@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { AlertTriangle, Menu, HelpCircle, LogOut, Settings } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, Menu, HelpCircle, LogOut, Settings, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -14,7 +15,6 @@ import {
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface HeaderProps {
   emergencyStopActive: boolean;
@@ -22,35 +22,8 @@ interface HeaderProps {
     email: string;
     full_name: string | null;
   };
-}
-
-const routeLabels: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/connections": "Connections",
-  "/rules": "Rules",
-  "/webhooks": "Webhooks",
-  "/playground": "API Playground",
-  "/team": "Team",
-  "/messaging": "Messaging",
-  "/analytics": "Analytics",
-  "/audit-log": "Audit Log",
-  "/organization": "Organization",
-  "/settings": "Settings",
-  "/settings/oauth": "OAuth Apps",
-  "/emergency": "Emergency Stop",
-  "/admin": "Admin",
-  "/setup": "Setup",
-};
-
-function getPageTitle(pathname: string): string {
-  // Try exact match first
-  if (routeLabels[pathname]) return routeLabels[pathname];
-  // Try parent path
-  const parent = pathname.split("/").slice(0, -1).join("/");
-  if (routeLabels[parent]) return routeLabels[parent];
-  // Fallback to last segment
-  const last = pathname.split("/").pop() ?? "";
-  return last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ");
+  orgName?: string;
+  pendingCount?: number;
 }
 
 function getInitials(name: string | null, email: string): string {
@@ -65,11 +38,9 @@ function getInitials(name: string | null, email: string): string {
   return email.charAt(0).toUpperCase();
 }
 
-export function Header({ emergencyStopActive, user }: HeaderProps) {
-  const pathname = usePathname();
+export function Header({ emergencyStopActive, user, orgName, pendingCount = 0 }: HeaderProps) {
   const router = useRouter();
   const { setMobileOpen } = useSidebarStore();
-  const pageTitle = getPageTitle(pathname);
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -89,8 +60,8 @@ export function Header({ emergencyStopActive, user }: HeaderProps) {
       )}
 
       {/* Top bar */}
-      <div className="top-bar flex items-center justify-between px-4">
-        {/* Left: mobile menu + page title */}
+      <div className="top-bar flex items-center justify-between px-5">
+        {/* Left: mobile menu + org name */}
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -100,20 +71,36 @@ export function Header({ emergencyStopActive, user }: HeaderProps) {
           >
             <Menu className="size-5" />
           </Button>
-          <h2 className="text-sm font-semibold text-foreground">{pageTitle}</h2>
+          {orgName && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">{orgName}</span>
+              <Link
+                href="/organization"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                Organization settings
+              </Link>
+            </div>
+          )}
         </div>
 
-        {/* Right: help + user */}
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            asChild
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <a href="https://okrunit.com/docs" target="_blank" rel="noopener noreferrer" title="Help & Docs">
+        {/* Right: actions */}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon-sm" asChild className="text-muted-foreground hover:text-foreground">
+            <a href="https://okrunit.com/docs" target="_blank" rel="noopener noreferrer" title="Help">
               <HelpCircle className="size-4" />
             </a>
+          </Button>
+
+          <Button variant="ghost" size="icon-sm" className="relative text-muted-foreground hover:text-foreground" asChild>
+            <Link href="/dashboard" title="Notifications">
+              <Bell className="size-4" />
+              {pendingCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white">
+                  {pendingCount > 9 ? "9+" : pendingCount}
+                </span>
+              )}
+            </Link>
           </Button>
 
           {user && (
@@ -121,7 +108,7 @@ export function Header({ emergencyStopActive, user }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon-sm" className="rounded-full">
                   <Avatar className="size-7">
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                    <AvatarFallback className="bg-primary text-white text-xs font-medium">
                       {getInitials(user.full_name, user.email)}
                     </AvatarFallback>
                   </Avatar>

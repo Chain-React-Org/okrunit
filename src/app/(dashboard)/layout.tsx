@@ -18,7 +18,6 @@ export default async function DashboardLayout({
     } = await supabase.auth.getUser();
 
     if (user) {
-      // User is authenticated but has no org membership
       redirect("/login?error=no_org");
     }
 
@@ -27,10 +26,8 @@ export default async function DashboardLayout({
 
   const { profile, membership, org } = ctx;
 
-  // Fetch user's org list for the switcher
   const userOrgs = await getUserOrgs(profile.id);
 
-  // Fetch pending approval count and connection count for the active org
   const admin = createAdminClient();
   const [{ count: pendingCount }, { count: connectionCount }] = await Promise.all([
     admin
@@ -44,7 +41,6 @@ export default async function DashboardLayout({
       .eq("org_id", org.id),
   ]);
 
-  // Show setup link if org has no connections yet (likely a new org)
   const showSetup = (connectionCount ?? 0) === 0;
 
   return (
@@ -68,6 +64,8 @@ export default async function DashboardLayout({
         email: profile.email,
         full_name: profile.full_name,
       }}
+      orgName={org.name}
+      pendingCount={pendingCount ?? 0}
     >
       {children}
     </DashboardShell>

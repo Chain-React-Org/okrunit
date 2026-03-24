@@ -177,16 +177,18 @@
   --input: oklch(0.92 0.008 265);
   --ring: oklch(0.62 0.19 145);
 
-  /* Sidebar — dark charcoal from logo hexagon */
-  --sidebar: oklch(0.22 0.01 240);
-  --sidebar-foreground: oklch(0.82 0.01 240);
-  --sidebar-border: oklch(0.30 0.01 240);
-  --sidebar-accent: oklch(0.28 0.015 240);
-  --sidebar-accent-foreground: oklch(0.95 0.005 240);
+  /* Sidebar — gradient green from logo */
+  --sidebar: oklch(0.35 0.12 155);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.40 0.10 155 / 0.3);
+  --sidebar-accent: oklch(1 0 0 / 0.15);
+  --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-primary: oklch(0.62 0.19 145);
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-ring: oklch(0.62 0.19 145);
-  --sidebar-muted: oklch(0.50 0.01 240);
+  --sidebar-muted: oklch(1 0 0 / 0.6);
+  --sidebar-gradient-from: oklch(0.30 0.10 160);
+  --sidebar-gradient-to: oklch(0.45 0.14 145);
 
   /* Semantic status colors */
   --success: oklch(0.55 0.18 155);
@@ -328,18 +330,23 @@
   transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
-/* Sidebar active indicator — green border on dark bg */
+/* Sidebar icon bar — gradient background */
+.gk-v2 .sidebar-icon-bar {
+  background: linear-gradient(180deg, var(--sidebar-gradient-from), var(--sidebar-gradient-to));
+}
+
+/* Sidebar active indicator — subtle white bg on gradient */
 .gk-v2 .sidebar-nav-active {
-  border-left-width: 3px;
-  border-left-color: var(--sidebar-primary);
   background-color: var(--sidebar-accent);
   font-weight: 500;
   color: var(--sidebar-accent-foreground);
 }
 
-/* Sidebar collapse/expand transition */
-.gk-v2 .sidebar-transition {
-  transition: width 200ms cubic-bezier(0.22, 1, 0.36, 1);
+/* Sidebar sub-panel (second level) */
+.gk-v2 .sidebar-subpanel {
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 8px oklch(0.15 0.02 265 / 0.06);
 }
 
 /* Top bar */
