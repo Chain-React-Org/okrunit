@@ -8,6 +8,7 @@ import { ApprovalListMasterDetail } from "@/components/approvals/approval-list-m
 import { ApprovalDetail } from "@/components/approvals/approval-detail";
 import { LayoutToggle } from "@/components/approvals/layout-toggle";
 import { StatCard } from "@/components/ui/stat-card";
+import { Pagination } from "@/components/ui/pagination";
 import { useApprovalFiltersStore } from "@/stores/approval-filters-store";
 import { useRealtime } from "@/hooks/use-realtime";
 import { createClient } from "@/lib/supabase/client";
@@ -46,6 +47,8 @@ export function ApprovalDashboard({
   const newIdTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const [userProfiles, setUserProfiles] = useState<Map<string, UserProfile>>(new Map());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [pageSize, setPageSize] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { status, priority, search, source, showArchived, setStatus, setPriority, setSearch, setSource, setShowArchived } =
     useApprovalFiltersStore();
@@ -180,6 +183,19 @@ export function ApprovalDashboard({
   const approvedCount = approvals.filter((a) => a.status === "approved").length;
   const rejectedCount = approvals.filter((a) => a.status === "rejected").length;
 
+  // Pagination
+  const totalPages = Math.ceil(approvals.length / pageSize);
+  const paginatedApprovals = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return approvals.slice(start, start + pageSize);
+  }, [approvals, currentPage, pageSize]);
+
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1); // Reset to first page
+    setSelectedIds(new Set()); // Clear selection
+  }, []);
+
   const fetchApprovals = useCallback(
     async (filters: {
       status?: string;
@@ -236,6 +252,7 @@ export function ApprovalDashboard({
       setSearch(filters.search ?? "");
       setSource(filters.source);
       if (filters.showArchived !== undefined) setShowArchived(filters.showArchived);
+      setCurrentPage(1); // Reset to first page when filters change
       fetchApprovals(filters);
     },
     [fetchApprovals, setStatus, setPriority, setSearch, setSource, setShowArchived]
@@ -522,7 +539,7 @@ export function ApprovalDashboard({
   }, [approvalCreators, approvals, userProfiles]);
 
   const sharedListProps = {
-    approvals,
+    approvals: paginatedApprovals,
     connections,
     approvalCreators: allCreatorNames,
     onSelect: handleSelect,
@@ -643,6 +660,19 @@ export function ApprovalDashboard({
           </>
         ) : null}
       </div>
+
+      {/* Pagination */}
+      {approvals.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={approvals.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={handlePageSizeChange}
+          pageSizeOptions={[10, 25, 50, 100]}
+        />
+      )}
 
       {/* Detail slide-in panel (Cards & Grouped only) */}
       {layout !== "split" && (
