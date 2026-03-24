@@ -12,6 +12,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canAddTeamMember } from "@/lib/billing/enforce";
 import { INVITE_EXPIRY_DAYS } from "@/lib/constants";
 import { buildInviteEmailHtml } from "@/lib/email/invite";
 import type { OrgInvite } from "@/lib/types/database";
@@ -41,6 +42,22 @@ export async function POST(request: Request) {
     // Must be admin or owner.
     if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
       throw new ApiError(403, "Insufficient permissions");
+    }
+
+    // Billing plan enforcement
+    const billingCheck = await canAddTeamMember(auth.orgId);
+    if (!billingCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: billingCheck.reason,
+          code: "PLAN_LIMIT_EXCEEDED",
+          upgrade_required: true,
+          limit: billingCheck.limit,
+          current: billingCheck.current,
+          plan: billingCheck.plan,
+        },
+        { status: 403 },
+      );
     }
 
     // Validate request body.

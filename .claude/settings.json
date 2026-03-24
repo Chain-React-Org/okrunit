@@ -214,7 +214,14 @@
       "Bash(sed -i '' 's/padding:0 12px/padding:0 16px/' /private/tmp/check-sidebar4.mjs)",
       "Bash(node /private/tmp/check-sidebar4.mjs)",
       "Bash(node compare-logos.mjs)",
-      "Bash(curl -s -o /private/tmp/prod-logo-icon.png \"https://www.okrunit.com/logo-icon.png\")"
+      "Bash(curl -s -o /private/tmp/prod-logo-icon.png \"https://www.okrunit.com/logo-icon.png\")",
+      "Bash(grep -E \"\\\\.sql$\")",
+      "Bash(ls -la /Users/nathanielstoddard/okrunit/okrunit/src/app/\\\\\\(dashboard\\\\\\)/organization/)",
+      "Bash(cat /Users/nathanielstoddard/okrunit/okrunit/src/app/\\\\\\(dashboard\\\\\\)/organization/page.tsx)",
+      "Bash(cat /Users/nathanielstoddard/okrunit/okrunit/src/app/\\\\\\(dashboard\\\\\\)/settings/page.tsx)",
+      "Bash(grep -r \"free\\\\|pro\\\\|enterprise\\\\|pricing\\\\|plan\" /Users/nathanielstoddard/okrunit/okrunit/src/components/landing --include=*.tsx)",
+      "Bash(grep -r \"stripe\" /Users/nathanielstoddard/okrunit/okrunit/.env*)",
+      "Bash(grep -A 20 \"CREATE TABLE org_memberships\" /Users/nathanielstoddard/okrunit/okrunit/supabase/migrations/*.sql)"
     ],
     "additionalDirectories": [
       "/Users/nathanielstoddard/gatekeeper/src/app/api/v1/oauth/grants",

@@ -24,6 +24,7 @@ import { dispatchNotifications } from "@/lib/notifications/orchestrator";
 import { calculateSlaDeadline, checkSlaBreach, type SlaConfig } from "@/lib/api/sla";
 import { checkBottleneckThreshold } from "@/lib/api/bottleneck";
 import { enforceFourEyesOnCreation } from "@/lib/api/four-eyes";
+import { canCreateRequest } from "@/lib/billing/enforce";
 
 // ---- Helpers ---------------------------------------------------------------
 
@@ -70,6 +71,22 @@ export async function POST(request: Request) {
         503,
         "Emergency stop is active",
         "EMERGENCY_STOP",
+      );
+    }
+
+    // 2b. Billing plan enforcement
+    const billingCheck = await canCreateRequest(auth.orgId);
+    if (!billingCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: billingCheck.reason,
+          code: "PLAN_LIMIT_EXCEEDED",
+          upgrade_required: true,
+          limit: billingCheck.limit,
+          current: billingCheck.current,
+          plan: billingCheck.plan,
+        },
+        { status: 403 },
       );
     }
 

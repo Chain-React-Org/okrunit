@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createConnectionSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canCreateConnection } from "@/lib/billing/enforce";
 
 // ---- Column allowlist (never return api_key_hash) -------------------------
 
@@ -60,6 +61,22 @@ export async function POST(request: Request) {
     // Must be owner or admin.
     if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
       throw new ApiError(403, "Insufficient permissions");
+    }
+
+    // Billing plan enforcement
+    const billingCheck = await canCreateConnection(auth.orgId);
+    if (!billingCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: billingCheck.reason,
+          code: "PLAN_LIMIT_EXCEEDED",
+          upgrade_required: true,
+          limit: billingCheck.limit,
+          current: billingCheck.current,
+          plan: billingCheck.plan,
+        },
+        { status: 403 },
+      );
     }
 
     // Validate request body.
