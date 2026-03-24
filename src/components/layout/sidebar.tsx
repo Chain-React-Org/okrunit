@@ -169,14 +169,14 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
         {/* Logo */}
         <Link
           href="/dashboard"
-          className="mb-4 flex size-9 items-center justify-center"
+          className="mb-3 flex items-center justify-center pt-1"
           onClick={() => { setActivePanel(null); setMobileOpen(false); }}
         >
-          <img src="/logo.png" alt="OKRunit" className="size-7" />
+          <img src="/logo.png" alt="OKRunit" className="size-9" />
         </Link>
 
         {/* Divider */}
-        <div className="mx-auto mb-3 h-px w-7 bg-white/20" />
+        <div className="mx-auto mb-3 h-px w-7 bg-white/25" />
 
         {/* Setup item */}
         {showSetup && (
