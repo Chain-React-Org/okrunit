@@ -335,9 +335,8 @@
   background: linear-gradient(180deg, var(--sidebar-gradient-from), var(--sidebar-gradient-to));
 }
 
-/* Sidebar active indicator — subtle white bg on gradient */
+/* Sidebar active indicator — text brightens, icon gets bg via component */
 .gk-v2 .sidebar-nav-active {
-  background-color: var(--sidebar-accent);
   font-weight: 500;
   color: var(--sidebar-accent-foreground);
 }

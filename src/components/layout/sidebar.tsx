@@ -17,7 +17,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
-  MoreHorizontal,
+  MoreVertical,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -50,7 +50,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { id: "home", href: "/dashboard", label: "Home", icon: Home },
+  { id: "home", href: "/dashboard", label: "Org", icon: Home },
   { id: "requests", href: "/requests", label: "Requests", icon: ClipboardList },
   { id: "connections", href: "/connections", label: "Connections", icon: Key, adminOnly: true },
   { id: "rules", href: "/rules", label: "Rules", icon: ShieldCheck },
@@ -64,7 +64,6 @@ const navItems: NavItem[] = [
     id: "analytics", href: "/analytics", label: "Analytics", icon: BarChart3,
     children: [{ href: "/analytics", label: "Overview" }, { href: "/audit-log", label: "Audit Log" }],
   },
-  // Overflow items — shown in "More" menu
   { id: "playground", href: "/playground", label: "Playground", icon: FlaskConical, overflow: true },
   {
     id: "settings", href: "/settings", label: "Settings", icon: Settings, overflow: true,
@@ -74,7 +73,6 @@ const navItems: NavItem[] = [
   { id: "admin", href: "/admin", label: "Admin", icon: ShieldAlert, appAdminOnly: true, overflow: true },
 ];
 
-// Max primary items before "More" button (excluding overflow-flagged items)
 const MAX_PRIMARY = 8;
 
 export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: SidebarProps) {
@@ -89,7 +87,6 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
     return true;
   });
 
-  // Split into primary and overflow
   const primaryItems = visibleItems.filter((i) => !i.overflow).slice(0, MAX_PRIMARY);
   const overflowItems = [
     ...visibleItems.filter((i) => !i.overflow).slice(MAX_PRIMARY),
@@ -121,25 +118,29 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
     const Icon = item.icon;
     const active = isItemActive(item);
     const panelOpen = activePanel === item.id;
-
-    const classes = cn(
-      "group flex w-full cursor-pointer flex-col items-center gap-1 rounded-lg px-1 py-2.5 text-white/75 transition-colors hover:bg-white/15",
-      (active || panelOpen) && "sidebar-nav-active",
-    );
+    const isActive = active || panelOpen;
 
     const content = (
       <>
-        <div className="relative flex size-8 items-center justify-center rounded-md group-hover:bg-white/10 transition-colors">
-          <Icon className="size-5 shrink-0" />
+        <div className={cn(
+          "relative flex size-9 items-center justify-center rounded-lg transition-colors",
+          isActive ? "bg-white/20" : "group-hover:bg-white/15",
+        )}>
+          <Icon className="size-[22px] shrink-0" />
           {item.id === "requests" && pendingCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-white text-[8px] font-bold text-[var(--sidebar-gradient-to)]">
+            <span className="absolute -right-1.5 -top-1.5 flex size-[18px] items-center justify-center rounded-full bg-white text-[9px] font-bold text-[var(--sidebar-gradient-to)]">
               {pendingCount > 9 ? "9+" : pendingCount}
             </span>
           )}
         </div>
-        <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+        <span className={cn(
+          "text-[11px] leading-tight",
+          isActive ? "font-semibold text-white" : "font-medium",
+        )}>{item.label}</span>
       </>
     );
+
+    const classes = "group flex w-full cursor-pointer flex-col items-center gap-1.5 py-3 text-white/80 transition-colors";
 
     if (item.children) {
       return (
@@ -159,8 +160,8 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
   return (
     <div className="flex h-full">
       {/* Icon bar */}
-      <div className="sidebar-icon-bar flex h-full w-20 flex-col items-center py-4">
-        {/* Logo — icon only, centered with equal padding */}
+      <div className="sidebar-icon-bar flex h-full w-20 flex-col items-center">
+        {/* Logo */}
         <Link
           href="/dashboard"
           className="mb-2 flex w-full items-center justify-center px-2 py-1"
@@ -169,53 +170,61 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
           <img src="/logo-icon.png" alt="OKRunit" className="size-10 object-contain drop-shadow-md" />
         </Link>
 
-        {/* Divider */}
-        <div className="mx-auto mb-3 h-px w-7 bg-white/25" />
+        {/* First item (Org/Home) — above divider like Make.com */}
+        {primaryItems.length > 0 && renderNavItem(primaryItems[0])}
+
+        {/* Divider — between first item and rest */}
+        <div className="mx-auto my-2 h-px w-7 bg-white/25" />
 
         {/* Setup */}
         {showSetup && (
           <Link
             href="/setup"
             onClick={() => { setActivePanel(null); setMobileOpen(false); }}
-            className={cn(
-              "group mb-1 flex w-full flex-col items-center gap-1 rounded-lg px-1 py-2.5 text-white/75 transition-colors hover:bg-white/15",
-              pathname === "/setup" && "sidebar-nav-active",
-            )}
+            className="group flex w-full cursor-pointer flex-col items-center gap-1.5 py-3 text-white/80 transition-colors"
           >
-            <div className="flex size-8 items-center justify-center rounded-md">
-              <Sparkles className="size-5 shrink-0" />
+            <div className={cn(
+              "flex size-9 items-center justify-center rounded-lg transition-colors",
+              pathname === "/setup" ? "bg-white/20" : "group-hover:bg-white/15",
+            )}>
+              <Sparkles className="size-[22px] shrink-0" />
             </div>
-            <span className="text-[10px] font-medium leading-tight">Setup</span>
+            <span className={cn(
+              "text-[11px] leading-tight",
+              pathname === "/setup" ? "font-semibold text-white" : "font-medium",
+            )}>Setup</span>
           </Link>
         )}
 
-        {/* Primary nav items */}
-        <nav className="flex w-full flex-1 flex-col items-center gap-0.5 overflow-y-auto px-2">
-          {primaryItems.map(renderNavItem)}
+        {/* Remaining primary nav items */}
+        <nav className="flex w-full flex-1 flex-col items-center overflow-y-auto">
+          {primaryItems.slice(1).map((item) => renderNavItem(item))}
         </nav>
 
-        {/* More button — overflow items */}
+        {/* More button */}
         {overflowItems.length > 0 && (
-          <div className="relative w-full px-2 pb-1">
+          <div className="relative w-full pb-3">
             <button
               onClick={() => setMoreOpen(!moreOpen)}
-              className={cn(
-                "group flex w-full cursor-pointer flex-col items-center gap-1 rounded-lg px-1 py-2.5 text-white/75 transition-colors hover:bg-white/15",
-                (moreOpen || anyOverflowActive) && "sidebar-nav-active",
-              )}
+              className="group flex w-full cursor-pointer flex-col items-center gap-1.5 py-3 text-white/80 transition-colors"
             >
-              <div className="flex size-8 items-center justify-center rounded-md">
-                <MoreHorizontal className="size-5" />
+              <div className={cn(
+                "flex size-9 items-center justify-center rounded-lg transition-colors",
+                (moreOpen || anyOverflowActive) ? "bg-white/20" : "group-hover:bg-white/15",
+              )}>
+                <MoreVertical className="size-[22px]" />
               </div>
-              <span className="text-[10px] font-medium leading-tight">More</span>
+              <span className={cn(
+                "text-[11px] leading-tight",
+                (moreOpen || anyOverflowActive) ? "font-semibold text-white" : "font-medium",
+              )}>More</span>
             </button>
 
-            {/* Overflow popover */}
             {moreOpen && (
               <div className="absolute bottom-0 left-full z-50 ml-2 w-48 rounded-lg border border-border bg-card py-2 shadow-lg">
                 <div className="flex items-center justify-between px-3 pb-2">
                   <span className="text-xs font-semibold text-muted-foreground">More</span>
-                  <button onClick={() => setMoreOpen(false)} className="text-muted-foreground hover:text-foreground">
+                  <button onClick={() => setMoreOpen(false)} className="cursor-pointer text-muted-foreground hover:text-foreground">
                     <X className="size-3.5" />
                   </button>
                 </div>
