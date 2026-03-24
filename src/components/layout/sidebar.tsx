@@ -69,7 +69,7 @@ const navItems: NavItem[] = [
   { id: "playground", href: "/playground", label: "Playground", icon: FlaskConical, overflow: true },
   {
     id: "settings", href: "/settings", label: "Settings", icon: Settings, overflow: true,
-    children: [{ href: "/settings", label: "Preferences" }, { href: "/settings/oauth", label: "OAuth Apps" }],
+    children: [{ href: "/settings", label: "Preferences" }, { href: "/settings/oauth", label: "OAuth Apps" }, { href: "/settings/sso", label: "SSO" }],
   },
   { id: "emergency", href: "/emergency", label: "Emergency", icon: AlertTriangle, adminOnly: true, overflow: true },
   { id: "admin", href: "/admin", label: "Admin", icon: ShieldAlert, appAdminOnly: true, overflow: true },

@@ -871,6 +871,24 @@ export function isUnlimited(limit: number): boolean {
   return limit === -1;
 }
 
+// ---- SSO Config -----------------------------------------------------------
+
+export interface SSOConfig {
+  id: string;
+  org_id: string;
+  provider: string;
+  entity_id: string;
+  sso_url: string;
+  certificate: string;
+  attribute_mapping: Record<string, string>;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SSOConfigInsert = Omit<SSOConfig, "id" | "created_at" | "updated_at">;
+export type SSOConfigUpdate = Partial<Omit<SSOConfig, "id" | "org_id" | "created_at">> & { id: string };
+
 // ---- Multi-Step Approvals --------------------------------------------------
 
 export type ApprovalStepStatus = "waiting" | "active" | "approved" | "rejected" | "skipped";

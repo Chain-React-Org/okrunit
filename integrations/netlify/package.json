@@ -1,0 +1,30 @@
+{
+  "name": "@okrunit/netlify",
+  "version": "0.1.0",
+  "description": "OKRunit approval gate for Netlify deployments — Netlify Build Plugin",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "manifest.yml"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "okrunit",
+    "netlify",
+    "netlify-plugin",
+    "deployment",
+    "approval",
+    "human-in-the-loop"
+  ],
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0"
+  }
+}

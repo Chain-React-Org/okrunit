@@ -1,0 +1,30 @@
+name: okrunit-approval-gate
+inputs:
+  - name: api_key
+    description: OKRunit API key (starts with gk_). Can also be set via OKRUNIT_API_KEY env var.
+    required: false
+  - name: api_url
+    description: OKRunit instance URL.
+    required: false
+    default: "https://app.okrunit.com"
+  - name: title
+    description: Approval request title. Auto-generated from site/branch if omitted.
+    required: false
+  - name: description
+    description: Additional context for the reviewer.
+    required: false
+  - name: priority
+    description: "Priority level: low, medium, high, or critical."
+    required: false
+    default: "medium"
+  - name: timeout
+    description: Maximum seconds to wait for approval.
+    required: false
+    default: 3600
+  - name: poll_interval
+    description: Seconds between status checks.
+    required: false
+    default: 10
+  - name: branches
+    description: "Comma-separated list of branches that require approval (e.g. main,production). Leave empty to require approval on all branches."
+    required: false

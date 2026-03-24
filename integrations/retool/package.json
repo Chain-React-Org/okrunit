@@ -1,0 +1,34 @@
+{
+  "name": "@okrunit/retool",
+  "version": "0.1.0",
+  "description": "OKRunit approval gate for Retool custom components and workflows",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "okrunit",
+    "retool",
+    "approval",
+    "human-in-the-loop",
+    "custom-component"
+  ],
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0"
+  }
+}

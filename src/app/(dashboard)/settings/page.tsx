@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Shield } from "lucide-react";
 import { getOrgContext } from "@/lib/org-context";
 import { createClient } from "@/lib/supabase/server";
 import { PageContainer } from "@/components/ui/page-container";
@@ -37,25 +37,49 @@ export default async function SettingsPage() {
       <NotificationSettingsForm initialSettings={notificationSettings ?? null} />
 
       {isAdmin && (
-        <div className="mt-6 rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-muted/50 p-2.5">
-                <KeyRound className="size-5 text-muted-foreground" />
+        <div className="mt-6 space-y-4">
+          <div className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-muted/50 p-2.5">
+                  <KeyRound className="size-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-medium">OAuth Apps</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage OAuth 2.0 applications for one-click platform integrations.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium">OAuth Apps</h3>
-                <p className="text-sm text-muted-foreground">
-                  Manage OAuth 2.0 applications for one-click platform integrations.
-                </p>
-              </div>
+              <Link
+                href="/settings/oauth"
+                className="text-sm font-medium text-[var(--primary)] hover:underline"
+              >
+                Manage
+              </Link>
             </div>
-            <Link
-              href="/settings/oauth"
-              className="text-sm font-medium text-[var(--primary)] hover:underline"
-            >
-              Manage
-            </Link>
+          </div>
+
+          <div className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-muted/50 p-2.5">
+                  <Shield className="size-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Single Sign-On (SSO)</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Configure SAML-based SSO so your team can log in with your identity provider.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/settings/sso"
+                className="text-sm font-medium text-[var(--primary)] hover:underline"
+              >
+                Configure
+              </Link>
+            </div>
           </div>
         </div>
       )}
