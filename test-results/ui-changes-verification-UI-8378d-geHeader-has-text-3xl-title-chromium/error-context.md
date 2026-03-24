@@ -1,0 +1,48 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - img "OKRunit" [ref=e4]
+      - blockquote [ref=e6]:
+        - paragraph [ref=e7]: “OKRunit saved us from a catastrophic automated deployment. One approval click was all it took.”
+        - contentinfo [ref=e8]: — Engineering Lead, Series B Startup
+      - paragraph [ref=e9]: Human-in-the-loop approval for every automation.
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - heading "Welcome back" [level=1] [ref=e14]
+        - paragraph [ref=e15]: Enter your credentials to sign in to your account
+      - generic [ref=e16]:
+        - button "Sign in with Google" [ref=e17]:
+          - img
+          - text: Sign in with Google
+        - button "Sign in with GitHub" [ref=e18]:
+          - img
+          - text: Sign in with GitHub
+        - button "Sign in with Microsoft" [ref=e19]:
+          - img
+          - text: Sign in with Microsoft
+        - button "Sign in with Slack" [ref=e20]:
+          - img
+          - text: Sign in with Slack
+      - generic [ref=e22]: or
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]: Email
+          - textbox "Email" [ref=e26]:
+            - /placeholder: you@example.com
+        - generic [ref=e27]:
+          - generic [ref=e28]: Password
+          - textbox "Password" [ref=e29]:
+            - /placeholder: Enter your password
+        - button "Sign in" [ref=e30]
+      - paragraph [ref=e31]:
+        - text: Don't have an account?
+        - link "Sign up" [ref=e32] [cursor=pointer]:
+          - /url: /signup
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e38] [cursor=pointer]:
+    - img [ref=e39]
+  - alert [ref=e42]
+```

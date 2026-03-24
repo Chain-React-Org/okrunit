@@ -1,0 +1,530 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - link "OKRunit" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "OKRunit" [ref=e6]
+        - generic [ref=e7]:
+          - link "Features" [ref=e8] [cursor=pointer]:
+            - /url: "#features"
+          - link "Pricing" [ref=e9] [cursor=pointer]:
+            - /url: "#pricing"
+          - link "Testimonials" [ref=e10] [cursor=pointer]:
+            - /url: "#testimonials"
+        - generic [ref=e11]:
+          - link "Log in" [ref=e12] [cursor=pointer]:
+            - /url: /login
+          - link "Start for free" [ref=e13] [cursor=pointer]:
+            - /url: /signup
+    - generic [ref=e14]:
+      - link "Now available for AI agent teams" [ref=e16] [cursor=pointer]:
+        - /url: /signup
+        - text: Now available for AI agent teams
+        - img [ref=e17]
+      - heading "Human approval for every automation" [level=1] [ref=e20]
+      - paragraph [ref=e22]: The approval gateway for AI agents, automations, and workflows. One API call pauses execution until a human approves.
+      - generic [ref=e24]:
+        - img [ref=e25]
+        - img [ref=e27]
+        - img [ref=e29]
+        - img [ref=e31]
+        - img [ref=e33]
+        - generic [ref=e35]: 4.9 rating
+      - generic [ref=e37]:
+        - link "Get started free" [ref=e38] [cursor=pointer]:
+          - /url: /signup
+          - text: Get started free
+          - img [ref=e39]
+        - link "See how it works" [ref=e41] [cursor=pointer]:
+          - /url: "#features"
+          - img [ref=e42]
+          - text: See how it works
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - img "OKRunit" [ref=e55]
+          - generic [ref=e56]:
+            - generic [ref=e57]:
+              - img [ref=e58]
+              - generic [ref=e63]: Dashboard
+              - generic [ref=e64]: "3"
+            - generic [ref=e65]:
+              - img [ref=e66]
+              - generic [ref=e70]: Connections
+            - generic [ref=e71]:
+              - img [ref=e72]
+              - generic [ref=e77]: Team
+            - generic [ref=e78]:
+              - img [ref=e79]
+              - generic [ref=e82]: Rules
+            - generic [ref=e83]:
+              - img [ref=e84]
+              - generic [ref=e87]: Audit Log
+            - generic [ref=e88]:
+              - img [ref=e89]
+              - generic [ref=e93]: Webhooks
+            - generic [ref=e94]:
+              - img [ref=e95]
+              - generic [ref=e97]: Analytics
+            - generic [ref=e98]:
+              - img [ref=e99]
+              - generic [ref=e101]: Playground
+            - generic [ref=e102]:
+              - img [ref=e103]
+              - generic [ref=e106]: Settings
+          - generic [ref=e108]:
+            - generic [ref=e109]: NS
+            - generic [ref=e110]: nathaniel@okrunit.com
+        - generic [ref=e111]:
+          - generic [ref=e113]: Dashboard
+          - generic [ref=e114]:
+            - generic [ref=e115]:
+              - img [ref=e116]
+              - generic [ref=e119]: Search approvals...
+            - generic [ref=e120]: "Status: All"
+            - generic [ref=e121]: "Priority: All"
+          - generic [ref=e122]:
+            - generic [ref=e123]:
+              - generic [ref=e124]:
+                - generic [ref=e125]: "Delete user account #4821"
+                - generic [ref=e126]:
+                  - generic [ref=e127]: High
+                  - generic [ref=e128]: Pending
+              - paragraph [ref=e129]: Permanently remove user and all associated data
+              - generic [ref=e130]:
+                - generic [ref=e131]: Zapier
+                - generic [ref=e132]:
+                  - img [ref=e133]
+                  - text: 2 min ago
+            - generic [ref=e136]:
+              - generic [ref=e137]:
+                - generic [ref=e138]: Send bulk email (2,400 recipients)
+                - generic [ref=e139]:
+                  - generic [ref=e140]: Medium
+                  - generic [ref=e141]: Approved
+              - paragraph [ref=e142]: Marketing campaign — Q1 product launch
+              - generic [ref=e143]:
+                - generic [ref=e144]: n8n
+                - generic [ref=e145]:
+                  - img [ref=e146]
+                  - text: 8 min ago
+            - generic [ref=e149]:
+              - generic [ref=e150]:
+                - generic [ref=e151]: Deploy to production v3.2.1
+                - generic [ref=e152]:
+                  - generic [ref=e153]: High
+                  - generic [ref=e154]: Pending
+              - paragraph [ref=e155]: Release includes auth fix and new webhook endpoint
+              - generic [ref=e156]:
+                - generic [ref=e157]: Make
+                - generic [ref=e158]:
+                  - img [ref=e159]
+                  - text: 14 min ago
+            - generic [ref=e162]:
+              - generic [ref=e163]:
+                - generic [ref=e164]: "Update billing plan for org #127"
+                - generic [ref=e165]:
+                  - generic [ref=e166]: Low
+                  - generic [ref=e167]: Approved
+              - paragraph [ref=e168]: Upgrade from Pro to Enterprise tier
+              - generic [ref=e169]:
+                - generic [ref=e170]: Zapier
+                - generic [ref=e171]:
+                  - img [ref=e172]
+                  - text: 23 min ago
+    - generic [ref=e178]:
+      - paragraph [ref=e179]: Works with the tools your team already uses
+      - generic [ref=e181]:
+        - generic [ref=e182]:
+          - img [ref=e184]
+          - generic [ref=e186]: Zapier
+        - generic [ref=e187]:
+          - img [ref=e189]
+          - generic [ref=e192]: Make
+        - generic [ref=e193]:
+          - img [ref=e195]
+          - generic [ref=e198]: n8n
+        - generic [ref=e199]:
+          - img [ref=e201]
+          - generic [ref=e203]: Slack
+        - generic [ref=e204]:
+          - img [ref=e206]
+          - generic [ref=e208]: OpenAI
+        - generic [ref=e209]:
+          - img [ref=e211]
+          - generic [ref=e213]: LangChain
+        - generic [ref=e214]:
+          - img [ref=e216]
+          - generic [ref=e218]: Vercel
+        - generic [ref=e219]:
+          - img [ref=e221]
+          - generic [ref=e223]: Windmill
+        - generic [ref=e224]:
+          - img [ref=e226]
+          - generic [ref=e228]: Zapier
+        - generic [ref=e229]:
+          - img [ref=e231]
+          - generic [ref=e234]: Make
+        - generic [ref=e235]:
+          - img [ref=e237]
+          - generic [ref=e240]: n8n
+        - generic [ref=e241]:
+          - img [ref=e243]
+          - generic [ref=e245]: Slack
+        - generic [ref=e246]:
+          - img [ref=e248]
+          - generic [ref=e250]: OpenAI
+        - generic [ref=e251]:
+          - img [ref=e253]
+          - generic [ref=e255]: LangChain
+        - generic [ref=e256]:
+          - img [ref=e258]
+          - generic [ref=e260]: Vercel
+        - generic [ref=e261]:
+          - img [ref=e263]
+          - generic [ref=e265]: Windmill
+    - generic [ref=e268]:
+      - generic [ref=e269]:
+        - generic [ref=e271]:
+          - heading "Approve from anywhere" [level=3] [ref=e272]
+          - paragraph [ref=e273]: Review and approve requests from the dashboard, email, Slack, or push notifications. Never miss a critical decision.
+        - generic [ref=e275]:
+          - heading "Rules that route automatically" [level=3] [ref=e276]
+          - paragraph [ref=e277]: Set up rules based on action type, priority, or source to auto-route approvals to the right people.
+        - generic [ref=e279]:
+          - heading "Team-based permissions" [level=3] [ref=e280]
+          - paragraph [ref=e281]: Fine-grained role-based access ensures the right reviewers see the right requests.
+      - generic [ref=e284]:
+        - heading "A universal API that works with every automation" [level=3] [ref=e285]
+        - paragraph [ref=e286]: OKRunit provides a single REST API that sits between your AI agents and destructive actions. One endpoint to create approvals, webhooks to deliver decisions.
+        - link "Get started" [ref=e287] [cursor=pointer]:
+          - /url: /signup
+          - text: Get started
+          - img [ref=e288]
+    - generic [ref=e292]:
+      - heading "Everything you need for safe automation" [level=2] [ref=e295]
+      - generic [ref=e296]:
+        - generic [ref=e297]:
+          - generic [ref=e299]:
+            - img [ref=e301]
+            - heading "From request to resolution" [level=3] [ref=e303]
+            - paragraph [ref=e304]: One API call creates an approval, notifies reviewers, and delivers the decision back to your automation.
+          - generic [ref=e306]:
+            - img [ref=e308]
+            - heading "AI-ready approval workflows" [level=3] [ref=e313]
+            - paragraph [ref=e314]: Purpose-built for AI agents and automations that need human oversight before taking action.
+          - generic [ref=e316]:
+            - img [ref=e318]
+            - heading "Full audit visibility" [level=3] [ref=e321]
+            - paragraph [ref=e322]: Every request, vote, and decision is logged with timestamps and context for complete traceability.
+          - generic [ref=e324]:
+            - img [ref=e326]
+            - heading "Connect everything" [level=3] [ref=e329]
+            - paragraph [ref=e330]: Integrate with Zapier, Make, n8n, Slack, custom webhooks, and any platform with an HTTP client.
+        - generic [ref=e333]:
+          - img [ref=e335]
+          - paragraph [ref=e337]: 2.4 min
+          - paragraph [ref=e338]: avg. approval response time
+          - paragraph [ref=e340]: 99.9%
+          - paragraph [ref=e341]: webhook delivery rate
+    - generic [ref=e343]:
+      - heading "“OKRunit stopped our AI agent from deleting a production database. That single approval saved us weeks of recovery time.”" [level=2] [ref=e344]
+      - generic [ref=e345]:
+        - generic [ref=e346]: MC
+        - generic [ref=e347]:
+          - paragraph [ref=e348]: Marcus Chen
+          - paragraph [ref=e349]: CTO @ DataFlow
+    - generic [ref=e353]:
+      - generic [ref=e355]:
+        - generic [ref=e356]:
+          - generic [ref=e357]: Universal API
+          - heading "Connect any automation in minutes" [level=3] [ref=e358]
+          - paragraph [ref=e359]: Send a POST request from Zapier, Make, n8n, or your AI agent. OKRunit handles notifications, routing, and callbacks automatically.
+        - generic [ref=e360]:
+          - generic [ref=e361]: REST API
+          - generic [ref=e362]: Zapier
+          - generic [ref=e363]: Make
+          - generic [ref=e364]: n8n
+          - generic [ref=e365]: Webhooks
+          - generic [ref=e366]: Slack
+      - generic [ref=e369]:
+        - generic [ref=e370]: Smart Routing
+        - heading "Approvals go to the right people" [level=3] [ref=e371]
+        - paragraph [ref=e372]: Rules engine routes requests based on type, priority, and custom conditions. Set up escalation paths and auto-approve for low-risk actions.
+      - generic [ref=e375]:
+        - generic [ref=e376]: Real-time
+        - heading "Instant decisions, delivered everywhere" [level=3] [ref=e377]
+        - paragraph [ref=e378]: Webhook callbacks notify your automation the moment a decision is made. No polling required.
+    - generic [ref=e381]:
+      - heading "Start protecting your automations today" [level=2] [ref=e382]
+      - paragraph [ref=e383]: Free to start. No credit card required. Add human oversight in minutes.
+      - link "Get started free" [ref=e384] [cursor=pointer]:
+        - /url: /signup
+        - text: Get started free
+        - img [ref=e385]
+    - generic [ref=e387]:
+      - generic [ref=e389]:
+        - heading "Simple, transparent pricing" [level=2] [ref=e390]
+        - paragraph [ref=e391]: Start free. Scale as your team grows.
+      - generic [ref=e392]:
+        - generic [ref=e394]:
+          - generic [ref=e395]:
+            - heading "Free" [level=3] [ref=e396]
+            - generic [ref=e398]: $0
+            - paragraph [ref=e399]: For individuals and small projects
+          - list [ref=e400]:
+            - listitem [ref=e401]:
+              - img [ref=e402]
+              - generic [ref=e404]: 3 connections
+            - listitem [ref=e405]:
+              - img [ref=e406]
+              - generic [ref=e408]: 100 approvals/month
+            - listitem [ref=e409]:
+              - img [ref=e410]
+              - generic [ref=e412]: Email notifications
+            - listitem [ref=e413]:
+              - img [ref=e414]
+              - generic [ref=e416]: Community support
+            - listitem [ref=e417]:
+              - img [ref=e418]
+              - generic [ref=e420]: 7-day history
+          - link "Start for free" [ref=e421] [cursor=pointer]:
+            - /url: /signup
+        - generic [ref=e423]:
+          - generic [ref=e424]: Most Popular
+          - generic [ref=e425]:
+            - heading "Pro" [level=3] [ref=e426]
+            - generic [ref=e427]:
+              - generic [ref=e428]: $49
+              - generic [ref=e429]: /mo
+            - paragraph [ref=e430]: For teams shipping at scale
+          - list [ref=e431]:
+            - listitem [ref=e432]:
+              - img [ref=e433]
+              - generic [ref=e435]: Unlimited connections
+            - listitem [ref=e436]:
+              - img [ref=e437]
+              - generic [ref=e439]: Unlimited approvals
+            - listitem [ref=e440]:
+              - img [ref=e441]
+              - generic [ref=e443]: Slack integration
+            - listitem [ref=e444]:
+              - img [ref=e445]
+              - generic [ref=e447]: Rules engine
+            - listitem [ref=e448]:
+              - img [ref=e449]
+              - generic [ref=e451]: Audit log
+            - listitem [ref=e452]:
+              - img [ref=e453]
+              - generic [ref=e455]: 90-day history
+            - listitem [ref=e456]:
+              - img [ref=e457]
+              - generic [ref=e459]: Team collaboration
+          - link "Get started" [ref=e460] [cursor=pointer]:
+            - /url: /signup
+        - generic [ref=e462]:
+          - generic [ref=e463]:
+            - heading "Enterprise" [level=3] [ref=e464]
+            - generic [ref=e466]: Custom
+            - paragraph [ref=e467]: For organizations with advanced needs
+          - list [ref=e468]:
+            - listitem [ref=e469]:
+              - img [ref=e470]
+              - generic [ref=e472]: Everything in Pro
+            - listitem [ref=e473]:
+              - img [ref=e474]
+              - generic [ref=e476]: SSO / SAML
+            - listitem [ref=e477]:
+              - img [ref=e478]
+              - generic [ref=e480]: Dedicated support
+            - listitem [ref=e481]:
+              - img [ref=e482]
+              - generic [ref=e484]: Custom SLAs
+            - listitem [ref=e485]:
+              - img [ref=e486]
+              - generic [ref=e488]: Unlimited history
+            - listitem [ref=e489]:
+              - img [ref=e490]
+              - generic [ref=e492]: Advanced analytics
+            - listitem [ref=e493]:
+              - img [ref=e494]
+              - generic [ref=e496]: Custom integrations
+          - link "Contact us" [ref=e497] [cursor=pointer]:
+            - /url: /signup
+    - generic [ref=e498]:
+      - generic [ref=e500]:
+        - generic [ref=e501]:
+          - img [ref=e502]
+          - img [ref=e504]
+          - img [ref=e506]
+          - img [ref=e508]
+          - img [ref=e510]
+          - generic [ref=e512]: 4.9 rating
+        - heading "Trusted by engineering teams" [level=2] [ref=e513]
+      - generic [ref=e514]:
+        - generic [ref=e516]:
+          - generic [ref=e517]:
+            - paragraph [ref=e518]: “OKRunit saved us from a catastrophic data deletion. Our AI agent tried to drop a production table and the approval gate caught it.”
+            - generic [ref=e519]:
+              - paragraph [ref=e520]: Marcus Chen
+              - paragraph [ref=e521]: CTO @ DataFlow
+          - generic [ref=e522]:
+            - paragraph [ref=e523]: “We integrated OKRunit in 20 minutes. Now every Zapier workflow that touches customer data goes through human review first.”
+            - generic [ref=e524]:
+              - paragraph [ref=e525]: Emily Rodriguez
+              - paragraph [ref=e526]: Head of Ops @ ScaleUp
+          - generic [ref=e527]:
+            - paragraph [ref=e528]: “The webhook callbacks are incredibly reliable. Our n8n workflows pause cleanly and resume the moment someone approves.”
+            - generic [ref=e529]:
+              - paragraph [ref=e530]: James Park
+              - paragraph [ref=e531]: Lead Engineer @ BuildFast
+          - generic [ref=e532]:
+            - paragraph [ref=e533]: “Finally, a tool that gives us confidence to let AI agents handle sensitive operations. The audit trail alone is worth it.”
+            - generic [ref=e534]:
+              - paragraph [ref=e535]: Sarah Mitchell
+              - paragraph [ref=e536]: VP Engineering @ TrustLayer
+          - generic [ref=e537]:
+            - paragraph [ref=e538]: “OKRunit saved us from a catastrophic data deletion. Our AI agent tried to drop a production table and the approval gate caught it.”
+            - generic [ref=e539]:
+              - paragraph [ref=e540]: Marcus Chen
+              - paragraph [ref=e541]: CTO @ DataFlow
+          - generic [ref=e542]:
+            - paragraph [ref=e543]: “We integrated OKRunit in 20 minutes. Now every Zapier workflow that touches customer data goes through human review first.”
+            - generic [ref=e544]:
+              - paragraph [ref=e545]: Emily Rodriguez
+              - paragraph [ref=e546]: Head of Ops @ ScaleUp
+          - generic [ref=e547]:
+            - paragraph [ref=e548]: “The webhook callbacks are incredibly reliable. Our n8n workflows pause cleanly and resume the moment someone approves.”
+            - generic [ref=e549]:
+              - paragraph [ref=e550]: James Park
+              - paragraph [ref=e551]: Lead Engineer @ BuildFast
+          - generic [ref=e552]:
+            - paragraph [ref=e553]: “Finally, a tool that gives us confidence to let AI agents handle sensitive operations. The audit trail alone is worth it.”
+            - generic [ref=e554]:
+              - paragraph [ref=e555]: Sarah Mitchell
+              - paragraph [ref=e556]: VP Engineering @ TrustLayer
+        - generic [ref=e558]:
+          - generic [ref=e559]:
+            - paragraph [ref=e560]: “We went from 3 hours of manual review to 4 minutes average response time. OKRunit routes the right requests to the right people.”
+            - generic [ref=e561]:
+              - paragraph [ref=e562]: Alex Turner
+              - paragraph [ref=e563]: Founder @ AutoScale
+          - generic [ref=e564]:
+            - paragraph [ref=e565]: “The Slack integration means our team can approve requests without context-switching. Massive productivity win.”
+            - generic [ref=e566]:
+              - paragraph [ref=e567]: Priya Sharma
+              - paragraph [ref=e568]: Engineering Manager @ Nexus
+          - generic [ref=e569]:
+            - paragraph [ref=e570]: “OKRunit is the missing piece for production AI agents. You can't ship autonomous systems without human oversight.”
+            - generic [ref=e571]:
+              - paragraph [ref=e572]: David Kim
+              - paragraph [ref=e573]: AI Lead @ Cortex Labs
+          - generic [ref=e574]:
+            - paragraph [ref=e575]: “Setting up approval rules took 5 minutes. Now our entire deployment pipeline has human checkpoints where it matters.”
+            - generic [ref=e576]:
+              - paragraph [ref=e577]: Rachel Foster
+              - paragraph [ref=e578]: DevOps Lead @ CloudNine
+          - generic [ref=e579]:
+            - paragraph [ref=e580]: “We went from 3 hours of manual review to 4 minutes average response time. OKRunit routes the right requests to the right people.”
+            - generic [ref=e581]:
+              - paragraph [ref=e582]: Alex Turner
+              - paragraph [ref=e583]: Founder @ AutoScale
+          - generic [ref=e584]:
+            - paragraph [ref=e585]: “The Slack integration means our team can approve requests without context-switching. Massive productivity win.”
+            - generic [ref=e586]:
+              - paragraph [ref=e587]: Priya Sharma
+              - paragraph [ref=e588]: Engineering Manager @ Nexus
+          - generic [ref=e589]:
+            - paragraph [ref=e590]: “OKRunit is the missing piece for production AI agents. You can't ship autonomous systems without human oversight.”
+            - generic [ref=e591]:
+              - paragraph [ref=e592]: David Kim
+              - paragraph [ref=e593]: AI Lead @ Cortex Labs
+          - generic [ref=e594]:
+            - paragraph [ref=e595]: “Setting up approval rules took 5 minutes. Now our entire deployment pipeline has human checkpoints where it matters.”
+            - generic [ref=e596]:
+              - paragraph [ref=e597]: Rachel Foster
+              - paragraph [ref=e598]: DevOps Lead @ CloudNine
+    - contentinfo [ref=e599]:
+      - generic [ref=e600]:
+        - paragraph [ref=e601]: Join the teams using OKRunit
+        - link "Get started" [ref=e602] [cursor=pointer]:
+          - /url: /signup
+          - text: Get started
+          - img [ref=e603]
+      - generic [ref=e606]:
+        - generic [ref=e607]:
+          - link "OKRunit" [ref=e609] [cursor=pointer]:
+            - /url: /
+            - img "OKRunit" [ref=e610]
+          - generic [ref=e611]:
+            - paragraph [ref=e612]: Product
+            - list [ref=e613]:
+              - listitem [ref=e614]:
+                - link "Why OKRunit" [ref=e615] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e616]:
+                - link "Platform" [ref=e617] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e618]:
+                - link "Pricing" [ref=e619] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e620]:
+                - link "Changelog" [ref=e621] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e622]:
+            - paragraph [ref=e623]: Solutions
+            - list [ref=e624]:
+              - listitem [ref=e625]:
+                - link "For Founders" [ref=e626] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e627]:
+                - link "For Startups" [ref=e628] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e629]:
+                - link "For Enterprise" [ref=e630] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e631]:
+                - link "For AI Teams" [ref=e632] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e633]:
+            - paragraph [ref=e634]: Company
+            - list [ref=e635]:
+              - listitem [ref=e636]:
+                - link "About" [ref=e637] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e638]:
+                - link "Contact" [ref=e639] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e640]:
+                - link "Privacy" [ref=e641] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e642]:
+            - paragraph [ref=e643]: Resources
+            - list [ref=e644]:
+              - listitem [ref=e645]:
+                - link "Blog" [ref=e646] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e647]:
+                - link "Docs" [ref=e648] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e649]:
+                - link "Community" [ref=e650] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e651]:
+                - link "Changelog" [ref=e652] [cursor=pointer]:
+                  - /url: "#"
+        - generic [ref=e653]:
+          - paragraph [ref=e654]: © 2026 OKRunit. All rights reserved.
+          - generic [ref=e655]:
+            - link "Terms of Service" [ref=e656] [cursor=pointer]:
+              - /url: "#"
+            - link "Privacy Policy" [ref=e657] [cursor=pointer]:
+              - /url: "#"
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e663] [cursor=pointer]:
+    - img [ref=e664]
+  - alert [ref=e667]
+```
