@@ -5,8 +5,9 @@ import { MemberList } from "@/components/team/member-list";
 import { InviteForm } from "@/components/team/invite-form";
 import { PendingInvites } from "@/components/team/pending-invites";
 import { TeamList } from "@/components/teams/team-list";
-import { Users, Mail, UsersRound } from "lucide-react";
-import type { OrgInvite } from "@/lib/types/database";
+import { OrgSettingsForm } from "@/components/organization/org-settings-form";
+import { Users, Mail, UsersRound, Building2 } from "lucide-react";
+import type { OrgInvite, Organization, UserRole } from "@/lib/types/database";
 
 interface TeamMember {
   id: string;
@@ -43,6 +44,13 @@ interface OrgMember {
   can_approve: boolean;
 }
 
+export interface MemberActivityStats {
+  decisions_30d: number;
+  approved: number;
+  rejected: number;
+  last_active: string | null;
+}
+
 interface TeamPageTabsProps {
   members: TeamMember[];
   currentUserId: string;
@@ -53,6 +61,10 @@ interface TeamPageTabsProps {
   memberCounts: Record<string, number>;
   teamMemberships: TeamMembershipData[];
   orgMembers: OrgMember[];
+  org: Organization;
+  memberCount: number;
+  memberStats: Record<string, MemberActivityStats>;
+  pendingLoadMap: Record<string, number>;
 }
 
 export function TeamPageTabs({
@@ -65,6 +77,10 @@ export function TeamPageTabs({
   memberCounts,
   teamMemberships,
   orgMembers,
+  org,
+  memberCount,
+  memberStats,
+  pendingLoadMap,
 }: TeamPageTabsProps) {
   return (
     <Tabs defaultValue="members" className="w-full">
@@ -88,6 +104,10 @@ export function TeamPageTabs({
           <UsersRound className="size-3.5" />
           Team Groups
         </TabsTrigger>
+        <TabsTrigger value="organization" className="gap-1.5">
+          <Building2 className="size-3.5" />
+          Organization
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="members">
@@ -95,6 +115,8 @@ export function TeamPageTabs({
           members={members}
           currentUserId={currentUserId}
           currentUserRole={currentUserRole}
+          memberStats={memberStats}
+          pendingLoadMap={pendingLoadMap}
         />
       </TabsContent>
 
@@ -120,6 +142,14 @@ export function TeamPageTabs({
           orgMembers={orgMembers}
           currentUserId={currentUserId}
           currentUserRole={currentUserRole}
+        />
+      </TabsContent>
+
+      <TabsContent value="organization">
+        <OrgSettingsForm
+          org={org}
+          role={currentUserRole as UserRole}
+          memberCount={memberCount}
         />
       </TabsContent>
     </Tabs>

@@ -95,6 +95,48 @@ export default async function TeamPage() {
     .select("id, team_id, user_id, created_at")
     .in("team_id", teamIds.length > 0 ? teamIds : ["00000000-0000-0000-0000-000000000000"]);
 
+  // Fetch activity stats: recent decisions per member (last 30 days)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: recentDecisions } = await admin
+    .from("approval_requests")
+    .select("decided_by, decided_at, status")
+    .eq("org_id", membership.org_id)
+    .not("decided_by", "is", null)
+    .gte("decided_at", thirtyDaysAgo)
+    .in("decided_by", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
+
+  // Build activity stats per member
+  const memberStats: Record<string, { decisions_30d: number; approved: number; rejected: number; last_active: string | null }> = {};
+  for (const uid of userIds) {
+    memberStats[uid] = { decisions_30d: 0, approved: 0, rejected: 0, last_active: null };
+  }
+  for (const d of recentDecisions ?? []) {
+    if (!d.decided_by) continue;
+    const stat = memberStats[d.decided_by];
+    if (!stat) continue;
+    stat.decisions_30d++;
+    if (d.status === "approved") stat.approved++;
+    if (d.status === "rejected") stat.rejected++;
+    if (!stat.last_active || (d.decided_at && d.decided_at > stat.last_active)) {
+      stat.last_active = d.decided_at;
+    }
+  }
+
+  // Fetch pending approval count assigned to each member
+  const { data: pendingAssigned } = await admin
+    .from("approval_requests")
+    .select("assigned_approvers, status")
+    .eq("org_id", membership.org_id)
+    .eq("status", "pending");
+
+  const pendingLoadMap: Record<string, number> = {};
+  for (const req of pendingAssigned ?? []) {
+    const approvers: string[] = req.assigned_approvers ?? [];
+    for (const uid of approvers) {
+      pendingLoadMap[uid] = (pendingLoadMap[uid] ?? 0) + 1;
+    }
+  }
+
   return (
     <PageContainer>
       <PageHeader
@@ -123,6 +165,10 @@ export default async function TeamPage() {
           created_at: tm.created_at,
         }))}
         orgMembers={orgMembers}
+        org={org}
+        memberCount={members.length}
+        memberStats={memberStats}
+        pendingLoadMap={pendingLoadMap}
       />
     </PageContainer>
   );

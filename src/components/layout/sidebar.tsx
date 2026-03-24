@@ -57,10 +57,7 @@ const navItems: NavItem[] = [
   { id: "rules", href: "/rules", label: "Rules", icon: ShieldCheck },
   { id: "webhooks", href: "/webhooks", label: "Webhooks", icon: Webhook, adminOnly: true },
   { id: "messaging", href: "/messaging", label: "Messaging", icon: MessageSquare, adminOnly: true },
-  {
-    id: "team", href: "/team", label: "Team", icon: Users, adminOnly: true,
-    children: [{ href: "/team", label: "Members" }, { href: "/organization", label: "Organization" }],
-  },
+  { id: "team", href: "/team", label: "Team", icon: Users, adminOnly: true },
   {
     id: "analytics", href: "/analytics", label: "Analytics", icon: BarChart3,
     children: [{ href: "/analytics", label: "Overview" }, { href: "/audit-log", label: "Audit Log" }],
