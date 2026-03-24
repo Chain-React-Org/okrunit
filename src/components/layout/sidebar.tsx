@@ -167,7 +167,7 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
           className="mb-2 flex w-full items-center justify-center px-2 py-1"
           onClick={() => { setActivePanel(null); setMobileOpen(false); }}
         >
-          <img src="/logo-icon.png" alt="OKRunit" className="size-11 object-contain drop-shadow-md" />
+          <img src="/logo-icon.png" alt="OKRunit" className="size-14 object-contain drop-shadow-md" />
         </Link>
 
         {/* First item (Org/Home) — above divider like Make.com */}
