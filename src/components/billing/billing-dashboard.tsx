@@ -263,9 +263,12 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
                       </Button>
                     )}
                     {isEnterprise && isUpgrade && (
-                      <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white/10" asChild>
-                        <a href="mailto:support@okrunit.com">Talk to sales</a>
-                      </Button>
+                      <a
+                        href="mailto:support@okrunit.com"
+                        className="flex w-full items-center justify-center rounded-md border border-white/30 bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                      >
+                        Talk to sales
+                      </a>
                     )}
                     {isCurrent && (
                       <p className={cn("text-center text-xs", isEnterprise ? "text-white/60" : "text-muted-foreground")}>
