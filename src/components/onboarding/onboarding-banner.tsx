@@ -16,7 +16,7 @@ export function OnboardingBanner() {
   if (isComplete || dismissed) return null;
 
   return (
-    <div className="relative -mx-8 -mt-8 mb-6 flex items-center gap-3 border-b border-border/50 bg-muted/30 px-8 py-3">
+    <div className="flex items-center gap-3 border-b border-border/50 bg-muted/30 px-8 py-3 mb-6">
       <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
         <Sparkles className="size-3.5 text-primary" />
       </div>
