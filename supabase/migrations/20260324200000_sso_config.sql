@@ -64,4 +64,4 @@ CREATE POLICY "sso_configs_delete_org_admins" ON sso_configs
 CREATE TRIGGER sso_configs_updated_at
   BEFORE UPDATE ON sso_configs
   FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at();
+  EXECUTE FUNCTION update_updated_at_column();
