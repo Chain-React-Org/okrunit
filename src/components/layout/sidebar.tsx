@@ -172,7 +172,9 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
           className="mb-3 flex items-center justify-center pt-1"
           onClick={() => { setActivePanel(null); setMobileOpen(false); }}
         >
-          <img src="/logo.png" alt="OKRunit" className="size-9" />
+          <div className="flex size-10 items-center justify-center rounded-lg bg-white/95 shadow-sm">
+            <img src="/logo.png" alt="OKRunit" className="size-7" />
+          </div>
         </Link>
 
         {/* Divider */}

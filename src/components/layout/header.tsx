@@ -1,8 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, Menu, HelpCircle, LogOut, Settings, Bell } from "lucide-react";
+import { AlertTriangle, Menu, HelpCircle, LogOut, Settings, Bell, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -62,7 +61,7 @@ export function Header({ emergencyStopActive, user, orgName, pendingCount = 0 }:
       {/* Top bar */}
       <div className="top-bar flex items-center justify-between px-5">
         {/* Left: mobile menu + org name */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -72,47 +71,51 @@ export function Header({ emergencyStopActive, user, orgName, pendingCount = 0 }:
             <Menu className="size-5" />
           </Button>
           {orgName && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-foreground">{orgName}</span>
-              <Link
-                href="/organization"
-                className="text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                Organization settings
-              </Link>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-foreground">{orgName}</span>
+              <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs font-medium">
+                <Link href="/organization">
+                  <Pencil className="size-3" />
+                  Organization settings
+                </Link>
+              </Button>
             </div>
           )}
         </div>
 
         {/* Right: actions */}
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon-sm" asChild className="text-muted-foreground hover:text-foreground">
-            <a href="https://okrunit.com/docs" target="_blank" rel="noopener noreferrer" title="Help">
+        <div className="flex items-center gap-1.5">
+          {/* Help button with text label like Make.com */}
+          <Button variant="ghost" size="sm" asChild className="h-8 gap-1.5 text-muted-foreground hover:text-foreground">
+            <a href="https://okrunit.com/docs" target="_blank" rel="noopener noreferrer">
               <HelpCircle className="size-4" />
+              <span className="hidden sm:inline text-xs">Help</span>
             </a>
           </Button>
 
-          <Button variant="ghost" size="icon-sm" className="relative text-muted-foreground hover:text-foreground" asChild>
-            <Link href="/dashboard" title="Notifications">
-              <Bell className="size-4" />
+          {/* Notification bell */}
+          <Button variant="ghost" size="icon" className="relative size-8 text-muted-foreground hover:text-foreground" asChild>
+            <Link href="/dashboard" title="Pending approvals">
+              <Bell className="size-[18px]" />
               {pendingCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white">
+                <span className="absolute -right-0.5 -top-0.5 flex size-[18px] items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white ring-2 ring-white">
                   {pendingCount > 9 ? "9+" : pendingCount}
                 </span>
               )}
             </Link>
           </Button>
 
+          {/* User avatar dropdown */}
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" className="rounded-full">
-                  <Avatar className="size-7">
-                    <AvatarFallback className="bg-primary text-white text-xs font-medium">
+                <button className="ml-1 flex cursor-pointer items-center justify-center rounded-full outline-none ring-2 ring-primary/20 transition-shadow hover:ring-primary/40 focus-visible:ring-primary/50">
+                  <Avatar className="size-8">
+                    <AvatarFallback className="bg-primary text-white text-xs font-bold">
                       {getInitials(user.full_name, user.email)}
                     </AvatarFallback>
                   </Avatar>
-                </Button>
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5">

@@ -351,7 +351,7 @@
 
 /* Top bar */
 .gk-v2 .top-bar {
-  height: 48px;
+  height: 52px;
   border-bottom: 1px solid var(--border);
   background: var(--card);
 }
