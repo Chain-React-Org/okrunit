@@ -33,7 +33,7 @@ INSERT INTO plans (id, name, description, price_monthly_cents, price_yearly_cent
   ('business', 'Business', 'For scaling organizations', 6000, 57600, 'price_1TEd9PFSXJNt9c6Ko8EwWTQu', 'price_1TEd9QFSXJNt9c6K57sl8Xrs', -1, -1, -1, 365,
    '["email_notifications", "slack_notifications", "webhook_notifications", "rules_engine", "analytics", "analytics_export", "sso_saml", "audit_log_export", "multi_step_approvals", "custom_routing"]', 2),
   ('enterprise', 'Enterprise', 'For large organizations with custom needs', 0, 0, NULL, NULL, -1, -1, -1, -1,
-   '["email_notifications", "slack_notifications", "webhook_notifications", "rules_engine", "analytics", "analytics_export", "sso_saml", "audit_log_export", "multi_step_approvals", "custom_routing", "dedicated_support", "on_prem", "custom_sla"]', 3);
+   '["email_notifications", "slack_notifications", "webhook_notifications", "rules_engine", "analytics", "analytics_export", "sso_saml", "audit_log_export", "multi_step_approvals", "custom_routing", "dedicated_support", "custom_sla", "priority_processing"]', 3);
 -- Note: -1 means unlimited, enterprise price is custom/negotiated
 
 -- Organization subscriptions

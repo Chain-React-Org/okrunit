@@ -79,8 +79,8 @@ export const PLAN_LIMITS: Record<BillingPlan, {
       "multi_step_approvals",
       "custom_routing",
       "dedicated_support",
-      "on_prem",
       "custom_sla",
+      "priority_processing",
     ],
   },
 };

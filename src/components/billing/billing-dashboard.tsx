@@ -10,6 +10,27 @@ import { PLAN_LIMITS, isUnlimited, PLAN_ORDER } from "@/lib/billing/plans";
 import type { Plan, Subscription, Invoice, BillingPlan } from "@/lib/types/database";
 import { toast } from "sonner";
 
+/** Human-readable labels for feature keys */
+const FEATURE_LABELS: Record<string, string> = {
+  email_notifications: "Email Notifications",
+  slack_notifications: "Slack Notifications",
+  webhook_notifications: "Webhook Notifications",
+  rules_engine: "Rules Engine",
+  analytics: "Analytics",
+  analytics_export: "Analytics Export",
+  sso_saml: "SSO / SAML",
+  audit_log_export: "Audit Log Export",
+  multi_step_approvals: "Multi-Step Approvals",
+  custom_routing: "Custom Routing",
+  dedicated_support: "Dedicated Support",
+  custom_sla: "Custom SLA",
+  priority_processing: "Priority Processing",
+};
+
+function featureLabel(key: string): string {
+  return FEATURE_LABELS[key] ?? key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+}
+
 interface BillingDashboardProps {
   plans: Plan[];
   subscription: Subscription | null;
@@ -193,7 +214,7 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
               <Card key={planId} className={cn(
                 "relative",
                 isCurrent && "border-primary ring-1 ring-primary/20",
-                isEnterprise && "bg-foreground text-white",
+                isEnterprise && "bg-zinc-900 text-white border-zinc-800",
               )}>
                 {isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -285,7 +306,7 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
                       }).slice(0, 4).map((f) => (
                         <li key={f} className="flex items-start gap-2">
                           <Check className={cn("size-4 shrink-0 mt-0.5", isEnterprise ? "text-white/80" : "text-primary")} />
-                          {f.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                          {featureLabel(f)}
                         </li>
                       ))}
                     </ul>
@@ -333,6 +354,8 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
                 { label: "Multi-step approvals", feature: "multi_step_approvals" },
                 { label: "Custom routing", feature: "custom_routing" },
                 { label: "Dedicated support", feature: "dedicated_support" },
+                { label: "Custom SLA", feature: "custom_sla" },
+                { label: "Priority processing", feature: "priority_processing" },
               ].map((row) => (
                 <tr key={row.label} className="hover:bg-muted/30 transition-colors">
                   <td className="px-5 py-3 text-muted-foreground">{row.label}</td>
