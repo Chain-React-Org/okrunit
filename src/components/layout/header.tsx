@@ -71,12 +71,13 @@ export function Header({ emergencyStopActive, user, orgName, pendingCount = 0 }:
             <Menu className="size-5" />
           </Button>
           {orgName && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-foreground">{orgName}</span>
-              <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs font-medium">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="text-sm font-bold text-foreground truncate max-w-[140px] sm:max-w-none">{orgName}</span>
+              <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex h-8 gap-1.5 text-xs font-medium">
                 <Link href="/organization">
                   <Pencil className="size-3" />
-                  Organization settings
+                  <span className="hidden lg:inline">Organization settings</span>
+                  <span className="lg:hidden">Settings</span>
                 </Link>
               </Button>
             </div>

@@ -187,8 +187,8 @@
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-ring: oklch(0.62 0.19 145);
   --sidebar-muted: oklch(1 0 0 / 0.6);
-  --sidebar-gradient-from: oklch(0.30 0.10 160);
-  --sidebar-gradient-to: oklch(0.45 0.14 145);
+  --sidebar-gradient-from: oklch(0.55 0.14 150);
+  --sidebar-gradient-to: oklch(0.30 0.10 155);
 
   /* Semantic status colors */
   --success: oklch(0.55 0.18 155);
