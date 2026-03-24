@@ -227,7 +227,8 @@
       "Bash(for d:*)",
       "Bash(chmod +x integrations/terraform/scripts/approve.sh integrations/terraform/scripts/approve.py)",
       "Bash(grep -A 5 -B 5 \"current_approvals\\\\|thresholdMet\\\\|isMultiApprover\" /Users/nathanielstoddard/okrunit/okrunit/src/app/api/v1/approvals/[id]/route.ts)",
-      "Bash(ls src/app/\\\\\\(dashboard\\\\\\)/settings/sso/ src/app/api/v1/settings/sso/ src/lib/notifications/email-templates.ts supabase/migrations/20260324200000_sso_config.sql)"
+      "Bash(ls src/app/\\\\\\(dashboard\\\\\\)/settings/sso/ src/app/api/v1/settings/sso/ src/lib/notifications/email-templates.ts supabase/migrations/20260324200000_sso_config.sql)",
+      "Bash(ls src/lib/billing/__tests__/ src/lib/approvals/__tests__/ src/lib/api/__tests__/ vitest.config.*)"
     ],
     "additionalDirectories": [
       "/Users/nathanielstoddard/gatekeeper/src/app/api/v1/oauth/grants",
