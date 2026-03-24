@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -73,13 +73,49 @@ const navItems: NavItem[] = [
   { id: "admin", href: "/admin", label: "Admin", icon: ShieldAlert, appAdminOnly: true, overflow: true },
 ];
 
-const MAX_PRIMARY = 8;
-
 export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: SidebarProps) {
   const pathname = usePathname();
   const { activePanel, setActivePanel, setMobileOpen } = useSidebarStore();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [maxVisible, setMaxVisible] = useState(20);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const isAdmin = userRole === "owner" || userRole === "admin";
+
+  // Measure available space and calculate how many items fit
+  const calculateMaxItems = useCallback(() => {
+    if (!sidebarRef.current || !navRef.current) return;
+
+    // Measure the height of the first nav item to get actual item height
+    const firstItem = navRef.current.querySelector('[data-nav-item]');
+    const itemHeight = firstItem ? firstItem.getBoundingClientRect().height : 68;
+
+    // Available height = nav container's allocated flex space
+    const navRect = navRef.current.getBoundingClientRect();
+    const availableHeight = navRect.height;
+
+    const fitCount = Math.max(1, Math.floor(availableHeight / itemHeight));
+    setMaxVisible(fitCount);
+  }, []);
+
+  // Re-measure whenever the sidebar resizes AND when maxVisible changes
+  // (changing maxVisible changes what's rendered, which changes available space)
+  const prevMaxRef = useRef(maxVisible);
+  useEffect(() => {
+    const timer = setTimeout(calculateMaxItems, 50);
+    const observer = new ResizeObserver(() => {
+      requestAnimationFrame(calculateMaxItems);
+    });
+    if (sidebarRef.current) observer.observe(sidebarRef.current);
+
+    // Stabilize: if maxVisible changed, recalculate once more
+    if (prevMaxRef.current !== maxVisible) {
+      prevMaxRef.current = maxVisible;
+      requestAnimationFrame(calculateMaxItems);
+    }
+
+    return () => { clearTimeout(timer); observer.disconnect(); };
+  }, [calculateMaxItems, maxVisible]);
 
   const visibleItems = navItems.filter((item) => {
     if (item.appAdminOnly && !isAppAdmin) return false;
@@ -87,11 +123,9 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
     return true;
   });
 
-  const primaryItems = visibleItems.filter((i) => !i.overflow).slice(0, MAX_PRIMARY);
-  const overflowItems = [
-    ...visibleItems.filter((i) => !i.overflow).slice(MAX_PRIMARY),
-    ...visibleItems.filter((i) => i.overflow),
-  ];
+  // First item (Org) is always shown above divider, rest dynamically overflow
+  const remainingItems = visibleItems.slice(1);
+  const overflowItems = remainingItems.slice(maxVisible);
 
   const handleNavClick = (item: NavItem) => {
     setMoreOpen(false);
@@ -144,14 +178,14 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
 
     if (item.children) {
       return (
-        <button key={item.id} onClick={() => handleNavClick(item)} className={classes}>
+        <button key={item.id} data-nav-item onClick={() => handleNavClick(item)} className={classes}>
           {content}
         </button>
       );
     }
 
     return (
-      <Link key={item.id} href={item.href} onClick={() => handleNavClick(item)} className={classes}>
+      <Link key={item.id} data-nav-item href={item.href} onClick={() => handleNavClick(item)} className={classes}>
         {content}
       </Link>
     );
@@ -160,7 +194,7 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
   return (
     <div className="flex h-full">
       {/* Icon bar */}
-      <div className="sidebar-icon-bar flex h-full w-20 flex-col items-center">
+      <div ref={sidebarRef} className="sidebar-icon-bar flex h-full w-20 flex-col items-center">
         {/* Logo */}
         <Link
           href="/dashboard"
@@ -171,7 +205,7 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
         </Link>
 
         {/* First item (Org/Home) — above divider like Make.com */}
-        {primaryItems.length > 0 && renderNavItem(primaryItems[0])}
+        {visibleItems.length > 0 && renderNavItem(visibleItems[0])}
 
         {/* Divider — between first item and rest */}
         <div className="mx-auto my-2 h-px w-7 bg-white/25" />
@@ -196,9 +230,9 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
           </Link>
         )}
 
-        {/* Remaining primary nav items */}
-        <nav className="flex w-full flex-1 flex-col items-center overflow-y-auto">
-          {primaryItems.slice(1).map((item) => renderNavItem(item))}
+        {/* Remaining nav items — all rendered for measurement, overflow hidden */}
+        <nav ref={navRef} className="flex w-full flex-1 flex-col items-center overflow-hidden">
+          {remainingItems.slice(0, maxVisible).map((item) => renderNavItem(item))}
         </nav>
 
         {/* More button */}
