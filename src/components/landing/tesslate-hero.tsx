@@ -349,9 +349,10 @@ const testimonials2 = [
 ];
 
 const pricingTiers = [
-  { name: "Free", price: "$0", period: "", description: "For individuals and small projects", features: ["3 connections", "100 approvals/month", "Email notifications", "Community support", "7-day history"], cta: "Start for free", highlighted: false },
-  { name: "Pro", price: "$49", period: "/mo", description: "For teams shipping at scale", features: ["Unlimited connections", "Unlimited approvals", "Slack integration", "Rules engine", "Audit log", "90-day history", "Team collaboration"], cta: "Get started", highlighted: true },
-  { name: "Enterprise", price: "Custom", period: "", description: "For organizations with advanced needs", features: ["Everything in Pro", "SSO / SAML", "Dedicated support", "Custom SLAs", "Unlimited history", "Advanced analytics", "Custom integrations"], cta: "Contact us", highlighted: false },
+  { name: "Free", price: "$0", period: "", description: "For individuals and small projects", features: ["2 connections", "100 requests/month", "3 team members", "Email notifications", "7-day history"], cta: "Start for free", highlighted: false },
+  { name: "Pro", price: "$20", period: "/mo", description: "For growing teams", features: ["15 connections", "Unlimited requests", "15 team members", "Slack & webhook notifications", "Rules engine", "Analytics", "90-day history"], cta: "Get started", highlighted: true },
+  { name: "Business", price: "$60", period: "/mo", description: "For scaling organizations", features: ["Unlimited connections", "Unlimited requests", "Unlimited team members", "SSO / SAML", "Audit log export", "Multi-step approvals", "1-year history"], cta: "Get started", highlighted: false },
+  { name: "Enterprise", price: "Custom", period: "", description: "For large organizations", features: ["Everything in Business", "Dedicated support", "Custom SLAs", "On-premise option", "Unlimited history", "Custom integrations"], cta: "Contact us", highlighted: false },
 ];
 
 const footerLinks = {
@@ -623,7 +624,7 @@ export function TesslateHero({ user }: TesslateHeroProps) {
           </div>
         </FadeIn>
 
-        <div className="mx-auto grid max-w-4xl gap-5 md:grid-cols-3">
+        <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2 lg:grid-cols-4">
           {pricingTiers.map((tier, i) => (
             <FadeIn key={tier.name} delay={i * 80}>
               <div

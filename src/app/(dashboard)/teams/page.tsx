@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TeamList } from "@/components/teams/team-list";
+import { PageContainer } from "@/components/ui/page-container";
 
 export const metadata = {
   title: "Teams - OKRunit",
@@ -81,33 +82,35 @@ export default async function TeamsPage() {
     .in("team_id", teamIds.length > 0 ? teamIds : ["00000000-0000-0000-0000-000000000000"]);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Teams</h1>
-        <p className="text-muted-foreground text-sm">
-          Manage teams within {org.name}.
-        </p>
-      </div>
+    <PageContainer>
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Teams</h1>
+          <p className="text-muted-foreground text-sm">
+            Manage teams within {org.name}.
+          </p>
+        </div>
 
-      <TeamList
-        teams={(teams ?? []).map((t) => ({
-          id: t.id,
-          name: t.name,
-          description: t.description,
-          created_at: t.created_at,
-          updated_at: t.updated_at,
-        }))}
-        memberCounts={memberCountMap}
-        teamMemberships={(allTeamMemberships ?? []).map((tm) => ({
-          id: tm.id,
-          team_id: tm.team_id,
-          user_id: tm.user_id,
-          created_at: tm.created_at,
-        }))}
-        orgMembers={orgMembers}
-        currentUserId={ctx.profile.id}
-        currentUserRole={membership.role}
-      />
-    </div>
+        <TeamList
+          teams={(teams ?? []).map((t) => ({
+            id: t.id,
+            name: t.name,
+            description: t.description,
+            created_at: t.created_at,
+            updated_at: t.updated_at,
+          }))}
+          memberCounts={memberCountMap}
+          teamMemberships={(allTeamMemberships ?? []).map((tm) => ({
+            id: tm.id,
+            team_id: tm.team_id,
+            user_id: tm.user_id,
+            created_at: tm.created_at,
+          }))}
+          orgMembers={orgMembers}
+          currentUserId={ctx.profile.id}
+          currentUserRole={membership.role}
+        />
+      </div>
+    </PageContainer>
   );
 }
