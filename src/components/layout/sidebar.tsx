@@ -125,15 +125,15 @@ export function Sidebar({ user, currentOrgId, userOrgs, pendingCount, userRole, 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar)]">
       {/* Logo / Org Header */}
-      <div className="flex flex-col gap-3 border-b border-[var(--sidebar-border)] px-4 py-4">
+      <div className="flex flex-col gap-4 border-b border-[var(--sidebar-border)] px-4 py-5">
         <Link href="/dashboard" className="flex justify-center">
-          <img src="/logo_text.png" alt="OKRunit" className="h-8 w-auto" />
+          <img src="/logo_text.png" alt="OKRunit" className="h-7 w-auto" />
         </Link>
         <OrgSwitcher currentOrgId={currentOrgId} orgs={userOrgs} />
       </div>
 
       {/* Search trigger */}
-      <div className="px-3 py-2">
+      <div className="px-3 py-3">
         <button
           className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-[var(--ring)] hover:text-foreground"
           onClick={() => {/* Command palette — future enhancement */}}
@@ -147,9 +147,9 @@ export function Sidebar({ user, currentOrgId, userOrgs, pendingCount, userRole, 
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3">
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
         {showSetup && (
-          <div className="mb-3">
+          <div className="mb-4">
             <Link
               href="/setup"
               className={cn(
@@ -177,13 +177,13 @@ export function Sidebar({ user, currentOrgId, userOrgs, pendingCount, userRole, 
           if (visibleItems.length === 0) return null;
 
           return (
-            <div key={sectionIndex} className={sectionIndex > 0 ? "sidebar-section-divider mt-4 pt-4" : ""}>
+            <div key={sectionIndex} className={sectionIndex > 0 ? "sidebar-section-divider mt-5 pt-5" : ""}>
               {section.label && (
-                <p className="mb-2 px-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
+                <p className="mb-2.5 px-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
                   {section.label}
                 </p>
               )}
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {visibleItems.map((item) => {
                   const isActive =
                     pathname === item.href ||
@@ -218,8 +218,8 @@ export function Sidebar({ user, currentOrgId, userOrgs, pendingCount, userRole, 
       </nav>
 
       {/* User section */}
-      <div className="border-t border-[var(--sidebar-border)] p-3">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+      <div className="border-t border-[var(--sidebar-border)] p-4">
+        <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
           <Avatar className="size-8">
             <AvatarFallback className="bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-medium">
               {getInitials(user.full_name, user.email)}

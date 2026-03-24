@@ -37,8 +37,8 @@ export function OrgSwitcher({ currentOrgId, orgs }: OrgSwitcherProps) {
   if (orgs.length <= 1) {
     return (
       <div className="flex items-center gap-2">
-        <Building2 className="size-3.5 text-muted-foreground shrink-0" />
-        <span className="text-foreground truncate text-sm font-medium">
+        <Building2 className="size-4 text-primary shrink-0" />
+        <span className="text-foreground truncate text-base font-semibold">
           {currentOrg?.org_name ?? "No organization"}
         </span>
       </div>
@@ -47,10 +47,10 @@ export function OrgSwitcher({ currentOrgId, orgs }: OrgSwitcherProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors outline-none max-w-[170px] -mx-1 px-1 py-0.5 rounded hover:bg-[var(--sidebar-accent)]/60">
-        <Building2 className="size-3.5 shrink-0" />
+      <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 text-base font-semibold text-foreground hover:text-primary transition-colors outline-none max-w-[170px] -mx-2 px-2 py-1 rounded hover:bg-[var(--sidebar-accent)]/60">
+        <Building2 className="size-4 shrink-0" />
         <span className="truncate">{currentOrg?.org_name}</span>
-        <ChevronsUpDown className="size-3.5 shrink-0 opacity-60 ml-auto" />
+        <ChevronsUpDown className="size-4 shrink-0 opacity-60 ml-auto" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuLabel className="flex items-center gap-2 text-xs">
