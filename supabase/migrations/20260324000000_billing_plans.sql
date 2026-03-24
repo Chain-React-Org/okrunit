@@ -25,14 +25,14 @@ CREATE TABLE plans (
 );
 
 -- Seed plan data
-INSERT INTO plans (id, name, description, price_monthly_cents, price_yearly_cents, max_requests_per_month, max_connections, max_team_members, history_retention_days, features, sort_order) VALUES
-  ('free', 'Free', 'For individuals and small projects', 0, 0, 100, 2, 3, 7,
+INSERT INTO plans (id, name, description, price_monthly_cents, price_yearly_cents, stripe_price_id_monthly, stripe_price_id_yearly, max_requests_per_month, max_connections, max_team_members, history_retention_days, features, sort_order) VALUES
+  ('free', 'Free', 'For individuals and small projects', 0, 0, NULL, NULL, 100, 2, 3, 7,
    '["email_notifications"]', 0),
-  ('pro', 'Pro', 'For growing teams', 2000, 19200, -1, 15, 15, 90,
+  ('pro', 'Pro', 'For growing teams', 2000, 19200, 'price_1TEd8XFSXJNt9c6KUcAgC5mi', 'price_1TEd8XFSXJNt9c6KZ71PHrcP', -1, 15, 15, 90,
    '["email_notifications", "slack_notifications", "webhook_notifications", "rules_engine", "analytics"]', 1),
-  ('business', 'Business', 'For scaling organizations', 6000, 57600, -1, -1, -1, 365,
+  ('business', 'Business', 'For scaling organizations', 6000, 57600, 'price_1TEd9PFSXJNt9c6Ko8EwWTQu', 'price_1TEd9QFSXJNt9c6K57sl8Xrs', -1, -1, -1, 365,
    '["email_notifications", "slack_notifications", "webhook_notifications", "rules_engine", "analytics", "analytics_export", "sso_saml", "audit_log_export", "multi_step_approvals", "custom_routing"]', 2),
-  ('enterprise', 'Enterprise', 'For large organizations with custom needs', 0, 0, -1, -1, -1, -1,
+  ('enterprise', 'Enterprise', 'For large organizations with custom needs', 0, 0, NULL, NULL, -1, -1, -1, -1,
    '["email_notifications", "slack_notifications", "webhook_notifications", "rules_engine", "analytics", "analytics_export", "sso_saml", "audit_log_export", "multi_step_approvals", "custom_routing", "dedicated_support", "on_prem", "custom_sla"]', 3);
 -- Note: -1 means unlimited, enterprise price is custom/negotiated
 
