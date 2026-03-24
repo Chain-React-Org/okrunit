@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
+  Home,
+  ClipboardList,
   Key,
   MessageSquare,
   Users,
@@ -38,7 +39,7 @@ interface NavItem {
   id: string;
   href: string;
   label: string;
-  icon: typeof LayoutDashboard;
+  icon: typeof Home;
   adminOnly?: boolean;
   appAdminOnly?: boolean;
   children?: { href: string; label: string }[];
@@ -46,10 +47,16 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    id: "dashboard",
+    id: "home",
     href: "/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
+    label: "Home",
+    icon: Home,
+  },
+  {
+    id: "requests",
+    href: "/requests",
+    label: "Requests",
+    icon: ClipboardList,
   },
   {
     id: "connections",
@@ -165,15 +172,15 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
   return (
     <div className="flex h-full">
       {/* Icon bar — narrow, always visible */}
-      <div className="sidebar-icon-bar flex h-full w-16 flex-col items-center py-3">
+      <div className="sidebar-icon-bar flex h-full w-20 flex-col items-center py-3">
         {/* Logo */}
         <Link
           href="/dashboard"
           className="mb-3 flex items-center justify-center pt-1"
           onClick={() => { setActivePanel(null); setMobileOpen(false); }}
         >
-          <div className="flex size-10 items-center justify-center rounded-lg bg-white/95 shadow-sm">
-            <img src="/logo.png" alt="OKRunit" className="size-7" />
+          <div className="flex h-10 w-14 items-center justify-center rounded-lg bg-white/95 shadow-sm">
+            <img src="/logo.png" alt="OKRunit" className="h-7 w-auto" />
           </div>
         </Link>
 
@@ -226,7 +233,7 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
                   >
                     <div className="relative">
                       <Icon className="size-5 shrink-0" />
-                      {item.id === "dashboard" && pendingCount > 0 && (
+                      {item.id === "requests" && pendingCount > 0 && (
                         <span className="absolute -right-1.5 -top-1 flex size-4 items-center justify-center rounded-full bg-white text-[8px] font-bold text-[var(--sidebar-gradient-from)]">
                           {pendingCount > 9 ? "9+" : pendingCount}
                         </span>

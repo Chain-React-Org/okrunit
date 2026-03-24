@@ -95,7 +95,7 @@ export function Header({ emergencyStopActive, user, orgName, pendingCount = 0 }:
 
           {/* Notification bell */}
           <Button variant="ghost" size="icon" className="relative size-8 text-muted-foreground hover:text-foreground" asChild>
-            <Link href="/dashboard" title="Pending approvals">
+            <Link href="/requests" title="Pending requests">
               <Bell className="size-[18px]" />
               {pendingCount > 0 && (
                 <span className="absolute -right-0.5 -top-0.5 flex size-[18px] items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white ring-2 ring-white">
