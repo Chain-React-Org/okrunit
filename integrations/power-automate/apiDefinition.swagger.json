@@ -1,0 +1,555 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "OKRunit",
+    "description": "Human-in-the-loop approval gateway. Gate destructive operations behind human approval — create approval requests, check status, and approve or reject from Power Automate flows.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "OKRunit Support",
+      "url": "https://okrunit.com",
+      "email": "support@okrunit.com"
+    }
+  },
+  "host": "app.okrunit.com",
+  "basePath": "/api/v1",
+  "schemes": ["https"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "securityDefinitions": {
+    "apiKey": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization",
+      "description": "Enter your API key as: Bearer gk_your_key_here"
+    }
+  },
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "paths": {
+    "/approvals": {
+      "post": {
+        "operationId": "CreateApproval",
+        "summary": "Create Approval Request",
+        "description": "Create a new approval request and notify reviewers. The request will remain pending until a human approves or rejects it.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateApprovalRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Approval request created",
+            "schema": {
+              "$ref": "#/definitions/Approval"
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "Duplicate idempotency key",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "ListApprovals",
+        "summary": "List Approval Requests",
+        "description": "Search and list approval requests with optional filters.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string",
+            "description": "Filter by status",
+            "enum": ["pending", "approved", "rejected", "cancelled", "expired"],
+            "x-ms-summary": "Status"
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "type": "string",
+            "description": "Filter by priority",
+            "enum": ["low", "medium", "high", "critical"],
+            "x-ms-summary": "Priority"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "type": "string",
+            "description": "Full-text search on title and description",
+            "x-ms-summary": "Search"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer",
+            "default": 25,
+            "description": "Maximum number of results (1-100)",
+            "x-ms-summary": "Limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of approval requests",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Approval"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/approvals/{approvalId}": {
+      "get": {
+        "operationId": "GetApproval",
+        "summary": "Get Approval Request",
+        "description": "Fetch a single approval request by its ID.",
+        "parameters": [
+          {
+            "name": "approvalId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The approval request UUID",
+            "x-ms-summary": "Approval ID",
+            "x-ms-url-encoding": "single"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval request details",
+            "schema": {
+              "$ref": "#/definitions/Approval"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Approval not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/approvals/{approvalId}/approve": {
+      "post": {
+        "operationId": "ApproveRequest",
+        "summary": "Approve Request",
+        "description": "Approve a pending approval request.",
+        "parameters": [
+          {
+            "name": "approvalId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The approval request UUID",
+            "x-ms-summary": "Approval ID",
+            "x-ms-url-encoding": "single"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/DecisionRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval request approved",
+            "schema": {
+              "$ref": "#/definitions/Approval"
+            }
+          },
+          "400": {
+            "description": "Cannot approve (already decided or expired)",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Approval not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/approvals/{approvalId}/reject": {
+      "post": {
+        "operationId": "RejectRequest",
+        "summary": "Reject Request",
+        "description": "Reject a pending approval request.",
+        "parameters": [
+          {
+            "name": "approvalId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The approval request UUID",
+            "x-ms-summary": "Approval ID",
+            "x-ms-url-encoding": "single"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/DecisionRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval request rejected",
+            "schema": {
+              "$ref": "#/definitions/Approval"
+            }
+          },
+          "400": {
+            "description": "Cannot reject (already decided or expired)",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Approval not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/approvals/{approvalId}/comments": {
+      "post": {
+        "operationId": "AddComment",
+        "summary": "Add Comment",
+        "description": "Add a comment to an approval request.",
+        "parameters": [
+          {
+            "name": "approvalId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The approval request UUID",
+            "x-ms-summary": "Approval ID",
+            "x-ms-url-encoding": "single"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddCommentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Comment added",
+            "schema": {
+              "$ref": "#/definitions/Comment"
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Approval not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "CreateApprovalRequest": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Short title for the approval request",
+          "x-ms-summary": "Title",
+          "maxLength": 500
+        },
+        "description": {
+          "type": "string",
+          "description": "Additional context for the reviewer",
+          "x-ms-summary": "Description",
+          "maxLength": 5000
+        },
+        "priority": {
+          "type": "string",
+          "description": "Urgency level",
+          "x-ms-summary": "Priority",
+          "enum": ["low", "medium", "high", "critical"],
+          "default": "medium"
+        },
+        "action_type": {
+          "type": "string",
+          "description": "Category of the action (e.g., deploy, delete, transfer)",
+          "x-ms-summary": "Action Type"
+        },
+        "callback_url": {
+          "type": "string",
+          "description": "URL to POST the decision result to when approved or rejected",
+          "x-ms-summary": "Callback URL"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Arbitrary JSON key-value pairs for context",
+          "x-ms-summary": "Metadata"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 datetime when the approval auto-expires",
+          "x-ms-summary": "Expires At"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source platform identifier",
+          "x-ms-summary": "Source",
+          "default": "power-automate",
+          "x-ms-visibility": "internal"
+        },
+        "idempotency_key": {
+          "type": "string",
+          "description": "Unique key to prevent duplicate requests",
+          "x-ms-summary": "Idempotency Key"
+        },
+        "required_approvals": {
+          "type": "integer",
+          "description": "Number of approvals needed (1-10, default 1)",
+          "x-ms-summary": "Required Approvals",
+          "default": 1,
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "DecisionRequest": {
+      "type": "object",
+      "properties": {
+        "comment": {
+          "type": "string",
+          "description": "Optional comment explaining the decision",
+          "x-ms-summary": "Comment",
+          "maxLength": 5000
+        }
+      }
+    },
+    "AddCommentRequest": {
+      "type": "object",
+      "required": ["body"],
+      "properties": {
+        "body": {
+          "type": "string",
+          "description": "The comment text (max 5000 characters)",
+          "x-ms-summary": "Comment",
+          "maxLength": 5000
+        }
+      }
+    },
+    "Approval": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Approval request UUID",
+          "x-ms-summary": "Approval ID"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the approval request",
+          "x-ms-summary": "Title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the approval request",
+          "x-ms-summary": "Description"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status",
+          "x-ms-summary": "Status",
+          "enum": ["pending", "approved", "rejected", "cancelled", "expired"]
+        },
+        "priority": {
+          "type": "string",
+          "description": "Priority level",
+          "x-ms-summary": "Priority",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "action_type": {
+          "type": "string",
+          "description": "Action type category",
+          "x-ms-summary": "Action Type"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source platform",
+          "x-ms-summary": "Source"
+        },
+        "required_approvals": {
+          "type": "integer",
+          "description": "Number of approvals required",
+          "x-ms-summary": "Required Approvals"
+        },
+        "current_approvals": {
+          "type": "integer",
+          "description": "Number of approvals received",
+          "x-ms-summary": "Current Approvals"
+        },
+        "requested_by_name": {
+          "type": "string",
+          "description": "Name of the person who requested the approval",
+          "x-ms-summary": "Requested By"
+        },
+        "decided_by": {
+          "type": "string",
+          "description": "User ID of the person who decided",
+          "x-ms-summary": "Decided By (User ID)"
+        },
+        "decided_by_name": {
+          "type": "string",
+          "description": "Name of the person who decided",
+          "x-ms-summary": "Decided By"
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the decision",
+          "x-ms-summary": "Decided At"
+        },
+        "decision_comment": {
+          "type": "string",
+          "description": "Comment from the decider",
+          "x-ms-summary": "Decision Comment"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Attached metadata",
+          "x-ms-summary": "Metadata"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the request was created",
+          "x-ms-summary": "Created At"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last update",
+          "x-ms-summary": "Updated At"
+        }
+      }
+    },
+    "Comment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Comment UUID",
+          "x-ms-summary": "Comment ID"
+        },
+        "approval_id": {
+          "type": "string",
+          "description": "Parent approval request UUID",
+          "x-ms-summary": "Approval ID"
+        },
+        "body": {
+          "type": "string",
+          "description": "Comment text",
+          "x-ms-summary": "Comment"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "User ID of the commenter",
+          "x-ms-summary": "Created By"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the comment was created",
+          "x-ms-summary": "Created At"
+        }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "Error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message"
+        }
+      }
+    }
+  }
+}

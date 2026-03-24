@@ -221,7 +221,10 @@
       "Bash(cat /Users/nathanielstoddard/okrunit/okrunit/src/app/\\\\\\(dashboard\\\\\\)/settings/page.tsx)",
       "Bash(grep -r \"free\\\\|pro\\\\|enterprise\\\\|pricing\\\\|plan\" /Users/nathanielstoddard/okrunit/okrunit/src/components/landing --include=*.tsx)",
       "Bash(grep -r \"stripe\" /Users/nathanielstoddard/okrunit/okrunit/.env*)",
-      "Bash(grep -A 20 \"CREATE TABLE org_memberships\" /Users/nathanielstoddard/okrunit/okrunit/supabase/migrations/*.sql)"
+      "Bash(grep -A 20 \"CREATE TABLE org_memberships\" /Users/nathanielstoddard/okrunit/okrunit/supabase/migrations/*.sql)",
+      "Bash(ls src/app/\\\\\\(dashboard\\\\\\)/billing/loading.tsx src/app/\\\\\\(dashboard\\\\\\)/admin/loading.tsx src/app/\\\\\\(dashboard\\\\\\)/organization/loading.tsx src/app/\\\\\\(dashboard\\\\\\)/settings/oauth/loading.tsx src/app/\\\\\\(dashboard\\\\\\)/emergency/loading.tsx src/app/\\\\\\(dashboard\\\\\\)/teams/loading.tsx)",
+      "Bash(ls -d integrations/*/)",
+      "Bash(for d:*)"
     ],
     "additionalDirectories": [
       "/Users/nathanielstoddard/gatekeeper/src/app/api/v1/oauth/grants",

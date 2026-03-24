@@ -1,0 +1,31 @@
+{
+  "name": "@okrunit/vercel",
+  "version": "0.1.0",
+  "description": "OKRunit approval gate for Vercel deployments",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "okrunit-vercel": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "okrunit",
+    "vercel",
+    "deployment",
+    "approval",
+    "human-in-the-loop"
+  ],
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "properties": {
+    "connectionParameters": {
+      "api_key": {
+        "type": "securestring",
+        "uiDefinition": {
+          "displayName": "API Key",
+          "description": "Your OKRunit API key (starts with gk_)",
+          "tooltip": "Enter your OKRunit API key from Settings > API Keys",
+          "constraints": {
+            "required": "true",
+            "tabIndex": 1
+          }
+        }
+      },
+      "api_url": {
+        "type": "string",
+        "uiDefinition": {
+          "displayName": "API URL",
+          "description": "OKRunit instance URL (default: https://app.okrunit.com)",
+          "tooltip": "Only change this if you have a custom OKRunit instance",
+          "constraints": {
+            "required": "false",
+            "tabIndex": 2
+          }
+        }
+      }
+    },
+    "iconBrandColor": "#2563EB",
+    "capabilities": [],
+    "policyTemplateInstances": [
+      {
+        "templateId": "setheader",
+        "title": "Set Authorization Header",
+        "parameters": {
+          "x-ms-apimTemplateParameter.name": "Authorization",
+          "x-ms-apimTemplateParameter.value": "Bearer @connectionParameters('api_key')",
+          "x-ms-apimTemplateParameter.existsAction": "override"
+        }
+      },
+      {
+        "templateId": "setheader",
+        "title": "Set Host Header",
+        "parameters": {
+          "x-ms-apimTemplateParameter.name": "X-Custom-Host",
+          "x-ms-apimTemplateParameter.value": "@connectionParameters('api_url','https://app.okrunit.com')",
+          "x-ms-apimTemplateParameter.existsAction": "override"
+        }
+      }
+    ],
+    "publisher": "OKRunit",
+    "stackOwner": "OKRunit"
+  }
+}

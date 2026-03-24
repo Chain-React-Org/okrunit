@@ -54,6 +54,7 @@ function UsageBar({ label, current, limit }: { label: string; current: number; l
 
 export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin, orgId }: BillingDashboardProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const currentPlan = (subscription?.plan_id ?? "free") as BillingPlan;
   const limits = PLAN_LIMITS[currentPlan];
 
@@ -67,7 +68,7 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
       const res = await fetch("/api/v1/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_id: planId }),
+        body: JSON.stringify({ plan_id: planId, billing_cycle: billingCycle }),
       });
       const data = await res.json();
       if (data.url) {
@@ -151,7 +152,29 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
 
       {/* Plan comparison */}
       <div>
-        <h3 className="mb-4 text-lg font-semibold">Plans</h3>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Plans</h3>
+          <div className="flex items-center gap-2 rounded-full bg-muted p-1">
+            <button
+              onClick={() => setBillingCycle("monthly")}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                billingCycle === "monthly" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground",
+              )}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingCycle("yearly")}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                billingCycle === "yearly" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground",
+              )}
+            >
+              Yearly <span className="text-primary">save 20%</span>
+            </button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PLAN_ORDER.map((planId) => {
             const plan = PLAN_LIMITS[planId];
@@ -160,6 +183,7 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
             const planIdx = PLAN_ORDER.indexOf(planId);
             const isUpgrade = planIdx > currentIdx;
             const isEnterprise = planId === "enterprise";
+            const displayPrice = billingCycle === "yearly" ? Math.round(plan.priceYearly / 12) : plan.priceMonthly;
 
             return (
               <Card key={planId} className={cn("relative", isCurrent && "border-primary ring-1 ring-primary/20")}>
@@ -172,9 +196,12 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
                   <div className="mb-4">
                     <h4 className="text-lg font-bold">{plan.name}</h4>
                     <p className="text-2xl font-bold">
-                      {plan.priceMonthly === 0 && planId !== "enterprise" ? "Free" : isEnterprise ? "Custom" : `$${plan.priceMonthly}`}
-                      {plan.priceMonthly > 0 && <span className="text-sm font-normal text-muted-foreground">/mo</span>}
+                      {displayPrice === 0 && planId !== "enterprise" ? "Free" : isEnterprise ? "Custom" : `$${displayPrice}`}
+                      {displayPrice > 0 && <span className="text-sm font-normal text-muted-foreground">/mo</span>}
                     </p>
+                    {billingCycle === "yearly" && plan.priceYearly > 0 && (
+                      <p className="text-xs text-muted-foreground">${plan.priceYearly}/yr billed annually</p>
+                    )}
                   </div>
                   <ul className="mb-4 space-y-2 text-sm">
                     <li className="flex items-center gap-2">
