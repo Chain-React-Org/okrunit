@@ -90,13 +90,14 @@ export default async function DashboardPage() {
   }
 
   return (
-    <PageContainer>
+    <>
       <OnboardingBanner />
-      <OnboardingTour />
-      <PageHeader
-        title="Dashboard"
-        description="View and manage approval requests across your organization."
-      />
+      <PageContainer>
+        <OnboardingTour />
+        <PageHeader
+          title="Dashboard"
+          description="View and manage approval requests across your organization."
+        />
       <ApprovalDashboard
         initialApprovals={approvals ?? []}
         connections={connections ?? []}
@@ -104,6 +105,7 @@ export default async function DashboardPage() {
         canApprove={membership.can_approve ?? true}
         orgId={membership.org_id}
       />
-    </PageContainer>
+      </PageContainer>
+    </>
   );
 }

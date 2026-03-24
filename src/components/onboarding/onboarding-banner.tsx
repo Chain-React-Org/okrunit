@@ -16,23 +16,23 @@ export function OnboardingBanner() {
   if (isComplete || dismissed) return null;
 
   return (
-    <div className="relative flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-        <Sparkles className="size-4 text-primary" />
+    <div className="relative -mx-8 -mt-8 mb-6 flex items-center gap-3 border-b border-border/50 bg-muted/30 px-8 py-3">
+      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
+        <Sparkles className="size-3.5 text-primary" />
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium">Complete your setup</p>
-        <p className="text-xs text-muted-foreground">
-          Finish the setup wizard to start receiving approval requests from your automations.
+        <p className="text-xs font-medium leading-snug">Complete your setup</p>
+        <p className="text-[11px] text-muted-foreground leading-snug">
+          Finish the setup wizard to start receiving approval requests.
         </p>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
-        <Button size="sm" asChild>
-          <Link href="/setup">
-            Continue Setup
-            <ArrowRight className="size-3" />
+      <div className="flex items-center gap-1.5 shrink-0">
+        <Button size="xs" variant="default" asChild>
+          <Link href="/setup" className="gap-1">
+            Continue
+            <ArrowRight className="size-2.5" />
           </Link>
         </Button>
         <Button
@@ -40,9 +40,9 @@ export function OnboardingBanner() {
           size="icon-xs"
           onClick={dismiss}
           title="Dismiss"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground h-6 w-6"
         >
-          <X className="size-3.5" />
+          <X className="size-3" />
         </Button>
       </div>
     </div>
