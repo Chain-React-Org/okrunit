@@ -160,13 +160,13 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
     <div className="flex h-full">
       {/* Icon bar */}
       <div className="sidebar-icon-bar flex h-full w-20 flex-col items-center py-4">
-        {/* Logo — icon only, large and prominent */}
+        {/* Logo — icon only, centered in sidebar */}
         <Link
           href="/dashboard"
-          className="mb-2 flex items-center justify-center px-2"
+          className="mb-1 flex size-12 items-center justify-center rounded-xl"
           onClick={() => { setActivePanel(null); setMobileOpen(false); }}
         >
-          <img src="/logo-icon.png" alt="OKRunit" className="w-14 h-auto drop-shadow-md" />
+          <img src="/logo-icon.png" alt="OKRunit" className="size-10 object-contain drop-shadow-md" />
         </Link>
 
         {/* Divider */}
