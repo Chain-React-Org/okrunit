@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { Sidebar } from "@/components/layout/sidebar";
-import { Header } from "@/components/layout/header";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { getOrgContext, getUserOrgs } from "@/lib/org-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -49,34 +48,28 @@ export default async function DashboardLayout({
   const showSetup = (connectionCount ?? 0) === 0;
 
   return (
-    <div className="gk-v2 force-light flex h-screen overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
-      {/* Sidebar: hidden on mobile, visible on md+ */}
-      <div className="hidden md:flex">
-        <Sidebar
-          user={{
-            id: profile.id,
-            email: profile.email,
-            full_name: profile.full_name,
-            avatar_url: profile.avatar_url,
-          }}
-          currentOrgId={org.id}
-          userOrgs={userOrgs}
-          pendingCount={pendingCount ?? 0}
-          userRole={membership.role}
-          isAppAdmin={profile.is_app_admin}
-          showSetup={showSetup}
-        />
-      </div>
-
-      {/* Main content area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header emergencyStopActive={org.emergency_stop_active} />
-        <main className="flex-1 overflow-y-auto">
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
+    <DashboardShell
+      sidebarProps={{
+        user: {
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url,
+        },
+        currentOrgId: org.id,
+        userOrgs,
+        pendingCount: pendingCount ?? 0,
+        userRole: membership.role,
+        isAppAdmin: profile.is_app_admin,
+        showSetup,
+      }}
+      emergencyStopActive={org.emergency_stop_active}
+      user={{
+        email: profile.email,
+        full_name: profile.full_name,
+      }}
+    >
+      {children}
+    </DashboardShell>
   );
 }

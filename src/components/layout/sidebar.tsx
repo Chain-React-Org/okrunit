@@ -17,8 +17,9 @@ import {
   FlaskConical,
   Building2,
   ShieldAlert,
-  Search,
   Sparkles,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { OrgSwitcher } from "@/components/layout/org-switcher";
+import { useSidebarStore } from "@/stores/sidebar-store";
 
 interface SidebarProps {
   user: {
@@ -55,43 +57,31 @@ interface NavSection {
   items: NavItem[];
 }
 
-const setupItem: NavItem = { href: "/setup", label: "Setup", icon: Sparkles };
-
 const navSections: NavSection[] = [
   {
     label: null,
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
-    label: "Configuration",
-    items: [
       { href: "/connections", label: "Connections", icon: Key, adminOnly: true },
-      { href: "/messaging", label: "Messaging", icon: MessageSquare, adminOnly: true },
       { href: "/rules", label: "Rules", icon: ShieldCheck },
-      { href: "/team", label: "Team", icon: Users, adminOnly: true },
-      { href: "/organization", label: "Organization", icon: Building2, adminOnly: true },
+      { href: "/webhooks", label: "Webhooks", icon: Webhook, adminOnly: true },
+      { href: "/playground", label: "Playground", icon: FlaskConical },
     ],
   },
   {
-    label: "Monitoring",
+    label: "Organization",
     items: [
+      { href: "/team", label: "Team", icon: Users, adminOnly: true },
+      { href: "/messaging", label: "Messaging", icon: MessageSquare, adminOnly: true },
       { href: "/analytics", label: "Analytics", icon: BarChart3 },
       { href: "/audit-log", label: "Audit Log", icon: FileText },
-      { href: "/webhooks", label: "Webhooks", icon: Webhook, adminOnly: true },
-    ],
-  },
-  {
-    label: "Developer",
-    items: [
-      { href: "/playground", label: "Playground", icon: FlaskConical },
+      { href: "/organization", label: "Settings", icon: Building2, adminOnly: true },
     ],
   },
   {
     label: "System",
     items: [
-      { href: "/settings", label: "Settings", icon: Settings },
+      { href: "/settings", label: "Preferences", icon: Settings },
       { href: "/emergency", label: "Emergency", icon: AlertTriangle, adminOnly: true },
       { href: "/admin", label: "Admin", icon: ShieldAlert, appAdminOnly: true },
     ],
@@ -113,6 +103,7 @@ function getInitials(name: string | null, email: string): string {
 export function Sidebar({ user, currentOrgId, userOrgs, pendingCount, userRole, isAppAdmin, showSetup }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { collapsed, toggle, setMobileOpen } = useSidebarStore();
   const isAdmin = userRole === "owner" || userRole === "admin";
 
   const handleSignOut = async () => {
@@ -122,51 +113,59 @@ export function Sidebar({ user, currentOrgId, userOrgs, pendingCount, userRole, 
     router.refresh();
   };
 
-  return (
-    <aside className="flex h-full w-64 flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar)]">
-      {/* Logo / Org Header */}
-      <div className="flex flex-col gap-4 border-b border-[var(--sidebar-border)] px-4 py-5">
-        <Link href="/dashboard" className="flex justify-center">
-          <img src="/logo_text.png" alt="OKRunit" className="h-7 w-auto" />
-        </Link>
-        <OrgSwitcher currentOrgId={currentOrgId} orgs={userOrgs} />
-      </div>
+  const handleNavClick = () => {
+    // Close mobile sidebar on navigation
+    setMobileOpen(false);
+  };
 
-      {/* Search trigger */}
-      <div className="px-3 py-3">
-        <button
-          className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-[var(--ring)] hover:text-foreground"
-          onClick={() => {/* Command palette — future enhancement */}}
-        >
-          <Search className="size-3.5 shrink-0" />
-          <span className="flex-1 text-left text-xs">Search...</span>
-          <kbd className="hidden rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium sm:inline-block">
-            ⌘K
-          </kbd>
-        </button>
+  return (
+    <aside
+      className={cn(
+        "sidebar-transition flex h-full flex-col bg-[var(--sidebar)] overflow-hidden",
+        collapsed ? "w-14" : "w-60",
+      )}
+    >
+      {/* Logo + Org */}
+      <div className={cn("flex flex-col gap-3 border-b border-[var(--sidebar-border)] px-3 py-4", collapsed && "items-center px-2")}>
+        <Link href="/dashboard" className={cn("flex", collapsed ? "justify-center" : "px-1")} onClick={handleNavClick}>
+          {collapsed ? (
+            <img src="/logo.png" alt="OKRunit" className="size-7" />
+          ) : (
+            <img src="/logo_text_white.png" alt="OKRunit" className="h-6 w-auto" />
+          )}
+        </Link>
+        {!collapsed && <OrgSwitcher currentOrgId={currentOrgId} orgs={userOrgs} collapsed={false} />}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 overflow-y-auto px-2 py-3">
         {showSetup && (
-          <div className="mb-4">
+          <div className="mb-3">
             <Link
               href="/setup"
+              onClick={handleNavClick}
+              title={collapsed ? "Setup" : undefined}
               className={cn(
-                "sidebar-nav-item flex items-center gap-3 rounded-lg px-3 py-2 text-sm",
+                "sidebar-nav-item flex items-center gap-3 rounded-md px-2.5 py-2 text-sm",
                 pathname === "/setup"
                   ? "sidebar-nav-active"
-                  : "border-l-3 border-l-transparent text-primary hover:bg-[var(--sidebar-accent)]/60"
+                  : "border-l-3 border-l-transparent text-[var(--sidebar-primary)] hover:bg-[var(--sidebar-accent)]",
+                collapsed && "justify-center px-0",
               )}
             >
               <Sparkles className="size-4 shrink-0" />
-              <span className="flex-1">Setup</span>
-              <Badge className="h-5 bg-primary/10 px-1.5 text-[10px] font-medium text-primary hover:bg-primary/10">
-                New
-              </Badge>
+              {!collapsed && (
+                <>
+                  <span className="flex-1">Setup</span>
+                  <Badge className="h-5 bg-[var(--sidebar-primary)]/20 px-1.5 text-[10px] font-medium text-[var(--sidebar-primary)] hover:bg-[var(--sidebar-primary)]/20">
+                    New
+                  </Badge>
+                </>
+              )}
             </Link>
           </div>
         )}
+
         {navSections.map((section, sectionIndex) => {
           const visibleItems = section.items.filter((item) => {
             if (item.appAdminOnly && !isAppAdmin) return false;
@@ -177,36 +176,44 @@ export function Sidebar({ user, currentOrgId, userOrgs, pendingCount, userRole, 
           if (visibleItems.length === 0) return null;
 
           return (
-            <div key={sectionIndex} className={sectionIndex > 0 ? "sidebar-section-divider mt-5 pt-5" : ""}>
-              {section.label && (
-                <p className="mb-2.5 px-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
+            <div key={sectionIndex} className={sectionIndex > 0 ? "mt-5 pt-4 border-t border-[var(--sidebar-border)]" : ""}>
+              {section.label && !collapsed && (
+                <p className="mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--sidebar-muted)]">
                   {section.label}
                 </p>
               )}
-              <div className="space-y-1.5">
+              <div className="space-y-0.5">
                 {visibleItems.map((item) => {
-                  const isActive =
-                    pathname === item.href ||
-                    pathname.startsWith(item.href + "/");
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                   const Icon = item.icon;
 
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
+                      onClick={handleNavClick}
+                      title={collapsed ? item.label : undefined}
                       className={cn(
-                        "sidebar-nav-item flex items-center gap-3 rounded-lg px-3 py-2 text-sm",
+                        "sidebar-nav-item flex items-center gap-3 rounded-md px-2.5 py-2 text-sm",
                         isActive
                           ? "sidebar-nav-active"
-                          : "border-l-3 border-l-transparent text-muted-foreground hover:bg-[var(--sidebar-accent)]/60 hover:text-foreground"
+                          : "border-l-3 border-l-transparent text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)]",
+                        collapsed && "justify-center px-0",
                       )}
                     >
                       <Icon className="size-4 shrink-0" />
-                      <span className="flex-1">{item.label}</span>
-                      {item.href === "/dashboard" && pendingCount > 0 && (
-                        <Badge className="h-5 min-w-5 bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary)]">
-                          {pendingCount > 99 ? "99+" : pendingCount}
-                        </Badge>
+                      {!collapsed && (
+                        <>
+                          <span className="flex-1">{item.label}</span>
+                          {item.href === "/dashboard" && pendingCount > 0 && (
+                            <Badge className="h-5 min-w-5 bg-[var(--sidebar-primary)] px-1.5 text-[10px] font-semibold text-white hover:bg-[var(--sidebar-primary)]">
+                              {pendingCount > 99 ? "99+" : pendingCount}
+                            </Badge>
+                          )}
+                        </>
+                      )}
+                      {collapsed && item.href === "/dashboard" && pendingCount > 0 && (
+                        <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-[var(--sidebar-primary)]" />
                       )}
                     </Link>
                   );
@@ -217,34 +224,61 @@ export function Sidebar({ user, currentOrgId, userOrgs, pendingCount, userRole, 
         })}
       </nav>
 
+      {/* Collapse toggle */}
+      <div className={cn("hidden md:flex border-t border-[var(--sidebar-border)] px-2 py-2", collapsed ? "justify-center" : "justify-end")}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={toggle}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)]"
+        >
+          {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
+        </Button>
+      </div>
+
       {/* User section */}
-      <div className="border-t border-[var(--sidebar-border)] p-4">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-          <Avatar className="size-8">
-            <AvatarFallback className="bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-medium">
-              {getInitials(user.full_name, user.email)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 overflow-hidden">
-            <p className="truncate text-sm font-medium">
-              {user.full_name ?? user.email}
-            </p>
-            {user.full_name && (
-              <p className="truncate text-xs text-muted-foreground">
-                {user.email}
-              </p>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="icon-sm"
+      <div className={cn("border-t border-[var(--sidebar-border)] p-3", collapsed && "flex justify-center p-2")}>
+        {collapsed ? (
+          <button
             onClick={handleSignOut}
-            title="Sign out"
-            className="text-muted-foreground hover:text-foreground"
+            title={`${user.full_name ?? user.email} — Sign out`}
+            className="cursor-pointer"
           >
-            <LogOut className="size-4" />
-          </Button>
-        </div>
+            <Avatar className="size-8">
+              <AvatarFallback className="bg-[var(--sidebar-accent)] text-[var(--sidebar-accent-foreground)] text-xs font-medium">
+                {getInitials(user.full_name, user.email)}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+        ) : (
+          <div className="flex items-center gap-3 rounded-md px-2 py-1.5">
+            <Avatar className="size-8">
+              <AvatarFallback className="bg-[var(--sidebar-accent)] text-[var(--sidebar-accent-foreground)] text-xs font-medium">
+                {getInitials(user.full_name, user.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 overflow-hidden">
+              <p className="truncate text-sm font-medium text-[var(--sidebar-accent-foreground)]">
+                {user.full_name ?? user.email}
+              </p>
+              {user.full_name && (
+                <p className="truncate text-xs text-[var(--sidebar-muted)]">
+                  {user.email}
+                </p>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleSignOut}
+              title="Sign out"
+              className="text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)]"
+            >
+              <LogOut className="size-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </aside>
   );

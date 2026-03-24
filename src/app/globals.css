@@ -16,6 +16,7 @@
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
@@ -133,8 +134,8 @@
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.62 0.19 145);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.968 0.007 247.896);
@@ -144,7 +145,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --ring: oklch(0.62 0.19 145);
   color-scheme: light;
 }
 
@@ -159,9 +160,9 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0.035 265);
 
-  /* Deeper indigo-blue primary for authority/trust */
-  --primary: oklch(0.45 0.15 265);
-  --primary-foreground: oklch(0.985 0.003 265);
+  /* OKRunit green primary — from logo checkmark */
+  --primary: oklch(0.62 0.19 145);
+  --primary-foreground: oklch(1 0 0);
 
   /* Subtler secondary/muted */
   --secondary: oklch(0.965 0.005 265);
@@ -174,16 +175,18 @@
   /* Refined borders */
   --border: oklch(0.92 0.008 265);
   --input: oklch(0.92 0.008 265);
-  --ring: oklch(0.45 0.15 265);
+  --ring: oklch(0.62 0.19 145);
 
-  /* Sidebar — slightly tinted */
-  --sidebar: oklch(0.975 0.006 265);
-  --sidebar-foreground: oklch(0.145 0.035 265);
-  --sidebar-border: oklch(0.92 0.008 265);
-  --sidebar-accent: oklch(0.94 0.012 265);
-  --sidebar-accent-foreground: oklch(0.25 0.04 265);
-  --sidebar-primary: oklch(0.45 0.15 265);
-  --sidebar-primary-foreground: oklch(0.985 0.003 265);
+  /* Sidebar — dark charcoal from logo hexagon */
+  --sidebar: oklch(0.22 0.01 240);
+  --sidebar-foreground: oklch(0.82 0.01 240);
+  --sidebar-border: oklch(0.30 0.01 240);
+  --sidebar-accent: oklch(0.28 0.015 240);
+  --sidebar-accent-foreground: oklch(0.95 0.005 240);
+  --sidebar-primary: oklch(0.62 0.19 145);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-ring: oklch(0.62 0.19 145);
+  --sidebar-muted: oklch(0.50 0.01 240);
 
   /* Semantic status colors */
   --success: oklch(0.55 0.18 155);
@@ -325,13 +328,25 @@
   transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
-/* Sidebar active indicator — stronger left border */
+/* Sidebar active indicator — green border on dark bg */
 .gk-v2 .sidebar-nav-active {
   border-left-width: 3px;
   border-left-color: var(--sidebar-primary);
   background-color: var(--sidebar-accent);
   font-weight: 500;
-  color: var(--foreground);
+  color: var(--sidebar-accent-foreground);
+}
+
+/* Sidebar collapse/expand transition */
+.gk-v2 .sidebar-transition {
+  transition: width 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Top bar */
+.gk-v2 .top-bar {
+  height: 48px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
 }
 
 /* Sidebar section separator */
