@@ -870,3 +870,38 @@ export interface Invoice {
 export function isUnlimited(limit: number): boolean {
   return limit === -1;
 }
+
+// ---- Multi-Step Approvals --------------------------------------------------
+
+export type ApprovalStepStatus = "waiting" | "active" | "approved" | "rejected" | "skipped";
+
+export interface ApprovalStep {
+  id: string;
+  request_id: string;
+  step_order: number;
+  name: string;
+  status: ApprovalStepStatus;
+  assigned_team_id: string | null;
+  assigned_user_ids: string[] | null;
+  assigned_role: UserRole | null;
+  required_approvals: number;
+  current_approvals: number;
+  timeout_minutes: number | null;
+  activated_at: string | null;
+  completed_at: string | null;
+  decided_by: string | null;
+  decision_comment: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StepVote {
+  id: string;
+  step_id: string;
+  request_id: string;
+  user_id: string;
+  vote: "approve" | "reject";
+  comment: string | null;
+  source: string;
+  created_at: string;
+}
