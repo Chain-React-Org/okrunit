@@ -793,3 +793,80 @@ export interface ApprovalWebhookHistoryResponse {
   };
   deliveries: WebhookDeliveryLog[];
 }
+
+// ---- Billing & Plans -------------------------------------------------------
+
+export type BillingPlan = "free" | "pro" | "business" | "enterprise";
+
+export type SubscriptionStatus = "active" | "past_due" | "cancelled" | "trialing" | "expired";
+
+export type BillingCycle = "monthly" | "yearly" | "custom";
+
+export type InvoiceStatus = "draft" | "open" | "paid" | "void" | "uncollectible";
+
+export interface Plan {
+  id: BillingPlan;
+  name: string;
+  description: string | null;
+  price_monthly_cents: number;
+  price_yearly_cents: number;
+  stripe_price_id_monthly: string | null;
+  stripe_price_id_yearly: string | null;
+  max_requests_per_month: number; // -1 = unlimited
+  max_connections: number;        // -1 = unlimited
+  max_team_members: number;       // -1 = unlimited
+  history_retention_days: number; // -1 = unlimited
+  features: string[];
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Subscription {
+  id: string;
+  org_id: string;
+  plan_id: BillingPlan;
+  status: SubscriptionStatus;
+  billing_cycle: BillingCycle;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  trial_end: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageMetric {
+  id: string;
+  org_id: string;
+  period_start: string;
+  period_end: string;
+  requests_count: number;
+  connections_count: number;
+  team_members_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Invoice {
+  id: string;
+  org_id: string;
+  stripe_invoice_id: string | null;
+  status: InvoiceStatus;
+  amount_cents: number;
+  currency: string;
+  period_start: string | null;
+  period_end: string | null;
+  hosted_invoice_url: string | null;
+  pdf_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Helper: check if a plan limit is unlimited */
+export function isUnlimited(limit: number): boolean {
+  return limit === -1;
+}

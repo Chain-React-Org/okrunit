@@ -13,6 +13,7 @@ import {
   Settings,
   AlertTriangle,
   BarChart3,
+  CreditCard,
   FlaskConical,
   ShieldAlert,
   ShieldCheck,
@@ -64,6 +65,7 @@ const navItems: NavItem[] = [
     id: "analytics", href: "/analytics", label: "Analytics", icon: BarChart3,
     children: [{ href: "/analytics", label: "Overview" }, { href: "/audit-log", label: "Audit Log" }],
   },
+  { id: "billing", href: "/billing", label: "Billing", icon: CreditCard, overflow: true, adminOnly: true },
   { id: "playground", href: "/playground", label: "Playground", icon: FlaskConical, overflow: true },
   {
     id: "settings", href: "/settings", label: "Settings", icon: Settings, overflow: true,
