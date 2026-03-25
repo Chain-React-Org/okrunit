@@ -6,6 +6,9 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import {
   ArrowRight,
   Shield,
+  Zap,
+  Link2,
+  MessageSquare,
   Menu,
   X,
   LayoutDashboard,
@@ -634,12 +637,34 @@ export function Hero({ user }: HeroProps) {
         </FadeIn>
       </section>
 
+      {/* ── Social Proof Stats Bar ──────────────────────────────── */}
+      <section className="relative z-10 mx-auto max-w-4xl px-5 py-10">
+        <FadeIn>
+          <p className="mb-6 text-center text-sm font-medium" style={{ color: "var(--tess-text-muted)" }}>
+            500+ teams trust OKRunit to safeguard their automations
+          </p>
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+            {[
+              { value: "10,000+", label: "Requests processed" },
+              { value: "99.9%", label: "Uptime" },
+              { value: "< 2s", label: "Avg response time" },
+              { value: "19", label: "Integrations" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-2xl font-bold md:text-3xl" style={{ color: "var(--tess-accent)" }}>{stat.value}</p>
+                <p className="mt-1 text-xs font-medium" style={{ color: "var(--tess-text-muted)" }}>{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </FadeIn>
+      </section>
+
       {/* ── Section Separator ──────────────────────────────────── */}
       <div className="relative z-10 mx-auto max-w-4xl px-5">
         <div className="h-px" style={{ background: "linear-gradient(to right, transparent, rgba(255,145,29,0.2), transparent)" }} />
       </div>
 
-      {/* ── Logo Ticker ────────────────────────────────────────── */}
+      {/* ── Integration Logos ──────────────────────────────────── */}
       <section className="relative z-10 mx-auto max-w-6xl px-5 py-6">
         <FadeIn>
           <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: "var(--tess-text-muted)" }}>
@@ -647,6 +672,72 @@ export function Hero({ user }: HeroProps) {
           </p>
           <LogoTicker />
         </FadeIn>
+      </section>
+
+      {/* ── Section Separator ──────────────────────────────────── */}
+      <div className="relative z-10 mx-auto max-w-4xl px-5">
+        <div className="h-px" style={{ background: "linear-gradient(to right, transparent, rgba(255,145,29,0.15), transparent)" }} />
+      </div>
+
+      {/* ── How It Works ──────────────────────────────────────── */}
+      <section className="relative z-10 mx-auto max-w-6xl px-5 py-16">
+        <FadeIn>
+          <div className="mb-10 text-center">
+            <h2 className="text-3xl font-bold md:text-4xl" style={{ letterSpacing: "-0.02em" }}>
+              How it works
+            </h2>
+            <p className="mt-3 text-base" style={{ color: "var(--tess-text-secondary)" }}>
+              Add human oversight to any automation in three steps
+            </p>
+          </div>
+        </FadeIn>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          {[
+            {
+              step: "1",
+              icon: Link2,
+              title: "Connect",
+              description: "Connect your automation tools via API key or OAuth. Works with Zapier, Make, n8n, GitHub Actions, and any HTTP client.",
+            },
+            {
+              step: "2",
+              icon: Zap,
+              title: "Request",
+              description: "Your automations send approval requests when they need human sign-off. One API call pauses execution and notifies reviewers.",
+            },
+            {
+              step: "3",
+              icon: MessageSquare,
+              title: "Decide",
+              description: "Approve or reject from anywhere — dashboard, email, Slack, or mobile. Your automation resumes instantly with the decision.",
+            },
+          ].map((item, i) => (
+            <FadeIn key={item.step} delay={i * 100}>
+              <div
+                className="tess-card relative rounded-2xl border p-6 text-center"
+                style={{ backgroundColor: "var(--tess-bg-card)", borderColor: "var(--tess-border)" }}
+              >
+                <div
+                  className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl"
+                  style={{ backgroundColor: "var(--tess-accent-soft)" }}
+                >
+                  <item.icon className="h-6 w-6" style={{ color: "var(--tess-accent)" }} />
+                </div>
+                <span
+                  className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-bold"
+                  style={{ backgroundColor: "var(--tess-accent-soft)", color: "var(--tess-accent)" }}
+                >
+                  Step {item.step}
+                </span>
+                <h3 className="mt-2 text-lg font-bold">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--tess-text-secondary)" }}>
+                  {item.description}
+                </p>
+              </div>
+            </FadeIn>
+          ))}
+        </div>
       </section>
 
       {/* ── Section Separator ──────────────────────────────────── */}
@@ -809,6 +900,71 @@ export function Hero({ user }: HeroProps) {
           </div>
         </FadeIn>
       </section>
+
+      {/* ── Feature Comparison ─────────────────────────────────── */}
+      <section className="relative z-10 mx-auto max-w-4xl px-5 py-16">
+        <FadeIn>
+          <div className="mb-10 text-center">
+            <h2 className="text-3xl font-bold md:text-4xl" style={{ letterSpacing: "-0.02em" }}>
+              Why OKRunit?
+            </h2>
+            <p className="mt-3 text-base" style={{ color: "var(--tess-text-secondary)" }}>
+              See how OKRunit compares to handling approvals manually
+            </p>
+          </div>
+        </FadeIn>
+
+        <FadeIn delay={100}>
+          <div
+            className="overflow-hidden rounded-2xl border"
+            style={{ backgroundColor: "var(--tess-bg-card)", borderColor: "var(--tess-border)" }}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ borderColor: "var(--tess-border)" }}>
+                    <th className="border-b px-5 py-4 text-left font-semibold" style={{ borderColor: "var(--tess-border)", color: "var(--tess-text)" }}>Feature</th>
+                    <th className="border-b px-5 py-4 text-center font-semibold" style={{ borderColor: "var(--tess-border)", color: "var(--tess-accent)" }}>OKRunit</th>
+                    <th className="border-b px-5 py-4 text-center font-semibold" style={{ borderColor: "var(--tess-border)", color: "var(--tess-text-muted)" }}>Manual</th>
+                    <th className="border-b px-5 py-4 text-center font-semibold" style={{ borderColor: "var(--tess-border)", color: "var(--tess-text-muted)" }}>Slack bot</th>
+                    <th className="border-b px-5 py-4 text-center font-semibold" style={{ borderColor: "var(--tess-border)", color: "var(--tess-text-muted)" }}>Email</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { feature: "Audit trail", okrunit: true, manual: false, slack: false, email: false },
+                    { feature: "Multi-platform", okrunit: true, manual: false, slack: false, email: false },
+                    { feature: "Team routing", okrunit: true, manual: false, slack: true, email: false },
+                    { feature: "Auto-rules", okrunit: true, manual: false, slack: false, email: false },
+                    { feature: "Analytics", okrunit: true, manual: false, slack: false, email: false },
+                    { feature: "Webhook callbacks", okrunit: true, manual: false, slack: true, email: false },
+                    { feature: "Multi-step chains", okrunit: true, manual: true, slack: false, email: false },
+                    { feature: "Real-time updates", okrunit: true, manual: false, slack: true, email: false },
+                  ].map((row) => (
+                    <tr key={row.feature}>
+                      <td className="border-b px-5 py-3 font-medium" style={{ borderColor: "var(--tess-border)", color: "var(--tess-text-secondary)" }}>{row.feature}</td>
+                      {[row.okrunit, row.manual, row.slack, row.email].map((val, ci) => (
+                        <td key={ci} className="border-b px-5 py-3 text-center" style={{ borderColor: "var(--tess-border)" }}>
+                          {val ? (
+                            <Check className="mx-auto h-4.5 w-4.5" style={{ color: ci === 0 ? "var(--tess-accent)" : "#22c55e" }} />
+                          ) : (
+                            <span className="inline-block h-0.5 w-4 rounded" style={{ backgroundColor: "var(--tess-border)" }} />
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </FadeIn>
+      </section>
+
+      {/* ── Section Separator ──────────────────────────────────── */}
+      <div className="relative z-10 mx-auto max-w-4xl px-5 py-4">
+        <div className="h-px" style={{ background: "linear-gradient(to right, transparent, rgba(255,145,29,0.15), transparent)" }} />
+      </div>
 
       {/* ── Pricing Section ────────────────────────────────────── */}
       <section id="pricing" className="relative z-10 mx-auto max-w-6xl px-5 py-16">

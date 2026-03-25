@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: "/docs/integrations", label: "Integrations" },
   { href: "/docs/webhooks", label: "Webhooks & Callbacks" },
   { href: "/docs/billing", label: "Plans & Billing" },
+  { href: "/docs/changelog", label: "Changelog" },
 ];
 
 export default function DocsLayout({

@@ -237,7 +237,13 @@
       "Bash(cat /Users/nathanielstoddard/okrunit/okrunit/src/app/\\\\\\(dashboard\\\\\\)/dashboard/page.tsx)",
       "Bash(grep -l \"audit_log\\\\|audit_event\" /Users/nathanielstoddard/okrunit/okrunit/supabase/migrations/*.sql)",
       "Bash(grep -l \"approval_request\" /Users/nathanielstoddard/okrunit/okrunit/supabase/migrations/*.sql)",
-      "Bash(grep -n \"can_approve\" /Users/nathanielstoddard/okrunit/okrunit/supabase/migrations/*.sql)"
+      "Bash(grep -n \"can_approve\" /Users/nathanielstoddard/okrunit/okrunit/supabase/migrations/*.sql)",
+      "Bash(find /Users/nathanielstoddard/okrunit/okrunit/src/app -type f -name *profile* -o -name *account* -o -name *change*password*)",
+      "Bash(find /Users/nathanielstoddard/okrunit/okrunit/src -type d -path \"*/app/\\(dashboard\\)/*\")",
+      "Bash(find /Users/nathanielstoddard/okrunit/okrunit/src/app -type f -name \"*.tsx\" -path \"*/\\(auth\\)/*\")",
+      "Bash(ls .github/workflows/ci.yml src/app/\\\\\\(docs\\\\\\)/docs/changelog/page.tsx e2e/ playwright.config.ts)",
+      "Bash(cat /Users/nathanielstoddard/okrunit/okrunit/src/app/\\\\\\(dashboard\\\\\\)/requests/page.tsx)",
+      "Bash(git checkout:*)"
     ],
     "additionalDirectories": [
       "/Users/nathanielstoddard/gatekeeper/src/app/api/v1/oauth/grants",
