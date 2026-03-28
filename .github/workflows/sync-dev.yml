@@ -1,20 +1,20 @@
 name: Sync dev with main
 
 on:
-  push:
+  pull_request:
     branches: [main]
-
-permissions:
-  contents: write
+    types: [closed]
 
 jobs:
   sync:
     name: Fast-forward dev to main
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.BACKUP_REPO_TOKEN }}
 
       - name: Sync dev branch
         run: |
