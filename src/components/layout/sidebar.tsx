@@ -118,6 +118,15 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
     if (item.id === "home" && (pathname.startsWith("/org") || pathname === "/dashboard")) {
       return true;
     }
+    if (item.id === "playground" && pathname.startsWith("/playground")) {
+      return true;
+    }
+    if (item.id === "settings" && pathname.startsWith("/settings")) {
+      return true;
+    }
+    if (item.id === "admin" && pathname.startsWith("/admin")) {
+      return true;
+    }
     if (pathname === item.href || pathname.startsWith(item.href + "/")) return true;
     if (item.children) {
       return item.children.some((c) => pathname === c.href || pathname.startsWith(c.href + "/"));
