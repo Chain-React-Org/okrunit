@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Claude Code settings (may contain secrets in command history)
+.claude/settings.json
+
 # dependencies
 /node_modules
 /.pnp
