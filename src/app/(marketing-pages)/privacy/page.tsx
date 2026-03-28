@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "Privacy",
   description:
-    "A product-level overview of the data categories OKRunit uses and the controls available to customers.",
+    "A product-level overview of the data categories OKrunit uses and the controls available to customers.",
 };
 
 export default function PrivacyPage() {
@@ -27,11 +27,11 @@ export default function PrivacyPage() {
     <MarketingPageShell
       eyebrow="Trust"
       title="Privacy overview"
-      intro="This page describes the main categories of data OKRunit uses to operate the product and route approvals. It is a product overview for customers evaluating the platform and should not be treated as legal advice."
+      intro="This page describes the main categories of data OKrunit uses to operate the product and route approvals. It is a product overview for customers evaluating the platform and should not be treated as legal advice."
     >
       <MarketingPageSection
         title="Data categories used by the product"
-        intro="OKRunit processes the information required to create approval requests, route them, and keep an auditable decision trail."
+        intro="OKrunit processes the information required to create approval requests, route them, and keep an auditable decision trail."
       >
         <div className="grid gap-3 md:grid-cols-2">
           {[
@@ -60,13 +60,13 @@ export default function PrivacyPage() {
             return (
               <div
                 key={card.title}
-                className="rounded-xl border border-border/50 bg-[var(--card)] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm"
               >
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                  <Icon className="size-4.5 text-primary" />
+                <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-100 mb-3">
+                  <Icon className="size-4.5 text-emerald-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-foreground">{card.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+                <h3 className="text-sm font-semibold text-slate-900">{card.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-slate-500">
                   {card.body}
                 </p>
               </div>
@@ -88,12 +88,12 @@ export default function PrivacyPage() {
           ].map((item) => (
             <div
               key={item}
-              className="flex items-start gap-3 rounded-xl border border-border/50 bg-[var(--card)] px-4 py-3 shadow-[var(--shadow-card)]"
+              className="flex items-start gap-3 rounded-xl border border-slate-200/60 bg-white px-4 py-3 shadow-sm"
             >
-              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Check className="size-3 text-primary" />
+              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                <Check className="size-3 text-emerald-600" />
               </span>
-              <span className="text-sm text-foreground">{item}</span>
+              <span className="text-sm text-slate-900">{item}</span>
             </div>
           ))}
         </div>
@@ -125,13 +125,13 @@ export default function PrivacyPage() {
             return (
               <div
                 key={card.title}
-                className="rounded-xl border border-border/50 bg-[var(--card)] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm"
               >
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                  <Icon className="size-4.5 text-primary" />
+                <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-100 mb-3">
+                  <Icon className="size-4.5 text-emerald-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-foreground">{card.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+                <h3 className="text-sm font-semibold text-slate-900">{card.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-slate-500">
                   {card.body}
                 </p>
               </div>
@@ -142,23 +142,23 @@ export default function PrivacyPage() {
 
       <MarketingPageSection
         title="Questions and requests"
-        intro="If you need clarification about the way OKRunit handles product data, contact support with your organization and use case."
+        intro="If you need clarification about the way OKrunit handles product data, contact support with your organization and use case."
       >
-        <div className="rounded-xl border border-border/50 bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
-          <p className="text-sm leading-6 text-foreground">
+        <div className="rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm">
+          <p className="text-sm leading-6 text-slate-900">
             Email{" "}
             <a
-              href="mailto:support@okrunit.com"
-              className="font-medium text-primary hover:text-primary/80"
+              href="mailto:privacy@okrunit.com"
+              className="font-medium text-emerald-600 hover:text-emerald-700"
             >
-              support@okrunit.com
+              privacy@okrunit.com
             </a>{" "}
             for product privacy questions. For implementation details, see the{" "}
-            <Link href="/docs/api" className="font-medium text-primary hover:text-primary/80">
+            <Link href="/docs/api" className="font-medium text-emerald-600 hover:text-emerald-700">
               API reference
             </Link>{" "}
             and{" "}
-            <Link href="/docs/webhooks" className="font-medium text-primary hover:text-primary/80">
+            <Link href="/docs/webhooks" className="font-medium text-emerald-600 hover:text-emerald-700">
               webhook documentation
             </Link>
             .

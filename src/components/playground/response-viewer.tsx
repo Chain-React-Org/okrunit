@@ -1,7 +1,7 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// OKRunit -- API Response Viewer
+// OKrunit -- API Response Viewer
 // Displays a formatted view of an HTTP response including status, timing,
 // headers, and a syntax-highlighted JSON body.
 // ---------------------------------------------------------------------------

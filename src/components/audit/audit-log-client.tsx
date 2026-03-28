@@ -14,6 +14,8 @@ interface AuditLogClientProps {
 
 export function AuditLogClient({ orgId }: AuditLogClientProps) {
   const [entries, setEntries] = useState<AuditLogEntry[] | null>(null);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [connectionNames, setConnectionNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -24,7 +26,36 @@ export function AuditLogClient({ orgId }: AuditLogClientProps) {
         .eq("org_id", orgId)
         .order("created_at", { ascending: false })
         .limit(PAGE_SIZE);
-      setEntries((data as AuditLogEntry[]) ?? []);
+      const auditEntries = (data as AuditLogEntry[]) ?? [];
+      setEntries(auditEntries);
+
+      // Resolve user names
+      const userIds = [...new Set(auditEntries.map((e) => e.user_id).filter(Boolean))] as string[];
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("user_profiles")
+          .select("id, full_name, email")
+          .in("id", userIds);
+        const map: Record<string, string> = {};
+        for (const p of profiles ?? []) {
+          map[p.id] = p.full_name || p.email;
+        }
+        setUserNames(map);
+      }
+
+      // Resolve connection names
+      const connIds = [...new Set(auditEntries.map((e) => e.connection_id).filter(Boolean))] as string[];
+      if (connIds.length > 0) {
+        const { data: connections } = await supabase
+          .from("connections")
+          .select("id, name")
+          .in("id", connIds);
+        const map: Record<string, string> = {};
+        for (const c of connections ?? []) {
+          map[c.id] = c.name;
+        }
+        setConnectionNames(map);
+      }
     };
     load();
   }, [orgId]);
@@ -52,5 +83,5 @@ export function AuditLogClient({ orgId }: AuditLogClientProps) {
     );
   }
 
-  return <AuditLogTable initialEntries={entries} orgId={orgId} pageSize={PAGE_SIZE} />;
+  return <AuditLogTable initialEntries={entries} orgId={orgId} pageSize={PAGE_SIZE} userNames={userNames} connectionNames={connectionNames} />;
 }

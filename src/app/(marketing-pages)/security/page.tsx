@@ -18,7 +18,7 @@ import {
 export const metadata: Metadata = {
   title: "Security",
   description:
-    "A product-level overview of the controls OKRunit uses to protect approvals, callbacks, and operational workflows.",
+    "A product-level overview of the controls OKrunit uses to protect approvals, callbacks, and operational workflows.",
 };
 
 export default function SecurityPage() {
@@ -26,7 +26,7 @@ export default function SecurityPage() {
     <MarketingPageShell
       eyebrow="Trust"
       title="Security overview"
-      intro="OKRunit is built to help teams add security and operational control to automated actions. This page summarizes the product controls customers commonly evaluate when reviewing the platform."
+      intro="OKrunit is built to help teams add security and operational control to automated actions. This page summarizes the product controls customers commonly evaluate when reviewing the platform."
     >
       <MarketingPageSection
         title="Authentication and access"
@@ -54,13 +54,13 @@ export default function SecurityPage() {
             return (
               <div
                 key={card.title}
-                className="rounded-xl border border-border/50 bg-[var(--card)] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm"
               >
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                  <Icon className="size-4.5 text-primary" />
+                <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-100 mb-3">
+                  <Icon className="size-4.5 text-emerald-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-foreground">{card.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+                <h3 className="text-sm font-semibold text-slate-900">{card.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-slate-500">
                   {card.body}
                 </p>
               </div>
@@ -71,7 +71,7 @@ export default function SecurityPage() {
 
       <MarketingPageSection
         title="Controls around sensitive actions"
-        intro="OKRunit is not just an inbox for approvals. It is a control layer around actions that should not execute automatically."
+        intro="OKrunit is not just an inbox for approvals. It is a control layer around actions that should not execute automatically."
       >
         <div className="grid gap-3">
           {[
@@ -82,12 +82,12 @@ export default function SecurityPage() {
           ].map((item) => (
             <div
               key={item}
-              className="flex items-start gap-3 rounded-xl border border-border/50 bg-[var(--card)] px-4 py-3 shadow-[var(--shadow-card)]"
+              className="flex items-start gap-3 rounded-xl border border-slate-200/60 bg-white px-4 py-3 shadow-sm"
             >
-              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Check className="size-3 text-primary" />
+              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                <Check className="size-3 text-emerald-600" />
               </span>
-              <span className="text-sm text-foreground">{item}</span>
+              <span className="text-sm text-slate-900">{item}</span>
             </div>
           ))}
         </div>
@@ -114,13 +114,13 @@ export default function SecurityPage() {
             return (
               <div
                 key={card.title}
-                className="rounded-xl border border-border/50 bg-[var(--card)] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm"
               >
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                  <Icon className="size-4.5 text-primary" />
+                <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-100 mb-3">
+                  <Icon className="size-4.5 text-emerald-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-foreground">{card.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+                <h3 className="text-sm font-semibold text-slate-900">{card.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-slate-500">
                   {card.body}
                 </p>
               </div>
@@ -135,43 +135,25 @@ export default function SecurityPage() {
       >
         <div className="grid gap-3 md:grid-cols-3">
           {[
-            {
-              href: "/docs/api",
-              label: "API authentication and request model",
-              icon: Code2,
-              primary: true,
-            },
-            {
-              href: "/docs/webhooks",
-              label: "Webhooks and callback verification",
-              icon: Webhook,
-              primary: false,
-            },
-            {
-              href: "/docs/sso",
-              label: "SSO and SAML configuration",
-              icon: Shield,
-              primary: false,
-            },
+            { href: "/docs/api", label: "API authentication and request model", icon: Code2 },
+            { href: "/docs/webhooks", label: "Webhooks and callback verification", icon: Webhook },
+            { href: "/docs/sso", label: "SSO and SAML configuration", icon: Shield },
           ].map((link) => {
             const LinkIcon = link.icon;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`group flex items-center gap-3 rounded-xl border p-5 text-sm font-medium transition-all ${
-                  link.primary
-                    ? "border-primary/20 bg-primary/5 text-primary hover:bg-primary/10"
-                    : "border-border/50 bg-[var(--card)] text-foreground shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]"
-                }`}
+                className="group flex flex-col items-center gap-3 rounded-xl border border-slate-200/60 bg-white px-5 py-6 text-center shadow-sm transition-all hover:shadow-md hover:border-emerald-300"
               >
-                <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                  link.primary ? "bg-primary/10" : "bg-muted"
-                }`}>
-                  <LinkIcon className={`size-4 ${link.primary ? "text-primary" : "text-muted-foreground"}`} />
+                <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-100 transition-colors group-hover:bg-emerald-100">
+                  <LinkIcon className="size-5 text-emerald-600" />
                 </div>
-                <span className="flex-1">{link.label}</span>
-                <ArrowRight className="size-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="text-sm font-medium text-slate-900">{link.label}</span>
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-medium text-white transition-colors group-hover:bg-emerald-700">
+                  Read docs
+                  <ArrowRight className="size-3" />
+                </span>
               </Link>
             );
           })}

@@ -9,13 +9,12 @@ interface DashboardShellProps {
   children: React.ReactNode;
   sidebarProps: React.ComponentProps<typeof Sidebar>;
   emergencyStopActive: boolean;
-  isAdmin: boolean;
   user: { email: string; full_name: string | null };
   orgName: string;
   pendingCount: number;
 }
 
-export function DashboardShell({ children, sidebarProps, emergencyStopActive, isAdmin, user, orgName, pendingCount }: DashboardShellProps) {
+export function DashboardShell({ children, sidebarProps, emergencyStopActive, user, orgName, pendingCount }: DashboardShellProps) {
   const { mobileOpen, setMobileOpen, setActivePanel } = useSidebarStore();
 
   // Close mobile sidebar on Escape
@@ -29,16 +28,6 @@ export function DashboardShell({ children, sidebarProps, emergencyStopActive, is
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [setMobileOpen, setActivePanel]);
-
-  // Prevent body-level scrollbar — the dashboard manages its own scroll in <main>
-  useEffect(() => {
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.documentElement.style.overflow = "";
-      document.body.style.overflow = "";
-    };
-  }, []);
 
   return (
     <div className="gk-v2 flex h-screen overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
@@ -68,12 +57,11 @@ export function DashboardShell({ children, sidebarProps, emergencyStopActive, is
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header
           emergencyStopActive={emergencyStopActive}
-          isAdmin={isAdmin}
           user={user}
           orgName={orgName}
           pendingCount={pendingCount}
         />
-        <main className="flex-1 overflow-y-auto bg-[var(--background)]">
+        <main className="flex-1 overflow-y-auto">
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
             {children}
           </div>

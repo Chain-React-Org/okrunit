@@ -6,13 +6,8 @@ import { usePathname } from "next/navigation";
 import {
   Home,
   ClipboardList,
-  Key,
-  MessageSquare,
   Settings,
-  BarChart3,
-  CreditCard,
   FlaskConical,
-  Route,
   ShieldAlert,
   Sparkles,
   MoreVertical,
@@ -50,8 +45,8 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: "home", href: "/org/overview", label: "Org", icon: Home },
   { id: "requests", href: "/requests", label: "Requests", icon: ClipboardList },
-  { id: "playground", href: "/playground", label: "Playground", icon: FlaskConical, overflow: true },
-  { id: "settings", href: "/settings", label: "Settings", icon: Settings, overflow: true },
+  { id: "playground", href: "/playground/request-builder", label: "Playground", icon: FlaskConical, overflow: true },
+  { id: "settings", href: "/settings/account", label: "Settings", icon: Settings, overflow: true },
   { id: "admin", href: "/admin", label: "Admin", icon: ShieldAlert, appAdminOnly: true, overflow: true },
 ];
 
@@ -62,20 +57,7 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
   const [maxVisible, setMaxVisible] = useState(20);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
-  const moreMenuRef = useRef<HTMLDivElement>(null);
   const isAdmin = userRole === "owner" || userRole === "admin";
-
-  // Close "More" menu when clicking outside
-  useEffect(() => {
-    if (!moreOpen) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [moreOpen]);
 
   // Measure available space and calculate how many items fit
   const calculateMaxItems = useCallback(() => {
@@ -133,6 +115,18 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
   };
 
   const isItemActive = (item: NavItem) => {
+    if (item.id === "home" && (pathname.startsWith("/org") || pathname === "/dashboard")) {
+      return true;
+    }
+    if (item.id === "playground" && pathname.startsWith("/playground")) {
+      return true;
+    }
+    if (item.id === "settings" && pathname.startsWith("/settings")) {
+      return true;
+    }
+    if (item.id === "admin" && pathname.startsWith("/admin")) {
+      return true;
+    }
     if (pathname === item.href || pathname.startsWith(item.href + "/")) return true;
     if (item.children) {
       return item.children.some((c) => pathname === c.href || pathname.startsWith(c.href + "/"));
@@ -180,7 +174,7 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
     }
 
     return (
-      <Link key={item.id} data-nav-item href={item.href} prefetch={false} onClick={() => handleNavClick(item)} className={classes}>
+      <Link key={item.id} data-nav-item href={item.href} onClick={() => handleNavClick(item)} className={classes}>
         {content}
       </Link>
     );
@@ -232,7 +226,7 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
 
         {/* More button */}
         {overflowItems.length > 0 && (
-          <div ref={moreMenuRef} className="relative w-full pb-3">
+          <div className="relative w-full pb-3">
             <button
               onClick={() => setMoreOpen(!moreOpen)}
               className="group flex w-full cursor-pointer flex-col items-center gap-1.5 py-3 text-white/80 transition-colors"
@@ -264,7 +258,6 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
                     <Link
                       key={item.id}
                       href={item.href}
-                      prefetch={false}
                       onClick={() => handleNavClick(item)}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2 text-sm transition-colors",
@@ -297,7 +290,6 @@ export function Sidebar({ pendingCount, userRole, isAppAdmin, showSetup }: Sideb
                 <Link
                   key={child.href}
                   href={child.href}
-                  prefetch={false}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
                     "rounded-md px-3 py-2 text-sm transition-colors",
