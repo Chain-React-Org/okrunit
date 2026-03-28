@@ -3,6 +3,9 @@ name: Backup Mirror
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 * * * *'  # Every hour
+  workflow_dispatch: {}   # Manual trigger
 
 jobs:
   mirror:
@@ -11,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Push to backup repo
@@ -18,7 +22,7 @@ jobs:
           BACKUP_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
         run: |
           if [ -z "$BACKUP_TOKEN" ]; then
-            echo "::warning::BACKUP_REPO_TOKEN secret not set — skipping mirror. Create a PAT with repo scope and add it as BACKUP_REPO_TOKEN secret."
+            echo "::warning::BACKUP_REPO_TOKEN secret not set — skipping mirror."
             exit 0
           fi
           git remote add backup https://x-access-token:${BACKUP_TOKEN}@github.com/nstoddard17/okrunit-backup.git
