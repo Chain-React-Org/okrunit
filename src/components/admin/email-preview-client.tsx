@@ -60,6 +60,12 @@ export function EmailPreviewClient() {
   const activePreview = previews.find((p) => p.id === selected);
   const frameWidth =
     viewport === "desktop" ? DESKTOP_FRAME_WIDTH : MOBILE_FRAME_WIDTH;
+  const previewHtml =
+    typeof window === "undefined" || !activePreview
+      ? activePreview?.html ?? ""
+      : activePreview.html
+          .replace(/https:\/\/(?:gkapprove|okrunit)\.com/g, window.location.origin)
+          .replace(/http:\/\/localhost:\d+/g, window.location.origin);
 
   async function handleCopyHtml() {
     if (!activePreview) return;
@@ -245,7 +251,7 @@ export function EmailPreviewClient() {
                     </div>
                     <iframe
                       ref={iframeRef}
-                      srcDoc={activePreview.html}
+                      srcDoc={previewHtml}
                       className="block min-h-0 flex-1 border-0 bg-white"
                       style={{ width: frameWidth }}
                       title={`Preview: ${activePreview.name}`}

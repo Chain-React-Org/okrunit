@@ -30,7 +30,7 @@ export function DashboardShell({ children, sidebarProps, emergencyStopActive, us
   }, [setMobileOpen, setActivePanel]);
 
   return (
-    <div className="gk-v2 force-light flex h-screen overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+    <div className="gk-v2 flex h-screen overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
       {/* Mobile overlay backdrop */}
       {mobileOpen && (
         <div
