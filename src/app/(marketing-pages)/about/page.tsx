@@ -16,18 +16,18 @@ import {
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Why OKRunit exists, what it does, and how teams use it to add human approval to automation workflows.",
+    "Why OKrunit exists, what it does, and how teams use it to add human approval to automation workflows.",
 };
 
 export default function AboutPage() {
   return (
     <MarketingPageShell
       eyebrow="Company"
-      title="OKRunit exists to put human judgment back into automated work."
-      intro="OKRunit is a human-in-the-loop approval gateway for teams running automations, AI agents, internal tools, and operational workflows. It sits between a workflow and a sensitive action, pauses execution, routes the request to the right reviewers, and records the decision trail."
+      title="OKrunit exists to put human judgment back into automated work."
+      intro="OKrunit is a human-in-the-loop approval gateway for teams running automations, AI agents, internal tools, and operational workflows. It sits between a workflow and a sensitive action, pauses execution, routes the request to the right reviewers, and records the decision trail."
     >
       <MarketingPageSection
-        title="What OKRunit does"
+        title="What OKrunit does"
         intro="The product is designed for workflows that should not execute without clear human sign-off."
       >
         <div className="grid gap-3 md:grid-cols-3">
@@ -52,15 +52,15 @@ export default function AboutPage() {
             return (
               <div
                 key={card.title}
-                className="rounded-xl border border-border/50 bg-[var(--card)] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm"
               >
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                  <Icon className="size-4.5 text-primary" />
+                <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-100 mb-3">
+                  <Icon className="size-4.5 text-emerald-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-foreground">
+                <h3 className="text-sm font-semibold text-slate-900">
                   {card.title}
                 </h3>
-                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+                <p className="mt-1.5 text-sm leading-6 text-slate-500">
                   {card.body}
                 </p>
               </div>
@@ -71,7 +71,7 @@ export default function AboutPage() {
 
       <MarketingPageSection
         title="How it fits into a workflow"
-        intro="OKRunit is intentionally simple: it becomes the approval layer between a trigger and a sensitive action."
+        intro="OKrunit is intentionally simple: it becomes the approval layer between a trigger and a sensitive action."
       >
         <div className="grid gap-3">
           {[
@@ -88,19 +88,19 @@ export default function AboutPage() {
             {
               step: "3",
               title: "The decision flows back into the system.",
-              body: "Once approved or rejected, OKRunit updates the request state and notifies the calling workflow so it can continue or stop.",
+              body: "Once approved or rejected, OKrunit updates the request state and notifies the calling workflow so it can continue or stop.",
             },
           ].map((item) => (
             <div
               key={item.step}
-              className="flex items-start gap-4 rounded-xl border border-border/50 bg-[var(--card)] p-5 shadow-[var(--shadow-card)]"
+              className="flex items-start gap-4 rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm"
             >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-sm font-semibold text-emerald-600">
                 {item.step}
               </span>
               <div>
-                <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
                   {item.body}
                 </p>
               </div>
@@ -111,14 +111,14 @@ export default function AboutPage() {
 
       <MarketingPageSection
         title="Who uses it"
-        intro="OKRunit is built for teams that need reliable control over operational changes, customer-impacting actions, and destructive workflows."
+        intro="OKrunit is built for teams that need reliable control over operational changes, customer-impacting actions, and destructive workflows."
       >
         <div className="grid gap-3 md:grid-cols-2">
           {[
             {
               icon: Cpu,
               title: "Engineering and platform teams",
-              body: "Use OKRunit to gate production deploys, credential rotation, infrastructure changes, and bulk operations.",
+              body: "Use OKrunit to gate production deploys, credential rotation, infrastructure changes, and bulk operations.",
             },
             {
               icon: Settings2,
@@ -130,26 +130,26 @@ export default function AboutPage() {
             return (
               <div
                 key={card.title}
-                className="rounded-xl border border-border/50 bg-[var(--card)] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm"
               >
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                  <Icon className="size-4.5 text-primary" />
+                <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-100 mb-3">
+                  <Icon className="size-4.5 text-emerald-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-foreground">{card.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+                <h3 className="text-sm font-semibold text-slate-900">{card.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-slate-500">
                   {card.body}
                 </p>
               </div>
             );
           })}
         </div>
-        <p className="text-sm leading-6 text-muted-foreground">
+        <p className="text-sm leading-6 text-slate-500">
           For implementation details, start with the{" "}
-          <Link href="/docs" className="font-medium text-primary hover:text-primary/80">
+          <Link href="/docs" className="font-medium text-emerald-600 hover:text-emerald-700">
             getting started guide
           </Link>{" "}
           or the{" "}
-          <Link href="/docs/api" className="font-medium text-primary hover:text-primary/80">
+          <Link href="/docs/api" className="font-medium text-emerald-600 hover:text-emerald-700">
             API reference
           </Link>
           .
