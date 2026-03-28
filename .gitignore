@@ -66,3 +66,4 @@ supabase/.temp
 integrations/*/dist/
 tools/scripts/deploy/screenshots/
 tools/scripts/deploy/node_modules/
+.claude/settings.json
