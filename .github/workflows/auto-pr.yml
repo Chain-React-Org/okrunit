@@ -26,12 +26,15 @@ jobs:
           EXISTING_PR=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null)
 
           if [ -z "$EXISTING_PR" ]; then
-            # Create new PR
+            # Create new PR (may fail if dev is identical to main after a sync)
             PR_URL=$(gh pr create \
               --title "$COMMIT_MSG" \
               --body "Auto-created PR for branch \`$BRANCH\`. Will auto-merge when CI passes." \
               --base main \
-              --head "$BRANCH")
+              --head "$BRANCH" 2>&1) || {
+              echo "No new changes to create PR for — dev is in sync with main"
+              exit 0
+            }
             PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
             echo "Created PR #$PR_NUMBER"
           else
