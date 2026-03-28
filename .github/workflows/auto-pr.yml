@@ -36,7 +36,9 @@ jobs:
             echo "Created PR #$PR_NUMBER"
           else
             PR_NUMBER=$EXISTING_PR
-            echo "PR #$PR_NUMBER already exists"
+            # Update PR title to latest commit
+            gh pr edit "$PR_NUMBER" --title "$COMMIT_MSG" || true
+            echo "PR #$PR_NUMBER already exists, updated title"
           fi
 
           # Enable auto-merge
