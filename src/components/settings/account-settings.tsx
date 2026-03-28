@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { User, Mail, Lock, Loader2, AlertTriangle, CheckCircle, Clock, Bell, ShieldCheck, SlidersHorizontal, Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -92,7 +92,7 @@ export function AccountSettings({
 
   // Notification preferences
   const [emailEnabled, setEmailEnabled] = useState(
-    notificationSettings?.email_enabled ?? true
+    notificationSettings?.email_enabled ?? false
   );
   const [quietHoursEnabled, setQuietHoursEnabled] = useState(
     notificationSettings?.quiet_hours_enabled ?? false
@@ -112,7 +112,6 @@ export function AccountSettings({
   const [skipApprovalConfirmation, setSkipApprovalConfirmation] = useState(
     notificationSettings?.skip_approval_confirmation ?? false
   );
-  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
   // Delete account
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -207,17 +206,16 @@ export function AccountSettings({
     }
   }
 
-  // -- Save notification preferences --
+  // -- Auto-save notification preferences (debounced) --
 
-  async function handleSaveNotifications() {
-    setIsSavingNotifications(true);
+  const notifDirty = useRef(false);
+  const notifSaveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const saveNotifications = useCallback(async () => {
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("You must be logged in to save settings.");
-        return;
-      }
+      if (!user) return;
 
       const payload = {
         user_id: user.id,
@@ -235,14 +233,28 @@ export function AccountSettings({
         .upsert(payload, { onConflict: "user_id" });
 
       if (error) throw error;
-      toast.success("Notification preferences saved.");
+      toast.success("Settings saved");
     } catch (err) {
       console.error("Failed to save notification settings:", err);
       toast.error("Failed to save settings. Please try again.");
-    } finally {
-      setIsSavingNotifications(false);
     }
-  }
+  }, [emailEnabled, quietHoursEnabled, quietHoursStart, quietHoursEnd, quietHoursTimezone, minimumPriority, skipApprovalConfirmation]);
+
+  useEffect(() => {
+    if (!notifDirty.current) return;
+    if (notifSaveTimeout.current) clearTimeout(notifSaveTimeout.current);
+    notifSaveTimeout.current = setTimeout(() => { saveNotifications(); }, 600);
+    return () => { if (notifSaveTimeout.current) clearTimeout(notifSaveTimeout.current); };
+  }, [saveNotifications]);
+
+  // Wrap setters to mark dirty on user interaction
+  const setEmailEnabledDirty = useCallback((v: boolean) => { notifDirty.current = true; setEmailEnabled(v); }, []);
+  const setQuietHoursEnabledDirty = useCallback((v: boolean) => { notifDirty.current = true; setQuietHoursEnabled(v); }, []);
+  const setQuietHoursStartDirty = useCallback((v: string) => { notifDirty.current = true; setQuietHoursStart(v); }, []);
+  const setQuietHoursEndDirty = useCallback((v: string) => { notifDirty.current = true; setQuietHoursEnd(v); }, []);
+  const setQuietHoursTimezoneDirty = useCallback((v: string) => { notifDirty.current = true; setQuietHoursTimezone(v); }, []);
+  const setMinimumPriorityDirty = useCallback((v: ApprovalPriority) => { notifDirty.current = true; setMinimumPriority(v); }, []);
+  const setSkipApprovalConfirmationDirty = useCallback((v: boolean) => { notifDirty.current = true; setSkipApprovalConfirmation(v); }, []);
 
   // -- Request deletion (sends email) --
 
@@ -543,7 +555,7 @@ export function AccountSettings({
             <Switch
               id="email-toggle"
               checked={emailEnabled}
-              onCheckedChange={setEmailEnabled}
+              onCheckedChange={setEmailEnabledDirty}
             />
           </div>
 
@@ -565,7 +577,7 @@ export function AccountSettings({
             <Switch
               id="quiet-hours-toggle"
               checked={quietHoursEnabled}
-              onCheckedChange={setQuietHoursEnabled}
+              onCheckedChange={setQuietHoursEnabledDirty}
             />
           </div>
 
@@ -577,7 +589,7 @@ export function AccountSettings({
                   id="quiet-start"
                   type="time"
                   value={quietHoursStart}
-                  onChange={(e) => setQuietHoursStart(e.target.value)}
+                  onChange={(e) => setQuietHoursStartDirty(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -586,14 +598,14 @@ export function AccountSettings({
                   id="quiet-end"
                   type="time"
                   value={quietHoursEnd}
-                  onChange={(e) => setQuietHoursEnd(e.target.value)}
+                  onChange={(e) => setQuietHoursEndDirty(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="quiet-timezone">Timezone</Label>
                 <Select
                   value={quietHoursTimezone}
-                  onValueChange={setQuietHoursTimezone}
+                  onValueChange={setQuietHoursTimezoneDirty}
                 >
                   <SelectTrigger id="quiet-timezone" className="w-full">
                     <SelectValue placeholder="Select timezone" />
@@ -625,7 +637,7 @@ export function AccountSettings({
             </div>
             <Select
               value={minimumPriority}
-              onValueChange={(val) => setMinimumPriority(val as ApprovalPriority)}
+              onValueChange={(val) => setMinimumPriorityDirty(val as ApprovalPriority)}
             >
               <SelectTrigger className="w-[140px]">
                 <SelectValue />
@@ -658,16 +670,10 @@ export function AccountSettings({
             <Switch
               id="skip-confirmation-toggle"
               checked={skipApprovalConfirmation}
-              onCheckedChange={setSkipApprovalConfirmation}
+              onCheckedChange={setSkipApprovalConfirmationDirty}
             />
           </div>
 
-          <div className="flex justify-end pt-2">
-            <Button onClick={handleSaveNotifications} disabled={isSavingNotifications}>
-              {isSavingNotifications && <Loader2 className="size-4 animate-spin" />}
-              Save preferences
-            </Button>
-          </div>
         </CardContent>
       </Card>
 

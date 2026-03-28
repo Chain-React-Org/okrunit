@@ -46,7 +46,7 @@ interface BillingDashboardProps {
 
 export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin, orgId }: BillingDashboardProps) {
   const [loading, setLoading] = useState<string | null>(null);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
   const currentPlan = (subscription?.plan_id ?? "free") as BillingPlan;
   const limits = PLAN_LIMITS[currentPlan];
 

@@ -1,7 +1,7 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// OKRunit -- Audit Log Table (Client Component)
+// OKrunit -- Audit Log Table (Client Component)
 // Paginated, filterable table displaying organization audit log entries.
 // ---------------------------------------------------------------------------
 
@@ -61,6 +61,8 @@ interface AuditLogTableProps {
   initialEntries: AuditLogEntry[];
   orgId?: string;
   pageSize?: number;
+  userNames?: Record<string, string>;
+  connectionNames?: Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +73,8 @@ export function AuditLogTable({
   initialEntries,
   orgId,
   pageSize = 50,
+  userNames = {},
+  connectionNames = {},
 }: AuditLogTableProps) {
   const [entries, setEntries] = useState<AuditLogEntry[]>(initialEntries);
   const [hasMore, setHasMore] = useState(initialEntries.length >= pageSize);
@@ -196,7 +200,7 @@ export function AuditLogTable({
       {/* ---- Filters ---- */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Select value={actionFilter} onValueChange={setActionFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px] bg-white text-gray-900">
             <SelectValue placeholder="All actions" />
           </SelectTrigger>
           <SelectContent>
@@ -213,7 +217,7 @@ export function AuditLogTable({
           value={resourceTypeFilter}
           onValueChange={setResourceTypeFilter}
         >
-          <SelectTrigger className="w-full sm:w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px] bg-white text-gray-900">
             <SelectValue placeholder="All resource types" />
           </SelectTrigger>
           <SelectContent>
@@ -241,7 +245,7 @@ export function AuditLogTable({
             size="sm"
             onClick={exportCsv}
             disabled={filteredEntries.length === 0}
-            className="gap-1.5"
+            className="gap-1.5 bg-white text-gray-900 hover:bg-gray-50"
           >
             <Download className="size-3.5" />
             Export CSV
@@ -274,7 +278,7 @@ export function AuditLogTable({
           )}
         </div>
       ) : (
-        <div className="rounded-xl border">
+        <div className="rounded-xl border bg-white">
           <Table>
             <TableHeader>
               <TableRow>
@@ -294,9 +298,9 @@ export function AuditLogTable({
                   entry.details !== null &&
                   Object.keys(entry.details).length > 0;
                 const actor = entry.user_id
-                  ? `User: ${entry.user_id.slice(0, 8)}...`
+                  ? userNames[entry.user_id] ?? `User: ${entry.user_id.slice(0, 8)}...`
                   : entry.connection_id
-                    ? `Conn: ${entry.connection_id.slice(0, 8)}...`
+                    ? connectionNames[entry.connection_id] ?? `Conn: ${entry.connection_id.slice(0, 8)}...`
                     : "System";
 
                 return (
@@ -400,6 +404,7 @@ export function AuditLogTable({
             variant="outline"
             onClick={loadMore}
             disabled={isPending}
+            className="bg-white text-gray-900 hover:bg-gray-50"
           >
             {isPending ? (
               <>

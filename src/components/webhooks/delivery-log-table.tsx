@@ -1,7 +1,7 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// OKRunit -- Webhook Delivery Log Table (Client Component)
+// OKrunit -- Webhook Delivery Log Table (Client Component)
 // Paginated, filterable table with expandable rows showing full request/
 // response details for each webhook delivery attempt.
 // ---------------------------------------------------------------------------
@@ -141,6 +141,9 @@ export function DeliveryLogTable({
   const [filters, setFilters] = useState<Filters>({
     status: "all",
     connectionId: null,
+    dateRange: "all",
+    customFrom: null,
+    customTo: null,
   });
 
   // Expanded rows (track by entry id)
@@ -154,6 +157,30 @@ export function DeliveryLogTable({
 
   // Apply client-side filters.
   const filteredEntries = useMemo(() => {
+    let cutoff: Date | null = null;
+    let customFromDate: Date | null = null;
+    let customToDate: Date | null = null;
+
+    if (filters.dateRange === "custom") {
+      if (filters.customFrom) customFromDate = new Date(filters.customFrom);
+      if (filters.customTo) {
+        customToDate = new Date(filters.customTo);
+        // Include the entire "to" day
+        customToDate.setHours(23, 59, 59, 999);
+      }
+    } else if (filters.dateRange !== "all") {
+      const now = Date.now();
+      const durations: Record<string, number> = {
+        "1h": 60 * 60 * 1000,
+        "24h": 24 * 60 * 60 * 1000,
+        "7d": 7 * 24 * 60 * 60 * 1000,
+        "30d": 30 * 24 * 60 * 60 * 1000,
+        "90d": 90 * 24 * 60 * 60 * 1000,
+      };
+      const ms = durations[filters.dateRange];
+      if (ms) cutoff = new Date(now - ms);
+    }
+
     return entries.filter((entry) => {
       if (filters.status !== "all") {
         const wantSuccess = filters.status === "success";
@@ -163,6 +190,15 @@ export function DeliveryLogTable({
         filters.connectionId !== null &&
         entry.connection_id !== filters.connectionId
       ) {
+        return false;
+      }
+      if (cutoff && new Date(entry.created_at) < cutoff) {
+        return false;
+      }
+      if (customFromDate && new Date(entry.created_at) < customFromDate) {
+        return false;
+      }
+      if (customToDate && new Date(entry.created_at) > customToDate) {
         return false;
       }
       return true;
@@ -227,33 +263,7 @@ export function DeliveryLogTable({
       </div>
 
       {/* ---- Table ---- */}
-      {filteredEntries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-5 rounded-xl border-0 py-20 text-center shadow-[var(--shadow-card)]">
-          <div className="empty-state-icon rounded-2xl p-5">
-            <Webhook className="size-9 text-muted-foreground/70" />
-          </div>
-          <div className="space-y-2">
-            <p className="text-base font-semibold text-foreground">No webhook deliveries found</p>
-            {(filters.status !== "all" || filters.connectionId !== null) && (
-              <p className="text-sm text-muted-foreground">
-                Try adjusting your filters to see more results.
-              </p>
-            )}
-          </div>
-          {(filters.status !== "all" || filters.connectionId !== null) && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                handleFilterChange({ status: "all", connectionId: null })
-              }
-            >
-              Clear filters
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="rounded-xl border">
+        <div className="rounded-xl border bg-white">
           <Table>
             <TableHeader>
               <TableRow>
@@ -269,7 +279,33 @@ export function DeliveryLogTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEntries.map((entry) => {
+              {filteredEntries.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Webhook className="size-8 text-muted-foreground/40" />
+                      <p className="text-sm font-medium text-muted-foreground">No webhook deliveries found</p>
+                      {(filters.status !== "all" || filters.connectionId !== null || filters.dateRange !== "all") && (
+                        <>
+                          <p className="text-xs text-muted-foreground/60">
+                            Try adjusting your filters to see more results.
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleFilterChange({ status: "all", connectionId: null, dateRange: "all", customFrom: null, customTo: null })
+                            }
+                          >
+                            Clear filters
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+              filteredEntries.map((entry) => {
                 const isExpanded = expandedRows.has(entry.id);
                 const connName =
                   connectionMap.get(entry.connection_id) ??
@@ -424,11 +460,11 @@ export function DeliveryLogTable({
                     )}
                   </Fragment>
                 );
-              })}
+              }))
+              }
             </TableBody>
           </Table>
         </div>
-      )}
 
       {/* ---- Load More ---- */}
       {hasMore && (
@@ -437,6 +473,7 @@ export function DeliveryLogTable({
             variant="outline"
             onClick={loadMore}
             disabled={isPending}
+            className="bg-white text-gray-900 hover:bg-gray-50"
           >
             {isPending ? (
               <>

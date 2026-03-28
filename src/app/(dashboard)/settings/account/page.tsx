@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/layout/page-header";
 import { AccountSettings } from "@/components/settings/account-settings";
-import { NotificationSettingsForm } from "@/components/settings/notification-settings-form";
 import type { NotificationSettings } from "@/lib/types/database";
 
 export const metadata = {
@@ -38,12 +37,6 @@ export default async function AccountSettingsPage() {
         initialEmail={profile.email}
         notificationSettings={notificationSettings ?? null}
       />
-
-      <div className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold">Notifications</h2>
-      </div>
-
-      <NotificationSettingsForm initialSettings={notificationSettings ?? null} />
     </PageContainer>
   );
 }
