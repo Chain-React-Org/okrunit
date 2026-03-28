@@ -29,16 +29,37 @@ export default async function AnalyticsPage() {
   const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
   const sixtyDaysAgoISO = sixtyDaysAgo.toISOString();
 
+  // Fetch all counts and chart data in a single parallel batch
   const [
     { count: total },
     { count: pending },
     { count: approved },
     { count: rejected },
+    { count: prevTotal },
+    { count: prevPending },
+    { count: prevApproved },
+    { count: prevRejected },
+    { count: currentPeriodTotal },
+    { data: recentRequests },
+    { data: decidedRequests },
+    { data: timedRequests },
   ] = await Promise.all([
+    // Current counts
     admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId),
     admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending"),
     admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved"),
     admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "rejected"),
+    // Previous period counts
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending").gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved").gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "rejected").gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
+    // Current period total
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).gte("created_at", thirtyDaysAgoISO),
+    // Chart data
+    admin.from("approval_requests").select("created_at").eq("org_id", orgId).gte("created_at", thirtyDaysAgoISO).order("created_at", { ascending: true }),
+    admin.from("approval_requests").select("status, decided_at").eq("org_id", orgId).in("status", ["approved", "rejected"]).gte("decided_at", thirtyDaysAgoISO).order("decided_at", { ascending: true }),
+    admin.from("approval_requests").select("created_at, decided_at").eq("org_id", orgId).in("status", ["approved", "rejected"]).not("decided_at", "is", null).gte("decided_at", thirtyDaysAgoISO).order("decided_at", { ascending: true }),
   ]);
 
   const totalNum = total ?? 0;
@@ -47,18 +68,6 @@ export default async function AnalyticsPage() {
   const rejectedNum = rejected ?? 0;
   const decidedNum = approvedNum + rejectedNum;
   const approvalRate = decidedNum > 0 ? Math.round((approvedNum / decidedNum) * 100) : 0;
-
-  const [
-    { count: prevTotal },
-    { count: prevPending },
-    { count: prevApproved },
-    { count: prevRejected },
-  ] = await Promise.all([
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending").gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved").gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "rejected").gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
-  ]);
 
   function calcTrend(current: number, previous: number | null): number | null {
     const prev = previous ?? 0;
@@ -70,25 +79,12 @@ export default async function AnalyticsPage() {
   const prevDecided = (prevApproved ?? 0) + (prevRejected ?? 0);
   const prevApprovalRate = prevDecided > 0 ? Math.round(((prevApproved ?? 0) / prevDecided) * 100) : 0;
 
-  const { count: currentPeriodTotal } = await admin
-    .from("approval_requests")
-    .select("*", { count: "exact", head: true })
-    .eq("org_id", orgId)
-    .gte("created_at", thirtyDaysAgoISO);
-
   const trends = {
     totalTrend: calcTrend(currentPeriodTotal ?? 0, prevTotal),
     pendingTrend: calcTrend(pendingNum, prevPending),
     approvalRateTrend: prevDecided > 0 || decidedNum > 0 ? calcTrend(approvalRate, prevApprovalRate) : null,
     decidedTrend: calcTrend(decidedNum, prevDecided),
   };
-
-  const { data: recentRequests } = await admin
-    .from("approval_requests")
-    .select("created_at")
-    .eq("org_id", orgId)
-    .gte("created_at", thirtyDaysAgoISO)
-    .order("created_at", { ascending: true });
 
   const volumeMap = new Map<string, number>();
   for (let i = 29; i >= 0; i--) {
@@ -101,14 +97,6 @@ export default async function AnalyticsPage() {
     volumeMap.set(dateKey, (volumeMap.get(dateKey) ?? 0) + 1);
   }
   const volumeData: VolumeDataPoint[] = Array.from(volumeMap.entries()).map(([date, count]) => ({ date, count }));
-
-  const { data: decidedRequests } = await admin
-    .from("approval_requests")
-    .select("status, decided_at")
-    .eq("org_id", orgId)
-    .in("status", ["approved", "rejected"])
-    .gte("decided_at", thirtyDaysAgoISO)
-    .order("decided_at", { ascending: true });
 
   const rateMap = new Map<string, { approved: number; rejected: number }>();
   for (let i = 29; i >= 0; i--) {
@@ -125,15 +113,6 @@ export default async function AnalyticsPage() {
     rateMap.set(dateKey, entry);
   }
   const approvalRateData: ApprovalRateDataPoint[] = Array.from(rateMap.entries()).map(([date, counts]) => ({ date, ...counts }));
-
-  const { data: timedRequests } = await admin
-    .from("approval_requests")
-    .select("created_at, decided_at")
-    .eq("org_id", orgId)
-    .in("status", ["approved", "rejected"])
-    .not("decided_at", "is", null)
-    .gte("decided_at", thirtyDaysAgoISO)
-    .order("decided_at", { ascending: true });
 
   const timeMap = new Map<string, { totalHours: number; count: number }>();
   for (let i = 29; i >= 0; i--) {

@@ -26,26 +26,24 @@ export const getOrgContext = cache(async (): Promise<OrgContext | null> => {
 
   const admin = createAdminClient();
 
-  // Get user profile
-  const { data: profile } = await admin
-    .from("user_profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single<UserProfile>();
+  // Fetch profile and default membership in parallel (both only need user.id)
+  const [{ data: profile }, { data: membership }] = await Promise.all([
+    admin
+      .from("user_profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single<UserProfile>(),
+    admin
+      .from("org_memberships")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_default", true)
+      .single<OrgMembership>(),
+  ]);
 
-  if (!profile) return null;
+  if (!profile || !membership) return null;
 
-  // Get the user's default (active) membership
-  const { data: membership } = await admin
-    .from("org_memberships")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("is_default", true)
-    .single<OrgMembership>();
-
-  if (!membership) return null;
-
-  // Fetch the organization
+  // Fetch the organization (depends on membership.org_id)
   const { data: org } = await admin
     .from("organizations")
     .select("*")

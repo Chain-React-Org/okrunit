@@ -398,7 +398,22 @@
       "Bash(grep -l \"messaging_connections\\\\|CREATE TABLE.*connections\" /Users/nathanielstoddard/okrunit/okrunit/supabase/migrations/*.sql)",
       "Bash(ls -la /Users/nathanielstoddard/okrunit/okrunit/src/app/\\\\\\(marketing-pages\\\\\\)/)",
       "Bash(PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 E2E_EMAIL=\"test@okrunit.com\" E2E_PASSWORD=\"e2e-test-password-2026!\" npx playwright test e2e/docs-screenshots.spec.ts --reporter=line --workers=1 -g \"dashboard overview|billing page|settings page\")",
-      "Bash(PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 E2E_EMAIL=\"test@okrunit.com\" E2E_PASSWORD=\"e2e-test-password-2026!\" npx playwright test e2e/product-screenshots.spec.ts --reporter=line --workers=1)"
+      "Bash(PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 E2E_EMAIL=\"test@okrunit.com\" E2E_PASSWORD=\"e2e-test-password-2026!\" npx playwright test e2e/product-screenshots.spec.ts --reporter=line --workers=1)",
+      "Bash(grep -E \"\\\\.\\(json|yml|yaml|ts|js|md\\)$\")",
+      "Bash(find /Users/nathanielstoddard/okrunit/node_modules/next -name *proxy* -type f)",
+      "Bash(find /Users/nathanielstoddard/okrunit/node_modules/next/dist -path *templates* -type f)",
+      "Bash(grep -r \"isProxy\\\\|isMiddleware\\\\|VAR_DEFINITION_PAGE\" /Users/nathanielstoddard/okrunit/node_modules/next/dist/build --include=*.ts --include=*.js)",
+      "Bash(grep -r \"PROXY_FILENAME\\\\|MIDDLEWARE_FILENAME\" /Users/nathanielstoddard/okrunit/node_modules/next/dist --include=*.ts --include=*.js)",
+      "Bash(grep -r \"NextProxy\\\\|type.*proxy\\\\|export.*proxy\" /Users/nathanielstoddard/okrunit/node_modules/next/dist/server --include=*.ts --include=*.d.ts)",
+      "Bash(find /Users/nathanielstoddard/okrunit/node_modules/next -name *.d.ts -type f)",
+      "Bash(grep -r middleware-to-proxy /Users/nathanielstoddard/okrunit/node_modules/next/dist/docs --include=*.md)",
+      "Bash(find /Users/nathanielstoddard/okrunit -maxdepth 2 -name next.config.* -o -name middleware.ts)",
+      "Bash(ls -la /Users/nathanielstoddard/okrunit/*.ts)",
+      "Bash(ls /Users/nathanielstoddard/okrunit/src/app/\\\\\\(dashboard\\\\\\)/)",
+      "Bash(ls /Users/nathanielstoddard/okrunit/src/middleware*)",
+      "Bash(ls /Users/nathanielstoddard/okrunit/middleware*)",
+      "Bash(curl -s \"https://srtqterqrmptljfwllfr.supabase.co/auth/v1/admin/users?per_page=5\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNydHF0ZXJxcm1wdGxqZndsbGZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTUzNzkzNCwiZXhwIjoyMDg3MTEzOTM0fQ.hnyBUDcb8tYLkBn8A30dZDdIPizlpIouF_pYAu651GY\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNydHF0ZXJxcm1wdGxqZndsbGZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTUzNzkzNCwiZXhwIjoyMDg3MTEzOTM0fQ.hnyBUDcb8tYLkBn8A30dZDdIPizlpIouF_pYAu651GY\")",
+      "Bash(PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 E2E_EMAIL=\"test@okrunit.com\" E2E_PASSWORD=\"e2e-test-password-2026!\" npx playwright test e2e/navigation-perf.spec.ts --reporter=line)"
     ],
     "additionalDirectories": [
       "/Users/nathanielstoddard/gatekeeper/src/app/api/v1/oauth/grants",

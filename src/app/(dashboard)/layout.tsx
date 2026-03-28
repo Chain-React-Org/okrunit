@@ -26,10 +26,9 @@ export default async function DashboardLayout({
 
   const { profile, membership, org } = ctx;
 
-  const userOrgs = await getUserOrgs(profile.id);
-
   const admin = createAdminClient();
-  const [{ count: pendingCount }, { count: connectionCount }] = await Promise.all([
+  const [userOrgs, { count: pendingCount }, { count: connectionCount }] = await Promise.all([
+    getUserOrgs(profile.id),
     admin
       .from("approval_requests")
       .select("*", { count: "exact", head: true })
