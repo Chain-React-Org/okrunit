@@ -42,7 +42,6 @@ export default async function DashboardLayout({
   ]);
 
   const showSetup = (connectionCount ?? 0) === 0;
-  const isAdmin = membership.role === "owner" || membership.role === "admin";
 
   return (
     <DashboardShell
@@ -61,7 +60,6 @@ export default async function DashboardLayout({
         showSetup,
       }}
       emergencyStopActive={org.emergency_stop_active}
-      isAdmin={isAdmin}
       user={{
         email: profile.email,
         full_name: profile.full_name,

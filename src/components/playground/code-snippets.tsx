@@ -1,7 +1,7 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// OKRunit -- Code Snippets Generator
+// OKrunit -- Code Snippets Generator
 // Auto-generates curl, JavaScript fetch, and Python requests code snippets
 // from the current playground request configuration.
 // ---------------------------------------------------------------------------
@@ -10,7 +10,12 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Copy, Check } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Copy, Check, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
@@ -149,9 +154,9 @@ function CopyButton({ text }: { text: string }) {
   return (
     <Button
       type="button"
-      variant="ghost"
+      variant={copied ? "default" : "secondary"}
       size="sm"
-      className="h-7 gap-1.5 text-xs"
+      className="h-8 gap-1.5 text-xs"
       onClick={handleCopy}
     >
       {copied ? (
@@ -159,7 +164,7 @@ function CopyButton({ text }: { text: string }) {
       ) : (
         <Copy className="size-3.5" />
       )}
-      {copied ? "Copied" : "Copy"}
+      {copied ? "Copied!" : "Copy code"}
     </Button>
   );
 }
@@ -182,7 +187,17 @@ export function CodeSnippets({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Code Snippets</CardTitle>
+        <div className="flex items-center gap-1.5">
+          <CardTitle className="text-base">Code Snippets</CardTitle>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <HelpCircle className="size-3.5 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              Auto-generated code examples based on your current request configuration. Copy these into your own projects to make the same API call.
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="curl">

@@ -17,7 +17,6 @@ import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   emergencyStopActive: boolean;
-  isAdmin?: boolean;
   user?: {
     email: string;
     full_name: string | null;
@@ -38,7 +37,7 @@ function getInitials(name: string | null, email: string): string {
   return email.charAt(0).toUpperCase();
 }
 
-export function Header({ emergencyStopActive, isAdmin, user, orgName, pendingCount = 0 }: HeaderProps) {
+export function Header({ emergencyStopActive, user, orgName, pendingCount = 0 }: HeaderProps) {
   const router = useRouter();
   const { setMobileOpen } = useSidebarStore();
 
@@ -51,15 +50,12 @@ export function Header({ emergencyStopActive, isAdmin, user, orgName, pendingCou
 
   return (
     <header>
-      {/* Emergency banner — admin-only, clickable to go to Safety settings */}
-      {emergencyStopActive && isAdmin && (
-        <Link
-          href="/settings?tab=safety"
-          className="emergency-banner flex items-center justify-center gap-2 bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
-        >
+      {/* Emergency banner */}
+      {emergencyStopActive && (
+        <div className="emergency-banner flex items-center justify-center gap-2 bg-red-600 px-4 py-2 text-sm font-medium text-white">
           <AlertTriangle className="size-4" />
-          Emergency Stop Active — All approval requests are being held. Click to manage.
-        </Link>
+          Emergency Stop Active — All approval requests are being held.
+        </div>
       )}
 
       {/* Top bar */}
@@ -122,7 +118,7 @@ export function Header({ emergencyStopActive, isAdmin, user, orgName, pendingCou
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link href="/settings">
+                  <Link href="/settings/account">
                     <Settings className="mr-2 size-4" />
                     Settings
                   </Link>

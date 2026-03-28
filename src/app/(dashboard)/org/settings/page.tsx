@@ -4,7 +4,7 @@ import { V2OrgSettings } from "@/components/org/v2-org-settings";
 import type { UserRole } from "@/lib/types/database";
 
 export const metadata = {
-  title: "Organization Settings - OKRunit",
+  title: "Organization Settings - OKrunit",
   description: "Manage your organization settings.",
 };
 
