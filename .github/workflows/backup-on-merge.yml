@@ -1,15 +1,23 @@
-name: Backup on Merge
+name: Backup Mirror
 
 on:
-  pull_request:
-    branches: [main]
-    types: [closed]
+  # Run after CI completes on any branch (catches direct pushes to main)
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  # Run on a schedule as a fallback (auto-merges via GITHUB_TOKEN
+  # don't trigger push/workflow_run events)
+  schedule:
+    - cron: "*/15 * * * *"
 
 jobs:
   backup:
     name: Backup Mirror
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
     steps:
       - uses: actions/checkout@v4
         with:
