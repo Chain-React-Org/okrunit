@@ -18,16 +18,24 @@ export default async function V2OrgInvitesPage() {
 
   const admin = createAdminClient();
 
-  const { data: pendingInvites } = await admin
-    .from("org_invites")
-    .select("id, org_id, email, role, invited_by, expires_at, accepted_at, created_at")
-    .eq("org_id", membership.org_id)
-    .is("accepted_at", null)
-    .gt("expires_at", new Date().toISOString())
-    .order("created_at", { ascending: false })
-    .returns<Omit<OrgInvite, "token">[]>();
+  const [{ data: pendingInvites }, { data: teams }] = await Promise.all([
+    admin
+      .from("org_invites")
+      .select("id, org_id, email, role, invited_by, expires_at, accepted_at, team_ids, created_at")
+      .eq("org_id", membership.org_id)
+      .is("accepted_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .returns<Omit<OrgInvite, "token">[]>(),
+    admin
+      .from("teams")
+      .select("id, name")
+      .eq("org_id", membership.org_id)
+      .order("name"),
+  ]);
 
   const invites = (pendingInvites ?? []) as OrgInvite[];
+  const orgTeams = (teams ?? []).map((t) => ({ id: t.id, name: t.name }));
 
-  return <V2InviteSection invites={invites} />;
+  return <V2InviteSection invites={invites} teams={orgTeams} />;
 }

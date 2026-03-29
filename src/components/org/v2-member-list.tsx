@@ -73,9 +73,10 @@ function getInitials(name: string | null, email: string): string {
 }
 
 const roleConfig = {
-  owner: { icon: Crown, label: "Owner", color: "text-foreground", bg: "bg-white" },
-  admin: { icon: Shield, label: "Admin", color: "text-foreground", bg: "bg-white" },
-  member: { icon: User, label: "Member", color: "text-foreground", bg: "bg-white" },
+  owner: { icon: Crown, label: "Owner", color: "text-black", bg: "bg-white" },
+  admin: { icon: Shield, label: "Admin", color: "text-black", bg: "bg-white" },
+  approver: { icon: ShieldCheck, label: "Approver", color: "text-teal-700", bg: "bg-teal-50" },
+  member: { icon: User, label: "Member", color: "text-black", bg: "bg-white" },
 } as const;
 
 interface V2MemberListProps {
@@ -212,7 +213,7 @@ export function V2MemberList({
   }
 
   const roleCounts = useMemo(() => {
-    const counts: Record<string, number> = { owner: 0, admin: 0, member: 0 };
+    const counts: Record<string, number> = { owner: 0, admin: 0, approver: 0, member: 0 };
     members.forEach((m) => { counts[m.role]++; });
     return counts;
   }, [members]);
@@ -236,6 +237,7 @@ export function V2MemberList({
               { value: "all", label: "All" },
               { value: "owner", label: "Owners" },
               { value: "admin", label: "Admins" },
+              { value: "approver", label: "Approvers" },
               { value: "member", label: "Members" },
             ].map((filter) => (
               <button
@@ -287,7 +289,7 @@ export function V2MemberList({
             return (
               <div
                 key={member.id}
-                className="group flex items-center gap-4 rounded-xl border border-border/50 px-4 py-3 transition-colors hover:border-border hover:bg-muted/20"
+                className="group flex items-center gap-4 rounded-xl border border-border/50 bg-white px-4 py-3 transition-colors hover:border-border hover:bg-white"
               >
                 {/* Avatar */}
                 <Avatar size="sm">
@@ -303,7 +305,7 @@ export function V2MemberList({
                       {member.full_name ?? member.email.split("@")[0]}
                     </p>
                     {isSelf && (
-                      <span className="shrink-0 text-[10px] font-medium text-foreground bg-white shadow-sm px-1.5 py-0.5 rounded">you</span>
+                      <span className="shrink-0 text-[10px] font-medium text-black bg-white shadow-sm px-1.5 py-0.5 rounded">you</span>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{member.email}</p>
@@ -326,7 +328,7 @@ export function V2MemberList({
                     <span className="text-[11px] text-muted-foreground/40">No activity</span>
                   )}
                   {pendingLoad > 0 && (
-                    <span className="flex items-center gap-0.5 rounded-md bg-white px-1.5 py-0.5 text-[11px] font-medium text-foreground">
+                    <span className="flex items-center gap-0.5 rounded-md bg-white px-1.5 py-0.5 text-[11px] font-medium text-black">
                       <Clock className="size-3" />
                       {pendingLoad}
                     </span>
@@ -350,12 +352,14 @@ export function V2MemberList({
                           <Switch
                             checked={canApproveValue}
                             onCheckedChange={(checked) => handleCanApproveChange(member.id, checked)}
-                            disabled={isSelf}
+                            disabled={isSelf || member.role === "approver"}
                           />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        {canApproveValue
+                        {member.role === "approver"
+                          ? "Approvers always have approval permission."
+                          : canApproveValue
                           ? "This member can approve or reject requests. Toggle off to revoke."
                           : "This member cannot approve requests. Toggle on to grant permission."}
                       </TooltipContent>
@@ -365,19 +369,25 @@ export function V2MemberList({
 
                 {/* Role */}
                 <div className="shrink-0">
-                  {isOwner && !isSelf && member.role !== "owner" ? (
+                  {(isOwner || currentUserRole === "admin") && !isSelf && member.role !== "owner" && !(currentUserRole === "admin" && member.role === "admin") ? (
                     <Select
                       value={member.role}
                       onValueChange={(value) => handleRoleChange(member.id, value)}
                       disabled={loading === member.id}
                     >
-                      <SelectTrigger size="sm" className="w-[120px] h-8 text-xs !bg-white !text-foreground !border-transparent !shadow-none">
+                      <SelectTrigger size="sm" className="w-[120px] h-8 text-xs !bg-white !text-black !border-transparent !shadow-none">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="admin">
-                          <Shield className="mr-1.5 inline size-3" />
-                          Admin
+                        {isOwner && (
+                          <SelectItem value="admin">
+                            <Shield className="mr-1.5 inline size-3" />
+                            Admin
+                          </SelectItem>
+                        )}
+                        <SelectItem value="approver">
+                          <ShieldCheck className="mr-1.5 inline size-3" />
+                          Approver
                         </SelectItem>
                         <SelectItem value="member">
                           <User className="mr-1.5 inline size-3" />

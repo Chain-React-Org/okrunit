@@ -539,7 +539,7 @@ export async function PATCH(
     // 5d. If required_role is set, enforce role hierarchy
     const requiredRole: string | null = approval.required_role;
     if (requiredRole) {
-      const roleLevel: Record<string, number> = { member: 0, admin: 1, owner: 2 };
+      const roleLevel: Record<string, number> = { member: 0, approver: 1, admin: 2, owner: 3 };
       const userRoleLevel = roleLevel[auth.membership.role] ?? 0;
       const requiredRoleLevel = roleLevel[requiredRole] ?? 0;
 

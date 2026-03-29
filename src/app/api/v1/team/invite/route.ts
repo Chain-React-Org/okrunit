@@ -22,7 +22,8 @@ import type { OrgInvite } from "@/lib/types/database";
 
 const inviteBodySchema = z.object({
   email: z.string().email("Invalid email address"),
-  role: z.enum(["admin", "member"]),
+  role: z.enum(["admin", "approver", "member"]),
+  team_ids: z.array(z.string().uuid()).optional().default([]),
 });
 
 const revokeBodySchema = z.object({
@@ -78,6 +79,11 @@ export async function POST(request: Request) {
         );
       }
       throw err;
+    }
+
+    // Only owners can invite as admin.
+    if (body.role === "admin" && auth.membership.role !== "owner") {
+      throw new ApiError(403, "Only owners can invite as admin");
     }
 
     const admin = createAdminClient();
@@ -143,8 +149,9 @@ export async function POST(request: Request) {
         token,
         invited_by: auth.user.id,
         expires_at: expiresAt.toISOString(),
+        team_ids: body.team_ids,
       })
-      .select("id, org_id, email, role, invited_by, expires_at, created_at")
+      .select("id, org_id, email, role, invited_by, expires_at, team_ids, created_at")
       .single<Omit<OrgInvite, "token" | "accepted_at">>();
 
     if (insertError || !invite) {
@@ -206,7 +213,7 @@ export async function POST(request: Request) {
       action: "invite.created",
       resourceType: "org_invite",
       resourceId: invite.id,
-      details: { email: normalizedEmail, role: body.role },
+      details: { email: normalizedEmail, role: body.role, team_ids: body.team_ids },
       ipAddress,
     });
 

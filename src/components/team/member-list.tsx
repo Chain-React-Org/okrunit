@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Crown, Shield, User, Trash2, Search, Download, ClipboardCopy, Check, ThumbsUp, ThumbsDown, Clock, Info } from "lucide-react";
+import { Crown, Shield, ShieldCheck, User, Trash2, Search, Download, ClipboardCopy, Check, ThumbsUp, ThumbsDown, Clock, Info } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -67,25 +67,29 @@ function getInitials(name: string | null, email: string): string {
 const roleIcons = {
   owner: Crown,
   admin: Shield,
+  approver: ShieldCheck,
   member: User,
 } as const;
 
 const roleLabels = {
   owner: "Owner",
   admin: "Admin",
+  approver: "Approver",
   member: "Member",
 } as const;
 
 const roleBadgeVariants = {
   owner: "default",
   admin: "secondary",
+  approver: "secondary",
   member: "outline",
 } as const;
 
 const roleDescriptions = {
   owner: "Full access. Can manage billing, members, roles, and all settings. Cannot be removed.",
   admin: "Can manage members, invites, connections, webhooks, and messaging. Cannot change roles.",
-  member: "Can view and act on approval requests. No management access.",
+  approver: "Can view and approve or reject requests. No management access.",
+  member: "Can view approval requests. No management access.",
 } as const;
 
 // ---- Component ------------------------------------------------------------

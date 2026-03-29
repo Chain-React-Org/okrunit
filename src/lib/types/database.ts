@@ -20,9 +20,9 @@ export type ConditionStatus = "pending" | "met" | "failed";
 
 export type ApprovalPriority = "low" | "medium" | "high" | "critical";
 
-export type UserRole = "owner" | "admin" | "member";
+export type UserRole = "owner" | "admin" | "approver" | "member";
 
-export type InviteRole = "admin" | "member";
+export type InviteRole = "admin" | "approver" | "member";
 
 export type MessagingPlatform = "discord" | "email" | "slack" | "teams" | "telegram";
 
@@ -259,6 +259,7 @@ export interface OrgInvite {
   invited_by: string;
   expires_at: string;
   accepted_at: string | null;
+  team_ids: string[];
   created_at: string;
 }
 

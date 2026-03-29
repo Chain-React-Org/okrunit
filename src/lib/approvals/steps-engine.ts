@@ -246,7 +246,7 @@ async function isAuthorizedForStep(step: ApprovalStep, userId: string): Promise<
 
     if (!membership) return false;
 
-    const roleHierarchy = { member: 0, admin: 1, owner: 2 };
+    const roleHierarchy = { member: 0, approver: 1, admin: 2, owner: 3 };
     const userLevel = roleHierarchy[membership.role as keyof typeof roleHierarchy] ?? 0;
     const requiredLevel = roleHierarchy[step.assigned_role as keyof typeof roleHierarchy] ?? 0;
     return userLevel >= requiredLevel;

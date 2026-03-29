@@ -40,6 +40,7 @@ import type {
 const roleConfig = {
   owner: { icon: Crown, label: "Owner", color: "text-amber-600", bg: "bg-amber-500/10", border: "border-amber-200" },
   admin: { icon: Shield, label: "Admin", color: "text-blue-600", bg: "bg-blue-500/10", border: "border-blue-200" },
+  approver: { icon: ShieldCheck, label: "Approver", color: "text-teal-600", bg: "bg-teal-500/10", border: "border-teal-200" },
   member: { icon: User, label: "Member", color: "text-muted-foreground", bg: "bg-muted", border: "border-border" },
 } as const;
 

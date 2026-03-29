@@ -64,6 +64,7 @@ const DURATION_PRESETS = [
 
 const ROLE_OPTIONS: { label: string; value: UserRole }[] = [
   { label: "Member (anyone)", value: "member" },
+  { label: "Approver or higher", value: "approver" },
   { label: "Admin or higher", value: "admin" },
   { label: "Owner only", value: "owner" },
 ];

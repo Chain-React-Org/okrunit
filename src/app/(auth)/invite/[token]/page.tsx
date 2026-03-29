@@ -143,6 +143,15 @@ export default async function InviteAcceptPage({
     is_default: false,
   });
 
+  // 4. Auto-add to teams if specified on the invite.
+  const teamIds: string[] = invite.team_ids ?? [];
+  if (teamIds.length > 0) {
+    const rows = teamIds.map((tid) => ({ team_id: tid, user_id: user.id }));
+    await admin
+      .from("team_memberships")
+      .upsert(rows, { onConflict: "team_id,user_id", ignoreDuplicates: true });
+  }
+
   // Mark invite as accepted.
   await admin
     .from("org_invites")
@@ -156,7 +165,7 @@ export default async function InviteAcceptPage({
     action: "invite.accepted",
     resourceType: "org_invite",
     resourceId: invite.id,
-    details: { email: invite.email, role: invite.role },
+    details: { email: invite.email, role: invite.role, team_ids: teamIds },
   });
 
   redirect("/org/overview");

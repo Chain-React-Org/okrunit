@@ -14,7 +14,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const updateRoleSchema = z.object({
   user_id: z.string().uuid("Invalid user ID"),
-  role: z.enum(["admin", "member"]).optional(),
+  role: z.enum(["admin", "approver", "member"]).optional(),
   can_approve: z.boolean().optional(),
 });
 
@@ -119,9 +119,14 @@ export async function PATCH(request: Request) {
       throw err;
     }
 
-    // Role changes require owner-level permissions.
-    if (body.role && auth.membership.role !== "owner") {
-      throw new ApiError(403, "Only owners can change member roles");
+    // Role changes: owners can set any role; admins can set approver/member.
+    if (body.role) {
+      if (body.role === "admin" && auth.membership.role !== "owner") {
+        throw new ApiError(403, "Only owners can promote to admin");
+      }
+      if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
+        throw new ApiError(403, "Insufficient permissions to change roles");
+      }
     }
 
     const admin = createAdminClient();

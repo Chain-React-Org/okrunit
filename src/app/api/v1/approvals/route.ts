@@ -31,7 +31,8 @@ import { canCreateRequest } from "@/lib/billing/enforce";
 /** Return all roles that satisfy a minimum role requirement. */
 function getRoleHierarchy(minRole: string): string[] {
   switch (minRole) {
-    case "member": return ["member", "admin", "owner"];
+    case "member": return ["member", "approver", "admin", "owner"];
+    case "approver": return ["approver", "admin", "owner"];
     case "admin": return ["admin", "owner"];
     case "owner": return ["owner"];
     default: return [minRole];
