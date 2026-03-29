@@ -4,8 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ApprovalDashboard } from "@/components/approvals/approval-dashboard";
 import type { CreatedByInfo } from "@/lib/types/database";
 
-export const dynamic = "force-dynamic";
-
 export const metadata = {
   title: "Requests - OKRunit",
   description: "View and manage approval requests.",

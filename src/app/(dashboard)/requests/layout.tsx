@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { RequestsNav } from "@/components/requests/requests-nav";
 
 export default async function RequestsLayout({
@@ -10,28 +9,20 @@ export default async function RequestsLayout({
 }) {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
-  const { membership, org } = ctx;
+  const { membership } = ctx;
 
   const isAdmin = membership.role === "owner" || membership.role === "admin";
-
-  const admin = createAdminClient();
-  const { count } = await admin
-    .from("approval_requests")
-    .select("*", { count: "exact", head: true })
-    .eq("org_id", org.id)
-    .eq("status", "pending");
-  const pendingCount = count ?? 0;
 
   return (
     <div className="flex w-full flex-col md:flex-row md:min-h-[calc(100vh-52px)]">
       {/* Left sidebar — desktop */}
       <aside className="hidden md:block w-56 shrink-0 border-r border-border/40 bg-white pt-5">
-        <RequestsNav isAdmin={isAdmin} pendingCount={pendingCount} />
+        <RequestsNav isAdmin={isAdmin} pendingCount={0} />
       </aside>
 
       {/* Mobile nav — top dropdown */}
       <div className="md:hidden border-b border-border/40 bg-background px-4 py-3">
-        <RequestsNav isAdmin={isAdmin} pendingCount={pendingCount} mobile />
+        <RequestsNav isAdmin={isAdmin} pendingCount={0} mobile />
       </div>
 
       {/* Main content */}

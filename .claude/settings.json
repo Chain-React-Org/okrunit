@@ -413,7 +413,22 @@
       "Bash(ls /Users/nathanielstoddard/okrunit/src/middleware*)",
       "Bash(ls /Users/nathanielstoddard/okrunit/middleware*)",
       "Bash(curl -s \"https://srtqterqrmptljfwllfr.supabase.co/auth/v1/admin/users?per_page=5\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNydHF0ZXJxcm1wdGxqZndsbGZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTUzNzkzNCwiZXhwIjoyMDg3MTEzOTM0fQ.hnyBUDcb8tYLkBn8A30dZDdIPizlpIouF_pYAu651GY\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNydHF0ZXJxcm1wdGxqZndsbGZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTUzNzkzNCwiZXhwIjoyMDg3MTEzOTM0fQ.hnyBUDcb8tYLkBn8A30dZDdIPizlpIouF_pYAu651GY\")",
-      "Bash(PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 E2E_EMAIL=\"test@okrunit.com\" E2E_PASSWORD=\"e2e-test-password-2026!\" npx playwright test e2e/navigation-perf.spec.ts --reporter=line)"
+      "Bash(PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 E2E_EMAIL=\"test@okrunit.com\" E2E_PASSWORD=\"e2e-test-password-2026!\" npx playwright test e2e/navigation-perf.spec.ts --reporter=line)",
+      "Bash(gh pr:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm update:*)",
+      "Bash(npm cache:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge-tree:*)",
+      "Bash(git rebase:*)",
+      "Bash(find /Users/nathanielstoddard/okrunit/src -type d -name \"\\(dashboard\\)\")",
+      "Bash(wc -l /Users/nathanielstoddard/okrunit/src/app/\\\\\\(dashboard\\\\\\)/*/loading.tsx)",
+      "Bash(head -30 /Users/nathanielstoddard/okrunit/src/app/\\\\\\(dashboard\\\\\\)/layout.tsx)",
+      "Bash(ls -la /Users/nathanielstoddard/okrunit/src/app/\\\\\\(dashboard\\\\\\)/)",
+      "Bash(ls -la /Users/nathanielstoddard/okrunit/src/app/\\\\\\(dashboard\\\\\\)/requests/*/loading.tsx)",
+      "Bash(ls -la /Users/nathanielstoddard/okrunit/src/app/\\\\\\(dashboard\\\\\\)/org/*/loading.tsx)",
+      "Bash(ls -la /Users/nathanielstoddard/okrunit/src/app/\\\\\\(dashboard\\\\\\)/settings/*/loading.tsx)",
+      "Bash(gh secret:*)"
     ],
     "additionalDirectories": [
       "/Users/nathanielstoddard/gatekeeper/src/app/api/v1/oauth/grants",

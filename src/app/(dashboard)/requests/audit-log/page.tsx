@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
 import { AuditLogClient } from "@/components/audit/audit-log-client";

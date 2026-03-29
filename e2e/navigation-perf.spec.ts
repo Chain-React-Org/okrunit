@@ -56,10 +56,12 @@ test.describe("Dashboard navigation performance", () => {
     }
 
     // Now test client-side navigations (clicking links in the sidebar)
+    // Measures both time-to-visual-feedback (URL change) and time-to-full-load (networkidle)
     const clientNavResults: {
       from: string;
       to: string;
-      durationMs: number;
+      visualMs: number;
+      fullMs: number;
     }[] = [];
 
     // Navigate to a known starting point
@@ -69,8 +71,8 @@ test.describe("Dashboard navigation performance", () => {
     const clientRoutes = [
       { name: "Org Overview", path: "/org/overview" },
       { name: "Requests", path: "/requests" },
-      { name: "Analytics", path: "/analytics" },
-      { name: "Connections", path: "/connections" },
+      { name: "Analytics", path: "/requests/analytics" },
+      { name: "Connections", path: "/requests/connections" },
     ];
 
     for (const target of clientRoutes) {
@@ -83,23 +85,25 @@ test.describe("Dashboard navigation performance", () => {
       if (await link.isVisible()) {
         await link.click();
       } else {
-        // Fallback to goto if sidebar link not found
         await page.goto(target.path);
       }
 
       await page.waitForURL(`**${target.path}*`, { timeout: 15000 });
-      await page.waitForLoadState("networkidle");
+      const visualMs = Date.now() - start;
 
-      const duration = Date.now() - start;
+      await page.waitForLoadState("networkidle");
+      const fullMs = Date.now() - start;
+
       clientNavResults.push({
         from: fromPath,
         to: target.path,
-        durationMs: duration,
+        visualMs,
+        fullMs,
       });
     }
 
     // Print results
-    console.log("\n=== FULL PAGE NAVIGATION (page.goto) ===");
+    console.log("\n=== FULL PAGE NAVIGATION (page.goto → networkidle) ===");
     for (const r of results) {
       const status = r.durationMs > 3000 ? "🔴 SLOW" : r.durationMs > 1500 ? "🟡 MODERATE" : "🟢 FAST";
       console.log(`  ${r.from} → ${r.to}: ${r.durationMs}ms ${status}`);
@@ -107,22 +111,27 @@ test.describe("Dashboard navigation performance", () => {
 
     console.log("\n=== CLIENT-SIDE NAVIGATION (link click) ===");
     for (const r of clientNavResults) {
-      const status = r.durationMs > 3000 ? "🔴 SLOW" : r.durationMs > 1500 ? "🟡 MODERATE" : "🟢 FAST";
-      console.log(`  ${r.from} → ${r.to}: ${r.durationMs}ms ${status}`);
+      const visualStatus = r.visualMs > 500 ? "🔴 SLOW" : r.visualMs > 200 ? "🟡 OK" : "🟢 INSTANT";
+      const fullStatus = r.fullMs > 3000 ? "🔴 SLOW" : r.fullMs > 1500 ? "🟡 MODERATE" : "🟢 FAST";
+      console.log(`  ${r.from} → ${r.to}: visual=${r.visualMs}ms ${visualStatus} | full=${r.fullMs}ms ${fullStatus}`);
     }
 
     const avgFull =
       results.reduce((s, r) => s + r.durationMs, 0) / results.length;
-    const avgClient =
-      clientNavResults.reduce((s, r) => s + r.durationMs, 0) /
+    const avgVisual =
+      clientNavResults.reduce((s, r) => s + r.visualMs, 0) /
+      clientNavResults.length;
+    const avgClientFull =
+      clientNavResults.reduce((s, r) => s + r.fullMs, 0) /
       clientNavResults.length;
 
-    console.log(`\n  Average full navigation: ${Math.round(avgFull)}ms`);
-    console.log(`  Average client navigation: ${Math.round(avgClient)}ms`);
+    console.log(`\n  Average full page navigation: ${Math.round(avgFull)}ms`);
+    console.log(`  Average client visual feedback: ${Math.round(avgVisual)}ms`);
+    console.log(`  Average client full load: ${Math.round(avgClientFull)}ms`);
 
-    // Assert that average navigation is under 5 seconds (generous threshold)
-    // Tighten this as performance improves
-    expect(avgFull).toBeLessThan(5000);
-    expect(avgClient).toBeLessThan(5000);
+    // Visual feedback should be under 500ms (instant feel)
+    expect(avgVisual).toBeLessThan(500);
+    // Full load should be under 5 seconds
+    expect(avgClientFull).toBeLessThan(5000);
   });
 });
