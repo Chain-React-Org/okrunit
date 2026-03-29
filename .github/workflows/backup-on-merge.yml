@@ -1,0 +1,28 @@
+name: Backup on Merge
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+jobs:
+  backup:
+    name: Backup Mirror
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Push main to backup repo
+        env:
+          BACKUP_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
+        run: |
+          if [ -z "$BACKUP_TOKEN" ]; then
+            echo "::warning::BACKUP_REPO_TOKEN secret not set — skipping mirror."
+            exit 0
+          fi
+          git remote add backup https://x-access-token:${BACKUP_TOKEN}@github.com/nstoddard17/okrunit-backup.git
+          git push backup main || echo "Backup already up to date"
