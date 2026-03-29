@@ -73,9 +73,9 @@ function getInitials(name: string | null, email: string): string {
 }
 
 const roleConfig = {
-  owner: { icon: Crown, label: "Owner", color: "text-amber-600", bg: "bg-amber-500/10" },
-  admin: { icon: Shield, label: "Admin", color: "text-blue-600", bg: "bg-blue-500/10" },
-  member: { icon: User, label: "Member", color: "text-muted-foreground", bg: "bg-muted" },
+  owner: { icon: Crown, label: "Owner", color: "text-foreground", bg: "bg-white" },
+  admin: { icon: Shield, label: "Admin", color: "text-foreground", bg: "bg-white" },
+  member: { icon: User, label: "Member", color: "text-foreground", bg: "bg-white" },
 } as const;
 
 interface V2MemberListProps {
@@ -228,10 +228,10 @@ export function V2MemberList({
               placeholder="Search members..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
+              className="pl-9 h-9 !bg-white !shadow-none"
             />
           </div>
-          <div className="flex items-center gap-1 rounded-lg border border-border/50 p-0.5">
+          <div className="flex items-center gap-1 rounded-lg bg-white p-0.5">
             {[
               { value: "all", label: "All" },
               { value: "owner", label: "Owners" },
@@ -243,7 +243,7 @@ export function V2MemberList({
                 onClick={() => setRoleFilter(filter.value)}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   roleFilter === filter.value
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-white text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -255,7 +255,7 @@ export function V2MemberList({
             ))}
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5 h-9">
+        <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5 h-9 bg-white text-foreground hover:bg-white/80">
           <Download className="size-3.5" />
           Export
         </Button>
@@ -303,7 +303,7 @@ export function V2MemberList({
                       {member.full_name ?? member.email.split("@")[0]}
                     </p>
                     {isSelf && (
-                      <span className="shrink-0 text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">you</span>
+                      <span className="shrink-0 text-[10px] font-medium text-foreground bg-white shadow-sm px-1.5 py-0.5 rounded">you</span>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{member.email}</p>
@@ -326,7 +326,7 @@ export function V2MemberList({
                     <span className="text-[11px] text-muted-foreground/40">No activity</span>
                   )}
                   {pendingLoad > 0 && (
-                    <span className="flex items-center gap-0.5 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-medium text-amber-600">
+                    <span className="flex items-center gap-0.5 rounded-md bg-white px-1.5 py-0.5 text-[11px] font-medium text-foreground">
                       <Clock className="size-3" />
                       {pendingLoad}
                     </span>
@@ -371,7 +371,7 @@ export function V2MemberList({
                       onValueChange={(value) => handleRoleChange(member.id, value)}
                       disabled={loading === member.id}
                     >
-                      <SelectTrigger size="sm" className="w-[120px] h-8 text-xs">
+                      <SelectTrigger size="sm" className="w-[120px] h-8 text-xs !bg-white !text-foreground !border-transparent !shadow-none">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

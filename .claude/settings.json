@@ -428,7 +428,13 @@
       "Bash(ls -la /Users/nathanielstoddard/okrunit/src/app/\\\\\\(dashboard\\\\\\)/requests/*/loading.tsx)",
       "Bash(ls -la /Users/nathanielstoddard/okrunit/src/app/\\\\\\(dashboard\\\\\\)/org/*/loading.tsx)",
       "Bash(ls -la /Users/nathanielstoddard/okrunit/src/app/\\\\\\(dashboard\\\\\\)/settings/*/loading.tsx)",
-      "Bash(gh secret:*)"
+      "Bash(gh secret:*)",
+      "Bash(grep -r \"useRouter\\\\|usePathname\" /Users/nathanielstoddard/okrunit/src/components/layout --include=*.tsx --include=*.ts)",
+      "Bash(find /Users/nathanielstoddard/okrunit -type f \\\\\\(-name *.css -o -name *.module.css \\\\\\))",
+      "Bash(find /Users/nathanielstoddard/okrunit/src/stores -name *)",
+      "Bash(PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 E2E_EMAIL=\"test@okrunit.com\" E2E_PASSWORD=\"e2e-test-password-2026!\" npx playwright test --reporter=line -g \"never match\")",
+      "Bash(PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 E2E_EMAIL=\"test@okrunit.com\" E2E_PASSWORD=\"e2e-test-password-2026!\" npx playwright test --config=playwright.config.ts /tmp/screenshot-members.ts --reporter=line)",
+      "Bash(PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 E2E_EMAIL=\"test@okrunit.com\" E2E_PASSWORD=\"e2e-test-password-2026!\" npx playwright test e2e/screenshot-members.spec.ts --reporter=line)"
     ],
     "additionalDirectories": [
       "/Users/nathanielstoddard/gatekeeper/src/app/api/v1/oauth/grants",
