@@ -3,7 +3,7 @@
   "description": "Triggers when an approval request is approved or rejected.",
   "actionType": "trigger",
   "type": "polling",
-  "connection": "oauth2",
+
   "parameters": [
     {
       "name": "decision",

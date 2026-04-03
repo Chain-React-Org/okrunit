@@ -28,6 +28,7 @@ const signupSchema = z.object({
     .regex(/[^A-Za-z0-9]/, "Password must contain a special character"),
   fullName: z.string().min(1, "Full name is required"),
   inviteToken: z.string().optional(),
+  visitorId: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -124,6 +125,15 @@ export async function POST(request: Request) {
         "[Auth] RESEND_API_KEY is not set -- skipping confirmation email for:",
         body.email,
       );
+    }
+
+    // Link visitor tracking data to the new user
+    if (body.visitorId && linkData.user?.id) {
+      admin
+        .from("visitor_tracking")
+        .update({ user_id: linkData.user.id, signed_up_at: new Date().toISOString() })
+        .eq("visitor_id", body.visitorId)
+        .then();
     }
 
     return NextResponse.json({ success: true }, { status: 201 });

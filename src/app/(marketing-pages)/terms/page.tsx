@@ -92,7 +92,13 @@ export default function TermsOfServicePage() {
             via email or in-app notification. Continued use after changes constitutes acceptance.
           </p>
 
-          <h2>12. Contact</h2>
+          <h2>12. Governing Law</h2>
+          <p>
+            OKrunit is operated from the United States. These terms are governed by the laws of
+            the State of Washington, United States, without regard to conflict of law principles.
+          </p>
+
+          <h2>13. Contact</h2>
           <p>
             For questions about these terms, contact us at{" "}
             <a href="mailto:support@okrunit.com" className="text-primary hover:underline">

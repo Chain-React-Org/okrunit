@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, DM_Sans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { ClientErrorReporter } from "@/components/client-error-reporter";
+import { UTMTracker } from "@/components/tracking/utm-tracker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -97,6 +98,7 @@ export default function RootLayout({
           {children}
           <Toaster />
           <ClientErrorReporter />
+          <UTMTracker />
         </ThemeProvider>
       </body>
     </html>

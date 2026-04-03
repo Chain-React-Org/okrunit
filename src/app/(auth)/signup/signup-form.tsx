@@ -66,6 +66,7 @@ export function SignupForm() {
             password,
             fullName,
             inviteToken: inviteToken ?? undefined,
+            visitorId: document.cookie.match(/(?:^|; )__okr_vid=([^;]*)/)?.[1] || undefined,
           }),
         });
 

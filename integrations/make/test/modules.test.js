@@ -141,10 +141,9 @@ describe('new_approval', () => {
     expect(newApproval.description).toMatch(/new approval request/i);
   });
 
-  test('is a polling trigger with oauth2', () => {
+  test('is a polling trigger', () => {
     expect(newApproval.actionType).toBe('trigger');
     expect(newApproval.type).toBe('polling');
-    expect(newApproval.connection).toBe('oauth2');
   });
 
   test('endpoint is GET /api/v1/approvals', () => {
@@ -212,10 +211,9 @@ describe('approval_decided', () => {
     expect(approvalDecided.description).toMatch(/approved or rejected/i);
   });
 
-  test('is a polling trigger with oauth2', () => {
+  test('is a polling trigger', () => {
     expect(approvalDecided.actionType).toBe('trigger');
     expect(approvalDecided.type).toBe('polling');
-    expect(approvalDecided.connection).toBe('oauth2');
   });
 
   test('endpoint is GET /api/v1/approvals', () => {
@@ -293,9 +291,8 @@ describe('request_approval', () => {
     expect(requestApproval.description).toMatch(/approval/i);
   });
 
-  test('is a create action with oauth2', () => {
+  test('is a create action', () => {
     expect(requestApproval.actionType).toBe('create');
-    expect(requestApproval.connection).toBe('oauth2');
   });
 
   test('endpoint is POST /api/v1/approvals', () => {
@@ -380,9 +377,8 @@ describe('add_comment', () => {
     expect(addComment.description).toMatch(/comment/i);
   });
 
-  test('is a create action with oauth2', () => {
+  test('is a create action', () => {
     expect(addComment.actionType).toBe('create');
-    expect(addComment.connection).toBe('oauth2');
   });
 
   test('endpoint is POST /api/v1/approvals/{approvalId}/comments', () => {
@@ -443,13 +439,12 @@ describe('add_comment', () => {
 
 describe('get_approval', () => {
   test('has correct label and description', () => {
-    expect(getApproval.label).toBe('Get Approval Request');
+    expect(getApproval.label).toBe('Search approval');
     expect(getApproval.description).toMatch(/approval/i);
   });
 
-  test('is a get action with oauth2', () => {
-    expect(getApproval.actionType).toBe('get');
-    expect(getApproval.connection).toBe('oauth2');
+  test('is a search action', () => {
+    expect(getApproval.actionType).toBe('search');
   });
 
   test('endpoint is GET /api/v1/approvals/{approvalId}', () => {
@@ -500,9 +495,8 @@ describe('list_approvals', () => {
     expect(listApprovals.description).toMatch(/search|filter/i);
   });
 
-  test('is a search action with oauth2', () => {
+  test('is a search action', () => {
     expect(listApprovals.actionType).toBe('search');
-    expect(listApprovals.connection).toBe('oauth2');
   });
 
   test('endpoint is GET /api/v1/approvals', () => {
@@ -593,9 +587,8 @@ describe('approval_decision_received', () => {
     expect(approvalDecisionReceived.description).toMatch(/webhook|decision/i);
   });
 
-  test('is an instant (webhook) trigger with oauth2', () => {
+  test('is an instant (webhook) trigger', () => {
     expect(approvalDecisionReceived.type).toBe('instant');
-    expect(approvalDecisionReceived.connection).toBe('oauth2');
     expect(approvalDecisionReceived.webhook).toBeDefined();
   });
 
@@ -633,13 +626,18 @@ describe('approval_decision_received', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 
 describe('cross-module consistency', () => {
-  test('all modules use oauth2 connection', () => {
+  test('connection is defined in base, not in individual modules', () => {
+    const base = JSON.parse(
+      fs.readFileSync(path.resolve(__dirname, '..', 'base.json'), 'utf-8')
+    );
+    expect(base.connection).toBe('oauth2');
+
     const modules = [
       newApproval, approvalDecided, requestApproval,
       addComment, getApproval, listApprovals, approvalDecisionReceived,
     ];
     modules.forEach((m) => {
-      expect(m.connection).toBe('oauth2');
+      expect(m.connection).toBeUndefined();
     });
   });
 
@@ -710,11 +708,83 @@ describe('cross-module consistency', () => {
     const moduleNames = [
       'new_approval', 'approval_decided', 'request_approval',
       'add_comment', 'get_approval', 'list_approvals', 'approval_decision_received',
+      'universal',
     ];
     moduleNames.forEach((name) => {
       const filePath = path.join(MODULES_DIR, `${name}.json`);
       const raw = fs.readFileSync(filePath, 'utf-8');
       expect(() => JSON.parse(raw)).not.toThrow();
     });
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  base.json
+// ═════════════════════════════════════════════════════════════════════════════
+
+describe('base', () => {
+  const base = JSON.parse(
+    fs.readFileSync(path.resolve(__dirname, '..', 'base.json'), 'utf-8')
+  );
+
+  test('has error handling with status code and message', () => {
+    expect(base.response).toBeDefined();
+    expect(base.response.error).toBeDefined();
+    expect(base.response.error.message).toContain('statusCode');
+    expect(base.response.error.message).toContain('body.message');
+  });
+
+  test('has connection set to oauth2', () => {
+    expect(base.connection).toBe('oauth2');
+  });
+
+  test('has authorization header', () => {
+    expect(base.headers.Authorization).toContain('connection.accessToken');
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  universal (Make an API call)
+// ═════════════════════════════════════════════════════════════════════════════
+
+describe('universal', () => {
+  const universal = loadModule('universal');
+
+  test('has correct label and description', () => {
+    expect(universal.label).toBe('Make an API call');
+    expect(universal.description).toMatch(/api call/i);
+  });
+
+  test('is a universal action type', () => {
+    expect(universal.actionType).toBe('universal');
+  });
+
+  test('has url, method, headers, qs, and body parameters', () => {
+    const names = paramNames(universal);
+    expect(names).toContain('url');
+    expect(names).toContain('method');
+    expect(names).toContain('headers');
+    expect(names).toContain('qs');
+    expect(names).toContain('body');
+  });
+
+  test('url and method are required', () => {
+    expect(findParam(universal, 'url').required).toBe(true);
+    expect(findParam(universal, 'method').required).toBe(true);
+  });
+
+  test('method has standard HTTP options', () => {
+    const method = findParam(universal, 'method');
+    const values = optionValues(method);
+    expect(values).toContain('GET');
+    expect(values).toContain('POST');
+    expect(values).toContain('PUT');
+    expect(values).toContain('PATCH');
+    expect(values).toContain('DELETE');
+  });
+
+  test('has sample data', () => {
+    expect(universal.samples).toBeDefined();
+    expect(typeof universal.samples.id).toBe('string');
   });
 });

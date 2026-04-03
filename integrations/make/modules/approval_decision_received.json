@@ -2,7 +2,7 @@
   "label": "Approval Decision Received",
   "description": "Instantly triggers when OKRunit sends an approval decision to this webhook. Use this as the trigger for your second scenario in the pause-and-wait pattern.",
   "type": "instant",
-  "connection": "oauth2",
+
   "webhook": "approvalDecisionWebhook",
   "parameters": [],
   "response": {

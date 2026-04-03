@@ -1,8 +1,7 @@
 {
-  "label": "Get Approval Request",
+  "label": "Search approval",
   "description": "Fetch a single approval request by its ID.",
-  "actionType": "get",
-  "connection": "oauth2",
+  "actionType": "search",
   "parameters": [
     {
       "name": "approval_id",
@@ -15,7 +14,9 @@
   "url": "/api/v1/approvals/{{parameters.approval_id}}",
   "method": "GET",
   "response": {
-    "output": "{{body}}"
+    "output": [
+      "{{body}}"
+    ]
   },
   "samples": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
