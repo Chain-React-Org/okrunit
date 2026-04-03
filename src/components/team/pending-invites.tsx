@@ -6,6 +6,17 @@ import { Mail, Trash2, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,10 +31,11 @@ interface PendingInvitesProps {
 
 export function PendingInvites({ invites, canManage }: PendingInvitesProps) {
   const router = useRouter();
-  const [revoking, setRevoking] = useState<string | null>(null);
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  const visibleInvites = invites.filter((i) => !removedIds.has(i.id));
 
   async function handleRevoke(inviteId: string) {
-    setRevoking(inviteId);
+    setRemovedIds((prev) => new Set(prev).add(inviteId));
     try {
       const res = await fetch("/api/v1/team/invite", {
         method: "DELETE",
@@ -39,11 +51,14 @@ export function PendingInvites({ invites, canManage }: PendingInvitesProps) {
       toast.success("Invite revoked");
       router.refresh();
     } catch (err) {
+      setRemovedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(inviteId);
+        return next;
+      });
       toast.error(
         err instanceof Error ? err.message : "Failed to revoke invite",
       );
-    } finally {
-      setRevoking(null);
     }
   }
 
@@ -52,12 +67,12 @@ export function PendingInvites({ invites, canManage }: PendingInvitesProps) {
       <div className="mb-4 flex items-center gap-2">
         <Mail className="text-muted-foreground size-4" />
         <h2 className="text-sm font-medium">
-          Pending Invitations ({invites.length})
+          Pending Invitations ({visibleInvites.length})
         </h2>
       </div>
 
       <div className="divide-y">
-        {invites.map((invite) => (
+        {visibleInvites.map((invite) => (
           <div
             key={invite.id}
             className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
@@ -79,15 +94,38 @@ export function PendingInvites({ invites, canManage }: PendingInvitesProps) {
             </div>
 
             {canManage && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => handleRevoke(invite.id)}
-                disabled={revoking === invite.id}
-                title="Revoke invite"
-              >
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    title="Revoke invite"
+                  >
+                    <Trash2 className="size-4 text-destructive" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will revoke the invite sent to{" "}
+                      <span className="font-medium text-foreground">
+                        {invite.email}
+                      </span>
+                      . They will no longer be able to join using this link.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleRevoke(invite.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Revoke
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         ))}

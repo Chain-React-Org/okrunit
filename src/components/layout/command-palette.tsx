@@ -22,6 +22,13 @@ import {
   MessageSquare,
   Bug,
   LineChart,
+  Building2,
+  Palette,
+  Lock,
+  UserPlus,
+  Mail,
+  Webhook,
+  Timer,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -30,23 +37,34 @@ interface CommandPaletteProps {
 }
 
 const PAGES = [
-  { name: "Overview", href: "/org/overview", icon: Home, section: "Navigate" },
-  { name: "Requests", href: "/requests", icon: ClipboardList, section: "Navigate" },
-  { name: "Connections", href: "/requests/connections", icon: Key, section: "Navigate" },
-  { name: "Routes", href: "/requests/routes", icon: Route, section: "Navigate" },
-  { name: "Rules", href: "/requests/rules", icon: GitBranch, section: "Navigate" },
-  { name: "Messaging", href: "/requests/messaging", icon: MessageSquare, section: "Navigate" },
-  { name: "Analytics", href: "/requests/analytics", icon: BarChart3, section: "Navigate" },
-  { name: "SLA Compliance", href: "/requests/sla", icon: LineChart, section: "Navigate" },
-  { name: "Teams", href: "/org/teams", icon: UsersRound, section: "Navigate" },
-  { name: "Members", href: "/org/members", icon: Users, section: "Navigate" },
-  { name: "Custom Roles", href: "/org/roles", icon: Shield, section: "Navigate" },
-  { name: "Organizations", href: "/org/organizations", icon: Home, section: "Navigate" },
-  { name: "Subscription", href: "/org/subscription", icon: CreditCard, section: "Navigate" },
-  { name: "Account Settings", href: "/settings/account", icon: Settings, section: "Navigate" },
-  { name: "Notification History", href: "/settings/notifications", icon: Bell, section: "Navigate" },
-  { name: "Audit Log", href: "/requests/audit-log", icon: FileText, section: "Navigate" },
-  { name: "Error Monitor", href: "/admin/errors", icon: Bug, section: "Admin" },
+  // Navigation
+  { name: "Overview", href: "/org/overview", icon: Home, section: "Navigate", keywords: "dashboard home" },
+  { name: "Requests", href: "/requests", icon: ClipboardList, section: "Navigate", keywords: "approvals pending review" },
+  { name: "Connections", href: "/requests/connections", icon: Key, section: "Navigate", keywords: "api keys integrations webhooks" },
+  { name: "Routes", href: "/requests/routes", icon: Route, section: "Navigate", keywords: "routing flows paths" },
+  { name: "Rules", href: "/requests/rules", icon: GitBranch, section: "Navigate", keywords: "automation auto-approve conditions" },
+  { name: "Messaging", href: "/requests/messaging", icon: MessageSquare, section: "Navigate", keywords: "slack discord telegram teams notifications chat" },
+  { name: "Analytics", href: "/requests/analytics", icon: BarChart3, section: "Navigate", keywords: "stats metrics charts reports" },
+  { name: "SLA Compliance", href: "/requests/sla", icon: LineChart, section: "Navigate", keywords: "service level agreement response time" },
+  { name: "Teams", href: "/org/teams", icon: UsersRound, section: "Navigate", keywords: "groups departments" },
+  { name: "Members", href: "/org/members", icon: Users, section: "Navigate", keywords: "people users team" },
+  { name: "Invites", href: "/org/invites", icon: UserPlus, section: "Navigate", keywords: "invite send invitation pending" },
+  { name: "Custom Roles", href: "/org/roles", icon: Shield, section: "Navigate", keywords: "permissions access control" },
+  { name: "Organizations", href: "/org/organizations", icon: Building2, section: "Navigate", keywords: "org switch workspace" },
+  { name: "Subscription", href: "/org/subscription", icon: CreditCard, section: "Navigate", keywords: "billing plan pricing upgrade payment" },
+  // Settings
+  { name: "Org Settings", href: "/org/settings", icon: Settings, section: "Settings", keywords: "organization name logo configure" },
+  { name: "Account Settings", href: "/settings/account", icon: Settings, section: "Settings", keywords: "profile email password name avatar" },
+  { name: "Appearance", href: "/settings/account", icon: Palette, section: "Settings", keywords: "theme dark light mode color" },
+  { name: "Notification Preferences", href: "/settings/notifications", icon: Bell, section: "Settings", keywords: "alerts email push digest quiet hours" },
+  { name: "Notification History", href: "/settings/notifications", icon: Bell, section: "Settings", keywords: "past alerts messages" },
+  { name: "Security", href: "/settings/account", icon: Lock, section: "Settings", keywords: "password mfa 2fa two-factor authentication webauthn passkey" },
+  { name: "Email Settings", href: "/org/settings", icon: Mail, section: "Settings", keywords: "email notifications sender" },
+  { name: "Webhooks", href: "/requests/connections", icon: Webhook, section: "Settings", keywords: "webhook endpoint callback url" },
+  { name: "Auto-Approval Rules", href: "/requests/rules", icon: Timer, section: "Settings", keywords: "automatic approve trust level schedule" },
+  // Admin
+  { name: "Audit Log", href: "/requests/audit-log", icon: FileText, section: "Admin", keywords: "history activity events trail" },
+  { name: "Error Monitor", href: "/admin/errors", icon: Bug, section: "Admin", keywords: "errors bugs exceptions sentry monitoring" },
 ];
 
 interface ApprovalResult {
@@ -172,7 +190,7 @@ export function CommandPalette({ orgId }: CommandPaletteProps) {
           )}
 
           {/* Page navigation */}
-          {["Navigate", "Admin"].map((section) => {
+          {["Navigate", "Settings", "Admin"].map((section) => {
             const items = PAGES.filter((p) => p.section === section);
             if (items.length === 0) return null;
             return (
@@ -181,8 +199,8 @@ export function CommandPalette({ orgId }: CommandPaletteProps) {
                   const Icon = page.icon;
                   return (
                     <Command.Item
-                      key={page.href}
-                      value={page.name}
+                      key={page.name}
+                      value={`${page.name} ${page.keywords}`}
                       onSelect={() => runCommand(() => router.push(page.href))}
                       className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm cursor-pointer data-[selected=true]:bg-muted"
                     >

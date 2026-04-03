@@ -18,7 +18,7 @@ export function escapeHtml(str: string): string {
 
 const PROD_URL = "https://okrunit.com";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || PROD_URL;
-const LOGO_URL = `${APP_URL}/logo_text.png`;
+const LOGO_URL = `${PROD_URL}/logo_text.png`;
 
 export { APP_URL, PROD_URL };
 
@@ -355,7 +355,7 @@ export function emailIllustrationSection(options: {
       <tr>
         <td align="center" style="padding:28px 20px;">
           <img
-            src="${APP_URL}/email/${image}"
+            src="${PROD_URL}/email/${image}"
             alt="${escapeHtml(title)}"
             width="${imageWidth}"
             height="${imageHeight}"
@@ -395,7 +395,7 @@ export function emailHeroBanner(options: {
       <tr>
         <td align="center" style="padding:${padding};">
           <img
-            src="${APP_URL}/email/${image}"
+            src="${PROD_URL}/email/${image}"
             alt="${escapeHtml(alt)}"
             width="${imageWidth}"
             height="${imageHeight}"
@@ -417,7 +417,7 @@ export function emailIconCircle(
   const radius = Math.round(size / 2);
   const imgSize = Math.round(size * 0.6);
 
-  return `<div style="width:${size}px;height:${size}px;border-radius:${radius}px;background:${palette.background};border:2px solid ${palette.border};text-align:center;line-height:${size}px;"><img src="${APP_URL}/email/${image}" alt="" width="${imgSize}" height="${imgSize}" style="display:inline-block;width:${imgSize}px;height:${imgSize}px;vertical-align:middle;border:0;" /></div>`;
+  return `<div style="width:${size}px;height:${size}px;border-radius:${radius}px;background:${palette.background};border:2px solid ${palette.border};text-align:center;line-height:${size}px;"><img src="${PROD_URL}/email/${image}" alt="" width="${imgSize}" height="${imgSize}" style="display:inline-block;width:${imgSize}px;height:${imgSize}px;vertical-align:middle;border:0;" /></div>`;
 }
 
 /** Stat block for digest / overview emails */

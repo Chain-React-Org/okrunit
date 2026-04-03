@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWelcomeEmailHtml } from "@/lib/email/welcome";
+import { safeRedirectUrl } from "@/lib/redirect";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 
@@ -10,6 +11,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
   const inviteToken = searchParams.get("invite");
+  const redirectTo = searchParams.get("redirect_to");
 
   if (!code) {
     const loginUrl = new URL("/login", origin);
@@ -77,8 +79,13 @@ export async function GET(request: NextRequest) {
   // Check if user has MFA enrolled — redirect to verification if so
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2") {
-    return NextResponse.redirect(new URL("/mfa-verify", origin));
+    const mfaUrl = new URL("/mfa-verify", origin);
+    if (redirectTo) {
+      mfaUrl.searchParams.set("redirect_to", redirectTo);
+    }
+    return NextResponse.redirect(mfaUrl);
   }
 
-  return NextResponse.redirect(new URL("/org/overview", origin));
+  // If there's a redirect_to param (e.g. from OAuth authorize flow), go there
+  return NextResponse.redirect(new URL(safeRedirectUrl(redirectTo), origin));
 }
