@@ -4,10 +4,16 @@
   "version": "1.0.0",
   "language": "en",
   "baseUrl": "https://okrunit.com",
+  "connection": "oauth2",
   "headers": {
     "Authorization": "Bearer {{connection.accessToken}}",
     "Content-Type": "application/json",
     "Accept": "application/json"
+  },
+  "response": {
+    "error": {
+      "message": "[{{statusCode}}] {{body.message}}"
+    }
   },
   "log": {
     "sanitize": ["request.headers.authorization"]

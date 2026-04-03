@@ -1,8 +1,8 @@
 {
-  "label": "List Approvals",
+  "label": "List approvals",
   "description": "Search for approval requests with filters.",
   "actionType": "search",
-  "connection": "oauth2",
+
   "parameters": [
     {
       "name": "status",

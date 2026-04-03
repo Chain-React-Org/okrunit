@@ -1,0 +1,73 @@
+{
+  "label": "Make an API call",
+  "description": "Perform an arbitrary authorized API call to the OKRunit API. This is useful for endpoints not covered by other modules.",
+  "actionType": "universal",
+  "parameters": [
+    {
+      "name": "url",
+      "type": "text",
+      "label": "URL",
+      "required": true,
+      "help": "A path relative to the base URL, e.g. /api/v1/approvals. You can also enter a full URL."
+    },
+    {
+      "name": "method",
+      "type": "select",
+      "label": "Method",
+      "required": true,
+      "default": "GET",
+      "options": [
+        { "label": "GET", "value": "GET" },
+        { "label": "POST", "value": "POST" },
+        { "label": "PUT", "value": "PUT" },
+        { "label": "PATCH", "value": "PATCH" },
+        { "label": "DELETE", "value": "DELETE" }
+      ],
+      "help": "The HTTP method of the request."
+    },
+    {
+      "name": "headers",
+      "type": "array",
+      "label": "Headers",
+      "required": false,
+      "spec": [
+        { "name": "key", "type": "text", "label": "Key" },
+        { "name": "value", "type": "text", "label": "Value" }
+      ],
+      "help": "Additional request headers. Authorization is added automatically."
+    },
+    {
+      "name": "qs",
+      "type": "array",
+      "label": "Query string",
+      "required": false,
+      "spec": [
+        { "name": "key", "type": "text", "label": "Key" },
+        { "name": "value", "type": "text", "label": "Value" }
+      ],
+      "help": "Query string parameters to append to the URL."
+    },
+    {
+      "name": "body",
+      "type": "text",
+      "label": "Body",
+      "required": false,
+      "help": "The request body as a JSON string. Only used for POST, PUT, and PATCH requests."
+    }
+  ],
+  "url": "{{parameters.url}}",
+  "method": "{{parameters.method}}",
+  "headers": "{{parameters.headers}}",
+  "qs": "{{parameters.qs}}",
+  "body": "{{parameters.body}}",
+  "type": "json",
+  "response": {
+    "output": "{{body}}"
+  },
+  "samples": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Deploy v2.3.1 to production",
+    "status": "pending",
+    "created_at": "2026-02-21T10:00:00.000Z"
+  }
+}

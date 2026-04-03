@@ -2,7 +2,7 @@
   "label": "Add Comment",
   "description": "Add a comment to an existing approval request.",
   "actionType": "create",
-  "connection": "oauth2",
+
   "parameters": [
     {
       "name": "approval_id",

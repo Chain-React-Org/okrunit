@@ -115,16 +115,19 @@ export async function sendTelegramNotification(
     .filter((line) => line !== "")
     .join("\n");
 
+  const approveWebAppUrl = `${APP_URL}/telegram/decide?id=${params.requestId}&action=approve`;
+  const rejectWebAppUrl = `${APP_URL}/telegram/decide?id=${params.requestId}&action=reject`;
+
   const inlineKeyboard = {
     inline_keyboard: [
       [
         {
           text: "\u2705 Approve",
-          callback_data: `okrunit:approve:${params.requestId}`,
+          web_app: { url: approveWebAppUrl },
         },
         {
           text: "\u274C Reject",
-          callback_data: `okrunit:reject:${params.requestId}`,
+          web_app: { url: rejectWebAppUrl },
         },
       ],
       [

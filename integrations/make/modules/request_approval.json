@@ -2,7 +2,7 @@
   "label": "Request Approval",
   "description": "Create an approval request and pause this scenario until a human approves or rejects. Use the callback URL from a Make webhook to resume your scenario after the decision.",
   "actionType": "create",
-  "connection": "oauth2",
+
   "parameters": [
     {
       "name": "title",

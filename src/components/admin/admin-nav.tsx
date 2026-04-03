@@ -7,6 +7,7 @@ import {
   BarChart3,
   Bug,
   Building2,
+  Globe,
   CreditCard,
   Users,
   Webhook,
@@ -32,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "email-previews", label: "Email Previews", href: "/admin/email-previews", icon: Mail },
   { id: "plan-overrides", label: "Plan Overrides", href: "/admin/plan-overrides", icon: CreditCard },
   { id: "errors", label: "Error Monitor", href: "/admin/errors", icon: Bug },
+  { id: "traffic", label: "Traffic", href: "/admin/traffic", icon: Globe },
 ];
 
 interface AdminNavProps {
