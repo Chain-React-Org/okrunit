@@ -83,7 +83,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-8 flex flex-col gap-2 border-t border-green-200/80 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 OKrunit.</p>
+          <p>© 2026 OKrunit. United States.</p>
           <p>Built for teams shipping automations with human oversight.</p>
         </div>
       </div>
