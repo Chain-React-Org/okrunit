@@ -1,4 +1,4 @@
-name: Auto PR
+name: Auto PR & Merge
 
 on:
   push:
@@ -10,10 +10,12 @@ permissions:
 
 jobs:
   auto-pr:
-    name: Create PR
+    name: Create PR and enable auto-merge
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Create or update PR
         env:
@@ -22,18 +24,24 @@ jobs:
           BRANCH="${GITHUB_REF_NAME}"
           COMMIT_MSG=$(git log -1 --pretty=%s)
 
+          # Check if there are actually changes vs main
+          if git diff --quiet origin/main...HEAD; then
+            echo "No changes between $BRANCH and main — skipping PR creation"
+            exit 0
+          fi
+
           # Check if PR already exists for this branch
           EXISTING_PR=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null)
 
           if [ -z "$EXISTING_PR" ]; then
-            # Create new PR (may fail if dev is identical to main after a sync)
+            echo "Creating new PR from $BRANCH to main..."
             PR_URL=$(gh pr create \
               --title "$COMMIT_MSG" \
-              --body "Auto-created PR for branch \`$BRANCH\`. Merge manually after CI passes." \
+              --body "Auto-created PR for branch \`$BRANCH\`. Will auto-merge when CI passes." \
               --base main \
-              --head "$BRANCH" 2>&1) || {
-              echo "No new changes to create PR for — dev is in sync with main"
-              exit 0
+              --head "$BRANCH") || {
+              echo "::error::Failed to create PR: $?"
+              exit 1
             }
             PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
             echo "Created PR #$PR_NUMBER"
@@ -43,3 +51,5 @@ jobs:
             echo "PR #$PR_NUMBER already exists, updated title"
           fi
 
+          # Enable auto-merge (squash)
+          gh pr merge "$PR_NUMBER" --auto --squash || true
