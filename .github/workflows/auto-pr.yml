@@ -1,4 +1,4 @@
-name: Auto PR
+name: Auto PR & Merge
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   auto-pr:
-    name: Create PR
+    name: Create PR and enable auto-merge
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
             echo "Creating new PR from $BRANCH to main..."
             PR_URL=$(gh pr create \
               --title "$COMMIT_MSG" \
-              --body "Auto-created PR for branch \`$BRANCH\`. Merge manually after CI passes." \
+              --body "Auto-created PR for branch \`$BRANCH\`. Will auto-merge when CI passes." \
               --base main \
               --head "$BRANCH") || {
               echo "::error::Failed to create PR: $?"
