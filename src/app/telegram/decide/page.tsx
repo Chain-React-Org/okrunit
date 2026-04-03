@@ -155,8 +155,8 @@ export default function TelegramDecidePage() {
     }
   }
 
-  // Telegram theme colors
-  const tg = window.Telegram?.WebApp;
+  // Telegram theme colors (guard for SSR where window is undefined)
+  const tg = typeof window !== "undefined" ? window.Telegram?.WebApp : undefined;
   const isDark = tg?.colorScheme === "dark";
   const bgColor = tg?.themeParams?.bg_color || (isDark ? "#1c1c1e" : "#ffffff");
   const textColor = tg?.themeParams?.text_color || (isDark ? "#ffffff" : "#000000");
