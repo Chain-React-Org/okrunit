@@ -11,7 +11,13 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
   const inviteToken = searchParams.get("invite");
-  const redirectTo = searchParams.get("redirect_to");
+
+  // redirect_to can come from query params (email/password login) or from a
+  // cookie set before the OAuth provider round-trip (social login).
+  const redirectTo =
+    searchParams.get("redirect_to") ||
+    decodeURIComponent(request.cookies.get("oauth_redirect_to")?.value ?? "") ||
+    null;
 
   if (!code) {
     const loginUrl = new URL("/login", origin);
@@ -83,9 +89,13 @@ export async function GET(request: NextRequest) {
     if (redirectTo) {
       mfaUrl.searchParams.set("redirect_to", redirectTo);
     }
-    return NextResponse.redirect(mfaUrl);
+    const mfaResponse = NextResponse.redirect(mfaUrl);
+    mfaResponse.cookies.delete("oauth_redirect_to");
+    return mfaResponse;
   }
 
   // If there's a redirect_to param (e.g. from OAuth authorize flow), go there
-  return NextResponse.redirect(new URL(safeRedirectUrl(redirectTo), origin));
+  const finalResponse = NextResponse.redirect(new URL(safeRedirectUrl(redirectTo), origin));
+  finalResponse.cookies.delete("oauth_redirect_to");
+  return finalResponse;
 }

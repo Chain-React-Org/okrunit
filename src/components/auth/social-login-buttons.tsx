@@ -117,10 +117,12 @@ export function SocialLoginButtons({
     }
 
     // Preserve redirect_to (e.g. from OAuth authorize flow via Make.com/Zapier)
+    // Store in a cookie so the server-side callback can read it after the
+    // Supabase → Provider → Supabase round-trip.
     const pageParams = new URLSearchParams(window.location.search);
     const redirectAfter = pageParams.get("redirect_to");
     if (redirectAfter) {
-      redirectTo.searchParams.set("redirect_to", redirectAfter);
+      document.cookie = `oauth_redirect_to=${encodeURIComponent(redirectAfter)}; path=/; max-age=600; SameSite=Lax`;
     }
 
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
