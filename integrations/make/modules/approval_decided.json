@@ -37,11 +37,24 @@
   "qs": {
     "status": "{{ifempty(parameters.decision, 'approved,rejected')}}",
     "page_size": "50",
-    "priority": "{{ifempty(parameters.priority_filter, undefined)}}"
+    "priority": "{{parameters.priority_filter}}"
   },
   "response": {
-    "output": "{{body.data}}",
     "iterate": "{{body.data}}",
+    "output": {
+      "id": "{{item.id}}",
+      "title": "{{item.title}}",
+      "description": "{{item.description}}",
+      "status": "{{item.status}}",
+      "priority": "{{item.priority}}",
+      "source": "{{item.source}}",
+      "decided_by": "{{item.decided_by}}",
+      "decided_by_name": "{{item.decided_by_name}}",
+      "decision_comment": "{{item.decision_comment}}",
+      "metadata": "{{item.metadata}}",
+      "created_at": "{{item.created_at}}",
+      "decided_at": "{{item.decided_at}}"
+    },
     "trigger": {
       "id": "{{item.id}}",
       "date": "{{item.decided_at}}",

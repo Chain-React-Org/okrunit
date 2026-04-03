@@ -219,6 +219,7 @@ export async function POST(request: Request) {
     //    the matching flow and apply its saved defaults.
     let flowId: string | null = null;
     let flowIsUnconfigured = false;
+    let flowIsNewlyCreated = false;
     let flowPriority: string | undefined;
     let flowExpiresAt: string | undefined;
     let flowRequiredApprovals: number | undefined;
@@ -311,6 +312,7 @@ export async function POST(request: Request) {
         if (newFlow) {
           flowId = newFlow.id;
           flowIsUnconfigured = true;
+          flowIsNewlyCreated = true;
         }
       }
     }
@@ -691,22 +693,36 @@ export async function POST(request: Request) {
           : `${priorityLabel} priority`;
 
         if (flowIsUnconfigured && (!targetUserIds || targetUserIds.length === 0)) {
-          // Unconfigured flow with no approvers resolved: notify connection owner
-          // to configure routing. Also notify all eligible approvers so the request
-          // doesn't sit unnoticed.
+          // Unconfigured flow: on the first request, notify connection owner
+          // to configure routing. On subsequent requests, just notify about
+          // the new request like normal.
           const ownerId = auth.type === "api_key"
             ? auth.connection.created_by
             : auth.type === "oauth" ? auth.userId : null;
+
           if (ownerId) {
-            await createInAppNotification({
-              userId: ownerId,
-              orgId: auth.orgId,
-              category: "flow_assigned",
-              title: `New flow needs configuration`,
-              body: `"${validated.title}" arrived${sourceName ? ` from ${sourceName.charAt(0).toUpperCase() + sourceName.slice(1)}` : ""}. Configure routing to assign approvers.`,
-              resourceType: "approval_request",
-              resourceId: approval.id,
-            });
+            if (flowIsNewlyCreated) {
+              await createInAppNotification({
+                userId: ownerId,
+                orgId: auth.orgId,
+                category: "flow_assigned",
+                title: `New flow needs configuration`,
+                body: `"${validated.title}" arrived${sourceName ? ` from ${sourceName.charAt(0).toUpperCase() + sourceName.slice(1)}` : ""}. Configure routing to assign approvers.`,
+                resourceType: "approval_request",
+                resourceId: approval.id,
+              });
+            } else {
+              await createInAppNotification({
+                userId: ownerId,
+                orgId: auth.orgId,
+                category: "approval_awaiting",
+                title: `New request: ${validated.title}`,
+                body: bodyText,
+                actorName: connectionName ?? undefined,
+                resourceType: "approval_request",
+                resourceId: approval.id,
+              });
+            }
           }
 
           // Also notify eligible approvers so the request isn't missed
@@ -857,8 +873,8 @@ export async function GET(request: Request) {
       page: searchParams.get("page")
         ? Number(searchParams.get("page"))
         : undefined,
-      page_size: searchParams.get("page_size")
-        ? Number(searchParams.get("page_size"))
+      page_size: searchParams.get("page_size") || searchParams.get("limit")
+        ? Number(searchParams.get("page_size") || searchParams.get("limit"))
         : undefined,
       status: searchParams.get("status") ?? undefined,
       priority: searchParams.get("priority") ?? undefined,

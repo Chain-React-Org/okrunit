@@ -21,7 +21,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
-import { isRejectionReasonRequired } from "@/lib/api/rejection-reason";
+import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
 
 // ---------------------------------------------------------------------------
 // Signature Verification
@@ -443,27 +443,26 @@ export async function POST(request: Request) {
           return;
         }
 
-        // Check if rejection reason is required.
-        const reasonRequired =
-          decision === "reject" &&
-          (await isRejectionReasonRequired(approval.org_id, {
+        // Check whether to show the reason prompt.
+        const { showPrompt, reasonRequired } =
+          await getDecisionCommentPolicy(approval.org_id, decision, {
             require_rejection_reason: approval.require_rejection_reason,
             priority: approval.priority,
-          }));
+          });
 
-        if (reasonRequired && triggerId) {
+        if (showPrompt && triggerId) {
           await openSlackModal({
             triggerId,
             action: decision,
             requestId,
             title: approval.title,
-            reasonRequired: true,
+            reasonRequired,
             responseUrl: responseUrl ?? undefined,
           });
           return;
         }
 
-        // Apply the decision.
+        // Skip prompt — apply the decision immediately.
         const result = await applyDecisionAndRespond(request, {
           decision,
           requestId,

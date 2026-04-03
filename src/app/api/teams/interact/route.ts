@@ -26,7 +26,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
-import { isRejectionReasonRequired } from "@/lib/api/rejection-reason";
+import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
 
 // ---------------------------------------------------------------------------
 // Bot Framework Auth Constants
@@ -641,24 +641,26 @@ async function handleActionSubmit(
 
   // -------------------------------------------------------------------------
   // If this is the first submit (no hasComment flag), show the reason prompt
+  // (unless the org has opted to skip it)
   // -------------------------------------------------------------------------
   if (!actionData.hasComment) {
-    // Check if rejection reason is required.
-    const reasonRequired =
-      decision === "reject" &&
-      (await isRejectionReasonRequired(approval.org_id, {
+    const { showPrompt, reasonRequired } =
+      await getDecisionCommentPolicy(approval.org_id, decision, {
         require_rejection_reason: approval.require_rejection_reason,
         priority: approval.priority,
-      }));
+      });
 
-    return NextResponse.json(
-      buildReasonPromptCard(
-        approval.title,
-        decision,
-        requestId,
-        reasonRequired,
-      ),
-    );
+    if (showPrompt) {
+      return NextResponse.json(
+        buildReasonPromptCard(
+          approval.title,
+          decision,
+          requestId,
+          reasonRequired,
+        ),
+      );
+    }
+    // Fall through to apply immediately when prompt is skipped.
   }
 
   // -------------------------------------------------------------------------

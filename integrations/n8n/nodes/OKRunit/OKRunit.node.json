@@ -1,0 +1,17 @@
+{
+  "node": "n8n-nodes-okrunit.okrunit",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": ["Productivity"],
+  "resources": {
+    "primaryDocumentation": [
+      {
+        "url": "https://okrunit.com/docs/integrations/n8n"
+      }
+    ]
+  },
+  "alias": ["approval", "human-in-the-loop", "gate", "review", "okrunit", "gatekeeper", "approve", "reject"],
+  "subcategories": {
+    "Productivity": ["Workflow Automation"]
+  }
+}

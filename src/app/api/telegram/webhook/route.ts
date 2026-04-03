@@ -3,17 +3,15 @@
 // ---------------------------------------------------------------------------
 //
 // Flow:
-//   1. User clicks Approve/Reject button → decision applied immediately
-//   2. Confirmation message says "Reply to add a reason" (optional)
-//   3. If user replies with text → reason is attached as decision_comment
-//
-// Exception: If rejection reason is REQUIRED by org policy, the reject button
-// prompts for a reason first and blocks until provided.
+//   1. User clicks Approve/Reject button → prompted for a reason
+//   2. User types their reason → decision applied with comment
+//   3. User sends /skip → decision applied without comment
+//      (unless rejection reason is REQUIRED by org policy, then /skip is blocked)
 //
 // Callback data formats:
-//   okrunit:approve:<requestId>   -- Approve (immediate)
-//   okrunit:reject:<requestId>    -- Reject (immediate, unless reason required)
-//   okrunit:reason:reject:<requestId> -- Forced reason prompt (when required)
+//   okrunit:approve:<requestId>   -- Approve (prompts for reason)
+//   okrunit:reject:<requestId>    -- Reject (prompts for reason)
+//   okrunit:reason:reject:<requestId> -- Forced reason prompt (legacy)
 // ---------------------------------------------------------------------------
 
 import { timingSafeEqual } from "crypto";
@@ -23,7 +21,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
-import { isRejectionReasonRequired } from "@/lib/api/rejection-reason";
+import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
 import {
   answerCallbackQuery,
   editMessage,
@@ -70,9 +68,10 @@ interface TelegramUpdate {
 // ---------------------------------------------------------------------------
 
 interface PendingReason {
-  action: "reject";
+  action: "approve" | "reject";
   requestId: string;
   botMessageId: number;
+  reasonRequired: boolean;
   expiresAt: number;
 }
 
@@ -462,11 +461,23 @@ export async function POST(request: Request) {
     }
 
     // -----------------------------------------------------------------------
-    // Reply with rejection reason (for required rejections)
+    // Reply with reason for pending approve/reject
     // -----------------------------------------------------------------------
     const key = pendingKey(msg.chat.id, fromUser.id);
     const pending = pendingReasons.get(key);
     if (!pending) return NextResponse.json({ ok: true });
+
+    const isSkip = msg.text.trim().toLowerCase() === "/skip";
+
+    if (isSkip && pending.reasonRequired) {
+      // Reason is required — don't allow skip
+      await sendBotMessage(
+        botToken,
+        msg.chat.id,
+        "⚠️ A reason is required and cannot be skipped. Please type your reason:",
+      );
+      return NextResponse.json({ ok: true });
+    }
 
     pendingReasons.delete(key);
 
@@ -476,7 +487,7 @@ export async function POST(request: Request) {
       telegramUser: fromUser,
       chatId: msg.chat.id,
       messageId: pending.botMessageId,
-      comment: msg.text,
+      comment: isSkip ? undefined : msg.text,
     });
 
     return NextResponse.json({ ok: true });
@@ -498,27 +509,11 @@ export async function POST(request: Request) {
   const messageId = cb.message?.message_id;
 
   // -------------------------------------------------------------------------
-  // Approve — always immediate
+  // Approve — prompt for reason (unless org skips it)
   // -------------------------------------------------------------------------
   if (parts[1] === "approve" && parts.length === 3) {
-    await answerCallbackQuery(cb.id, "Approved!");
-    await applyDecision(request, {
-      decision: "approve",
-      requestId: parts[2],
-      telegramUser: cb.from,
-      chatId,
-      messageId,
-    });
-    return NextResponse.json({ ok: true });
-  }
-
-  // -------------------------------------------------------------------------
-  // Reject — immediate unless reason is required
-  // -------------------------------------------------------------------------
-  if (parts[1] === "reject" && parts.length === 3) {
     const requestId = parts[2];
 
-    // Check if rejection reason is required
     const admin = createAdminClient();
     const { data: approval } = await admin
       .from("approval_requests")
@@ -526,43 +521,101 @@ export async function POST(request: Request) {
       .eq("id", requestId)
       .single();
 
-    const reasonRequired = approval
-      ? await isRejectionReasonRequired(approval.org_id, {
+    const { showPrompt } = approval
+      ? await getDecisionCommentPolicy(approval.org_id, "approve", {
           require_rejection_reason: approval.require_rejection_reason,
           priority: approval.priority,
         })
-      : false;
+      : { showPrompt: true };
 
-    if (reasonRequired) {
-      // Must provide a reason — prompt for it
-      await answerCallbackQuery(cb.id, "A rejection reason is required");
-      if (chatId && messageId) {
-        pendingReasons.set(pendingKey(chatId, cb.from.id), {
-          action: "reject",
-          requestId,
-          botMessageId: messageId,
-          expiresAt: Date.now() + PENDING_TTL_MS,
-        });
-        await editMessage(
-          String(chatId),
-          messageId,
-          "⚠️ A rejection reason is required.\n\nType your reason below:",
-          undefined,
-          false,
-        );
-      }
+    if (!showPrompt) {
+      // Skip prompt — apply immediately.
+      await answerCallbackQuery(cb.id, "Approved!");
+      await applyDecision(request, {
+        decision: "approve",
+        requestId,
+        telegramUser: cb.from,
+        chatId,
+        messageId,
+      });
       return NextResponse.json({ ok: true });
     }
 
-    // No reason required — apply immediately
-    await answerCallbackQuery(cb.id, "Rejected!");
-    await applyDecision(request, {
-      decision: "reject",
-      requestId,
-      telegramUser: cb.from,
-      chatId,
-      messageId,
-    });
+    await answerCallbackQuery(cb.id, "");
+    if (chatId && messageId) {
+      pendingReasons.set(pendingKey(chatId, cb.from.id), {
+        action: "approve",
+        requestId,
+        botMessageId: messageId,
+        reasonRequired: false,
+        expiresAt: Date.now() + PENDING_TTL_MS,
+      });
+      await editMessage(
+        String(chatId),
+        messageId,
+        "✅ Approving — type your reason below, or send /skip to approve without a reason:",
+        undefined,
+        false,
+      );
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  // -------------------------------------------------------------------------
+  // Reject — prompt for reason (unless org skips it and reason not required)
+  // -------------------------------------------------------------------------
+  if (parts[1] === "reject" && parts.length === 3) {
+    const requestId = parts[2];
+
+    const admin = createAdminClient();
+    const { data: approval } = await admin
+      .from("approval_requests")
+      .select("org_id, require_rejection_reason, priority")
+      .eq("id", requestId)
+      .single();
+
+    const { showPrompt, reasonRequired } = approval
+      ? await getDecisionCommentPolicy(approval.org_id, "reject", {
+          require_rejection_reason: approval.require_rejection_reason,
+          priority: approval.priority,
+        })
+      : { showPrompt: true, reasonRequired: false };
+
+    if (!showPrompt) {
+      // Skip prompt — apply immediately.
+      await answerCallbackQuery(cb.id, "Rejected!");
+      await applyDecision(request, {
+        decision: "reject",
+        requestId,
+        telegramUser: cb.from,
+        chatId,
+        messageId,
+      });
+      return NextResponse.json({ ok: true });
+    }
+
+    await answerCallbackQuery(cb.id, "");
+    if (chatId && messageId) {
+      pendingReasons.set(pendingKey(chatId, cb.from.id), {
+        action: "reject",
+        requestId,
+        botMessageId: messageId,
+        reasonRequired,
+        expiresAt: Date.now() + PENDING_TTL_MS,
+      });
+
+      const prompt = reasonRequired
+        ? "❌ Rejecting — a reason is required.\n\nType your reason below:"
+        : "❌ Rejecting — type your reason below, or send /skip to reject without a reason:";
+
+      await editMessage(
+        String(chatId),
+        messageId,
+        prompt,
+        undefined,
+        false,
+      );
+    }
     return NextResponse.json({ ok: true });
   }
 
@@ -579,6 +632,7 @@ export async function POST(request: Request) {
         action,
         requestId,
         botMessageId: messageId,
+        reasonRequired: true,
         expiresAt: Date.now() + PENDING_TTL_MS,
       });
       await editMessage(

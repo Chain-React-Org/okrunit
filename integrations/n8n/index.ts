@@ -1,4 +1,4 @@
-export { GatekeeperApi } from "./credentials/GatekeeperApi.credentials";
-export { GatekeeperOAuth2Api } from "./credentials/GatekeeperOAuth2Api.credentials";
-export { Gatekeeper } from "./nodes/Gatekeeper/Gatekeeper.node";
-export { GatekeeperTrigger } from "./nodes/Gatekeeper/GatekeeperTrigger.node";
+export { OKRunitApi } from "./credentials/OKRunitApi.credentials";
+export { OKRunitOAuth2Api } from "./credentials/OKRunitOAuth2Api.credentials";
+export { OKRunit } from "./nodes/OKRunit/OKRunit.node";
+export { OKRunitTrigger } from "./nodes/OKRunit/OKRunitTrigger.node";

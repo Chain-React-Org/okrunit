@@ -55,6 +55,7 @@ const escalationConfigSchema = z.object({
 const updateOrgSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name is too long").optional(),
   rejection_reason_policy: rejectionReasonPolicyEnum.optional(),
+  skip_decision_comment: z.boolean().optional(),
   sla_config: slaConfigSchema.optional(),
   bottleneck_threshold: z.number().int().min(1).max(1000).optional(),
   bottleneck_alert_enabled: z.boolean().optional(),
@@ -69,6 +70,7 @@ const updateOrgSchema = z.object({
   (data) =>
     data.name !== undefined ||
     data.rejection_reason_policy !== undefined ||
+    data.skip_decision_comment !== undefined ||
     data.sla_config !== undefined ||
     data.bottleneck_threshold !== undefined ||
     data.bottleneck_alert_enabled !== undefined ||
@@ -114,6 +116,7 @@ export async function PATCH(request: Request) {
     const updatePayload: Record<string, unknown> = {};
     if (body.name !== undefined) updatePayload.name = body.name;
     if (body.rejection_reason_policy !== undefined) updatePayload.rejection_reason_policy = body.rejection_reason_policy;
+    if (body.skip_decision_comment !== undefined) updatePayload.skip_decision_comment = body.skip_decision_comment;
     if (body.sla_config !== undefined) updatePayload.sla_config = body.sla_config;
     if (body.bottleneck_threshold !== undefined) updatePayload.bottleneck_threshold = body.bottleneck_threshold;
     if (body.bottleneck_alert_enabled !== undefined) updatePayload.bottleneck_alert_enabled = body.bottleneck_alert_enabled;

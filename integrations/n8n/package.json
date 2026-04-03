@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-okrunit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "n8n community node for OKRunit human-in-the-loop approval gateway",
   "keywords": [
     "n8n-community-node-package",
@@ -10,7 +10,22 @@
     "human-in-the-loop"
   ],
   "license": "MIT",
+  "homepage": "https://okrunit.com/docs/integrations/n8n",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/okrunit/okrunit",
+    "directory": "integrations/n8n"
+  },
   "main": "dist/index.js",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "dist/**/*.js.map",
+    "nodes/**/*.svg",
+    "nodes/**/*.json",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -20,12 +35,12 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/GatekeeperApi.credentials.js",
-      "dist/credentials/GatekeeperOAuth2Api.credentials.js"
+      "dist/credentials/OKRunitApi.credentials.js",
+      "dist/credentials/OKRunitOAuth2Api.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/Gatekeeper/Gatekeeper.node.js",
-      "dist/nodes/Gatekeeper/GatekeeperTrigger.node.js"
+      "dist/nodes/OKRunit/OKRunit.node.js",
+      "dist/nodes/OKRunit/OKRunitTrigger.node.js"
     ]
   },
   "devDependencies": {
