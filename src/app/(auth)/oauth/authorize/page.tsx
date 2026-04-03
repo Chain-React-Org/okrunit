@@ -132,6 +132,12 @@ export default async function AuthorizePage({ searchParams }: AuthorizePageProps
     client.scopes.includes(s),
   );
 
+  // Fall back to client's default scopes if parsing yielded nothing valid
+  // (e.g. Make.com sending scope as [object Object]).
+  if (grantedScopes.length === 0) {
+    grantedScopes.push(...client.scopes);
+  }
+
   // Get user profile for account display on consent screen.
   const { data: profile } = await admin
     .from("user_profiles")
