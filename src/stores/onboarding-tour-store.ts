@@ -151,7 +151,22 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
           const res = await fetch("/api/v1/onboarding/tour-state");
           if (res.ok) {
             const data = await res.json();
-            set({ tourCompleted: data.tourCompleted, tourDismissed: data.tourDismissed, synced: true });
+            const update: Partial<OnboardingTourState> = {
+              tourCompleted: data.tourCompleted,
+              tourDismissed: data.tourDismissed,
+              synced: true,
+            };
+            // Fresh user (neither completed nor dismissed) — clear stale
+            // localStorage state that may have leaked from a previous account.
+            if (!data.tourCompleted && !data.tourDismissed) {
+              update.touredPages = [];
+              update.fullTourPageIndex = 0;
+              update.tourPaused = false;
+              update.pausedPageId = null;
+              update.pausedStepIndex = 0;
+              update.pausedWasFullTour = false;
+            }
+            set(update);
           }
         } catch {}
       },
@@ -160,8 +175,10 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
       name: "okrunit-onboarding-tour",
       partialize: (state) => ({
         fullTourPageIndex: state.fullTourPageIndex,
-        tourCompleted: state.tourCompleted,
-        tourDismissed: state.tourDismissed,
+        // tourCompleted and tourDismissed are NOT persisted to localStorage —
+        // the database is the source of truth (via syncFromServer). Persisting
+        // these caused stale values from previous accounts to hide the banner
+        // for new users on the same browser.
         touredPages: state.touredPages,
         tourPaused: state.tourPaused,
         pausedPageId: state.pausedPageId,

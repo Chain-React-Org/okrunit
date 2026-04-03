@@ -63,6 +63,16 @@ export function SetupWizard({
     }
   }, [currentStep, loaded, displayedStep, finishing]);
 
+  // Edge case: if step is past the end, complete setup via effect (not during render)
+  const didComplete = useRef(false);
+  useEffect(() => {
+    if (loaded && !finishing && !didComplete.current && currentStep >= 3) {
+      didComplete.current = true;
+      handleCompleteSetup();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, finishing, currentStep]);
+
   // If localStorage says complete but we're still on /setup, the DB was reset.
   // Clear the stale localStorage state so the wizard starts fresh.
   // Skip if we're in the process of finishing (to avoid flashing step 0).
@@ -154,11 +164,7 @@ export function SetupWizard({
               />
             )}
 
-            {/* Edge case: step past the end */}
-            {stepToRender >= 3 && (() => {
-              handleCompleteSetup();
-              return null;
-            })()}
+            {/* Edge case: step past the end — handled by effect below */}
           </div>
         </CardContent>
       </Card>

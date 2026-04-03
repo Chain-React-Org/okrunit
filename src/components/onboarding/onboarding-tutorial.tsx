@@ -9,13 +9,15 @@ export function OnboardingTutorial() {
   const { fullTourActive, tourCompleted, tourDismissed, startFullTour, dismissFullTour, syncFromServer } =
     useOnboardingTourStore();
   const [mounted, setMounted] = useState(false);
+  const [serverLoaded, setServerLoaded] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    syncFromServer();
+    syncFromServer().finally(() => setServerLoaded(true));
   }, [syncFromServer]);
 
-  if (!mounted || tourCompleted || tourDismissed || fullTourActive) return null;
+  // Wait for server state before deciding visibility — localStorage may have stale values
+  if (!mounted || !serverLoaded || tourCompleted || tourDismissed || fullTourActive) return null;
 
   return (
     <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
