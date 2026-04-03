@@ -22,7 +22,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
-import { isRejectionReasonRequired } from "@/lib/api/rejection-reason";
+import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
 
 // ---------------------------------------------------------------------------
 // Discord Interaction Types
@@ -503,17 +503,43 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if rejection reason is required.
-    const reasonRequired =
-      actionStr === "reject" &&
-      (await isRejectionReasonRequired(approval.org_id, {
+    // Check whether to show the reason prompt.
+    const { showPrompt, reasonRequired } =
+      await getDecisionCommentPolicy(approval.org_id, actionStr, {
         require_rejection_reason: approval.require_rejection_reason,
         priority: approval.priority,
-      }));
+      });
 
-    // Show the modal.
+    if (showPrompt) {
+      // Show the modal.
+      return NextResponse.json(
+        buildReasonModal(actionStr, requestId, approval.title, reasonRequired),
+      );
+    }
+
+    // Skip prompt — apply the decision immediately.
+    const discordUser = interaction.member?.user ?? interaction.user;
+    const discordUserId = discordUser?.id ?? "unknown";
+    const discordUsername =
+      discordUser?.global_name ?? discordUser?.username ?? "Discord User";
+
+    const result = await applyDecision(request, {
+      decision: actionStr,
+      requestId,
+      discordUserId,
+      discordUsername,
+    });
+
+    if (!result.success) {
+      return NextResponse.json(result.response);
+    }
+
     return NextResponse.json(
-      buildReasonModal(actionStr, requestId, approval.title, reasonRequired),
+      buildDecisionResponse(
+        result.approval.title as string,
+        result.newStatus,
+        discordUsername,
+      ),
     );
   }
 

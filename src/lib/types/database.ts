@@ -113,6 +113,7 @@ export interface Organization {
   default_auto_action: AutoAction | null;
   default_auto_action_minutes: number | null;
   rejection_reason_policy: RejectionReasonPolicy;
+  skip_decision_comment: boolean;
   rejection_presets: string[];
   sla_config: SlaConfig;
   escalation_config: EscalationConfig | null;

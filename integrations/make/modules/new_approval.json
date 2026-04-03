@@ -38,13 +38,22 @@
   "url": "/api/v1/approvals",
   "method": "GET",
   "qs": {
-    "status": "{{ifempty(parameters.status_filter, undefined)}}",
-    "priority": "{{ifempty(parameters.priority_filter, undefined)}}",
+    "status": "{{parameters.status_filter}}",
+    "priority": "{{parameters.priority_filter}}",
     "page_size": "50"
   },
   "response": {
-    "output": "{{body.data}}",
     "iterate": "{{body.data}}",
+    "output": {
+      "id": "{{item.id}}",
+      "title": "{{item.title}}",
+      "description": "{{item.description}}",
+      "status": "{{item.status}}",
+      "priority": "{{item.priority}}",
+      "source": "{{item.source}}",
+      "created_at": "{{item.created_at}}",
+      "updated_at": "{{item.updated_at}}"
+    },
     "trigger": {
       "id": "{{item.id}}",
       "date": "{{item.created_at}}",

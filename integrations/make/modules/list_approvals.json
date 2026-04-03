@@ -52,14 +52,26 @@
   "url": "/api/v1/approvals",
   "method": "GET",
   "qs": {
-    "status": "{{ifempty(parameters.status, undefined)}}",
-    "priority": "{{ifempty(parameters.priority, undefined)}}",
-    "search": "{{ifempty(parameters.search, undefined)}}",
-    "limit": "{{ifempty(parameters.limit, undefined)}}"
+    "status": "{{parameters.status}}",
+    "priority": "{{parameters.priority}}",
+    "search": "{{parameters.search}}",
+    "limit": "{{ifempty(parameters.limit, 25)}}"
   },
   "response": {
-    "output": "{{body.data}}",
-    "iterate": "{{body.data}}"
+    "iterate": "{{body.data}}",
+    "output": {
+      "id": "{{item.id}}",
+      "title": "{{item.title}}",
+      "description": "{{item.description}}",
+      "status": "{{item.status}}",
+      "priority": "{{item.priority}}",
+      "source": "{{item.source}}",
+      "decided_by_name": "{{item.decided_by_name}}",
+      "decision_comment": "{{item.decision_comment}}",
+      "metadata": "{{item.metadata}}",
+      "created_at": "{{item.created_at}}",
+      "decided_at": "{{item.decided_at}}"
+    }
   },
   "samples": {
     "id": "550e8400-e29b-41d4-a716-446655440000",

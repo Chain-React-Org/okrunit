@@ -6,11 +6,11 @@ import type {
   INodeTypeDescription,
 } from "n8n-workflow";
 
-export class Gatekeeper implements INodeType {
+export class OKRunit implements INodeType {
   description: INodeTypeDescription = {
     displayName: "OKRunit",
     name: "okrunit",
-    icon: "file:gatekeeper.svg",
+    icon: "file:okrunit.svg",
     group: ["transform"],
     version: 1,
     subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -20,7 +20,7 @@ export class Gatekeeper implements INodeType {
     outputs: ["main"],
     credentials: [
       {
-        name: "gatekeeperOAuth2Api",
+        name: "okrunitOAuth2Api",
         required: true,
       },
     ],
@@ -280,7 +280,7 @@ export class Gatekeeper implements INodeType {
     const returnData: INodeExecutionData[] = [];
     const resource = this.getNodeParameter("resource", 0) as string;
     const operation = this.getNodeParameter("operation", 0) as string;
-    const credentials = await this.getCredentials("gatekeeperOAuth2Api");
+    const credentials = await this.getCredentials("okrunitOAuth2Api");
     const baseUrl = credentials.baseUrl as string;
 
     for (let i = 0; i < items.length; i++) {
@@ -318,7 +318,7 @@ export class Gatekeeper implements INodeType {
           responseData =
             await this.helpers.httpRequestWithAuthentication.call(
               this,
-              "gatekeeperOAuth2Api",
+              "okrunitOAuth2Api",
               {
                 method: "POST",
                 url: `${baseUrl}/api/v1/approvals`,
@@ -335,7 +335,7 @@ export class Gatekeeper implements INodeType {
           responseData =
             await this.helpers.httpRequestWithAuthentication.call(
               this,
-              "gatekeeperOAuth2Api",
+              "okrunitOAuth2Api",
               {
                 method: "GET",
                 url: `${baseUrl}/api/v1/approvals/${approvalId}`,
@@ -362,7 +362,7 @@ export class Gatekeeper implements INodeType {
           responseData =
             await this.helpers.httpRequestWithAuthentication.call(
               this,
-              "gatekeeperOAuth2Api",
+              "okrunitOAuth2Api",
               {
                 method: "GET",
                 url: `${baseUrl}/api/v1/approvals`,
@@ -383,7 +383,7 @@ export class Gatekeeper implements INodeType {
           responseData =
             await this.helpers.httpRequestWithAuthentication.call(
               this,
-              "gatekeeperOAuth2Api",
+              "okrunitOAuth2Api",
               {
                 method: "POST",
                 url: `${baseUrl}/api/v1/approvals/${approvalId}/comments`,
@@ -395,7 +395,7 @@ export class Gatekeeper implements INodeType {
           responseData =
             await this.helpers.httpRequestWithAuthentication.call(
               this,
-              "gatekeeperOAuth2Api",
+              "okrunitOAuth2Api",
               {
                 method: "GET",
                 url: `${baseUrl}/api/v1/approvals/${approvalId}/comments`,

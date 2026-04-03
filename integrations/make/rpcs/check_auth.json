@@ -5,6 +5,9 @@
     "page_size": "1"
   },
   "response": {
-    "output": "{{body.data}}"
+    "valid": "{{body.data}}",
+    "error": {
+      "message": "[{{statusCode}}] {{body.error}}"
+    }
   }
 }

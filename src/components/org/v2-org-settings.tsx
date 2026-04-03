@@ -437,6 +437,7 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
   const [fourEyes, setFourEyes] = useState<FourEyesConfig>(org.four_eyes_config);
   const [sla, setSla] = useState<SlaConfig>(org.sla_config);
   const [sessionTimeout, setSessionTimeout] = useState(org.session_timeout_minutes);
+  const [skipDecisionComment, setSkipDecisionComment] = useState(org.skip_decision_comment);
   const [ipAllowlist, setIpAllowlist] = useState(org.ip_allowlist.join("\n"));
   const [ipTags, setIpTags] = useState<string[]>(org.ip_allowlist);
   const [ipInput, setIpInput] = useState("");
@@ -460,6 +461,7 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
 
   const hasChanges = useMemo(() => {
     if (rejectionPolicy !== org.rejection_reason_policy) return true;
+    if (skipDecisionComment !== org.skip_decision_comment) return true;
     if (requireReauth !== org.require_reauth_for_critical) return true;
     if (fourEyes.enabled !== org.four_eyes_config.enabled) return true;
     if ((fourEyes.min_priority ?? null) !== (org.four_eyes_config.min_priority ?? null)) return true;
@@ -474,7 +476,7 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
     if (JSON.stringify(escalation) !== JSON.stringify(org.escalation_config ?? defaultEscalation)) return true;
     return false;
   }, [
-    rejectionPolicy, requireReauth, fourEyes, sla, sessionTimeout,
+    rejectionPolicy, skipDecisionComment, requireReauth, fourEyes, sla, sessionTimeout,
     parsedIps, geoRestrictions.enabled, parsedCountries, escalation, org,
   ]);
 
@@ -486,6 +488,9 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
 
       if (rejectionPolicy !== org.rejection_reason_policy) {
         payload.rejection_reason_policy = rejectionPolicy;
+      }
+      if (skipDecisionComment !== org.skip_decision_comment) {
+        payload.skip_decision_comment = skipDecisionComment;
       }
       if (requireReauth !== org.require_reauth_for_critical) {
         payload.require_reauth_for_critical = requireReauth;
@@ -546,21 +551,15 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
     }
   }
 
-  function handleDiscard() {
-    setRejectionPolicy(org.rejection_reason_policy as RejectionPolicy);
-    setRequireReauth(org.require_reauth_for_critical);
-    setFourEyes(org.four_eyes_config);
-    setSla(org.sla_config);
-    setSessionTimeout(org.session_timeout_minutes);
-    setIpAllowlist(org.ip_allowlist.join("\n"));
-    setIpTags([...org.ip_allowlist]);
-    setIpInput("");
-    setIpBulkMode(false);
-    setIpBulkInput("");
-    setGeoRestrictions(org.geo_restrictions);
-    setGeoCountriesInput(org.geo_restrictions.allowed_countries.join(", "));
-    setEscalation(org.escalation_config ?? defaultEscalation);
-  }
+  // Warn before navigating away with unsaved changes
+  useEffect(() => {
+    if (!hasChanges) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasChanges]);
 
   return (
     <div className="space-y-8 pb-24">
@@ -604,6 +603,23 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
               ))}
             </SelectContent>
           </Select>
+        </SettingsRow>
+
+        <SettingsRow
+          label="Skip decision comment prompt"
+          description={
+            rejectionPolicy === "optional"
+              ? "When enabled, both approvals and rejections in messaging apps (Slack, Discord, Teams, Telegram) apply immediately without prompting for a comment."
+              : rejectionPolicy === "required"
+                ? "When enabled, only approvals will skip the comment prompt. Rejections will still require a reason because your rejection reason policy is set to \"Always required\"."
+                : "When enabled, only approvals will skip the comment prompt. Rejections on high & critical priority requests will still require a reason based on your rejection reason policy."
+          }
+        >
+          <Switch
+            checked={skipDecisionComment}
+            onCheckedChange={setSkipDecisionComment}
+            disabled={!canEdit}
+          />
         </SettingsRow>
 
         <SettingsRow
@@ -1022,24 +1038,19 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
 
       {/* Sticky save bar */}
       {canEdit && hasChanges && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-            <p className="text-sm text-muted-foreground">You have unsaved changes</p>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleDiscard} disabled={saving}>
-                Discard
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? (
-                  <>
-                    <Loader2 className="size-3.5 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save changes"
-                )}
-              </Button>
-            </div>
+        <div className="fixed left-0 right-0 md:left-[calc(5rem+14rem)] bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-sm">
+          <div className="flex items-center justify-end gap-3 px-4 py-3 sm:px-6">
+            <p className="text-sm text-muted-foreground">Unsaved changes</p>
+            <Button size="sm" onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save changes"
+              )}
+            </Button>
           </div>
         </div>
       )}

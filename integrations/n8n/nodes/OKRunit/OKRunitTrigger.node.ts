@@ -13,11 +13,11 @@ interface ApprovalRecord {
   [key: string]: unknown;
 }
 
-export class GatekeeperTrigger implements INodeType {
+export class OKRunitTrigger implements INodeType {
   description: INodeTypeDescription = {
     displayName: "OKRunit Trigger",
     name: "okrunitTrigger",
-    icon: "file:gatekeeper.svg",
+    icon: "file:okrunit.svg",
     group: ["trigger"],
     version: 1,
     description: "Fires when approvals are created or decided in OKRunit",
@@ -25,7 +25,7 @@ export class GatekeeperTrigger implements INodeType {
     inputs: [],
     outputs: ["main"],
     polling: true,
-    credentials: [{ name: "gatekeeperOAuth2Api", required: true }],
+    credentials: [{ name: "okrunitOAuth2Api", required: true }],
     properties: [
       {
         displayName: "Trigger Type",
@@ -114,7 +114,7 @@ export class GatekeeperTrigger implements INodeType {
   };
 
   async poll(this: IPollFunctions): Promise<INodeExecutionData[][] | null> {
-    const credentials = await this.getCredentials("gatekeeperOAuth2Api");
+    const credentials = await this.getCredentials("okrunitOAuth2Api");
     const baseUrl = credentials.baseUrl as string;
     const triggerType = this.getNodeParameter("triggerType") as string;
 
@@ -140,7 +140,7 @@ export class GatekeeperTrigger implements INodeType {
       const response =
         (await this.helpers.httpRequestWithAuthentication.call(
           this,
-          "gatekeeperOAuth2Api",
+          "okrunitOAuth2Api",
           {
             method: "GET",
             url: `${baseUrl}/api/v1/approvals`,
@@ -175,7 +175,7 @@ export class GatekeeperTrigger implements INodeType {
         const response =
           (await this.helpers.httpRequestWithAuthentication.call(
             this,
-            "gatekeeperOAuth2Api",
+            "okrunitOAuth2Api",
             {
               method: "GET",
               url: `${baseUrl}/api/v1/approvals`,

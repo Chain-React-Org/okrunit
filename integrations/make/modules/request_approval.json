@@ -23,7 +23,7 @@
       "type": "url",
       "label": "Callback URL",
       "required": false,
-      "help": "To receive the approval decision: 1) Create a second scenario with the OKRunit 'Approval Decision Received' trigger. 2) Copy the webhook URL it generates. 3) Paste it here. When someone approves or rejects, OKRunit will POST the decision to that URL and your second scenario will continue automatically."
+      "help": "To receive the approval decision: create a second scenario with the OKRunit 'Approval Decision Received' trigger, copy the webhook URL, and paste it here."
     },
     {
       "name": "source_url",
@@ -53,7 +53,14 @@
     "idempotency_key": "make-{{ifempty(parameters.title, 'approval')}}-{{timestamp}}"
   },
   "response": {
-    "output": "{{body}}"
+    "output": {
+      "id": "{{body.id}}",
+      "title": "{{body.title}}",
+      "status": "{{body.status}}",
+      "priority": "{{body.priority}}",
+      "source": "{{body.source}}",
+      "created_at": "{{body.created_at}}"
+    }
   },
   "samples": {
     "id": "550e8400-e29b-41d4-a716-446655440000",

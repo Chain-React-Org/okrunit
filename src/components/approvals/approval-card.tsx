@@ -9,15 +9,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { PriorityBadge } from "@/components/approvals/priority-badge";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -351,17 +349,17 @@ export const ApprovalCard = memo(function ApprovalCard({
       </Card>
 
       {/* Confirmation dialog */}
-      <AlertDialog open={confirmDialog !== null} onOpenChange={(open) => { if (!open) { setConfirmDialog(null); setComment(""); } }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
+      <Dialog open={confirmDialog !== null} onOpenChange={(open) => { if (!open) { setConfirmDialog(null); setComment(""); } }}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>
               {confirmDialog === "approved" ? "Approve" : "Reject"} this request?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
+            </DialogTitle>
+            <DialogDescription>
               You are about to {confirmDialog === "approved" ? "approve" : "reject"}{" "}
               &quot;{approval.title}&quot;. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+            </DialogDescription>
+          </DialogHeader>
           <Textarea
             placeholder={
               confirmDialog === "rejected"
@@ -386,9 +384,11 @@ export const ApprovalCard = memo(function ApprovalCard({
               Don&apos;t ask me again
             </label>
           </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setConfirmDialog(null); setComment(""); }}>
+              Cancel
+            </Button>
+            <Button
               onClick={handleConfirm}
               className={cn(
                 "!text-white cursor-pointer",
@@ -398,10 +398,10 @@ export const ApprovalCard = memo(function ApprovalCard({
               )}
             >
               {confirmDialog === "approved" ? "Approve" : "Reject"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 });
