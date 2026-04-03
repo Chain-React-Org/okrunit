@@ -1,4 +1,4 @@
-name: Auto PR & Merge
+name: Auto PR
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   auto-pr:
-    name: Create PR and enable auto-merge
+    name: Create PR
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
             # Create new PR (may fail if dev is identical to main after a sync)
             PR_URL=$(gh pr create \
               --title "$COMMIT_MSG" \
-              --body "Auto-created PR for branch \`$BRANCH\`. Will auto-merge when CI passes." \
+              --body "Auto-created PR for branch \`$BRANCH\`. Merge manually after CI passes." \
               --base main \
               --head "$BRANCH" 2>&1) || {
               echo "No new changes to create PR for — dev is in sync with main"
@@ -43,5 +43,3 @@ jobs:
             echo "PR #$PR_NUMBER already exists, updated title"
           fi
 
-          # Enable auto-merge
-          gh pr merge "$PR_NUMBER" --auto --merge || true

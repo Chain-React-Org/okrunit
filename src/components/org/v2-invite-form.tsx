@@ -6,6 +6,17 @@ import { Mail, Users, Send, Clock, X, Shield, ShieldCheck, User, ChevronDown, Ch
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +64,8 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
   const [loading, setLoading] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  const visibleInvites = invites.filter((i) => !removedIds.has(i.id));
 
   // Bulk mode state
   const [bulkInput, setBulkInput] = useState("");
@@ -268,7 +281,7 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
   }
 
   async function handleRevoke(inviteId: string) {
-    setRevoking(inviteId);
+    setRemovedIds((prev) => new Set(prev).add(inviteId));
     try {
       const res = await fetch("/api/v1/team/invite", {
         method: "DELETE",
@@ -282,11 +295,14 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
       toast.success("Invite revoked");
       router.refresh();
     } catch (err) {
+      setRemovedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(inviteId);
+        return next;
+      });
       toast.error(
         err instanceof Error ? err.message : "Failed to revoke invite",
       );
-    } finally {
-      setRevoking(null);
     }
   }
 
@@ -757,14 +773,14 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
       <div className="lg:col-span-3">
         <div className="flex items-center gap-2 mb-4">
           <h2 className="text-sm font-semibold">Pending Invitations</h2>
-          {invites.length > 0 && (
+          {visibleInvites.length > 0 && (
             <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground">
-              {invites.length}
+              {visibleInvites.length}
             </span>
           )}
         </div>
 
-        {invites.length === 0 ? (
+        {visibleInvites.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 bg-white dark:bg-card py-12 text-center">
             <Mail className="size-8 text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground">
@@ -776,7 +792,7 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
           </div>
         ) : (
           <div className="space-y-2">
-            {invites.map((invite) => (
+            {visibleInvites.map((invite) => (
               <div
                 key={invite.id}
                 className="group flex items-center gap-3 rounded-xl border border-border/50 bg-white dark:bg-card px-4 py-3 transition-colors hover:border-border"
@@ -808,16 +824,39 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                     ))}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => handleRevoke(invite.id)}
-                  disabled={revoking === invite.id}
-                  className="shrink-0"
-                  title="Revoke invite"
-                >
-                  <X className="size-3.5 text-destructive" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="shrink-0"
+                      title="Revoke invite"
+                    >
+                      <X className="size-3.5 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will revoke the invite sent to{" "}
+                        <span className="font-medium text-foreground">
+                          {invite.email}
+                        </span>
+                        . They will no longer be able to join using this link.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleRevoke(invite.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Revoke
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             ))}
           </div>

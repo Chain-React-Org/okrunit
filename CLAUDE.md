@@ -7,12 +7,13 @@ Human-in-the-loop approval gateway for automated workflows.
 **NEVER push directly to `main`.** It is protected and will reject direct pushes.
 
 Always use this workflow:
-1. Create a feature branch: `git checkout -b <branch-name>`
-2. Commit changes to the branch
-3. Push the branch: `git push -u origin <branch-name>`
-4. A GitHub Action will automatically create a PR and enable auto-merge
-5. CI (lint, typecheck, tests, build) runs on the PR
-6. If CI passes, the PR auto-merges to `main` via squash merge
+1. Commit changes to the `dev` branch
+2. Push to dev: `git push origin dev`
+3. A GitHub Action will automatically create a PR from `dev` to `main` and enable auto-merge
+4. CI (lint, typecheck, tests, build) runs on the PR
+5. If CI passes, the PR auto-merges to `main` via squash merge
+
+**Always push to `dev`, never create feature branches.**
 
 **NEVER force push to any branch. NEVER disable branch protection.**
 
