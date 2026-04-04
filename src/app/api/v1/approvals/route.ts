@@ -1114,7 +1114,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      console.log("[Approvals GET] auth error:", error.status, error.message, error.code);
+      console.log("[Approvals GET] auth error:", error.statusCode, error.message, error.code);
     }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
