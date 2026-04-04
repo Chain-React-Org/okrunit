@@ -862,7 +862,8 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    console.log("[Approvals GET] incoming request, url:", request.url);
+    const authHeader = request.headers.get("authorization");
+    console.log("[Approvals GET] incoming request, url:", request.url, "auth:", authHeader ? `${authHeader.slice(0, 15)}...${authHeader.slice(-8)}` : "none");
 
     // 1. Authenticate (both API key and session supported)
     const auth = await authenticateRequest(request);
@@ -1112,6 +1113,9 @@ export async function GET(request: Request) {
       page_size: pageSize,
     });
   } catch (error) {
+    if (error instanceof ApiError) {
+      console.log("[Approvals GET] auth error:", error.status, error.message, error.code);
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", issues: error.issues },
