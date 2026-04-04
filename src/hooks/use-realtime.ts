@@ -39,6 +39,15 @@ export function useRealtime<T extends { [key: string]: any }>(
 ) {
   const channelRef = useRef<RealtimeChannel | null>(null);
 
+  // Store callbacks in refs so the channel handler always calls the latest
+  // version without needing to re-subscribe when callbacks change.
+  const onInsertRef = useRef(options.onInsert);
+  const onUpdateRef = useRef(options.onUpdate);
+  const onDeleteRef = useRef(options.onDelete);
+  onInsertRef.current = options.onInsert;
+  onUpdateRef.current = options.onUpdate;
+  onDeleteRef.current = options.onDelete;
+
   useEffect(() => {
     if (options.enabled === false) return;
 
@@ -46,8 +55,6 @@ export function useRealtime<T extends { [key: string]: any }>(
     const supabase = createClient();
     const channelName = `realtime-${options.table}-${Math.random().toString(36).slice(2)}`;
 
-    // Build channel with listener, then subscribe asynchronously
-    // to avoid the "cannot add callbacks after subscribe()" race in strict mode.
     const channel = supabase.channel(channelName);
 
     channel.on(
@@ -60,26 +67,31 @@ export function useRealtime<T extends { [key: string]: any }>(
       },
       (payload: RealtimePostgresChangesPayload<T>) => {
         if (cancelled) return;
-        if (payload.eventType === "INSERT" && options.onInsert) {
-          options.onInsert(payload.new as T);
-        } else if (payload.eventType === "UPDATE" && options.onUpdate) {
-          options.onUpdate(payload.new as T, payload.old as T);
-        } else if (payload.eventType === "DELETE" && options.onDelete) {
-          options.onDelete(payload.old as T);
+        if (payload.eventType === "INSERT" && onInsertRef.current) {
+          onInsertRef.current(payload.new as T);
+        } else if (payload.eventType === "UPDATE" && onUpdateRef.current) {
+          onUpdateRef.current(payload.new as T, payload.old as T);
+        } else if (payload.eventType === "DELETE" && onDeleteRef.current) {
+          onDeleteRef.current(payload.old as T);
         }
       },
     );
 
-    channel.subscribe();
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        console.debug(`[Realtime] subscribed to ${options.table}${options.filter ? ` (${options.filter})` : ""}`);
+      } else if (status === "CHANNEL_ERROR") {
+        console.error(`[Realtime] channel error for ${options.table}`);
+      } else if (status === "TIMED_OUT") {
+        console.warn(`[Realtime] subscription timed out for ${options.table}`);
+      }
+    });
     channelRef.current = channel;
 
     return () => {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-    // Re-subscribe when table, filter, or enabled flag changes.
-    // Callback refs (onInsert, onUpdate, onDelete) are intentionally omitted
-    // to avoid unnecessary re-subscriptions -- callers should memoize them.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.table, options.filter, options.enabled]);
 

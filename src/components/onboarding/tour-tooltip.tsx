@@ -255,12 +255,19 @@ export function TourTooltip({
         <div className="fixed inset-0 z-[9998] bg-black/40 animate-in fade-in duration-200" onClick={onClose} />
       )}
 
-      {/* Highlight ring around target */}
-      {targetRect && !isCentered && highlightMode !== "full-width" && highlightMode !== "no-ring" && (
-        <div className="fixed z-[10001] rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-white dark:ring-offset-card pointer-events-none transition-all duration-300 ease-out"
-          style={{ top: targetRect.top - 4, left: targetRect.left - 4, width: targetRect.width + 8, height: targetRect.height + 8 }}
-        />
-      )}
+      {/* Highlight ring around target — clamped so it doesn't go off-screen */}
+      {targetRect && !isCentered && highlightMode !== "full-width" && highlightMode !== "no-ring" && (() => {
+        const ringPad = 4;
+        const ringTop = Math.max(0, targetRect.top - ringPad);
+        const ringLeft = Math.max(0, targetRect.left - ringPad);
+        const ringWidth = targetRect.width + ringPad * 2 - (ringLeft - (targetRect.left - ringPad));
+        const ringHeight = targetRect.height + ringPad * 2 - (ringTop - (targetRect.top - ringPad));
+        return (
+          <div className="fixed z-[10001] rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-white dark:ring-offset-card pointer-events-none transition-all duration-300 ease-out"
+            style={{ top: ringTop, left: ringLeft, width: ringWidth, height: ringHeight }}
+          />
+        );
+      })()}
 
       {/* Tooltip */}
       <div ref={tooltipRef} className="fixed z-[10002] rounded-xl border border-border bg-white shadow-2xl dark:bg-card animate-in fade-in slide-in-from-bottom-2 duration-300 transition-all ease-out" style={{ ...tooltipStyle, width: tooltipStyle.width ?? (isMobile ? "calc(100% - 2rem)" : actualTooltipWidth), maxWidth: actualTooltipWidth, transitionProperty: "top, bottom, left, right, transform", transitionDuration: "300ms" }}>
