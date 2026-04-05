@@ -28,7 +28,7 @@ const DEFAULT_TIMEOUT_MS = 3_600_000; // 1 hour
  * ```typescript
  * import { OKRunitClient } from "@okrunit/sdk";
  *
- * const client = new OKRunitClient({ apiKey: "gk_..." });
+ * const client = new OKRunitClient({ apiKey: "ok_..." });
  * const approval = await client.createApproval({ title: "Deploy to prod" });
  * const decided = await client.waitForDecision(approval.id);
  * ```

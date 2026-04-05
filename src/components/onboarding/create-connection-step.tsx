@@ -72,7 +72,7 @@ export function CreateConnectionStep({
   }
 
   const curlSnippet = `curl -X POST https://app.okrunit.com/api/v1/approvals \\
-  -H "Authorization: Bearer ${apiKey || "gk_..."}" \\
+  -H "Authorization: Bearer ${apiKey || "ok_..."}" \\
   -H "Content-Type: application/json" \\
   -d '{"title": "My first approval", "priority": "medium"}'`;
 

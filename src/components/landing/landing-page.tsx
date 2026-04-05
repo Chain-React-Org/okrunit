@@ -1429,6 +1429,46 @@ function HeroTopBar() {
   );
 }
 
+/** Scales its children down (never up) so they fit the parent's height. */
+function FitToHeight({ children }: { children: ReactNode }) {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    function measure() {
+      const outer = outerRef.current;
+      const inner = innerRef.current;
+      if (!outer || !inner) return;
+      const availableH = outer.offsetHeight;
+      const contentH = inner.scrollHeight;
+      if (contentH <= 0 || availableH <= 0) return;
+      setScale(Math.min(1, availableH / contentH));
+    }
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (outerRef.current) ro.observe(outerRef.current);
+    if (innerRef.current) ro.observe(innerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div ref={outerRef} className="h-full w-full overflow-hidden">
+      <div
+        ref={innerRef}
+        className="w-full origin-top-center"
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: "top center",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /** Wrapper that renders children at a fixed internal width, then CSS-scales to fit the container. */
 function ScaledMockup({
   children,
@@ -1562,78 +1602,107 @@ interface FeatureStep {
 
 function ScrollFeatures({ steps }: { steps: FeatureStep[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function onScroll() {
-      const trigger = window.innerHeight * 0.35;
-      let best = 0;
-      stepRefs.current.forEach((el, i) => {
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        if (rect.top <= trigger) best = i;
-      });
-      setActiveIndex(best);
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const containerTop = -rect.top;
+      const scrollableHeight = el.offsetHeight - window.innerHeight;
+      if (scrollableHeight <= 0) return;
+      const progress = Math.max(0, Math.min(1, containerTop / scrollableHeight));
+      const idx = Math.min(
+        steps.length - 1,
+        Math.floor(progress * steps.length),
+      );
+      setActiveIndex(idx);
     }
 
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [steps.length]);
 
   return (
     <section className="relative">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="lg:grid lg:grid-cols-[340px_1fr] lg:gap-12 xl:grid-cols-[400px_1fr]">
-          {/* Left: scrolling text steps */}
-          <div className="relative py-10 sm:py-16 lg:py-20">
-            {steps.map((step, i) => (
-              <div
-                key={step.id}
-                id={step.id}
-                ref={(el) => { stepRefs.current[i] = el; }}
-                className="scroll-mt-28 [&+div]:mt-12 sm:[&+div]:mt-0 lg:min-h-[70vh] lg:flex lg:items-center"
-              >
-                <div>
-                  <div
-                    className={cn(
-                      "space-y-3 transition-opacity duration-500 sm:space-y-4",
-                      activeIndex === i ? "opacity-100" : "lg:opacity-50",
-                    )}
-                  >
-                    <SectionEyebrow>{step.eyebrow}</SectionEyebrow>
-                    <h2 className="text-xl font-semibold tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.18)] sm:text-2xl md:text-3xl">
-                      {step.title}
-                    </h2>
-                    <p className="text-sm leading-7 text-emerald-50/92 drop-shadow-[0_1px_8px_rgba(0,0,0,0.12)] sm:text-base sm:leading-8">
-                      {step.description}
-                    </p>
-                  </div>
-
-                  {/* Mobile: show visual inline */}
-                  <div className="mt-8 lg:hidden">
-                    {step.visual}
-                  </div>
-                </div>
+      {/* Mobile: stacked sections, no scroll-lock */}
+      <div className="lg:hidden">
+        <div className="mx-auto max-w-7xl space-y-12 px-4 py-10 sm:space-y-16 sm:px-6 sm:py-16">
+          {steps.map((step) => (
+            <div key={step.id} id={step.id}>
+              <div className="space-y-3 sm:space-y-4">
+                <SectionEyebrow>{step.eyebrow}</SectionEyebrow>
+                <h2 className="text-xl font-semibold tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.18)] sm:text-2xl md:text-3xl">
+                  {step.title}
+                </h2>
+                <p className="text-sm leading-7 text-emerald-50/92 drop-shadow-[0_1px_8px_rgba(0,0,0,0.12)] sm:text-base sm:leading-8">
+                  {step.description}
+                </p>
               </div>
-            ))}
-          </div>
-
-          {/* Right: sticky visual that changes */}
-          <div className="relative hidden lg:block">
-            <div className="sticky top-28 py-8">
-              {steps.map((step, i) => (
-                <div
-                  key={step.id}
-                  style={{ display: activeIndex === i ? "block" : "none" }}
-                >
-                  {step.visual}
-                </div>
-              ))}
+              <div className="mt-8">
+                {step.visual}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
-        <div aria-hidden className="hidden lg:block lg:h-[20rem] xl:h-[24rem]" />
+      </div>
+
+      {/* Desktop: centered sticky crossfade */}
+      <div
+        ref={containerRef}
+        className="relative hidden lg:block"
+        style={{ height: `${steps.length * 100}vh` }}
+      >
+        <div className="sticky top-0 h-screen overflow-hidden">
+          {steps.map((step, i) => (
+            <div
+              key={step.id}
+              className="absolute inset-0 flex flex-col items-center justify-center px-8 py-8 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+              style={{
+                opacity: activeIndex === i ? 1 : 0,
+                transform: activeIndex === i
+                  ? "translateY(0) scale(1)"
+                  : activeIndex > i
+                    ? "translateY(-24px) scale(0.98)"
+                    : "translateY(24px) scale(0.98)",
+                pointerEvents: activeIndex === i ? "auto" : "none",
+              }}
+            >
+              {/* Step indicator dots */}
+              <div className="mb-4 flex shrink-0 items-center justify-center gap-2">
+                {steps.map((_, j) => (
+                  <div
+                    key={j}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all duration-500",
+                      activeIndex === j
+                        ? "w-8 bg-white"
+                        : "w-1.5 bg-white/30",
+                    )}
+                  />
+                ))}
+              </div>
+
+              {/* Text content — centered, compact */}
+              <div className="mx-auto mb-4 max-w-2xl shrink-0 text-center">
+                <SectionEyebrow>{step.eyebrow}</SectionEyebrow>
+                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.18)] md:text-3xl xl:text-[2.25rem]">
+                  {step.title}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-emerald-50/92 drop-shadow-[0_1px_8px_rgba(0,0,0,0.12)] sm:text-base sm:leading-7">
+                  {step.description}
+                </p>
+              </div>
+
+              {/* Visual — constrained to max 55vh so it never pushes content off screen */}
+              <div className="w-full max-w-4xl shrink-0" style={{ maxHeight: "55vh" }}>
+                <FitToHeight>{step.visual}</FitToHeight>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

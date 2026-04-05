@@ -121,12 +121,17 @@ async function handleAuthorizationCode(
     return oauthError("invalid_client", "Unknown or inactive client.", 401);
   }
 
-  // Verify client_secret if provided (confidential clients).
-  if (client_secret) {
+  // Verify client_secret for confidential (org-scoped) clients.
+  // Platform clients (org_id is null) are public clients — they skip secret
+  // validation and rely on redirect URI validation + authorization code flow.
+  const isPlatformClient = client.org_id === null;
+  if (client_secret && client_secret !== "not_required") {
     const secretHash = hashApiKey(client_secret);
     if (secretHash !== client.client_secret_hash) {
       return oauthError("invalid_client", "Invalid client secret.", 401);
     }
+  } else if (!isPlatformClient) {
+    return oauthError("invalid_client", "Client secret is required.", 401);
   }
 
   // Look up the authorization code.

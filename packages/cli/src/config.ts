@@ -76,7 +76,7 @@ export function requireConfig(): CliConfig {
       "Error: No API key configured.\n\n" +
         "Set one with:\n" +
         "  okrunit config\n" +
-        "  export OKRUNIT_API_KEY=gk_...\n",
+        "  export OKRUNIT_API_KEY=ok_...\n",
     );
     process.exit(1);
   }

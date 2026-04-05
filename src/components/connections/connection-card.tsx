@@ -114,7 +114,7 @@ export function ConnectionCard({
             <span className="inline-flex items-center gap-1.5">
               <Key className="size-3.5" />
               <code className="bg-muted rounded px-1.5 py-0.5 text-xs">
-                gk_{connection.api_key_prefix}...
+                ok_{connection.api_key_prefix}...
               </code>
             </span>
 

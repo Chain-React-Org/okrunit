@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2,
   Check,
   Crown,
+  Pencil,
   Plus,
   Shield,
   User,
@@ -16,6 +17,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useOrgName } from "@/components/org/org-name-context";
 import {
   Dialog,
   DialogContent,
@@ -42,12 +44,21 @@ interface OrgListProps {
   teamCounts: Record<string, number>;
 }
 
-export function OrgList({ orgs, currentOrgId, memberCounts, teamCounts }: OrgListProps) {
+export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCounts }: OrgListProps) {
   const router = useRouter();
   const [switching, setSwitching] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [editingOrgId, setEditingOrgId] = useState<string | null>(null);
+  const editRef = useRef<HTMLHeadingElement>(null);
+  const { getOrgName, setOrgName } = useOrgName();
+
+  // Apply optimistic name overrides
+  const orgs = serverOrgs.map((org) => ({
+    ...org,
+    org_name: getOrgName(org.org_id, org.org_name),
+  }));
 
   async function handleSwitch(orgId: string) {
     if (orgId === currentOrgId) return;
@@ -96,6 +107,91 @@ export function OrgList({ orgs, currentOrgId, memberCounts, teamCounts }: OrgLis
     }
   }
 
+  function startEditing(org: OrgItem) {
+    setEditingOrgId(org.org_id);
+  }
+
+  function cancelEditing(org: OrgItem) {
+    if (editRef.current) {
+      editRef.current.textContent = org.org_name;
+    }
+    setEditingOrgId(null);
+  }
+
+  // Focus and place cursor at end when editing starts
+  useEffect(() => {
+    if (editingOrgId && editRef.current) {
+      const el = editRef.current;
+      el.focus();
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  }, [editingOrgId]);
+
+  function handleRename(orgId: string, originalName: string) {
+    const trimmed = (editRef.current?.textContent ?? "").trim();
+    if (!trimmed || trimmed === originalName) {
+      if (editRef.current) editRef.current.textContent = originalName;
+      setEditingOrgId(null);
+      return;
+    }
+
+    // Update the DOM text immediately so contentEditable shows the new name
+    if (editRef.current) {
+      editRef.current.textContent = trimmed;
+    }
+
+    // Optimistic: update UI everywhere (header, sidebar, this list) immediately
+    setOrgName(orgId, trimmed);
+    setEditingOrgId(null);
+
+    // Save in background
+    const needSwitch = orgId !== currentOrgId;
+
+    (async () => {
+      try {
+        if (needSwitch) {
+          const switchRes = await fetch("/api/v1/org/switch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ org_id: orgId }),
+          });
+          if (!switchRes.ok) throw new Error("Failed to switch organization");
+        }
+
+        const res = await fetch("/api/v1/org", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmed }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          throw new Error(data?.error ?? "Failed to rename organization");
+        }
+
+        if (needSwitch) {
+          await fetch("/api/v1/org/switch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ org_id: currentOrgId }),
+          });
+        }
+
+        // Keep override in place — router.refresh() will bring matching server data.
+        // Override is harmless since it matches what the server now has.
+        router.refresh();
+      } catch (err) {
+        // Revert on failure — set override back to original name
+        setOrgName(orgId, originalName);
+        toast.error(err instanceof Error ? err.message : "Failed to rename");
+      }
+    })();
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -117,6 +213,7 @@ export function OrgList({ orgs, currentOrgId, memberCounts, teamCounts }: OrgLis
       <div className="grid gap-3">
         {orgs.map((org) => {
           const isActive = org.org_id === currentOrgId;
+          const isEditing = editingOrgId === org.org_id;
           const isSwitching = switching === org.org_id;
           const members = memberCounts[org.org_id] ?? 0;
           const teams = teamCounts[org.org_id] ?? 0;
@@ -140,9 +237,41 @@ export function OrgList({ orgs, currentOrgId, memberCounts, teamCounts }: OrgLis
               {/* Org info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold truncate">{org.org_name}</h3>
+                  <h3
+                    ref={isEditing ? editRef : undefined}
+                    contentEditable={isEditing}
+                    suppressContentEditableWarning
+                    spellCheck={false}
+                    onBlur={isEditing ? () => handleRename(org.org_id, org.org_name) : undefined}
+                    onKeyDown={isEditing ? (e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleRename(org.org_id, org.org_name);
+                      }
+                      if (e.key === "Escape") {
+                        cancelEditing(org);
+                      }
+                    } : undefined}
+                    style={isEditing ? { textDecoration: 'underline', textDecorationColor: '#16a34a', textUnderlineOffset: '4px', textDecorationThickness: '2px', outline: 'none' } : undefined}
+                    className="text-sm font-semibold truncate"
+                  >
+                    {org.org_name}
+                  </h3>
+                  {(org.role === "owner" || org.role === "admin") && (
+                    <button
+                      type="button"
+                      className={`inline-flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors ${
+                        isEditing ? "invisible" : "opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      }`}
+                      onClick={() => startEditing(org)}
+                      title="Rename organization"
+                      tabIndex={isEditing ? -1 : undefined}
+                    >
+                      <Pencil className="size-3" />
+                    </button>
+                  )}
                   {isActive && (
-                    <Badge variant="default" className="text-[10px] gap-1">
+                    <Badge variant="default" className="text-[10px] gap-1 shrink-0">
                       <Check className="size-2.5" />
                       Active
                     </Badge>
@@ -229,6 +358,7 @@ export function OrgList({ orgs, currentOrgId, memberCounts, teamCounts }: OrgLis
           </form>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

@@ -20,6 +20,7 @@ import { NotificationPanel } from "@/components/notifications/notification-panel
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { useOrgName } from "@/components/org/org-name-context";
 
 interface OrgItem {
   id: string;
@@ -54,10 +55,18 @@ function getInitials(name: string | null, email: string): string {
   return email.charAt(0).toUpperCase();
 }
 
-export function Header({ emergencyStopActive, user, orgName, pendingCount = 0, currentOrgId, userOrgs = [], userId }: HeaderProps) {
+export function Header({ emergencyStopActive, user, orgName: serverOrgName, pendingCount = 0, currentOrgId, userOrgs: serverUserOrgs = [], userId }: HeaderProps) {
   const router = useRouter();
   const { setMobileOpen } = useSidebarStore();
+  const { getOrgName } = useOrgName();
   const [isMac, setIsMac] = useState(false);
+
+  // Apply optimistic name overrides
+  const orgName = currentOrgId ? getOrgName(currentOrgId, serverOrgName ?? "") : serverOrgName;
+  const userOrgs = serverUserOrgs.map((org) => ({
+    ...org,
+    org_name: getOrgName(org.org_id, org.org_name),
+  }));
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
@@ -222,16 +231,25 @@ function HelpDropdown() {
 
   const currentPageTour = mounted ? findPageTour(pathname) : undefined;
   const docsPath = currentPageTour?.docsPath ?? "/docs";
-  const hasTour = !!currentPageTour;
   const isTourActive = fullTourActive || !!activePageId;
   const hasTouredThisPage = currentPageTour ? touredPages.includes(currentPageTour.pageId) : false;
 
-  const tourLabel = tourPaused ? "Resume Tour" : hasTouredThisPage ? "Restart Tour" : "Start Tour";
+  const tourLabel = tourPaused
+    ? "Resume Tour"
+    : currentPageTour
+      ? hasTouredThisPage ? "Restart Tour" : "Start Tour"
+      : "Start Tour";
 
   const handleTour = () => {
     setOpen(false);
-    if (currentPageTour) {
+    if (tourPaused) {
+      // Resume from where user left off
+      resumeTour(currentPageTour?.pageId);
+    } else if (currentPageTour) {
       resumeTour(currentPageTour.pageId);
+    } else {
+      // No tour for this page — start the full tour
+      useOnboardingTourStore.getState().startFullTour();
     }
   };
 
@@ -260,7 +278,7 @@ function HelpDropdown() {
             <BookOpen className="size-4 text-muted-foreground" />
             Documentation
           </a>
-          {hasTour && !isTourActive && (
+          {!isTourActive && (
             <button
               onClick={handleTour}
               className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"

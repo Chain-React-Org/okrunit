@@ -57,7 +57,6 @@
   ],
   "url": "{{parameters.url}}",
   "method": "{{parameters.method}}",
-  "headers": "{{parameters.headers}}",
   "qs": "{{parameters.qs}}",
   "body": "{{parameters.body}}",
   "type": "json",

@@ -297,7 +297,7 @@ export default function BillingPage() {
         </h4>
         <pre className="mt-2 overflow-x-auto rounded-md bg-zinc-900 p-3 text-xs leading-relaxed">
           <code className="text-zinc-100">{`curl https://okrunit.com/api/v1/org/usage \\
-  -H "Authorization: Bearer gk_your_api_key"
+  -H "Authorization: Bearer ok_your_api_key"
 
 // Response
 {

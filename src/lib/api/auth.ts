@@ -6,7 +6,7 @@ import { createHash, randomBytes } from "crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { API_KEY_LENGTH, API_KEY_PREFIX } from "@/lib/constants";
+import { API_KEY_LENGTH, API_KEY_PREFIX, LEGACY_API_KEY_PREFIX } from "@/lib/constants";
 import { ApiError } from "@/lib/api/errors";
 import type { Connection, OrgMembership, UserProfile } from "@/lib/types/database";
 
@@ -48,9 +48,9 @@ export function hashApiKey(key: string): string {
  * Generate a fresh API key.
  *
  * @returns An object containing:
- *  - `plaintext` - the full key to hand to the caller (`gk_<64 hex chars>`)
+ *  - `plaintext` - the full key to hand to the caller (`ok_<64 hex chars>`)
  *  - `hash`      - SHA-256 hex digest (stored in the database)
- *  - `prefix`    - first 8 characters after `gk_` (stored for display)
+ *  - `prefix`    - first 8 characters after the prefix (stored for display)
  */
 export function generateApiKey(): {
   plaintext: string;
@@ -70,9 +70,9 @@ export function generateApiKey(): {
 /**
  * Authenticate an incoming API request.
  *
- * 1. If the `Authorization` header carries a Bearer token starting with `gk_`,
- *    treat it as an API key.
- * 2. If the Bearer token does NOT start with `gk_`, treat it as an OAuth
+ * 1. If the `Authorization` header carries a Bearer token starting with `ok_`
+ *    or `gk_` (legacy), treat it as an API key.
+ * 2. If the Bearer token has no recognized prefix, treat it as an OAuth
  *    access token.
  * 3. Otherwise fall back to Supabase cookie-based session authentication.
  * 4. If no method succeeds, throw a 401 `ApiError`.
@@ -85,12 +85,12 @@ export async function authenticateRequest(
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
 
-    // --- API Key authentication (gk_ prefix) --------------------------------
-    if (token.startsWith(API_KEY_PREFIX)) {
+    // --- API Key authentication (ok_ or legacy gk_ prefix) -------------------
+    if (token.startsWith(API_KEY_PREFIX) || token.startsWith(LEGACY_API_KEY_PREFIX)) {
       return authenticateApiKey(token);
     }
 
-    // --- OAuth access token (no gk_ prefix) ---------------------------------
+    // --- OAuth access token (no recognized prefix) --------------------------
     return authenticateOAuthToken(token);
   }
 

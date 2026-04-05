@@ -66,7 +66,15 @@ export async function POST(request: Request) {
     }
 
     // Verify redirect_uri is registered.
-    if (!client.redirect_uris.includes(body.redirect_uri)) {
+    // Supports exact matches and wildcard patterns (e.g. "https://*.app.n8n.cloud/rest/oauth2-credential/callback")
+    const uriMatch = client.redirect_uris.some((pattern: string) => {
+      if (pattern.includes("*")) {
+        const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]+");
+        return new RegExp(`^${escaped}$`).test(body.redirect_uri);
+      }
+      return pattern === body.redirect_uri;
+    });
+    if (!uriMatch) {
       throw new ApiError(
         400,
         "Invalid redirect URI",

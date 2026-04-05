@@ -11,6 +11,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useOrgName } from "@/components/org/org-name-context";
 
 interface OrgSwitcherProps {
   currentOrgId: string;
@@ -18,8 +19,13 @@ interface OrgSwitcherProps {
   collapsed?: boolean;
 }
 
-export function OrgSwitcher({ currentOrgId, orgs, collapsed }: OrgSwitcherProps) {
+export function OrgSwitcher({ currentOrgId, orgs: serverOrgs, collapsed }: OrgSwitcherProps) {
   const router = useRouter();
+  const { getOrgName } = useOrgName();
+  const orgs = serverOrgs.map((org) => ({
+    ...org,
+    org_name: getOrgName(org.org_id, org.org_name),
+  }));
   const currentOrg = orgs.find((o) => o.org_id === currentOrgId);
 
   async function switchOrg(orgId: string) {

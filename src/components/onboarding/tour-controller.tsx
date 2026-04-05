@@ -85,8 +85,10 @@ export function TourController() {
   }, [pathname, tourPaused]);
 
   // Auto-start per-page tour on first visit (not in full tour mode, not paused)
+  // Skip if tour was already completed or dismissed (synced from server)
+  const synced = useOnboardingTourStore((s) => s.synced);
   useEffect(() => {
-    if (fullTourActive || activePageId || tourPaused) return;
+    if (!synced || fullTourActive || activePageId || tourPaused || tourCompleted || tourDismissed) return;
 
     const pageTour = findPageTour(pathname);
 
@@ -94,7 +96,7 @@ export function TourController() {
       const timer = setTimeout(() => startPageTour(pageTour.pageId), 1000);
       return () => clearTimeout(timer);
     }
-  }, [pathname, fullTourActive, activePageId, tourPaused, touredPages, startPageTour]);
+  }, [synced, pathname, fullTourActive, activePageId, tourPaused, tourCompleted, tourDismissed, touredPages, startPageTour]);
 
   const currentStep = currentPageTour?.steps[currentStepInPage];
   const isFirstStep = currentStepInPage === 0;
