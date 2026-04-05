@@ -227,8 +227,15 @@ export function TourTooltip({
     }
   }
 
-  // Don't render until position is determined
-  if (!ready) return null;
+  // While repositioning between steps, keep overlay visible to prevent
+  // stray clicks from reaching the page and accidentally pausing the tour.
+  if (!ready) {
+    if (!mounted) return null;
+    return createPortal(
+      <div className="fixed inset-0 z-[9998] bg-black/40" />,
+      document.body,
+    );
+  }
 
   return createPortal(
     <>

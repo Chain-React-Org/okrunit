@@ -231,7 +231,7 @@ export default function GettingStartedPage() {
         (e.g. &quot;Production API&quot;) and save. Copy the generated API key —
         it starts with{" "}
         <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-sm text-zinc-800">
-          gk_
+          ok_
         </code>{" "}
         and cannot be retrieved again.
       </p>
@@ -250,7 +250,7 @@ export default function GettingStartedPage() {
 
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm leading-relaxed">
         <code className="text-zinc-100">{`curl -X POST https://okrunit.com/api/v1/approvals \\
-  -H "Authorization: Bearer gk_your_api_key_here" \\
+  -H "Authorization: Bearer ok_your_api_key_here" \\
   -H "Content-Type: application/json" \\
   -d '{
     "title": "Deploy v2.4.0 to production",

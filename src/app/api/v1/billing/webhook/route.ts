@@ -28,13 +28,41 @@ export async function POST(req: NextRequest) {
       const planId = session.metadata?.plan_id;
       if (!orgId || !planId) break;
 
+      const stripeSubId = typeof session.subscription === "string" ? session.subscription : null;
+
+      // Fetch the full subscription from Stripe to get period dates and billing interval
+      let periodStart: string | null = null;
+      let periodEnd: string | null = null;
+      let billingCycle: "monthly" | "yearly" = "monthly";
+
+      if (stripeSubId) {
+        const stripeSub = await stripe.subscriptions.retrieve(stripeSubId) as unknown as Record<string, unknown>;
+        const pStart = stripeSub.current_period_start;
+        const pEnd = stripeSub.current_period_end;
+        if (typeof pStart === "number") {
+          periodStart = new Date(pStart * 1000).toISOString();
+        }
+        if (typeof pEnd === "number") {
+          periodEnd = new Date(pEnd * 1000).toISOString();
+        }
+        // Determine billing cycle from the price interval
+        const items = stripeSub.items as { data?: Array<{ price?: { recurring?: { interval?: string } } }> } | undefined;
+        if (items?.data?.[0]?.price?.recurring?.interval === "year") {
+          billingCycle = "yearly";
+        }
+      }
+
       await admin
         .from("subscriptions")
         .update({
           plan_id: planId,
           status: "active",
+          billing_cycle: billingCycle,
           stripe_customer_id: typeof session.customer === "string" ? session.customer : session.customer?.id,
-          stripe_subscription_id: typeof session.subscription === "string" ? session.subscription : null,
+          stripe_subscription_id: stripeSubId,
+          current_period_start: periodStart,
+          current_period_end: periodEnd,
+          cancelled_at: null,
           updated_at: new Date().toISOString(),
         })
         .eq("org_id", orgId);

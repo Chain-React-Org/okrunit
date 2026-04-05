@@ -37,7 +37,7 @@ interface ApprovalStep {
 }
 
 export interface OKRunitApprovalProps {
-  /** OKRunit API key (starts with gk_) */
+  /** OKRunit API key (starts with ok_) */
   apiKey: string;
   /** OKRunit instance URL */
   apiUrl?: string;

@@ -12,8 +12,8 @@ export class OKRunitApi implements ICredentialType {
       type: "string",
       typeOptions: { password: true },
       default: "",
-      placeholder: "gk_...",
-      description: "Your OKRunit API key (starts with gk_)",
+      placeholder: "ok_...",
+      description: "Your OKRunit API key (starts with ok_)",
     },
     {
       displayName: "Base URL",

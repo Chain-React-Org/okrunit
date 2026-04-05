@@ -135,31 +135,31 @@ export function ConsentForm({
   return (
     <Card className="w-full">
       {/* Logged-in account indicator */}
-      <div className="flex items-center gap-3 border-b px-5 py-2.5">
-        <Avatar className="size-7">
+      <div className="flex items-center gap-3 border-b px-4 py-2">
+        <Avatar className="size-6">
           {userAvatarUrl && <AvatarImage src={userAvatarUrl} alt="" />}
-          <AvatarFallback className="!bg-primary text-[10px] font-bold !text-white">
+          <AvatarFallback className="!bg-primary text-[9px] font-bold !text-white">
             {getInitials(userFullName, userEmail)}
           </AvatarFallback>
         </Avatar>
-        <div className="flex flex-col">
+        <div className="flex items-center gap-1.5 min-w-0">
           {userFullName && (
-            <span className="text-sm font-medium leading-tight">{userFullName}</span>
+            <span className="text-sm font-medium truncate">{userFullName}</span>
           )}
-          <span className="text-xs leading-tight text-muted-foreground">{userEmail}</span>
+          <span className="text-xs text-muted-foreground truncate">{userEmail}</span>
         </div>
       </div>
 
-      <CardHeader className="px-5 pb-3 pt-4 text-center">
-        <CardTitle className="flex items-center justify-center gap-2 text-lg">
+      <CardHeader className="px-4 pb-2 pt-3 text-center">
+        <CardTitle className="flex items-center justify-center gap-2 text-base">
           Authorize{" "}
           {clientLogoUrl ? (
             <Image
               src={clientLogoUrl}
               alt={clientName}
-              width={28}
-              height={28}
-              className="inline-block h-7 w-auto"
+              width={24}
+              height={24}
+              className="inline-block h-6 w-auto"
             />
           ) : (
             clientName
@@ -171,17 +171,17 @@ export function ConsentForm({
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3 px-5">
+      <CardContent className="space-y-2.5 px-4">
         {/* Org selector — only shown when user belongs to multiple orgs */}
         {orgOptions && orgOptions.length > 1 && (
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+          <div className="rounded-lg border bg-muted/30 p-2.5">
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">
               Connect to organization
             </label>
             <select
               value={selectedOrgId}
               onChange={(e) => setSelectedOrgId(e.target.value)}
-              className="w-full rounded-md border bg-white dark:bg-card px-3 py-2 text-sm"
+              className="w-full rounded-md border bg-white dark:bg-card px-2.5 py-1.5 text-sm"
             >
               {orgOptions.map((org) => (
                 <option key={org.id} value={org.id}>
@@ -191,24 +191,24 @@ export function ConsentForm({
             </select>
           </div>
         )}
-        <p className="text-sm font-medium">
+        <p className="text-xs font-medium">
           This will allow <strong>{clientName}</strong> to:
         </p>
 
-        <ul className="space-y-2">
+        <ul className="space-y-1.5">
           {scopes.map((scope) => {
             const info = SCOPE_LABELS[scope];
             return (
               <li
                 key={scope}
-                className="flex items-start gap-3 rounded-lg border p-2.5"
+                className="flex items-start gap-2.5 rounded-lg border p-2"
               >
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-600" />
                 <div>
                   <p className="text-sm font-medium leading-tight">
                     {info?.label || scope}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground leading-snug">
                     {info?.description || scope}
                   </p>
                 </div>
@@ -218,7 +218,7 @@ export function ConsentForm({
         </ul>
       </CardContent>
 
-      <CardFooter className="flex gap-3 px-5 pb-5 pt-2">
+      <CardFooter className="flex gap-3 px-4 pb-4 pt-2">
         <Button
           variant="outline"
           className="flex-1"

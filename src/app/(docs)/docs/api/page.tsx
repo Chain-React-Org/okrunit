@@ -138,12 +138,12 @@ export default function ApiReferencePage() {
       <p className="mt-2 text-zinc-700">
         Each connection has an API key with the{" "}
         <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-sm text-zinc-800">
-          gk_
+          ok_
         </code>{" "}
         prefix followed by 64 hex characters. Pass it as a Bearer token:
       </p>
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm">
-        <code className="text-zinc-100">{`Authorization: Bearer gk_a1b2c3d4e5f6...`}</code>
+        <code className="text-zinc-100">{`Authorization: Bearer ok_a1b2c3d4e5f6...`}</code>
       </pre>
 
       <h4 className="mt-4 text-base font-semibold text-zinc-900">
@@ -675,15 +675,15 @@ X-RateLimit-Reset: 1711296000`}</code>
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm leading-relaxed">
         <code className="text-zinc-100">{`# Get all pending high-priority requests
 curl "https://okrunit.com/api/v1/approvals?status=pending&priority=high" \\
-  -H "Authorization: Bearer gk_your_api_key"
+  -H "Authorization: Bearer ok_your_api_key"
 
 # Search requests by keyword
 curl "https://okrunit.com/api/v1/approvals?search=deploy+production" \\
-  -H "Authorization: Bearer gk_your_api_key"
+  -H "Authorization: Bearer ok_your_api_key"
 
 # Paginate through results
 curl "https://okrunit.com/api/v1/approvals?page=2&page_size=50" \\
-  -H "Authorization: Bearer gk_your_api_key"`}</code>
+  -H "Authorization: Bearer ok_your_api_key"`}</code>
       </pre>
 
       {/* Idempotency */}
@@ -706,7 +706,7 @@ curl "https://okrunit.com/api/v1/approvals?page=2&page_size=50" \\
       </p>
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm leading-relaxed">
         <code className="text-zinc-100">{`curl -X POST https://okrunit.com/api/v1/approvals \\
-  -H "Authorization: Bearer gk_your_api_key" \\
+  -H "Authorization: Bearer ok_your_api_key" \\
   -H "Content-Type: application/json" \\
   -d '{
     "title": "Deploy v2.4.0",
@@ -731,7 +731,7 @@ curl "https://okrunit.com/api/v1/approvals?page=2&page_size=50" \\
         <code className="text-zinc-100">{`const response = await fetch("https://okrunit.com/api/v1/approvals", {
   method: "POST",
   headers: {
-    Authorization: "Bearer gk_your_api_key",
+    Authorization: "Bearer ok_your_api_key",
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
@@ -752,7 +752,7 @@ console.log(approval.id, approval.status); // "a1b2c3d4-..." "pending"`}</code>
 
 response = requests.post(
     "https://okrunit.com/api/v1/approvals",
-    headers={"Authorization": "Bearer gk_your_api_key"},
+    headers={"Authorization": "Bearer ok_your_api_key"},
     json={
         "title": "Deploy v2.4.0 to production",
         "description": "Release includes database migration",

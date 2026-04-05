@@ -95,7 +95,7 @@ export default function WebhooksPage() {
       </p>
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm leading-relaxed">
         <code className="text-zinc-100">{`curl -X POST https://okrunit.com/api/v1/approvals \\
-  -H "Authorization: Bearer gk_your_api_key" \\
+  -H "Authorization: Bearer ok_your_api_key" \\
   -H "Content-Type: application/json" \\
   -d '{
     "title": "Delete user account #4821",
@@ -386,7 +386,7 @@ else:
       </p>
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm leading-relaxed">
         <code className="text-zinc-100">{`curl -X POST https://okrunit.com/api/v1/test-webhook \\
-  -H "Authorization: Bearer gk_your_api_key" \\
+  -H "Authorization: Bearer ok_your_api_key" \\
   -H "Content-Type: application/json" \\
   -d '{ "url": "https://your-app.com/webhooks/okrunit" }'`}</code>
       </pre>

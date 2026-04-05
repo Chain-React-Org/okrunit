@@ -46,9 +46,17 @@ export async function POST(req: NextRequest) {
 
   const { data: subscription } = await admin
     .from("subscriptions")
-    .select("stripe_customer_id")
+    .select("stripe_customer_id, stripe_subscription_id, status, plan_id")
     .eq("org_id", org.id)
     .single();
+
+  // If they already have an active paid subscription, don't create a duplicate
+  if (subscription?.stripe_subscription_id && subscription.status === "active" && subscription.plan_id !== "free") {
+    return NextResponse.json(
+      { error: "You already have an active subscription. Use 'Manage billing' to change your plan." },
+      { status: 409 },
+    );
+  }
 
   let customerId = subscription?.stripe_customer_id;
 

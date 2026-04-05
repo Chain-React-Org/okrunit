@@ -123,7 +123,11 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Billing</span>
               <span className="text-sm">
-                {limits.priceMonthly === 0 ? "$0.00" : `$${limits.priceMonthly}.00`} billed {subscription?.billing_cycle ?? "monthly"}
+                {currentPlan === "free"
+                  ? "$0.00"
+                  : subscription?.billing_cycle === "yearly"
+                    ? `$${limits.priceYearly}.00 / year`
+                    : `$${limits.priceMonthly}.00 / month`}
               </span>
             </div>
             {isAdmin && currentPlan !== "free" && subscription?.stripe_customer_id && (
@@ -133,6 +137,27 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
               </Button>
             )}
           </div>
+
+          {/* Row: Next billing / Renewal */}
+          {currentPlan !== "free" && subscription?.current_period_end && (
+            <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">
+                  {subscription.cancelled_at ? "Expires" : "Renews"}
+                </span>
+                <span className="text-sm">
+                  {new Date(subscription.current_period_end).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+                {subscription.cancelled_at && (
+                  <Badge variant="secondary" className="text-xs">Cancelled</Badge>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Row: Usage */}
           <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">

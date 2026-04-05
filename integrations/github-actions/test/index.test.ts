@@ -89,7 +89,7 @@ function makeDecidedApproval(
 
 function setupDefaultInputs(overrides: Record<string, string> = {}) {
   const defaults: Record<string, string> = {
-    "api-key": "gk_test_key",
+    "api-key": "ok_test_key",
     "api-url": "https://app.okrunit.com",
     title: "",
     description: "deploy the thing",
@@ -598,7 +598,7 @@ describe("polling behavior", () => {
 
 describe("API request structure", () => {
   it("sends correct authorization header", async () => {
-    setupDefaultInputs({ "api-key": "gk_my_secret_key" });
+    setupDefaultInputs({ "api-key": "ok_my_secret_key" });
     const fetchMock = setupFetchMock([
       { ok: true, body: makeApproval() },
       { ok: true, body: makeDecidedApproval("approved") },
@@ -608,7 +608,7 @@ describe("API request structure", () => {
 
     const createCall = fetchMock.mock.calls[0];
     expect(createCall[1].headers.Authorization).toBe(
-      "Bearer gk_my_secret_key",
+      "Bearer ok_my_secret_key",
     );
   });
 

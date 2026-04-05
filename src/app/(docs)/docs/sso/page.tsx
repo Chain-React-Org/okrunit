@@ -435,7 +435,7 @@ export default function SSODocsPage() {
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm leading-relaxed">
         <code className="text-zinc-100">{`# Configure SSO for your organization
 curl -X PATCH https://okrunit.com/api/v1/org/sso \\
-  -H "Authorization: Bearer gk_your_api_key" \\
+  -H "Authorization: Bearer ok_your_api_key" \\
   -H "Content-Type: application/json" \\
   -d '{
     "saml_metadata_url": "https://your-idp.okta.com/app/.../sso/saml/metadata",

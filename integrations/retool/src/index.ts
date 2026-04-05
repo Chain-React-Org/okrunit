@@ -6,7 +6,7 @@
  */
 
 export interface ApprovalOptions {
-  /** OKRunit API key (starts with gk_) */
+  /** OKRunit API key (starts with ok_) */
   apiKey: string;
   /** OKRunit instance URL */
   apiUrl?: string;
@@ -95,7 +95,7 @@ function generateIdempotencyKey(): string {
  * import { requestApproval } from "@okrunit/retool";
  *
  * const result = await requestApproval({
- *   apiKey: "gk_your_api_key",
+ *   apiKey: "ok_your_api_key",
  *   title: "Delete 500 user records",
  *   description: "Bulk deletion requested by admin",
  *   priority: "critical",

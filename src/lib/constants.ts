@@ -4,8 +4,11 @@
 
 export const APP_NAME = "OKrunit";
 
-/** Prefix prepended to every generated API key. */
-export const API_KEY_PREFIX = "gk_";
+/** Prefix prepended to every newly generated API key. */
+export const API_KEY_PREFIX = "ok_";
+
+/** Legacy prefix — existing keys with this prefix are still accepted. */
+export const LEGACY_API_KEY_PREFIX = "gk_";
 
 /** Number of random bytes used to generate an API key (64 hex chars). */
 export const API_KEY_LENGTH = 32;

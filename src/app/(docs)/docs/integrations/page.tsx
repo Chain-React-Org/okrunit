@@ -363,51 +363,119 @@ export default function IntegrationsPage() {
       <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
         <p className="text-sm font-medium text-amber-900">Two-scenario pattern</p>
         <p className="mt-1 text-sm text-amber-800 leading-relaxed">
-          <strong>Scenario 1</strong> creates the approval request and continues
-          immediately (it does not wait). <strong>Scenario 2</strong> uses a
-          webhook trigger that listens for OKrunit&apos;s decision callback and
-          performs the follow-up actions. This allows the approval to take as long
-          as needed with no timeout.
+          <strong>Scenario 1</strong> sets up a webhook to receive OKrunit&apos;s
+          decision callback and performs the follow-up actions.{" "}
+          <strong>Scenario 2</strong> creates the approval request (using the
+          webhook URL from Scenario 1) and continues immediately without waiting.
+          This allows the approval to take as long as needed with no timeout.
         </p>
       </div>
-      <p className="mt-4 text-sm font-medium text-zinc-900">Scenario 1 — Send the request:</p>
-      <ol className="mt-2 space-y-3 text-zinc-700">
-        <li className="flex gap-3">
+
+      <p className="mt-4 text-sm font-medium text-zinc-900">Scenario 1 — Set up the webhook (handle the decision):</p>
+      <div className="mt-2 space-y-2">
+        <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">1</span>
-          <span>In your Make scenario, click <strong>+</strong> to add a module.</span>
-        </li>
-        <li className="flex gap-3">
+          <span>Create a new scenario and click <strong>+</strong> to add a module.</span>
+        </div>
+
+        <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">2</span>
-          <span>Search for <strong>&quot;OKrunit&quot;</strong>.</span>
-        </li>
-        <li className="flex gap-3">
+          <span>Search for <strong>&quot;Webhooks&quot;</strong> and select the <strong>Webhooks</strong> app.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/make-step-7-search-webhooks.webp"
+          alt="Make app picker with Webhooks selected"
+          caption="Search for 'Webhooks' in the app picker."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
-          <span>Choose the <strong>Create an Approval</strong> module.</span>
-        </li>
-        <li className="flex gap-3">
+          <span>Choose <strong>Custom webhook</strong> as the trigger.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/make-step-8-custom-webhook.webp"
+          alt="Make module list showing Custom webhook trigger"
+          caption="Select 'Custom webhook' to create a webhook endpoint."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
-          <span>Click <strong>Add</strong> next to the Connection field and authorize your OKrunit account.</span>
-        </li>
-        <li className="flex gap-3">
+          <span>Click <strong>Add</strong> to create the webhook, then <strong>copy the webhook URL</strong> — you&apos;ll need it for Scenario 2.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/make-step-9-copy-webhook-url.webp"
+          alt="Make webhook configuration showing the generated URL to copy"
+          caption="Copy this webhook URL — you'll paste it into the Callback URL field in Scenario 2."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">5</span>
-          <span>Configure the fields. This scenario will run and create the request immediately — it does not wait for a decision.</span>
-        </li>
-      </ol>
-      <p className="mt-4 text-sm font-medium text-zinc-900">Scenario 2 — Handle the decision:</p>
-      <ol className="mt-2 space-y-3 text-zinc-700">
-        <li className="flex gap-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">1</span>
-          <span>Create a new scenario with a <strong>Webhooks &gt; Custom webhook</strong> trigger.</span>
-        </li>
-        <li className="flex gap-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">2</span>
-          <span>Copy the webhook URL and paste it as the <strong>callback_url</strong> in your Scenario 1&apos;s Create Approval module.</span>
-        </li>
-        <li className="flex gap-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
           <span>Add your follow-up modules after the webhook trigger — these will run when OKrunit sends the approval decision.</span>
-        </li>
-      </ol>
+        </div>
+      </div>
+
+      <p className="mt-4 text-sm font-medium text-zinc-900">Scenario 2 — Send the approval request:</p>
+      <div className="mt-2 space-y-2">
+        <div className="flex gap-3 text-zinc-700">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">1</span>
+          <span>Create a new scenario and click <strong>+</strong> to add a module.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/make-step-1-editor.webp"
+          alt="Make scenario editor showing the + button to add a module"
+          caption="Click the + icon in the scenario editor to open the app picker."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">2</span>
+          <span>Search for <strong>&quot;OKrunit&quot;</strong> in the app search.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/make-step-2-search.webp"
+          alt="Make app picker with the search bar highlighted"
+          caption="Type 'OKrunit' in the search bar to find the app."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
+          <span>Select <strong>OKrunit</strong> from the results.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/make-step-3-select-okrunit.webp"
+          alt="Make search results showing OKrunit"
+          caption="Click OKrunit in the search results to see available modules."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
+          <span>Scroll to <strong>Actions</strong> and choose <strong>Request an Approval</strong>.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/make-step-4-select-module-v2.webp"
+          alt="Make module list showing OKrunit triggers and actions"
+          caption="Select 'Request an Approval' under Actions to create approval requests."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">5</span>
+          <span>Click <strong>Add</strong> next to the Connection field and authorize your OKrunit account via OAuth.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/make-step-5-connection.webp"
+          alt="Make module configuration showing Connection field with Add button"
+          caption="Connect your OKrunit account to authorize Make."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">6</span>
+          <span>Fill in the request fields — <strong>What needs approval?</strong>, <strong>Details</strong>, and paste the webhook URL from Scenario 1 into <strong>Callback URL</strong>.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/make-step-6-fields.webp"
+          alt="Make module fields showing title, details, and callback URL"
+          caption="Configure all the fields. Paste the webhook URL from Scenario 1 into Callback URL."
+        />
+      </div>
 
       {/* n8n */}
       <h3 id="n8n" className="mt-8 scroll-mt-24 text-xl font-semibold text-zinc-900">n8n</h3>
@@ -603,7 +671,7 @@ def deploy_pipeline():
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm leading-relaxed">
         <code className="text-zinc-100">{`from dagster_okrunit import OKRunitResource, approval_gate_op
 
-@job(resource_defs={"okrunit": OKRunitResource(api_key="gk_...")})
+@job(resource_defs={"okrunit": OKRunitResource(api_key="ok_...")})
 def deploy_with_approval():
     approval = approval_gate_op()
     deploy_to_prod(approval)`}</code>
@@ -702,11 +770,11 @@ def deploy_with_approval():
           <p className="mt-2 text-sm text-zinc-700 leading-relaxed">
             Make&apos;s HTTP modules have a 40-second default timeout (configurable
             up to 5 minutes), which isn&apos;t enough for human approvals. Instead,
-            use two scenarios: <strong>Scenario 1</strong> creates the approval
-            request and continues immediately. <strong>Scenario 2</strong> uses a
-            webhook trigger that listens for OKrunit&apos;s decision callback and
-            performs the follow-up actions. This pattern allows the approval to take
-            as long as needed.
+            use two scenarios: <strong>Scenario 1</strong> sets up a webhook
+            trigger that listens for OKrunit&apos;s decision callback and
+            performs the follow-up actions. <strong>Scenario 2</strong> creates the
+            approval request (with the webhook URL from Scenario 1) and continues
+            immediately. This pattern allows the approval to take as long as needed.
           </p>
           <p className="mt-2 text-xs text-zinc-500">
             Pattern: Two scenarios — fire-and-forget + webhook listener
@@ -876,7 +944,7 @@ def deploy_with_approval():
       </h3>
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm leading-relaxed">
         <code className="text-zinc-100">{`curl -X POST https://okrunit.com/api/v1/approvals \\
-  -H "Authorization: Bearer gk_your_api_key" \\
+  -H "Authorization: Bearer ok_your_api_key" \\
   -H "Content-Type: application/json" \\
   -d '{
     "title": "Delete user account #4821",
@@ -892,7 +960,7 @@ def deploy_with_approval():
       </h3>
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm leading-relaxed">
         <code className="text-zinc-100">{`curl https://okrunit.com/api/v1/approvals/a1b2c3d4-... \\
-  -H "Authorization: Bearer gk_your_api_key"
+  -H "Authorization: Bearer ok_your_api_key"
 
 # Response when decided:
 {

@@ -7,6 +7,7 @@ import { NavigationProgress } from "@/components/layout/navigation-progress";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { TourController } from "@/components/onboarding/tour-controller";
 import { useSidebarStore } from "@/stores/sidebar-store";
+import { OrgNameProvider } from "@/components/org/org-name-context";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -36,6 +37,7 @@ export function DashboardShell({ children, sidebarProps, emergencyStopActive, us
   }, [setMobileOpen, setActivePanel]);
 
   return (
+    <OrgNameProvider>
     <div className="gk-v2 flex h-screen overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
       <NavigationProgress />
       <CommandPalette orgId={currentOrgId} />
@@ -88,5 +90,6 @@ export function DashboardShell({ children, sidebarProps, emergencyStopActive, us
         </main>
       </div>
     </div>
+    </OrgNameProvider>
   );
 }

@@ -252,7 +252,7 @@ COMMANDS
   comments <id>         List comments
 
   configure             Set API key and base URL
-    --api-key <key>       Your OKRunit API key (gk_...)
+    --api-key <key>       Your OKRunit API key (ok_...)
     --base-url <url>      API base URL
 
 GLOBAL OPTIONS

@@ -58,7 +58,7 @@ interface ApiApproval {
 }
 
 export interface ApprovalOptions {
-  /** OKRunit API key (starts with gk_) */
+  /** OKRunit API key (starts with ok_) */
   apiKey: string;
   /** OKRunit instance URL */
   apiUrl?: string;

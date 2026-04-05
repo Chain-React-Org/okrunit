@@ -27,12 +27,12 @@ Options:
   --poll-interval <sec>  Polling interval (default: 10)
 
 Environment:
-  OKRUNIT_API_KEY        Required. Your OKRunit API key (gk_...)
+  OKRUNIT_API_KEY        Required. Your OKRunit API key (ok_...)
   OKRUNIT_API_URL        Optional. OKRunit instance URL (default: https://app.okrunit.com)
 
 Examples:
-  OKRUNIT_API_KEY=gk_... npx @okrunit/vercel approve --title "Deploy to prod" --priority critical
-  OKRUNIT_API_KEY=gk_... npx @okrunit/vercel approve --timeout 1800
+  OKRUNIT_API_KEY=ok_... npx @okrunit/vercel approve --title "Deploy to prod" --priority critical
+  OKRUNIT_API_KEY=ok_... npx @okrunit/vercel approve --timeout 1800
 `.trim());
 }
 
