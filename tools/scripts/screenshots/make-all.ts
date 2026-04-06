@@ -460,9 +460,10 @@ async function main() {
   await snap(page, "make-step-6-fields");
   await clearAnn(page);
 
-  // ---- Scenario 2: Webhook scenario (handle the decision) ----
-  // Create a NEW scenario for the webhook trigger, capturing the same initial steps
-  console.log("\n📸 Scenario 2: Creating webhook scenario...");
+  // ---- Scenario 2: Decision listener (uses OKrunit instant trigger) ----
+  // Create a NEW scenario that uses the OKrunit "Approval Decision Received" trigger.
+  // Steps mirror Scenario 1 (search OKrunit, select app) but pick the trigger instead.
+  console.log("\n📸 Scenario 2: Creating decision listener scenario...");
 
   // Navigate back to scenarios list
   await page.goto("https://us2.make.com");
@@ -504,7 +505,7 @@ async function main() {
     await page.waitForTimeout(2000);
   }
 
-  // ---- Step 7: Click + to add a module (same as step 1 but for scenario 2) ----
+  // ---- Step 7: Click + to add a module ----
   console.log("\n📸 Step 7: Scenario 2 — add module...");
   let addBox3: { x: number; y: number; width: number; height: number } | null = null;
   for (const sel of plusSelectors) {
@@ -520,107 +521,166 @@ async function main() {
   await page.mouse.click(addBox3.x + addBox3.width / 2, addBox3.y + addBox3.height / 2);
   await page.waitForTimeout(3000);
 
-  // ---- Step 8: Search for "Webhooks" and select Custom webhook ----
-  console.log("\n📸 Step 8: Scenario 2 — search for Webhooks...");
-  const searchInput2 = page.locator('input[placeholder*="Search"], input[placeholder*="search"], input[type="search"], input[type="text"]').first();
+  // ---- Step 8: Search for OKrunit (same as step 2-3 but for scenario 2) ----
+  console.log("\n📸 Step 8: Scenario 2 — search for OKrunit...");
+  const searchInput2 = page.locator('input[placeholder*="Search"], input[placeholder*="search"]').first();
   if (await searchInput2.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await searchInput2.fill("Webhooks");
+    await searchInput2.fill("OKrunit");
     await page.waitForTimeout(3000);
   }
 
-  // Find and click "Webhooks" in results
-  const webhooksResult = page.locator('text=Webhooks').first();
-  if (await webhooksResult.isVisible({ timeout: 5000 }).catch(() => false)) {
-    const whBox = await webhooksResult.boundingBox();
-    if (whBox) await annotate(page, whBox, "7. Select Webhooks", "right");
-    await snap(page, "make-step-7-search-webhooks");
-    await clearAnn(page);
-
-    await webhooksResult.click();
+  // Click OKrunit in results
+  const okrunitResult2 = page.locator('text=OKrunit').first();
+  let okrunitClicked2 = false;
+  if (await okrunitResult2.isVisible({ timeout: 5000 }).catch(() => false)) {
+    await okrunitResult2.click();
     await page.waitForTimeout(3000);
+    okrunitClicked2 = true;
   } else {
-    console.log("  ⚠️  Webhooks not found in search results");
-    await snap(page, "make-step-7-debug");
+    console.log("  ⚠️  OKrunit not found in search results");
   }
 
-  // ---- Step 9: Select "Custom webhook" trigger ----
-  console.log("\n📸 Step 9: Scenario 2 — select Custom webhook...");
-  const customWebhook = page.locator('text="Custom webhook"').first();
+  // ---- Step 9: Select "Approval Decision Received" instant trigger ----
+  if (!okrunitClicked2) {
+    console.log("  ⚠️  Skipping trigger selection — OKrunit app not found");
+  } else {
+    console.log("\n📸 Step 9: Scenario 2 — select Approval Decision Received trigger...");
 
-  // Scroll the panel to find it
-  await page.evaluate(() => {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    while (walker.nextNode()) {
-      if (walker.currentNode.textContent?.trim() === 'Custom webhook') {
-        let el = walker.currentNode.parentElement;
-        while (el) {
-          if (el.scrollHeight > el.clientHeight + 20) {
-            el.scrollTop = 0;
-            break;
+    // The OKrunit module list has Triggers at top (may need scrolling up) and Actions below.
+    // Scroll the panel UP to find the Triggers section with "Approval Decision Received".
+    await page.waitForTimeout(2000);
+
+    // First, scroll the module list panel to the top to reveal Triggers
+    await page.evaluate(() => {
+      // Find text containing "Approval Decision Received" or scroll to top of module list
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const text = walker.currentNode.textContent?.trim();
+        if (text && text.includes('Approval Decision Received')) {
+          const el = walker.currentNode.parentElement;
+          if (el) {
+            el.scrollIntoView({ block: 'center' });
+            return;
           }
-          el = el.parentElement;
         }
-        (walker.currentNode.parentElement as HTMLElement)?.scrollIntoView({ block: 'center' });
+      }
+      // Fallback: find scrollable panel and scroll to top
+      const panels = document.querySelectorAll('[class*="module"], [class*="panel"], [class*="list"]');
+      for (let i = 0; i < panels.length; i++) {
+        const p = panels[i] as HTMLElement;
+        if (p.scrollHeight > p.clientHeight + 50 && p.getBoundingClientRect().x > 200) {
+          p.scrollTop = 0;
+        }
+      }
+    });
+    await page.waitForTimeout(1500);
+
+    // Find the trigger element
+    const triggerBox = await page.evaluate(() => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const text = walker.currentNode.textContent?.trim();
+        if (text && text.includes('Approval Decision Received')) {
+          const el = walker.currentNode.parentElement;
+          if (el) {
+            el.scrollIntoView({ block: 'center' });
+            const r = el.getBoundingClientRect();
+            if (r.x > 200 && r.width > 10) {
+              return { x: r.x, y: r.y, width: r.width, height: r.height };
+            }
+          }
+        }
+      }
+      return null;
+    });
+
+    if (triggerBox) {
+      await annotate(page, triggerBox, "7. Choose Approval Decision Received");
+      await snap(page, "make-step-7-select-trigger");
+      await clearAnn(page);
+      await page.mouse.click(triggerBox.x + triggerBox.width / 2, triggerBox.y + triggerBox.height / 2);
+      await page.waitForTimeout(3000);
+    } else {
+      console.log("  ⚠️  'Approval Decision Received' trigger not found — taking debug screenshot");
+      await snap(page, "make-step-7-debug");
+    }
+  }
+
+  // ---- Step 10: Click "Create a webhook" and capture the generated URL ----
+  console.log("\n📸 Step 10: Scenario 2 — create webhook & copy URL...");
+  await page.waitForTimeout(2000);
+
+  // The trigger config panel shows a "Create a webhook" button. Click it to open the naming dialog.
+  const createWebhookBtn = page.locator('button:has-text("Create a webhook"), button:has-text("Create a Webhook")').first();
+  if (await createWebhookBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+    console.log("  Clicking 'Create a webhook'...");
+    await createWebhookBtn.click();
+    await page.waitForTimeout(3000);
+
+    // A "Create a webhook" modal appears with a name field and Save button. Click Save.
+    const saveBtn = page.locator('button:has-text("Save")').first();
+    if (await saveBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      console.log("  Saving webhook...");
+      await saveBtn.click();
+      await page.waitForTimeout(5000);
+    }
+  } else {
+    // Fallback: try "Add" button
+    const addBtn2 = page.locator('button:has-text("Add")').first();
+    if (await addBtn2.isVisible({ timeout: 3000 }).catch(() => false)) {
+      console.log("  Clicking 'Add'...");
+      await addBtn2.click();
+      await page.waitForTimeout(5000);
+    }
+  }
+
+  // Now the URL should be visible — look for it in inputs or text containing "hook.make.com"
+  const triggerUrl = page.locator('input[value*="hook"], input[value*="make.com"]').first();
+  const triggerUrlText = page.locator('text=/https:\\/\\/hook/').first();
+
+  let urlCaptured = false;
+
+  for (const el of [triggerUrl, triggerUrlText]) {
+    if (await el.isVisible({ timeout: 5000 }).catch(() => false)) {
+      const urlBox = await el.boundingBox();
+      if (urlBox) {
+        await annotate(page, urlBox, "8. Copy this URL for Scenario 2", "left");
+        await snap(page, "make-step-8-trigger-url");
+        await clearAnn(page);
+        urlCaptured = true;
         break;
       }
     }
-  });
-  await page.waitForTimeout(1500);
-
-  if (await customWebhook.isVisible({ timeout: 3000 }).catch(() => false)) {
-    const cwBox = await customWebhook.boundingBox();
-    if (cwBox) {
-      await annotate(page, cwBox, "8. Choose Custom webhook");
-      await snap(page, "make-step-8-custom-webhook");
-      await clearAnn(page);
-      await customWebhook.click({ force: true, timeout: 10000 });
-      await page.waitForTimeout(3000);
-    }
-  } else {
-    console.log("  ⚠️  'Custom webhook' not visible");
-    await snap(page, "make-step-8-debug");
   }
 
-  // ---- Step 10: Copy the webhook URL ----
-  console.log("\n📸 Step 10: Scenario 2 — copy webhook URL...");
-  await page.waitForTimeout(2000);
+  if (!urlCaptured) {
+    // Try finding the URL via evaluate — it might be in a non-standard element
+    const urlBox2 = await page.evaluate(() => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const text = walker.currentNode.textContent?.trim() || '';
+        if (text.includes('hook') && text.includes('make.com')) {
+          const el = walker.currentNode.parentElement;
+          if (el) {
+            const r = el.getBoundingClientRect();
+            if (r.width > 50) return { x: r.x, y: r.y, width: r.width, height: r.height };
+          }
+        }
+      }
+      return null;
+    });
 
-  // After selecting Custom webhook, Make shows a panel with "Add" button to create the hook
-  // and then displays the URL. Look for the URL or the "Copy address to clipboard" button.
-  const addHookBtn = page.locator('button:has-text("Add")').first();
-  if (await addHookBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await addHookBtn.click();
-    await page.waitForTimeout(3000);
-  }
-
-  // Look for the webhook URL display — usually an input or text containing "hook.us2.make.com" or similar
-  const webhookUrl = page.locator('input[value*="hook"], input[value*="make.com"], text=/https:\\/\\/hook/').first();
-  const copyBtn = page.locator('button:has-text("Copy"), button[aria-label*="Copy"], button[aria-label*="copy"]').first();
-
-  let urlFound = false;
-  if (await webhookUrl.isVisible({ timeout: 5000 }).catch(() => false)) {
-    const urlBox = await webhookUrl.boundingBox();
-    if (urlBox) {
-      await annotate(page, urlBox, "9. Copy this webhook URL", "left");
-      await snap(page, "make-step-9-copy-webhook-url");
+    if (urlBox2) {
+      await annotate(page, urlBox2, "8. Copy this URL for Scenario 2", "left");
+      await snap(page, "make-step-8-trigger-url");
       await clearAnn(page);
-      urlFound = true;
+      urlCaptured = true;
     }
   }
 
-  if (!urlFound && await copyBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    const copyBox = await copyBtn.boundingBox();
-    if (copyBox) {
-      await annotate(page, copyBox, "9. Copy this webhook URL", "left");
-      await snap(page, "make-step-9-copy-webhook-url");
-      await clearAnn(page);
-      urlFound = true;
-    }
-  }
-
-  if (!urlFound) {
-    console.log("  ⚠️  Webhook URL not found — taking current state");
-    await snap(page, "make-step-9-webhook-url");
+  if (!urlCaptured) {
+    console.log("  ⚠️  Trigger URL not found — taking current state");
+    await snap(page, "make-step-8-trigger-url");
   }
 
   console.log("\n🎉 Make screenshots complete!");

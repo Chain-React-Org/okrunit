@@ -1,6 +1,6 @@
 # OKRunit monday.com Integration
 
-Native monday.com app for the [OKRunit](https://www.okrunit.com) human-in-the-loop approval gateway.
+Native monday.com app for the [OKRunit](https://okrunit.com) human-in-the-loop approval gateway.
 
 ## Features
 
@@ -23,7 +23,7 @@ Native monday.com app for the [OKRunit](https://www.okrunit.com) human-in-the-lo
 
 ### Prerequisites
 
-- A [OKRunit](https://www.okrunit.com) account
+- A [OKRunit](https://okrunit.com) account
 - A [monday.com](https://monday.com) account with admin access
 
 ### Installation

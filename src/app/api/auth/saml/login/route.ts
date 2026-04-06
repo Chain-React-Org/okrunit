@@ -17,6 +17,7 @@ import {
 
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");
+  const redirectTo = request.nextUrl.searchParams.get("redirect_to");
 
   if (!email) {
     return NextResponse.redirect(
@@ -41,5 +42,13 @@ export async function GET(request: NextRequest) {
   );
 
   // loginRequest has { id, context } where context is the redirect URL
-  return NextResponse.redirect(loginRequest.context);
+  let redirectUrl = loginRequest.context;
+
+  // Append RelayState for deep linking if redirect_to is a safe relative path
+  if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+    const separator = redirectUrl.includes("?") ? "&" : "?";
+    redirectUrl = `${redirectUrl}${separator}RelayState=${encodeURIComponent(redirectTo)}`;
+  }
+
+  return NextResponse.redirect(redirectUrl);
 }

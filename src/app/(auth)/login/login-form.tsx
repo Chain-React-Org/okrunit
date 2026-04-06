@@ -67,6 +67,26 @@ export function LoginForm() {
     startTransition(async () => {
       const supabase = createClient();
 
+      // Check if SSO is enforced for this email domain
+      try {
+        const checkRes = await fetch("/api/v1/auth/check-sso", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const checkData = await checkRes.json();
+        if (checkData.enforce_sso) {
+          setError(
+            `Your organization requires SSO login. Please use the "Sign in with SSO" option below.`,
+          );
+          setShowSso(true);
+          setSsoEmail(email);
+          return;
+        }
+      } catch {
+        // If the check fails, allow normal login to proceed
+      }
+
       try {
         localStorage.setItem(LAST_PROVIDER_KEY, "email");
       } catch {}

@@ -79,7 +79,15 @@ export function V2OrgNav({ isAdmin, pendingInviteCount, planName, mobile }: V2Or
     },
   ];
 
-  // Settings goes at the bottom, outside sections
+  // Bottom items outside sections
+  const ssoItem: NavItem = {
+    id: "sso",
+    label: "SSO",
+    href: "/org/sso",
+    icon: Shield,
+    adminOnly: true,
+  };
+
   const settingsItem: NavItem = {
     id: "settings",
     label: "Settings",
@@ -91,6 +99,7 @@ export function V2OrgNav({ isAdmin, pendingInviteCount, planName, mobile }: V2Or
   // Flatten for mobile + filtering
   const allItems = [
     ...sections.flatMap((s) => s.items),
+    ssoItem,
     settingsItem,
   ].filter((item) => !item.adminOnly || isAdmin);
 
@@ -115,6 +124,9 @@ export function V2OrgNav({ isAdmin, pendingInviteCount, planName, mobile }: V2Or
         ))}
         {(!settingsItem.adminOnly || isAdmin) && (
           <option value={settingsItem.href}>{settingsItem.label}</option>
+        )}
+        {(!ssoItem.adminOnly || isAdmin) && (
+          <option value={ssoItem.href}>{ssoItem.label}</option>
         )}
       </select>
     );
@@ -179,24 +191,41 @@ export function V2OrgNav({ isAdmin, pendingInviteCount, planName, mobile }: V2Or
         );
       })}
 
-      {/* Settings — pinned at bottom-ish */}
-      {(!settingsItem.adminOnly || isAdmin) && (
+      {/* SSO & Settings — pinned at bottom */}
+      {((!ssoItem.adminOnly || isAdmin) || (!settingsItem.adminOnly || isAdmin)) && (
         <div className="mt-4">
           <div className="flex items-center gap-2 px-3 mb-2">
             <Settings className="size-4 text-foreground" />
             <span className="text-sm font-semibold text-foreground">Settings</span>
           </div>
-          <Link
-            href={settingsItem.href}
-            className={cn(
-              "flex items-center rounded-lg px-3 py-1.5 text-[13px] transition-colors",
-              isActive(settingsItem.href)
-                ? "bg-emerald-50 dark:bg-emerald-950/50 font-medium text-emerald-700 dark:text-emerald-400"
-                : "text-foreground hover:bg-muted",
+          <div className="space-y-0.5">
+            {(!settingsItem.adminOnly || isAdmin) && (
+              <Link
+                href={settingsItem.href}
+                className={cn(
+                  "flex items-center rounded-lg px-3 py-1.5 text-[13px] transition-colors",
+                  isActive(settingsItem.href)
+                    ? "bg-emerald-50 dark:bg-emerald-950/50 font-medium text-emerald-700 dark:text-emerald-400"
+                    : "text-foreground hover:bg-muted",
+                )}
+              >
+                {settingsItem.label}
+              </Link>
             )}
-          >
-            {settingsItem.label}
-          </Link>
+            {(!ssoItem.adminOnly || isAdmin) && (
+              <Link
+                href={ssoItem.href}
+                className={cn(
+                  "flex items-center rounded-lg px-3 py-1.5 text-[13px] transition-colors",
+                  isActive(ssoItem.href)
+                    ? "bg-emerald-50 dark:bg-emerald-950/50 font-medium text-emerald-700 dark:text-emerald-400"
+                    : "text-foreground hover:bg-muted",
+                )}
+              >
+                {ssoItem.label}
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </nav>

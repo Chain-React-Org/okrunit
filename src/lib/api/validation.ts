@@ -85,8 +85,8 @@ export type RespondApprovalInput = z.infer<typeof respondApprovalSchema>;
 
 export const createConnectionSchema = z.object({
   name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
-  rate_limit_per_hour: z.int().min(1).max(10_000).default(100).optional(),
+  description: z.string().max(500).nullable().optional(),
+  rate_limit_per_hour: z.int().min(1).max(10_000).default(100).nullable().optional(),
   allowed_action_types: z.array(z.string()).optional(),
   max_priority: priorityEnum.nullable().optional(),
   scoping_rules: z.record(z.string(), z.unknown()).nullable().optional(),
@@ -96,8 +96,8 @@ export type CreateConnectionInput = z.infer<typeof createConnectionSchema>;
 
 export const updateConnectionSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  description: z.string().max(500).optional(),
-  rate_limit_per_hour: z.int().min(1).max(10_000).optional(),
+  description: z.string().max(500).nullable().optional(),
+  rate_limit_per_hour: z.int().min(1).max(10_000).nullable().optional(),
   allowed_action_types: z.array(z.string()).optional(),
   max_priority: priorityEnum.nullable().optional(),
   scoping_rules: z.record(z.string(), z.unknown()).nullable().optional(),

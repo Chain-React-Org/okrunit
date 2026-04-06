@@ -28,6 +28,12 @@ export function createServiceProvider() {
         Location: `${APP_URL}/api/auth/saml/callback`,
       },
     ],
+    singleLogoutService: [
+      {
+        Binding: samlify.Constants.namespace.binding.redirect,
+        Location: `${APP_URL}/api/auth/saml/logout`,
+      },
+    ],
     nameIDFormat: [samlify.Constants.namespace.format.emailAddress],
     authnRequestsSigned: false,
     wantAssertionsSigned: true,
@@ -49,6 +55,31 @@ export function createIdentityProvider(config: SSOConfig) {
     signingCert: config.certificate,
     nameIDFormat: [samlify.Constants.namespace.format.emailAddress],
   });
+}
+
+/**
+ * Creates multiple IdP instances for certificate rotation support.
+ * Returns an array with the primary IdP, and optionally a secondary IdP
+ * using the secondary certificate (for rollover periods).
+ */
+export function createIdentityProviders(
+  config: SSOConfig,
+): ReturnType<typeof samlify.IdentityProvider>[] {
+  const primary = createIdentityProvider(config);
+  if (!config.certificate_secondary) return [primary];
+
+  const secondary = samlify.IdentityProvider({
+    entityID: config.entity_id,
+    singleSignOnService: [
+      {
+        Binding: samlify.Constants.namespace.binding.redirect,
+        Location: config.sso_url,
+      },
+    ],
+    signingCert: config.certificate_secondary,
+    nameIDFormat: [samlify.Constants.namespace.format.emailAddress],
+  });
+  return [primary, secondary];
 }
 
 /**

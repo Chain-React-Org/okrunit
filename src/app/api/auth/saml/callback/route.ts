@@ -14,7 +14,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 import {
   createServiceProvider,
-  createIdentityProvider,
+  createIdentityProviders,
   APP_URL,
 } from "@/lib/saml/provider";
 import type { SSOConfig } from "@/lib/types/database";
@@ -23,6 +23,13 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const samlResponse = formData.get("SAMLResponse") as string | null;
+    const relayState = formData.get("RelayState") as string | null;
+
+    // Validate RelayState is a safe relative path; default to /org/overview
+    const redirectDestination =
+      relayState && relayState.startsWith("/") && !relayState.startsWith("//")
+        ? relayState
+        : "/org/overview";
 
     if (!samlResponse) {
       return NextResponse.redirect(
@@ -53,23 +60,26 @@ export async function POST(request: NextRequest) {
     const sp = createServiceProvider();
 
     for (const config of configs) {
-      try {
-        const idp = createIdentityProvider(config);
-        const result = await sp.parseLoginResponse(
-          idp,
-          samlify.Constants.namespace.binding.post,
-          { body: { SAMLResponse: samlResponse } },
-        );
+      const idps = createIdentityProviders(config);
+      for (const idp of idps) {
+        try {
+          const result = await sp.parseLoginResponse(
+            idp,
+            samlify.Constants.namespace.binding.post,
+            { body: { SAMLResponse: samlResponse } },
+          );
 
-        if (result?.extract) {
-          parsedResult = result;
-          matchedConfig = config;
-          break;
+          if (result?.extract) {
+            parsedResult = result;
+            matchedConfig = config;
+            break;
+          }
+        } catch {
+          // This IdP cert didn't match — try next
+          continue;
         }
-      } catch {
-        // This config didn't match — try next
-        continue;
       }
+      if (parsedResult) break;
     }
 
     if (!parsedResult || !matchedConfig) {
@@ -118,11 +128,18 @@ export async function POST(request: NextRequest) {
     const orgId = matchedConfig.org_id;
 
     // Provision or find the user in Supabase
-    // 1. Check if user exists by email
-    const { data: existingUsers } = await admin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users.find(
-      (u) => u.email?.toLowerCase() === email,
-    );
+    // 1. Check if user exists by email via user_profiles (scalable lookup)
+    const { data: profile } = await admin
+      .from("user_profiles")
+      .select("id")
+      .eq("email", email)
+      .single();
+
+    let existingUser: { id: string; user_metadata?: Record<string, unknown> } | null = null;
+    if (profile) {
+      const { data: { user: authUser } } = await admin.auth.admin.getUserById(profile.id);
+      existingUser = authUser;
+    }
 
     let userId: string;
 
@@ -192,7 +209,7 @@ export async function POST(request: NextRequest) {
         type: "magiclink",
         email,
         options: {
-          redirectTo: `${APP_URL}/org/overview`,
+          redirectTo: `${APP_URL}${redirectDestination}`,
         },
       });
 
@@ -219,7 +236,7 @@ export async function POST(request: NextRequest) {
     // Redirect to Supabase's verify endpoint which will set the session cookie
     // and then redirect to /org/overview
     const verifyUrl = new URL(
-      `/auth/v1/verify?token=${token}&type=${type || "magiclink"}&redirect_to=${encodeURIComponent(`${APP_URL}/org/overview`)}`,
+      `/auth/v1/verify?token=${token}&type=${type || "magiclink"}&redirect_to=${encodeURIComponent(`${APP_URL}${redirectDestination}`)}`,
       process.env.NEXT_PUBLIC_SUPABASE_URL,
     );
 
