@@ -1,0 +1,3 @@
+[submodule "integrations/n8n/n8n-nodes-okrunit"]
+	path = integrations/n8n/n8n-nodes-okrunit
+	url = https://github.com/Chain-React-Org/n8n-nodes-okrunit.git
