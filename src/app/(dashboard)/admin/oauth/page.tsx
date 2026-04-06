@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OAuthClientList } from "@/components/settings/oauth-client-list";
 
@@ -6,6 +7,7 @@ export const metadata = {
 };
 
 export default async function AdminOAuthPage() {
+  await connection();
   const admin = createAdminClient();
 
   const { data: oauthClientsData } = await admin

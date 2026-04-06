@@ -8,6 +8,7 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -65,6 +66,8 @@ export async function POST(request: Request) {
       .update({ is_default: true })
       .eq("user_id", auth.user.id)
       .eq("org_id", body.org_id);
+
+    revalidateTags(CacheTags.orgContext(auth.user.id));
 
     return NextResponse.json({ success: true });
   } catch (err) {

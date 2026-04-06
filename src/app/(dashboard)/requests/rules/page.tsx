@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getCachedRulesData } from "@/lib/cache/queries";
 import { RulesManager } from "@/components/rules/rules-manager";
 import type { ApprovalRule } from "@/lib/types/database";
 
@@ -18,32 +18,14 @@ export default async function RulesPage() {
     redirect("/requests");
   }
 
-  const admin = createAdminClient();
-
-  const [{ data: rules }, { data: teams }, { data: connections }] = await Promise.all([
-    admin
-      .from("approval_rules")
-      .select("*")
-      .eq("org_id", membership.org_id)
-      .order("priority_order", { ascending: true })
-      .returns<ApprovalRule[]>(),
-    admin
-      .from("teams")
-      .select("id, name")
-      .eq("org_id", membership.org_id)
-      .order("name"),
-    admin
-      .from("connections")
-      .select("id, name")
-      .eq("org_id", membership.org_id)
-      .order("name"),
-  ]);
+  const { rules, teams, connections } =
+    await getCachedRulesData(membership.org_id);
 
   return (
     <RulesManager
-      initialRules={rules ?? []}
-      teams={(teams ?? []) as { id: string; name: string }[]}
-      connections={(connections ?? []) as { id: string; name: string }[]}
+      initialRules={rules as ApprovalRule[]}
+      teams={teams as { id: string; name: string }[]}
+      connections={connections as { id: string; name: string }[]}
     />
   );
 }

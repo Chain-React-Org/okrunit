@@ -8,6 +8,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 const updateRoleSchema = z.object({
   name: z.string().min(1).max(50).optional(),
@@ -51,6 +52,8 @@ export async function PATCH(
       details: body as Record<string, unknown>,
     });
 
+    revalidateTags(CacheTags.roles(auth.orgId), CacheTags.members(auth.orgId));
+
     return NextResponse.json({ data });
   } catch (err) {
     return errorResponse(err);
@@ -92,6 +95,8 @@ export async function DELETE(
       resourceType: "custom_role",
       resourceId: id,
     });
+
+    revalidateTags(CacheTags.roles(auth.orgId), CacheTags.members(auth.orgId));
 
     return NextResponse.json({ success: true });
   } catch (err) {

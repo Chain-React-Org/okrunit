@@ -18,7 +18,7 @@ const sharp = require("sharp");
 async function snap(page: Page, name: string) {
   const png = path.join(OUTPUT_DIR, `${name}.png`);
   const webp = path.join(OUTPUT_DIR, `${name}.webp`);
-  await page.screenshot({ path: png, type: "png" });
+  await page.screenshot({ path: png, type: "png", timeout: 60000 });
   await sharp(png).webp({ quality: 90 }).toFile(webp);
   fs.unlinkSync(png);
   console.log(`✅ ${name}.webp`);

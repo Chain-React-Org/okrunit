@@ -8,6 +8,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 const createRoleSchema = z.object({
   name: z.string().min(1).max(50),
@@ -93,6 +94,8 @@ export async function POST(request: Request) {
       resourceId: data.id,
       details: { name: body.name, base_role: body.base_role },
     });
+
+    revalidateTags(CacheTags.roles(auth.orgId));
 
     return NextResponse.json({ data }, { status: 201 });
   } catch (err) {

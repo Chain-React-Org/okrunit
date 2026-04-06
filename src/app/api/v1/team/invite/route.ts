@@ -12,6 +12,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { checkIpRateLimit, getClientIp, INVITE_RATE_LIMIT, rateLimitResponse } from "@/lib/api/ip-rate-limiter";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canAddTeamMember } from "@/lib/billing/enforce";
 import { INVITE_EXPIRY_DAYS } from "@/lib/constants";
@@ -219,6 +220,8 @@ export async function POST(request: Request) {
       ipAddress,
     });
 
+    revalidateTags(CacheTags.members(auth.orgId));
+
     return NextResponse.json({ data: invite }, { status: 201 });
   } catch (err) {
     return errorResponse(err);
@@ -296,6 +299,8 @@ export async function DELETE(request: Request) {
       details: { email: invite.email },
       ipAddress,
     });
+
+    revalidateTags(CacheTags.members(auth.orgId));
 
     return NextResponse.json({ success: true });
   } catch (err) {

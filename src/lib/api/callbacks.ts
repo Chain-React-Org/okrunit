@@ -180,10 +180,6 @@ export async function deliverCallback(params: CallbackParams): Promise<void> {
 
       // -- If successful, stop retrying ----------------------------------
       if (success) {
-        console.log(
-          `[Callback] Delivered successfully for request ${requestId} ` +
-            `to ${callbackUrl} on attempt ${attempt}.`,
-        );
         return;
       }
 

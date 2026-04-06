@@ -1,8 +1,10 @@
+import { connection } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Organization, UserProfile, OrgMembership } from "@/lib/types/database";
 import type { OrgWithCounts, UserWithMemberships, SystemStats } from "@/lib/admin-types";
 
 export async function getAdminData() {
+  await connection();
   const admin = createAdminClient();
 
   const [

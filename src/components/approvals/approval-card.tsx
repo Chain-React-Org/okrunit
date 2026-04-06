@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo } from "react";
+import { useState, useMemo, memo } from "react";
 import { useOnboardingTourStore } from "@/stores/onboarding-tour-store";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -103,6 +103,7 @@ export const ApprovalCard = memo(function ApprovalCard({
   const glowColor = approval.is_log ? "card-interactive" : (statusGlowColors[approval.status] ?? "card-interactive");
 
   const isPending = approval.status === "pending";
+  const now = useMemo(() => new Date(), []);
 
   // Tour: force-show hover actions on the onboarding test request
   const isOnboardingRequest = approval.source === "onboarding";
@@ -205,11 +206,11 @@ export const ApprovalCard = memo(function ApprovalCard({
                   addSuffix: true,
                 })}
               </span>
-              {isPending && (Date.now() - new Date(approval.created_at).getTime()) > 3600000 && (
+              {isPending && (now.getTime() - new Date(approval.created_at).getTime()) > 3600000 && (
                 <>
                   <span className="text-muted-foreground/40">|</span>
                   <span className="text-amber-600 font-medium">
-                    Waiting {Math.floor((Date.now() - new Date(approval.created_at).getTime()) / 3600000)}h
+                    Waiting {Math.floor((now.getTime() - new Date(approval.created_at).getTime()) / 3600000)}h
                   </span>
                 </>
               )}

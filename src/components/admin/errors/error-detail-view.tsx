@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ErrorIssue, ErrorEvent, ErrorSeverity, ErrorIssueStatus } from "@/lib/monitoring/types";
+import type { ErrorIssue, ErrorEvent, ErrorSeverity } from "@/lib/monitoring/types";
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();

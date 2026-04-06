@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authenticateRequest } from "@/lib/api/auth";
-import { ApiError, errorResponse } from "@/lib/api/errors";
+import { ApiError } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { getInstallationToken } from "@/lib/api/github";

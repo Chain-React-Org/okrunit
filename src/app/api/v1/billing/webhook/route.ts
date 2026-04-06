@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeOrThrow } from "@/lib/billing/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 import type Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
@@ -72,6 +73,8 @@ export async function POST(req: NextRequest) {
         .update({ plan_id: planId })
         .eq("id", orgId);
 
+      revalidateTags(CacheTags.subscription(orgId));
+
       break;
     }
 
@@ -107,6 +110,8 @@ export async function POST(req: NextRequest) {
         .update(updateData)
         .eq("org_id", orgId);
 
+      revalidateTags(CacheTags.subscription(orgId));
+
       break;
     }
 
@@ -130,6 +135,8 @@ export async function POST(req: NextRequest) {
         .from("organizations")
         .update({ plan_id: "free" })
         .eq("id", orgId);
+
+      revalidateTags(CacheTags.subscription(orgId));
 
       break;
     }

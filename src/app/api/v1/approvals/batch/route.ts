@@ -12,6 +12,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { checkIpRateLimit, getClientIp, WRITE_RATE_LIMIT, rateLimitResponse } from "@/lib/api/ip-rate-limiter";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -266,6 +267,7 @@ export async function POST(request: Request) {
       }
     });
 
+    revalidateTags(CacheTags.requests(auth.orgId), CacheTags.overview(auth.orgId), CacheTags.analytics(auth.orgId));
     return NextResponse.json({ processed, errors });
   } catch (error) {
     if (error instanceof z.ZodError) {

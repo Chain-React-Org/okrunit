@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrgContext } from "@/lib/org-context";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getRequestSteps, activateFirstStep } from "@/lib/approvals/steps-engine";
+import { getRequestSteps } from "@/lib/approvals/steps-engine";
 import { z } from "zod";
 
 const StepSchema = z.object({

@@ -29,6 +29,7 @@ import type { EscalationConfig } from "@/lib/types/database";
 import { checkBottleneckThreshold } from "@/lib/api/bottleneck";
 import { enforceFourEyesOnCreation } from "@/lib/api/four-eyes";
 import { canCreateRequest } from "@/lib/billing/enforce";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Helpers ---------------------------------------------------------------
 
@@ -46,7 +47,6 @@ function getRoleHierarchy(minRole: string): string[] {
 // ---- POST /api/v1/approvals -----------------------------------------------
 
 export async function POST(request: Request) {
-  console.log("[Approvals POST] incoming request from:", request.headers.get("user-agent"), "content-type:", request.headers.get("content-type"));
   try {
     // 1. Authenticate -- API key or OAuth (for integrations like Zapier)
     const auth = await authenticateRequest(request);
@@ -156,8 +156,6 @@ export async function POST(request: Request) {
         try { cleaned.metadata = JSON.parse(cleaned.metadata); } catch { delete cleaned.metadata; }
       }
     }
-
-    console.log("[Approvals POST] auth_type:", auth.type, "body_keys:", Object.keys(body as Record<string, unknown>));
 
     const validated = createApprovalSchema.parse(body);
 
@@ -291,7 +289,7 @@ export async function POST(request: Request) {
           .from("approval_flows")
           .update(flowUpdate)
           .eq("id", existingFlow.id)
-          .then();
+          ;
       } else {
         // Auto-create a new unconfigured flow
         const { data: newFlow } = await admin
@@ -809,7 +807,7 @@ export async function POST(request: Request) {
       admin
         .from("request_watchers")
         .upsert({ request_id: approval.id, user_id: watchOwnerId }, { onConflict: "request_id,user_id" })
-        .then();
+        ;
     }
 
     // 15b. Bottleneck detection (fire-and-forget)
@@ -833,7 +831,10 @@ export async function POST(request: Request) {
       });
     }
 
-    // 16. Return created approval (with rate limit headers if applicable)
+    // 16. Invalidate caches
+    revalidateTags(CacheTags.requests(auth.orgId), CacheTags.overview(auth.orgId), CacheTags.analytics(auth.orgId));
+
+    // 17. Return created approval (with rate limit headers if applicable)
     const response = NextResponse.json(approval, { status: 201 });
     if (rateResult) {
       addRateLimitHeaders(response, rateResult);
@@ -841,14 +842,12 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.log("[Approvals POST] Validation failed:", JSON.stringify(error.issues));
       return NextResponse.json(
         { error: "Validation failed", issues: error.issues },
         { status: 400 },
       );
     }
     if (error instanceof SyntaxError) {
-      console.log("[Approvals POST] JSON parse error:", error.message);
       return NextResponse.json(
         { error: "Invalid JSON in request body" },
         { status: 400 },
@@ -862,9 +861,6 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get("authorization");
-    console.log("[Approvals GET] incoming request, url:", request.url, "auth:", authHeader ? `${authHeader.slice(0, 15)}...${authHeader.slice(-8)}` : "none");
-
     // 1. Authenticate (both API key and session supported)
     const auth = await authenticateRequest(request);
 
@@ -988,7 +984,7 @@ export async function GET(request: Request) {
         .from("approval_requests")
         .update({ status: "expired" })
         .in("id", expiredIds)
-        .then();
+        ;
     }
 
     // Fire-and-forget: lazy SLA breach check for pending approvals
@@ -1010,7 +1006,7 @@ export async function GET(request: Request) {
         })
         .in("id", slaBreachIds)
         .eq("sla_breached", false)
-        .then();
+        ;
 
       // Dispatch SLA breach notifications for each breached approval
       after(async () => {
@@ -1040,7 +1036,7 @@ export async function GET(request: Request) {
         })
         .eq("id", autoId)
         .eq("status", "pending") // guard against races
-        .then();
+        ;
 
       // Audit the auto-action
       logAuditEvent({

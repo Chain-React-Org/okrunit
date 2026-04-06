@@ -2,6 +2,8 @@
 // OKrunit -- OAuth 2.0 Authorization / Consent Page
 // ---------------------------------------------------------------------------
 
+import { Suspense } from "react";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +22,22 @@ interface AuthorizePageProps {
   }>;
 }
 
-export default async function AuthorizePage({ searchParams }: AuthorizePageProps) {
+export default function AuthorizePage({ searchParams }: AuthorizePageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-12">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+        </div>
+      }
+    >
+      <AuthorizeContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function AuthorizeContent({ searchParams }: AuthorizePageProps) {
+  await connection();
   const params = await searchParams;
 
   // Validate required parameters.

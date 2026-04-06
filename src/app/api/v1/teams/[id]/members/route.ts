@@ -12,6 +12,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { emailLayout, emailCard, emailButton, escapeHtml } from "@/lib/email/layout";
 import { createInAppNotification } from "@/lib/notifications/in-app";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -284,6 +285,8 @@ export async function POST(
       }),
     );
 
+    revalidateTags(CacheTags.teams(auth.orgId), CacheTags.members(auth.orgId));
+
     return NextResponse.json({ data: inserted ?? [], added: toAdd.length }, { status: 201 });
   } catch (err) {
     return errorResponse(err);
@@ -364,6 +367,8 @@ export async function DELETE(
       ipAddress: getIpAddress(request),
     });
 
+    revalidateTags(CacheTags.teams(auth.orgId), CacheTags.members(auth.orgId));
+
     return NextResponse.json({ success: true });
   } catch (err) {
     return errorResponse(err);
@@ -413,6 +418,8 @@ export async function PATCH(
       console.error("[Teams] Failed to update member position:", error);
       throw new ApiError(500, "Failed to update member position");
     }
+
+    revalidateTags(CacheTags.teams(auth.orgId), CacheTags.members(auth.orgId));
 
     return NextResponse.json({ success: true });
   } catch (err) {

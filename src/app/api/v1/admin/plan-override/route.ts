@@ -9,7 +9,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ApiError, errorResponse } from "@/lib/api/errors";
-import type { UserProfile, BillingPlan } from "@/lib/types/database";
+import type { UserProfile } from "@/lib/types/database";
 
 const bodySchema = z.object({
   org_id: z.string().uuid("Invalid org ID"),

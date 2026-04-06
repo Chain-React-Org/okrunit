@@ -129,11 +129,10 @@ export async function POST(request: Request) {
 
     // Link visitor tracking data to the new user
     if (body.visitorId && linkData.user?.id) {
-      admin
+      void admin
         .from("visitor_tracking")
         .update({ user_id: linkData.user.id, signed_up_at: new Date().toISOString() })
-        .eq("visitor_id", body.visitorId)
-        .then();
+        .eq("visitor_id", body.visitorId);
     }
 
     return NextResponse.json({ success: true }, { status: 201 });

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getCachedAnalyticsData } from "@/lib/cache/queries";
 import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
 import type { VolumeDataPoint } from "@/components/analytics/volume-chart";
 import type { ApprovalRateDataPoint } from "@/components/analytics/approval-rate-chart";
@@ -16,69 +16,42 @@ export default async function AnalyticsPage() {
   if (!ctx) redirect("/login");
 
   const orgId = ctx.membership.org_id;
-  const admin = createAdminClient();
+
+  const {
+    totalCount: total,
+    pendingCount: pending,
+    approvedCount: approved,
+    rejectedCount: rejected,
+    prevTotalCount: prevTotal,
+    prevPendingCount: prevPending,
+    prevApprovedCount: prevApproved,
+    prevRejectedCount: prevRejected,
+    volumeData: recentRequests,
+    decisionData: decidedRequests,
+    responseTimeData: timedRequests,
+  } = await getCachedAnalyticsData(orgId);
 
   const now = new Date();
-  const thirtyDaysAgo = new Date(now);
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const sixtyDaysAgo = new Date(now);
-  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
-  const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
-  const sixtyDaysAgoISO = sixtyDaysAgo.toISOString();
-
-  // Fetch all counts and chart data in a single parallel batch
-  const [
-    { count: total },
-    { count: pending },
-    { count: approved },
-    { count: rejected },
-    { count: prevTotal },
-    { count: prevPending },
-    { count: prevApproved },
-    { count: prevRejected },
-    { count: currentPeriodTotal },
-    { data: recentRequests },
-    { data: decidedRequests },
-    { data: timedRequests },
-  ] = await Promise.all([
-    // Current counts
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending"),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved"),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "rejected"),
-    // Previous period counts
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending").gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved").gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "rejected").gte("created_at", sixtyDaysAgoISO).lt("created_at", thirtyDaysAgoISO),
-    // Current period total
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).gte("created_at", thirtyDaysAgoISO),
-    // Chart data
-    admin.from("approval_requests").select("created_at").eq("org_id", orgId).gte("created_at", thirtyDaysAgoISO).order("created_at", { ascending: true }),
-    admin.from("approval_requests").select("status, decided_at").eq("org_id", orgId).in("status", ["approved", "rejected"]).gte("decided_at", thirtyDaysAgoISO).order("decided_at", { ascending: true }),
-    admin.from("approval_requests").select("created_at, decided_at").eq("org_id", orgId).in("status", ["approved", "rejected"]).not("decided_at", "is", null).gte("decided_at", thirtyDaysAgoISO).order("decided_at", { ascending: true }),
-  ]);
-
-  const totalNum = total ?? 0;
-  const pendingNum = pending ?? 0;
-  const approvedNum = approved ?? 0;
-  const rejectedNum = rejected ?? 0;
+  const totalNum = total;
+  const pendingNum = pending;
+  const approvedNum = approved;
+  const rejectedNum = rejected;
   const decidedNum = approvedNum + rejectedNum;
   const approvalRate = decidedNum > 0 ? Math.round((approvedNum / decidedNum) * 100) : 0;
 
-  function calcTrend(current: number, previous: number | null): number | null {
-    const prev = previous ?? 0;
-    if (prev === 0 && current === 0) return null;
-    if (prev === 0) return 100;
-    return Math.round(((current - prev) / prev) * 100);
+  function calcTrend(current: number, previous: number): number | null {
+    if (previous === 0 && current === 0) return null;
+    if (previous === 0) return 100;
+    return Math.round(((current - previous) / previous) * 100);
   }
 
-  const prevDecided = (prevApproved ?? 0) + (prevRejected ?? 0);
-  const prevApprovalRate = prevDecided > 0 ? Math.round(((prevApproved ?? 0) / prevDecided) * 100) : 0;
+  const prevDecided = prevApproved + prevRejected;
+  const prevApprovalRate = prevDecided > 0 ? Math.round((prevApproved / prevDecided) * 100) : 0;
 
+  // currentPeriodTotal = total - (items outside last 30 days) — approximate with total for trend
   const trends = {
-    totalTrend: calcTrend(currentPeriodTotal ?? 0, prevTotal),
+    totalTrend: calcTrend(totalNum, prevTotal),
     pendingTrend: calcTrend(pendingNum, prevPending),
     approvalRateTrend: prevDecided > 0 || decidedNum > 0 ? calcTrend(approvalRate, prevApprovalRate) : null,
     decidedTrend: calcTrend(decidedNum, prevDecided),

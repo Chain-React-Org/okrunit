@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createRuleSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- GET /api/v1/rules ----------------------------------------------------
 
@@ -124,6 +125,8 @@ export async function POST(request: Request) {
       details: { name: body.name, action: body.action },
       ipAddress,
     });
+
+    revalidateTags(CacheTags.rules(auth.orgId));
 
     return NextResponse.json({ data: rule }, { status: 201 });
   } catch (err) {

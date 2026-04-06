@@ -15,7 +15,6 @@ import {
   Pencil,
   Trash2,
   Loader2,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 

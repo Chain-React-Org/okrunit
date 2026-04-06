@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  ArrowRight,
   Check,
   Eye,
   Key,
   ScrollText,
   UserCheck,
   Users,
-  Webhook,
   Database,
 } from "lucide-react";
 import {

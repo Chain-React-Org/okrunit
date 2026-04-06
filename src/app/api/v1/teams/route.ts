@@ -9,6 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -161,6 +162,8 @@ export async function POST(request: Request) {
       details: { name: body.name },
       ipAddress,
     });
+
+    revalidateTags(CacheTags.teams(auth.orgId), CacheTags.overview(auth.orgId));
 
     return NextResponse.json({ data: team }, { status: 201 });
   } catch (err) {

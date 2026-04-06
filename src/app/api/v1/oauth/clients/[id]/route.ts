@@ -9,7 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { validateScopes, generateClientCredentials } from "@/lib/api/oauth";
+import { validateScopes } from "@/lib/api/oauth";
 import { OAUTH_SCOPES } from "@/lib/constants";
 
 const CLIENT_COLUMNS =
