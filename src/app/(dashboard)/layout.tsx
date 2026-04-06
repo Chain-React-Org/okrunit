@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
@@ -6,7 +7,27 @@ import { getOrgContext } from "@/lib/org-context";
 import { getCachedDashboardData } from "@/lib/cache/queries";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function DashboardLayout({
+function DashboardLoading() {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+    </div>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <DashboardContent>{children}</DashboardContent>
+    </Suspense>
+  );
+}
+
+async function DashboardContent({
   children,
 }: {
   children: React.ReactNode;

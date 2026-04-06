@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 const LandingPage = dynamic(
@@ -19,28 +21,37 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function HomePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+export default function HomePage() {
   return (
     <>
       <OrganizationJsonLd />
       <SoftwareAppJsonLd />
       <WebsiteJsonLd />
       <FAQJsonLd />
-      <LandingPage
-        user={
-          user
-            ? {
-                email: user.email ?? "",
-                full_name: user.user_metadata?.full_name ?? null,
-              }
-            : null
-        }
-      />
+      <Suspense fallback={null}>
+        <HomeContent />
+      </Suspense>
     </>
+  );
+}
+
+async function HomeContent() {
+  await connection();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return (
+    <LandingPage
+      user={
+        user
+          ? {
+              email: user.email ?? "",
+              full_name: user.user_metadata?.full_name ?? null,
+            }
+          : null
+      }
+    />
   );
 }

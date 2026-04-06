@@ -8,7 +8,9 @@
 // is the authentication.
 // ---------------------------------------------------------------------------
 
+import { Suspense } from "react";
 import { Metadata } from "next";
+import { connection } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TokenActionForm } from "@/components/token-action-form";
@@ -22,7 +24,22 @@ interface PageProps {
   params: Promise<{ token: string }>;
 }
 
-export default async function ApprovePage({ params }: PageProps) {
+export default function ApprovePage({ params }: PageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+        </div>
+      }
+    >
+      <ApproveContent params={params} />
+    </Suspense>
+  );
+}
+
+async function ApproveContent({ params }: PageProps) {
+  await connection();
   const { token } = await params;
 
   const admin = createAdminClient();

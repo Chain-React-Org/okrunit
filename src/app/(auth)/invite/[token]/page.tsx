@@ -2,6 +2,8 @@
 // OKrunit -- Accept Invite Page
 // ---------------------------------------------------------------------------
 
+import { Suspense } from "react";
+import { connection } from "next/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -16,11 +18,30 @@ export const metadata = {
   description: "Accept your team invitation.",
 };
 
-export default async function InviteAcceptPage({
+export default function InviteAcceptPage({
   params,
 }: {
   params: Promise<{ token: string }>;
 }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-12">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+        </div>
+      }
+    >
+      <InviteAcceptContent params={params} />
+    </Suspense>
+  );
+}
+
+async function InviteAcceptContent({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}) {
+  await connection();
   const { token } = await params;
   const admin = createAdminClient();
 
