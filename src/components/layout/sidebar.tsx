@@ -85,10 +85,9 @@ export function Sidebar({ pendingCount: initialPendingCount, userRole, isAppAdmi
     return () => window.removeEventListener("onboarding-test-deleted", handler);
   }, []);
 
-  // Listen for approval-realtime events from the dashboard component.
-  // When multiple components subscribe to the same Supabase Realtime table+filter,
-  // Supabase may deduplicate and only deliver INSERT events to one channel. This
-  // ensures the sidebar count stays in sync even if its own subscription misses them.
+  // Listen for approval-realtime CustomEvents dispatched by the dashboard.
+  // These provide a secondary sync path for optimistic updates (e.g. approve/reject)
+  // that bypass the realtime subscription.
   useEffect(() => {
     const handler = (e: Event) => {
       const { type, record } = (e as CustomEvent).detail;

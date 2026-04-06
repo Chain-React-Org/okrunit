@@ -302,7 +302,7 @@ export function ApprovalDashboard({
       });
       markAsNew(record.id);
       toast.info("New approval request received");
-      // Notify sidebar (its own subscription may miss events due to channel dedup)
+      // Notify sidebar for optimistic update sync
       window.dispatchEvent(new CustomEvent("approval-realtime", { detail: { type: "INSERT", record } }));
     }, [markAsNew]),
     onUpdate: useCallback((record: ApprovalRequest, oldRecord: ApprovalRequest) => {
@@ -540,7 +540,7 @@ export function ApprovalDashboard({
       );
 
       // Notify sidebar immediately so the badge count updates without waiting
-      // for the realtime event (which may be dropped due to channel dedup).
+      // for the realtime event from the optimistic update.
       const oldRecord = approvals.find((a) => a.id === approvalId);
       if (oldRecord) {
         window.dispatchEvent(

@@ -18,7 +18,7 @@ export async function GET() {
   const admin = createAdminClient();
   const { data } = await admin
     .from("user_profiles")
-    .select("onboarding_tour_step, onboarding_tour_completed, onboarding_tour_dismissed")
+    .select("onboarding_tour_step, onboarding_tour_completed, onboarding_tour_dismissed, onboarding_toured_pages")
     .eq("id", user.id)
     .single();
 
@@ -26,6 +26,7 @@ export async function GET() {
     currentStep: data?.onboarding_tour_step ?? 0,
     tourCompleted: data?.onboarding_tour_completed ?? false,
     tourDismissed: data?.onboarding_tour_dismissed ?? false,
+    touredPages: data?.onboarding_toured_pages ?? [],
   });
 }
 
@@ -42,6 +43,7 @@ export async function PATCH(request: Request) {
   if (body.currentStep !== undefined) update.onboarding_tour_step = body.currentStep;
   if (body.tourCompleted !== undefined) update.onboarding_tour_completed = body.tourCompleted;
   if (body.tourDismissed !== undefined) update.onboarding_tour_dismissed = body.tourDismissed;
+  if (body.touredPages !== undefined) update.onboarding_toured_pages = body.touredPages;
 
   if (Object.keys(update).length > 0) {
     await admin

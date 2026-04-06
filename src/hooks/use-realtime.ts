@@ -3,6 +3,11 @@
 // ---------------------------------------------------------------------------
 // OKrunit -- Generic Supabase Realtime Subscription Hook
 // ---------------------------------------------------------------------------
+// Shares a single Supabase channel per table+filter combination so that
+// multiple components subscribing to the same postgres_changes stream all
+// receive every event.  Without this, Supabase may deduplicate and only
+// deliver events to one of several channels with identical subscriptions.
+// ---------------------------------------------------------------------------
 
 import { useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -24,14 +29,40 @@ interface UseRealtimeOptions<T> {
   enabled?: boolean;
 }
 
+// ---- Shared channel registry ------------------------------------------------
+// One Supabase channel per unique (schema, table, filter, event) tuple.
+// Multiple hook instances register callbacks; the channel is torn down only
+// when the last consumer unmounts.
+
+interface CallbackEntry {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onInsert?: (record: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onUpdate?: (record: any, oldRecord: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onDelete?: (oldRecord: any) => void;
+}
+
+interface ChannelEntry {
+  channel: RealtimeChannel;
+  refCount: number;
+  callbacks: Map<symbol, CallbackEntry>;
+}
+
+const channelRegistry = new Map<string, ChannelEntry>();
+
+function registryKey(opts: { schema?: string; table: string; filter?: string; event?: string }) {
+  return `${opts.schema || "public"}:${opts.table}:${opts.filter || ""}:${opts.event || "*"}`;
+}
+
+// -----------------------------------------------------------------------------
+
 /**
  * Subscribe to Supabase Realtime Postgres changes for a given table.
  *
- * The subscription is scoped by an optional RLS-compatible `filter` string
- * (e.g. `org_id=eq.<uuid>`) and automatically cleaned up on unmount or when
- * the `table`, `filter`, or `enabled` dependencies change.
- *
- * Returns a ref to the underlying `RealtimeChannel` for advanced use-cases.
+ * When multiple components subscribe with the same table/filter/event, they
+ * share a single underlying Supabase channel.  Each component's callbacks are
+ * invoked independently so all consumers stay in sync.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useRealtime<T extends { [key: string]: any }>(
@@ -39,8 +70,8 @@ export function useRealtime<T extends { [key: string]: any }>(
 ) {
   const channelRef = useRef<RealtimeChannel | null>(null);
 
-  // Store callbacks in refs so the channel handler always calls the latest
-  // version without needing to re-subscribe when callbacks change.
+  // Store callbacks in refs so the shared handler always calls the latest
+  // version without needing to re-register.
   const onInsertRef = useRef(options.onInsert);
   const onUpdateRef = useRef(options.onUpdate);
   const onDeleteRef = useRef(options.onDelete);
@@ -48,52 +79,97 @@ export function useRealtime<T extends { [key: string]: any }>(
   onUpdateRef.current = options.onUpdate;
   onDeleteRef.current = options.onDelete;
 
+  // Stable identity for this hook instance across re-renders.
+  const idRef = useRef<symbol | null>(null);
+  if (!idRef.current) idRef.current = Symbol();
+
   useEffect(() => {
     if (options.enabled === false) return;
 
-    let cancelled = false;
-    const supabase = createClient();
-    const channelName = `realtime-${options.table}-${Math.random().toString(36).slice(2)}`;
+    const key = registryKey(options);
+    const id = idRef.current!;
 
-    const channel = supabase.channel(channelName);
+    // Callback entry that always delegates to the latest refs.
+    const callbackEntry: CallbackEntry = {
+      onInsert: (record) => onInsertRef.current?.(record),
+      onUpdate: (record, old) => onUpdateRef.current?.(record, old),
+      onDelete: (old) => onDeleteRef.current?.(old),
+    };
 
-    channel.on(
-      "postgres_changes",
-      {
-        event: options.event || "*",
-        schema: options.schema || "public",
-        table: options.table,
-        filter: options.filter,
-      },
-      (payload: RealtimePostgresChangesPayload<T>) => {
-        if (cancelled) return;
-        if (payload.eventType === "INSERT" && onInsertRef.current) {
-          onInsertRef.current(payload.new as T);
-        } else if (payload.eventType === "UPDATE" && onUpdateRef.current) {
-          onUpdateRef.current(payload.new as T, payload.old as T);
-        } else if (payload.eventType === "DELETE" && onDeleteRef.current) {
-          onDeleteRef.current(payload.old as T);
+    let entry = channelRegistry.get(key);
+
+    if (entry) {
+      // Reuse existing channel — just register our callbacks.
+      entry.refCount++;
+      entry.callbacks.set(id, callbackEntry);
+      channelRef.current = entry.channel;
+    } else {
+      // First subscriber — create the channel.
+      const supabase = createClient();
+      const channelName = `realtime-${options.table}-${Math.random().toString(36).slice(2)}`;
+      const channel = supabase.channel(channelName);
+
+      entry = {
+        channel,
+        refCount: 1,
+        callbacks: new Map([[id, callbackEntry]]),
+      };
+      channelRegistry.set(key, entry);
+
+      channel.on(
+        "postgres_changes",
+        {
+          event: options.event || "*",
+          schema: options.schema || "public",
+          table: options.table,
+          filter: options.filter,
+        },
+        (payload: RealtimePostgresChangesPayload<T>) => {
+          const current = channelRegistry.get(key);
+          if (!current) return;
+
+          for (const cb of current.callbacks.values()) {
+            if (payload.eventType === "INSERT") {
+              cb.onInsert?.(payload.new as T);
+            } else if (payload.eventType === "UPDATE") {
+              cb.onUpdate?.(payload.new as T, payload.old as T);
+            } else if (payload.eventType === "DELETE") {
+              cb.onDelete?.(payload.old as T);
+            }
+          }
+        },
+      );
+
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.debug(`[Realtime] subscribed to ${options.table}${options.filter ? ` (${options.filter})` : ""}`);
+        } else if (status === "CHANNEL_ERROR") {
+          console.error(`[Realtime] channel error for ${options.table}`);
+        } else if (status === "TIMED_OUT") {
+          console.warn(`[Realtime] subscription timed out for ${options.table}`);
         }
-      },
-    );
+      });
 
-    channel.subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        console.debug(`[Realtime] subscribed to ${options.table}${options.filter ? ` (${options.filter})` : ""}`);
-      } else if (status === "CHANNEL_ERROR") {
-        console.error(`[Realtime] channel error for ${options.table}`);
-      } else if (status === "TIMED_OUT") {
-        console.warn(`[Realtime] subscription timed out for ${options.table}`);
-      }
-    });
-    channelRef.current = channel;
+      channelRef.current = channel;
+    }
 
     return () => {
-      cancelled = true;
-      supabase.removeChannel(channel);
+      const current = channelRegistry.get(key);
+      if (!current) return;
+
+      current.callbacks.delete(id);
+      current.refCount--;
+
+      if (current.refCount <= 0) {
+        // Last consumer — tear down the channel.
+        const supabase = createClient();
+        supabase.removeChannel(current.channel);
+        channelRegistry.delete(key);
+        channelRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options.table, options.filter, options.enabled]);
+  }, [options.table, options.filter, options.enabled, options.schema, options.event]);
 
   return channelRef;
 }
