@@ -1109,6 +1109,9 @@ export async function GET(request: Request) {
       page_size: pageSize,
     });
   } catch (error) {
+    if (error instanceof ApiError) {
+      console.log("[Approvals GET] auth error:", error.statusCode, error.message, error.code);
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", issues: error.issues },
