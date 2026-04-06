@@ -113,9 +113,14 @@ export function TourController() {
   const handleBack = useCallback(() => prevStepInPage(), [prevStepInPage]);
 
   const handleClose = useCallback(() => {
-    // Just pause — don't skip or dismiss. User can resume via header button.
-    pauseFullTour();
-  }, [pauseFullTour]);
+    if (fullTourActive) {
+      // Full tour: pause so user can resume via header button.
+      pauseFullTour();
+    } else {
+      // Per-page tour: treat as skip so it doesn't repeat.
+      skipPageTour();
+    }
+  }, [fullTourActive, pauseFullTour, skipPageTour]);
 
   const handleSkip = useCallback(() => {
     if (fullTourActive) {

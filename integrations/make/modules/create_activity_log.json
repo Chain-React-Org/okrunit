@@ -1,0 +1,68 @@
+{
+  "label": "Create Activity Log",
+  "description": "Log an activity in OKRunit for audit and tracking purposes. This does not create an approval request — the scenario continues immediately.",
+  "actionType": "create",
+
+  "parameters": [
+    {
+      "name": "title",
+      "type": "text",
+      "label": "Title",
+      "required": true,
+      "help": "Short title for the activity log entry (max 500 characters). Use dynamic data from previous modules."
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "label": "Description",
+      "required": false,
+      "help": "Detailed description (max 5000 characters). Use dynamic data from previous modules."
+    },
+    {
+      "name": "source_url",
+      "type": "url",
+      "label": "Scenario URL",
+      "required": false,
+      "help": "Link back to this Make scenario so team members can jump to it from OKRunit. Use the built-in system variable {{scenarioUrl}} to auto-populate."
+    },
+    {
+      "name": "metadata",
+      "type": "text",
+      "label": "Metadata (JSON)",
+      "required": false,
+      "help": "Optional JSON data to attach (e.g. {\"order_id\": \"123\"}). This data is stored with the log entry for reference."
+    }
+  ],
+  "url": "/api/v1/approvals",
+  "method": "POST",
+  "type": "json",
+  "body": {
+    "title": "{{parameters.title}}",
+    "description": "{{parameters.description}}",
+    "source_url": "{{parameters.source_url}}",
+    "metadata": "{{parameters.metadata}}",
+    "source": "make",
+    "is_log": true,
+    "idempotency_key": "make-log-{{timestamp}}-{{random}}"
+  },
+  "response": {
+    "output": {
+      "id": "{{body.id}}",
+      "title": "{{body.title}}",
+      "description": "{{body.description}}",
+      "status": "{{body.status}}",
+      "priority": "{{body.priority}}",
+      "source": "{{body.source}}",
+      "created_at": "{{body.created_at}}"
+    }
+  },
+  "samples": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Invoice #1234 sent to client",
+    "description": "Auto-sent via Make scenario after payment confirmed",
+    "status": "approved",
+    "priority": "medium",
+    "source": "make",
+    "created_at": "2026-02-21T10:00:00.000Z"
+  }
+}

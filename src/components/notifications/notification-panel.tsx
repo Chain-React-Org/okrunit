@@ -15,6 +15,7 @@ import {
   Workflow,
   Sparkles,
   CheckCheck,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +40,7 @@ const CATEGORY_CONFIG: Record<
   approval_awaiting: { icon: Clock, color: "text-amber-500" },
   approval_created: { icon: Inbox, color: "text-blue-400" },
   approval_decided: { icon: CheckCircle2, color: "text-emerald-500" },
+  approval_comment: { icon: MessageSquare, color: "text-blue-500" },
   flow_step_decided: { icon: Workflow, color: "text-blue-500" },
   approval_expiring: { icon: Clock, color: "text-red-500" },
   team_invite: { icon: UserPlus, color: "text-violet-500" },

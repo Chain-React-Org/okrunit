@@ -831,6 +831,29 @@ export async function POST(request: Request) {
       });
     }
 
+    // 15c. Auto-register new action types (fire-and-forget)
+    if (effectiveActionType) {
+      after(async () => {
+        try {
+          const { data: org } = await admin
+            .from("organizations")
+            .select("action_types")
+            .eq("id", auth.orgId)
+            .single();
+          const existing: string[] = org?.action_types ?? [];
+          if (!existing.includes(effectiveActionType)) {
+            const updated = [...existing, effectiveActionType].sort();
+            await admin
+              .from("organizations")
+              .update({ action_types: updated })
+              .eq("id", auth.orgId);
+          }
+        } catch (err) {
+          console.error("[Approvals] Auto-register action type failed:", err);
+        }
+      });
+    }
+
     // 16. Invalidate caches
     revalidateTags(CacheTags.requests(auth.orgId), CacheTags.overview(auth.orgId), CacheTags.analytics(auth.orgId));
 

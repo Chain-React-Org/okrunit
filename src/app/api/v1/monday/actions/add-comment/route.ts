@@ -59,13 +59,9 @@ export async function POST(request: Request) {
     const { data: comment, error: insertError } = await admin
       .from("approval_comments")
       .insert({
-        approval_id: approval.id,
-        org_id: approval.org_id,
+        request_id: approval.id,
         body: inputFields.body.slice(0, 5000),
-        created_by: {
-          type: "integration",
-          platform: "monday",
-        },
+        source: "monday",
       })
       .select()
       .single();

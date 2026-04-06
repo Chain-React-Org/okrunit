@@ -1,36 +1,299 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<p align="center">
+  <a href="https://okrunit.com">
+    <img src="public/logo_text.png" alt="OKRunit" width="280" />
+  </a>
+</p>
 
-## Getting Started
+<p align="center">
+  <strong>Human-in-the-loop approval gateway for AI agents & automations</strong>
+</p>
 
-First, run the development server:
+<p align="center">
+  Add human approval to any automation workflow.<br />
+  One API call. Approve from Slack, email, or dashboard.
+</p>
+
+<p align="center">
+  <a href="https://okrunit.com">Website</a> &middot;
+  <a href="https://okrunit.com/docs">Documentation</a> &middot;
+  <a href="https://okrunit.com/docs/api-reference">API Reference</a> &middot;
+  <a href="https://okrunit.com/changelog">Changelog</a>
+</p>
+
+---
+
+<p align="center">
+  <img src="public/screenshots/hero-overview.webp" alt="OKRunit Dashboard" width="100%" style="border-radius: 12px;" />
+</p>
+
+## The Problem
+
+AI agents and automated workflows are powerful — but sometimes they need a human to say **"yes"** before taking action. Deleting production data, sending bulk emails, deploying to production, or modifying customer accounts are all actions that should require human oversight.
+
+## The Solution
+
+**OKRunit** pauses your automation, notifies the right people, collects their decision, and delivers it back — all through a single API call.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+curl -X POST https://okrunit.com/api/v1/approvals \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Deploy v4.0 to production",
+    "priority": "high",
+    "callback_url": "https://your-app.com/webhook"
+  }'
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Your workflow pauses. Reviewers get notified. Once approved (or rejected), the decision is delivered to your callback URL instantly.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Features
 
-## Learn More
+<table>
+<tr>
+<td width="50%">
 
-To learn more about Next.js, take a look at the following resources:
+### Approval Dashboard
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Review every request in real time. Filter by status, priority, source, or connection. Approve or reject with one click.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+</td>
+<td width="50%">
 
-## Deploy on Vercel
+<img src="public/screenshots/hero-requests.webp" alt="Approval Requests" style="border-radius: 8px;" />
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+</td>
+</tr>
+<tr>
+<td width="50%">
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+<img src="public/screenshots/hero-connections.webp" alt="Connections" style="border-radius: 8px;" />
+
+</td>
+<td width="50%">
+
+### Connections & Integrations
+
+Connect your automation platforms with OAuth or API keys. Setup guides walk you through Zapier, Make, n8n, and more in minutes.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### Analytics & Audit Trail
+
+Full visibility into approval rates, response times, and request volumes. Every request, vote, and decision is logged for compliance.
+
+</td>
+<td width="50%">
+
+<img src="public/screenshots/hero-analytics.webp" alt="Analytics Dashboard" style="border-radius: 8px;" />
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+<img src="public/screenshots/hero-routes.webp" alt="Approval Routes" style="border-radius: 8px;" />
+
+</td>
+<td width="50%">
+
+### Smart Routing & Rules Engine
+
+Route approvals to the right people automatically. Define rules based on action type, priority, source, or custom conditions.
+
+</td>
+</tr>
+</table>
+
+---
+
+## How It Works
+
+```
+┌─────────────┐     ┌──────────┐     ┌───────────────┐     ┌─────────────┐
+│  Your Agent  │────▶│  OKRunit │────▶│   Reviewers   │────▶│  Decision   │
+│  or Workflow │     │   API    │     │ (Slack/Email/  │     │  delivered  │
+│              │◀────│          │◀────│  Dashboard)    │◀────│  via webhook│
+└─────────────┘     └──────────┘     └───────────────┘     └─────────────┘
+```
+
+1. **Your automation sends a request** — One API call with the action details
+2. **Reviewers get notified** — Via Slack, email, push notifications, or the dashboard
+3. **A human decides** — Approve or reject with context and comments
+4. **Decision delivered instantly** — Webhook callback fires with the result
+
+---
+
+## Integrations
+
+OKRunit connects with the tools you already use.
+
+### Automation Platforms
+
+<table>
+<tr>
+<td align="center" width="11%"><img src="public/logos/zapier.svg" width="40" /><br /><sub>Zapier</sub></td>
+<td align="center" width="11%"><img src="public/logos/make.svg" width="40" /><br /><sub>Make</sub></td>
+<td align="center" width="11%"><img src="public/logos/n8n.svg" width="40" /><br /><sub>n8n</sub></td>
+<td align="center" width="11%"><img src="public/logos/github-actions.svg" width="40" /><br /><sub>GitHub Actions</sub></td>
+<td align="center" width="11%"><img src="public/logos/windmill.svg" width="40" /><br /><sub>Windmill</sub></td>
+<td align="center" width="11%"><img src="public/logos/temporal.svg" width="40" /><br /><sub>Temporal</sub></td>
+<td align="center" width="11%"><img src="public/logos/dagster.svg" width="40" /><br /><sub>Dagster</sub></td>
+<td align="center" width="11%"><img src="public/logos/pipedream.svg" width="40" /><br /><sub>Pipedream</sub></td>
+<td align="center" width="11%"><img src="public/logos/prefect.svg" width="40" /><br /><sub>Prefect</sub></td>
+</tr>
+</table>
+
+### Messaging & Notifications
+
+<table>
+<tr>
+<td align="center" width="14%"><img src="public/logos/slack.svg" width="40" /><br /><sub>Slack</sub></td>
+<td align="center" width="14%"><img src="public/logos/discord.svg" width="40" /><br /><sub>Discord</sub></td>
+<td align="center" width="14%"><img src="public/logos/teams.svg" width="40" /><br /><sub>Teams</sub></td>
+<td align="center" width="14%"><img src="public/logos/telegram.svg" width="40" /><br /><sub>Telegram</sub></td>
+<td align="center" width="14%"><img src="public/logos/resend.svg" width="40" /><br /><sub>Email</sub></td>
+<td align="center" width="14%"><img src="public/logos/webhook.svg" width="40" /><br /><sub>Webhooks</sub></td>
+<td align="center" width="14%"><img src="public/logos/api.svg" width="40" /><br /><sub>REST API</sub></td>
+</tr>
+</table>
+
+---
+
+## Use Cases
+
+- **AI Agents** — Pause before destructive actions like deleting data or modifying accounts
+- **Production Deployments** — Gate releases behind team approval
+- **Bulk Operations** — Require sign-off on mass email sends or data migrations
+- **Financial Actions** — Approve high-value transactions or billing changes
+- **Infrastructure Changes** — Review DNS updates, credential rotations, or config changes
+- **Compliance Workflows** — Enforce approval policies for regulated operations
+
+---
+
+## Quick Start
+
+### 1. Create an account
+
+Sign up at [okrunit.com](https://okrunit.com) and create your organization.
+
+### 2. Get your API key
+
+Go to **Connections** in the dashboard and create an API key.
+
+### 3. Send your first approval request
+
+```bash
+curl -X POST https://okrunit.com/api/v1/approvals \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Delete inactive user accounts",
+    "description": "Remove 847 accounts inactive for 90+ days",
+    "priority": "critical",
+    "callback_url": "https://your-app.com/webhook/approval-result"
+  }'
+```
+
+### 4. Handle the decision
+
+OKRunit delivers the result to your callback URL:
+
+```json
+{
+  "approval_id": "apr_abc123",
+  "status": "approved",
+  "decided_by": "jane@yourcompany.com",
+  "decided_at": "2026-04-06T14:32:00Z",
+  "comment": "Verified the list looks correct. Approved."
+}
+```
+
+---
+
+## SDKs
+
+| Language | Package |
+|----------|---------|
+| TypeScript / Node.js | [`@okrunit/sdk`](https://okrunit.com/docs/sdks) |
+| Go | [`okrunit-go`](https://okrunit.com/docs/sdks) |
+| CLI | [`@okrunit/cli`](https://okrunit.com/docs/sdks) |
+
+```typescript
+import { OKRunit } from "@okrunit/sdk";
+
+const client = new OKRunit({ apiKey: "YOUR_API_KEY" });
+
+const approval = await client.approvals.create({
+  title: "Deploy v4.0 to production",
+  priority: "high",
+  callbackUrl: "https://your-app.com/webhook",
+});
+
+// approval.status === "pending"
+```
+
+---
+
+## Pricing
+
+| | Free | Pro | Business | Enterprise |
+|---|---|---|---|---|
+| **Price** | $0/mo | $20/mo | $60/mo | Custom |
+| **Requests** | 100/mo | Unlimited | Unlimited | Unlimited |
+| **Connections** | 2 | 15 | Unlimited | Unlimited |
+| **Team members** | 3 | 15 | Unlimited | Unlimited |
+| **History** | 7 days | 90 days | 1 year | Unlimited |
+| **Notifications** | Email | + Slack, Webhooks | + All channels | + All channels |
+| **Rules engine** | — | Yes | Yes | Yes |
+| **Analytics** | — | Yes | Yes | Yes |
+| **SSO / SAML** | — | — | Yes | Yes |
+| **Audit log export** | — | — | Yes | Yes |
+| **Dedicated support** | — | — | — | Yes |
+
+---
+
+## Tech Stack
+
+- **Framework** — [Next.js](https://nextjs.org) (App Router)
+- **Database** — [Supabase](https://supabase.com) (PostgreSQL)
+- **Auth** — Supabase Auth + WebAuthn passkeys + SAML SSO
+- **UI** — [shadcn/ui](https://ui.shadcn.com) + [Tailwind CSS](https://tailwindcss.com)
+- **Payments** — [Stripe](https://stripe.com)
+- **Email** — [Resend](https://resend.com)
+- **Hosting** — [Vercel](https://vercel.com)
+
+---
+
+## Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start the development server
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to see the app.
+
+---
+
+## License
+
+Copyright &copy; 2026 OKRunit. All rights reserved.
+
+<p align="center">
+  <a href="https://okrunit.com">
+    <img src="public/logo-icon.png" alt="OKRunit" width="40" />
+  </a>
+</p>
+
+<p align="center">
+  <sub>Built with care for teams who need humans in the loop.</sub>
+</p>

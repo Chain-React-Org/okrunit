@@ -131,6 +131,7 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
           ? [...touredPages, activePageId]
           : touredPages;
         set({ touredPages: updated, activePageId: null, currentStepInPage: 0, testRequestId: null });
+        if (updated !== touredPages) saveToServer({ touredPages: updated });
         if (fullTourActive) get().advanceFullTour();
       },
       skipPageTour: () => {
@@ -142,6 +143,7 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
           ? [...touredPages, activePageId]
           : touredPages;
         set({ touredPages: updated, activePageId: null, currentStepInPage: 0, testRequestId: null });
+        if (updated !== touredPages) saveToServer({ touredPages: updated });
       },
 
       setTestRequestId: (id) => set({ testRequestId: id }),
@@ -151,14 +153,21 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
           const res = await fetch("/api/v1/onboarding/tour-state");
           if (res.ok) {
             const data = await res.json();
+            const serverPages: string[] = data.touredPages ?? [];
+            const localPages = get().touredPages;
+            // Merge: union of server and local pages (server is authoritative,
+            // but local may have pages saved before this fix was deployed).
+            const merged = Array.from(new Set([...serverPages, ...localPages]));
+
             const update: Partial<OnboardingTourState> = {
               tourCompleted: data.tourCompleted,
               tourDismissed: data.tourDismissed,
+              touredPages: merged,
               synced: true,
             };
-            // Fresh user (neither completed nor dismissed) — clear stale
-            // localStorage state that may have leaked from a previous account.
-            if (!data.tourCompleted && !data.tourDismissed) {
+            // Fresh user (no toured pages AND neither completed nor dismissed)
+            // — clear stale localStorage state from a previous account.
+            if (!data.tourCompleted && !data.tourDismissed && serverPages.length === 0) {
               update.touredPages = [];
               update.fullTourPageIndex = 0;
               update.tourPaused = false;
