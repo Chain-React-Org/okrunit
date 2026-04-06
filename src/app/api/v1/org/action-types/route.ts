@@ -27,10 +27,7 @@ export async function GET(request: Request) {
   try {
     const auth = await authenticateRequest(request);
 
-    // Allow session and OAuth (for Zapier dynamic dropdowns)
-    if (auth.type === "api_key") {
-      throw new ApiError(403, "API key auth not supported for this endpoint");
-    }
+    // Allow session, OAuth (for Zapier dynamic dropdowns), and API key (for n8n)
 
     const admin = createAdminClient();
 

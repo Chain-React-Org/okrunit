@@ -684,6 +684,7 @@ export type NotificationCategory =
   | "approval_awaiting"
   | "approval_created"
   | "approval_decided"
+  | "approval_comment"
   | "flow_step_decided"
   | "approval_expiring"
   | "team_invite"

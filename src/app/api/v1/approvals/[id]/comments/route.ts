@@ -2,7 +2,7 @@
 // OKrunit -- Approval Comments API: GET (list) + POST (create) + DELETE
 // ---------------------------------------------------------------------------
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/api/auth";
@@ -11,6 +11,7 @@ import { createCommentSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { dispatchNotifications } from "@/lib/notifications/orchestrator";
+import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // ---- GET /api/v1/approvals/[id]/comments ----------------------------------
@@ -77,7 +78,7 @@ export async function POST(
     // 3. Verify the approval exists and belongs to the org
     const { data: approval, error: approvalError } = await admin
       .from("approval_requests")
-      .select("id, title, priority, connection_id, source, action_type")
+      .select("id, title, priority, connection_id, source, action_type, assigned_approvers, created_by")
       .eq("id", id)
       .eq("org_id", auth.orgId)
       .single();
@@ -88,8 +89,21 @@ export async function POST(
 
     // 4. Determine comment source
     let commentSource = "dashboard";
-    if (auth.type === "api_key") {
-      commentSource = "api";
+    if (validated.source) {
+      // Explicit source from request body (e.g. n8n, zapier, make)
+      commentSource = validated.source;
+    } else if (auth.type === "api_key") {
+      // Auto-detect from connection name
+      const { data: conn } = await admin
+        .from("connections")
+        .select("name")
+        .eq("id", auth.connection.id)
+        .single();
+      const connName = conn?.name?.toLowerCase() ?? "";
+      if (connName.includes("n8n")) commentSource = "n8n";
+      else if (connName.includes("zapier")) commentSource = "zapier";
+      else if (connName.includes("make")) commentSource = "make";
+      else commentSource = "api";
     } else if (auth.type === "oauth") {
       const { data: oauthClient } = await admin
         .from("oauth_clients")
@@ -144,6 +158,57 @@ export async function POST(
       decidedBy: auth.type === "session" ? auth.user.id : undefined,
     }).catch((err) => {
       console.error("[Comments] Failed to dispatch notification:", err);
+    });
+
+    // 7. In-app notifications for watchers, assigned approvers, and request creator
+    const commentAuthorId = auth.type === "session" ? auth.user.id : null;
+    const sourceName = commentSource !== "dashboard" && commentSource !== "api"
+      ? commentSource.charAt(0).toUpperCase() + commentSource.slice(1)
+      : undefined;
+
+    after(async () => {
+      try {
+        // Collect all user IDs who should be notified
+        const targetIds = new Set<string>();
+
+        // Assigned approvers
+        const approvers: string[] = approval.assigned_approvers ?? [];
+        for (const uid of approvers) targetIds.add(uid);
+
+        // Request watchers
+        const { data: watchers } = await admin
+          .from("request_watchers")
+          .select("user_id")
+          .eq("request_id", id);
+        for (const w of watchers ?? []) targetIds.add(w.user_id);
+
+        // Request creator (if it was a dashboard user)
+        const createdBy = approval.created_by as Record<string, unknown> | null;
+        if (createdBy?.user_id && typeof createdBy.user_id === "string") {
+          targetIds.add(createdBy.user_id);
+        }
+
+        // Don't notify the comment author themselves
+        if (commentAuthorId) targetIds.delete(commentAuthorId);
+
+        if (targetIds.size > 0) {
+          await createInAppNotificationBulk(Array.from(targetIds), {
+            orgId: auth.orgId,
+            category: "approval_comment",
+            title: `New comment on "${approval.title}"`,
+            body: sourceName
+              ? `Comment from ${sourceName}`
+              : validated.body.length > 80
+                ? validated.body.slice(0, 80) + "…"
+                : validated.body,
+            actorName: sourceName ?? undefined,
+            resourceType: "approval_request",
+            resourceId: id,
+          });
+        }
+      } catch (err) {
+        console.error("[Comments] In-app notification failed:", err);
+      }
     });
 
     return NextResponse.json(comment, { status: 201 });

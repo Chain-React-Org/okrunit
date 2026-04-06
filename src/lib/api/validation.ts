@@ -127,6 +127,7 @@ export type PaginationInput = z.infer<typeof paginationSchema>;
 
 export const createCommentSchema = z.object({
   body: z.string().min(1).max(5000),
+  source: z.string().max(50).optional(),
 });
 
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
