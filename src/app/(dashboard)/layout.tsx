@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { getOrgContext, getUserOrgs } from "@/lib/org-context";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getOrgContext } from "@/lib/org-context";
+import { getCachedDashboardData } from "@/lib/cache/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardLayout({
@@ -10,6 +11,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  await connection();
   const ctx = await getOrgContext();
 
   if (!ctx) {
@@ -37,17 +39,10 @@ export default async function DashboardLayout({
     }
   }
 
-  const admin = createAdminClient();
-  const [userOrgs, { count: pendingCount }] = await Promise.all([
-    getUserOrgs(profile.id),
-    admin
-      .from("approval_requests")
-      .select("*", { count: "exact", head: true })
-      .eq("org_id", org.id)
-      .eq("status", "pending")
-      .eq("is_log", false)
-      .is("archived_at", null),
-  ]);
+  const { userOrgs, pendingCount } = await getCachedDashboardData(
+    profile.id,
+    org.id,
+  );
 
   return (
     <DashboardShell
@@ -60,7 +55,7 @@ export default async function DashboardLayout({
         },
         currentOrgId: org.id,
         userOrgs,
-        pendingCount: pendingCount ?? 0,
+        pendingCount,
         userRole: membership.role,
         isAppAdmin: profile.is_app_admin,
       }}
@@ -70,7 +65,7 @@ export default async function DashboardLayout({
         full_name: profile.full_name,
       }}
       orgName={org.name}
-      pendingCount={pendingCount ?? 0}
+      pendingCount={pendingCount}
       currentOrgId={org.id}
       userOrgs={userOrgs}
       userId={profile.id}

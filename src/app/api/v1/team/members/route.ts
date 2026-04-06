@@ -9,6 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -221,6 +222,8 @@ export async function PATCH(request: Request) {
       ipAddress,
     });
 
+    revalidateTags(CacheTags.members(auth.orgId));
+
     return NextResponse.json({ success: true });
   } catch (err) {
     return errorResponse(err);
@@ -326,6 +329,8 @@ export async function DELETE(request: Request) {
       details: { email: targetProfile?.email, role: targetMembership.role },
       ipAddress,
     });
+
+    revalidateTags(CacheTags.members(auth.orgId));
 
     return NextResponse.json({ success: true });
   } catch (err) {

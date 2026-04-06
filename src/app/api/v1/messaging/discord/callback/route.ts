@@ -35,11 +35,6 @@ interface DiscordTokenResponse {
   };
 }
 
-interface DiscordGuildChannel {
-  id: string;
-  name: string;
-  type: number; // 0 = text channel
-}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -114,12 +109,6 @@ export async function GET(request: Request) {
     const defaultChannelId = `pending:${guildId}`;
     const defaultChannelName = guildName ?? "Server";
 
-    console.log("[Discord Callback] Saving bot connection:", {
-      guild_id: guildId,
-      guild_name: guildName,
-      has_token: !!tokenData.access_token,
-    });
-
     // 4. Store the connection in the database
     const admin = createAdminClient();
     const tokenExpiresAt = new Date(
@@ -155,8 +144,6 @@ export async function GET(request: Request) {
         `${APP_URL}/requests/messaging?error=save_failed`,
       );
     }
-
-    console.log("[Discord Callback] Connection saved:", connection?.id);
 
     // 7. Audit log
     logAuditEvent({

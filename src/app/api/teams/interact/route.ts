@@ -515,16 +515,12 @@ async function handleConversationUpdate(
   // Store the conversation reference for proactive messaging
   const conversationId = activity.conversation?.id;
   const serviceUrl = activity.serviceUrl;
-  const tenantId = activity.conversation?.tenantId;
+  const _tenantId = activity.conversation?.tenantId;
 
   if (!conversationId || !serviceUrl) {
     console.warn("[Teams Interact] conversationUpdate missing conversation data");
     return NextResponse.json({ ok: true });
   }
-
-  console.log(
-    `[Teams Interact] Bot added to conversation: ${conversationId} (tenant: ${tenantId})`,
-  );
 
   // Store the conversation reference in the database.
   // This is stored as metadata that the proactive messaging system can use.
@@ -532,7 +528,7 @@ async function handleConversationUpdate(
 
   // We store the conversation reference as a messaging connection.
   // The channel_id is the conversation ID, and metadata holds the service URL.
-  const conversationName =
+  const _conversationName =
     activity.conversation?.name ?? `Teams conversation`;
 
   // Check if a connection already exists for this conversation
@@ -553,14 +549,6 @@ async function handleConversationUpdate(
       })
       .eq("id", existing.id);
 
-    console.log(
-      `[Teams Interact] Updated existing connection for conversation: ${conversationId}`,
-    );
-  } else {
-    console.log(
-      `[Teams Interact] No existing org connection for conversation ${conversationId}. ` +
-        "Bot install endpoint should be used to associate with an org.",
-    );
   }
 
   return NextResponse.json({ ok: true });

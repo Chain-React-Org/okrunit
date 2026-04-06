@@ -1,10 +1,12 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
+import { connection } from "next/server";
 
 export const metadata = {
   title: "Subscription - OKrunit",
   description: "Manage your subscription and billing.",
 };
 
-export default function OrgBillingPage() {
-  redirect("/org/subscription");
+export default async function OrgBillingPage() {
+  await connection();
+  permanentRedirect("/org/subscription");
 }

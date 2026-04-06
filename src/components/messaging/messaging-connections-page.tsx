@@ -8,7 +8,11 @@ import { toast } from "sonner";
 import { PlatformCard } from "@/components/messaging/platform-card";
 import { ConnectionList } from "@/components/messaging/connection-list";
 import { EmailConnectDialog } from "@/components/messaging/email-connect-dialog";
-import { TelegramDeepLinkDialog } from "@/components/messaging/telegram-deep-link-dialog";
+import dynamic from "next/dynamic";
+
+const TelegramDeepLinkDialog = dynamic(
+  () => import("@/components/messaging/telegram-deep-link-dialog").then((m) => m.TelegramDeepLinkDialog),
+);
 import { EmptyState } from "@/components/ui/empty-state";
 import { SOURCE_CONFIG, AVAILABLE_SOURCES } from "@/components/approvals/source-icons";
 import type { ApprovalFlow, MessagingConnection, MessagingPlatform, RoutingRules } from "@/lib/types/database";

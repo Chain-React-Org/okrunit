@@ -178,7 +178,7 @@ export async function POST(
     if (insertError || !attachment) {
       console.error("[Attachments] DB insert failed:", insertError);
       // Attempt to clean up the orphaned storage object
-      admin.storage.from("approval-attachments").remove([storagePath]).then();
+      void admin.storage.from("approval-attachments").remove([storagePath]);
       throw new ApiError(500, "Failed to save attachment record");
     }
 

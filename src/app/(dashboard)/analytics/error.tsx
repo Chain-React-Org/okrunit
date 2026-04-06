@@ -1,7 +1,6 @@
 "use client";
 
 export default function AnalyticsError({
-  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };

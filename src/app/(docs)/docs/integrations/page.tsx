@@ -65,19 +65,19 @@ const CATEGORIES: Category[] = [
         name: "LangChain",
         description:
           "Python and TypeScript tools that integrate with LangChain agents. The agent pauses and waits for human approval before executing sensitive tool calls.",
-        status: "coming_soon",
+        status: "available",
       },
       {
         name: "CrewAI",
         description:
           "Custom tool for CrewAI agents that requires human approval before proceeding with high-stakes actions in multi-agent workflows.",
-        status: "coming_soon",
+        status: "available",
       },
       {
         name: "AutoGen",
         description:
           "Integration for Microsoft AutoGen that adds human-in-the-loop approval to multi-agent conversations and task execution.",
-        status: "coming_soon",
+        status: "available",
       },
     ],
   },
@@ -96,19 +96,19 @@ const CATEGORIES: Category[] = [
         name: "Terraform",
         description:
           "External approval step for Terraform Cloud/Enterprise run tasks. Blocks plan application until a human reviews and approves the changes.",
-        status: "coming_soon",
+        status: "available",
       },
       {
         name: "Vercel",
         description:
           "Deployment protection integration that requires human approval before promoting preview deployments to production.",
-        status: "coming_soon",
+        status: "available",
       },
       {
         name: "Netlify",
         description:
           "Build plugin and deploy hook integration that gates production deployments behind human approval.",
-        status: "coming_soon",
+        status: "available",
       },
     ],
   },
@@ -127,7 +127,7 @@ const CATEGORIES: Category[] = [
         name: "Retool",
         description:
           "Retool component and workflow integration for building custom approval dashboards and embedding approval controls in internal tools.",
-        status: "coming_soon",
+        status: "available",
       },
     ],
   },
@@ -392,19 +392,13 @@ export default function IntegrationsPage() {
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
           <span>Choose <strong>Custom webhook</strong> as the trigger.</span>
         </div>
-        <DocsImage
-          src="/screenshots/docs/integrations/make-step-8-custom-webhook.webp"
-          alt="Make module list showing Custom webhook trigger"
-          caption="Select 'Custom webhook' to create a webhook endpoint."
-        />
-
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
-          <span>Click <strong>Add</strong> to create the webhook, then <strong>copy the webhook URL</strong> — you&apos;ll need it for Scenario 2.</span>
+          <span>Choose <strong>Custom webhook</strong> as the trigger, click <strong>Add</strong> to create it, then <strong>copy the webhook URL</strong> — you&apos;ll need it for Scenario 2.</span>
         </div>
         <DocsImage
-          src="/screenshots/docs/integrations/make-step-9-copy-webhook-url.webp"
-          alt="Make webhook configuration showing the generated URL to copy"
+          src="/screenshots/docs/integrations/make-step-9-webhook-url.webp"
+          alt="Make webhooks page showing the generated webhook URL to copy"
           caption="Copy this webhook URL — you'll paste it into the Callback URL field in Scenario 2."
         />
 
@@ -471,7 +465,7 @@ export default function IntegrationsPage() {
           <span>Fill in the request fields — <strong>What needs approval?</strong>, <strong>Details</strong>, and paste the webhook URL from Scenario 1 into <strong>Callback URL</strong>.</span>
         </div>
         <DocsImage
-          src="/screenshots/docs/integrations/make-step-6-fields.webp"
+          src="/screenshots/docs/integrations/make-step-6-fields-v2.webp"
           alt="Make module fields showing title, details, and callback URL"
           caption="Configure all the fields. Paste the webhook URL from Scenario 1 into Callback URL."
         />

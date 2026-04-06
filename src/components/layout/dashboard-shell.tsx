@@ -4,7 +4,12 @@ import { useEffect } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { NavigationProgress } from "@/components/layout/navigation-progress";
-import { CommandPalette } from "@/components/layout/command-palette";
+import dynamic from "next/dynamic";
+
+const CommandPalette = dynamic(
+  () => import("@/components/layout/command-palette").then((m) => m.CommandPalette),
+  { ssr: false },
+);
 import { TourController } from "@/components/onboarding/tour-controller";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { OrgNameProvider } from "@/components/org/org-name-context";

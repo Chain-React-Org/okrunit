@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as samlify from "samlify";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+
 import {
   createServiceProvider,
   createIdentityProvider,

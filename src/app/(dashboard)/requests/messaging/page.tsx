@@ -4,9 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { MessagingConnectionsPage } from "@/components/messaging/messaging-connections-page";
 import type { ApprovalFlow, MessagingConnection } from "@/lib/types/database";
 
-// Disable caching — connections change after OAuth callbacks redirect back here
-export const dynamic = "force-dynamic";
-
 export const metadata = {
   title: "Messaging Channels - OKrunit",
   description:

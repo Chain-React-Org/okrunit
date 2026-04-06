@@ -9,6 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -154,6 +155,8 @@ export async function PATCH(request: Request) {
       details: updatePayload as Record<string, unknown>,
       ipAddress,
     });
+
+    revalidateTags(CacheTags.settings(auth.orgId), CacheTags.orgContext(auth.user.id));
 
     return NextResponse.json({ data: org });
   } catch (err) {

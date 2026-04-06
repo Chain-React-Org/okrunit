@@ -16,7 +16,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 
-const MONDAY_SIGNING_SECRET = process.env.MONDAY_SIGNING_SECRET;
 
 interface MondayActionPayload {
   payload: {

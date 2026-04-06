@@ -20,7 +20,8 @@ import { checkSlaBreach } from "@/lib/api/sla";
 import { validateSecurityContext } from "@/lib/api/geo-security";
 import { checkFourEyes } from "@/lib/api/four-eyes";
 import { checkReauthRequired } from "@/lib/api/session-security";
-import type { RejectionReasonPolicy, ApprovalPriority } from "@/lib/types/database";
+import type { RejectionReasonPolicy } from "@/lib/types/database";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -204,7 +205,7 @@ export async function GET(
         })
         .eq("id", approval.id)
         .eq("sla_breached", false)
-        .then();
+        ;
 
       // Notify about the breach (fire-and-forget)
       dispatchNotifications({
@@ -862,6 +863,7 @@ export async function PATCH(
         }
       }
 
+      revalidateTags(CacheTags.requests(auth.orgId), CacheTags.overview(auth.orgId), CacheTags.analytics(auth.orgId));
       return NextResponse.json(updated);
     }
 
@@ -1015,6 +1017,7 @@ export async function PATCH(
       }
     });
 
+    revalidateTags(CacheTags.requests(auth.orgId), CacheTags.overview(auth.orgId), CacheTags.analytics(auth.orgId));
     return NextResponse.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {

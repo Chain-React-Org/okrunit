@@ -117,11 +117,10 @@ async function authenticateApiKey(token: string): Promise<AuthResult> {
     }
 
     // Fire-and-forget: update last_used_at so we don't block the request.
-    admin
+    void admin
       .from("connections")
       .update({ last_used_at: new Date().toISOString() })
-      .eq("id", connection.id)
-      .then();
+      .eq("id", connection.id);
 
     return {
       type: "api_key",
@@ -144,11 +143,10 @@ async function authenticateApiKey(token: string): Promise<AuthResult> {
     }
 
     // Fire-and-forget: update last_used_at.
-    admin
+    void admin
       .from("connections")
       .update({ last_used_at: new Date().toISOString() })
-      .eq("id", rotatedConnection.id)
-      .then();
+      .eq("id", rotatedConnection.id);
 
     // Mark the result so callers / middleware can add a deprecation header.
     const result: AuthResult = {
@@ -192,11 +190,10 @@ async function authenticateOAuthToken(token: string): Promise<AuthResult> {
   }
 
   // Fire-and-forget: update last_used_at.
-  admin
+  void admin
     .from("oauth_access_tokens")
     .update({ last_used_at: new Date().toISOString() })
-    .eq("id", accessToken.id)
-    .then();
+    .eq("id", accessToken.id);
 
   return {
     type: "oauth",

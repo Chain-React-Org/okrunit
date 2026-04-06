@@ -7,10 +7,12 @@ import { toast } from "sonner";
 import type { VolumeDataPoint } from "./volume-chart";
 import type { ApprovalRateDataPoint } from "./approval-rate-chart";
 import type { ResponseTimeDataPoint } from "./response-time-chart";
-import { VolumeChart } from "./volume-chart";
-import { ApprovalRateChart } from "./approval-rate-chart";
-import { ResponseTimeChart } from "./response-time-chart";
-import { PatternSuggestions } from "./pattern-suggestions";
+import dynamic from "next/dynamic";
+
+const VolumeChart = dynamic(() => import("./volume-chart").then((m) => m.VolumeChart));
+const ApprovalRateChart = dynamic(() => import("./approval-rate-chart").then((m) => m.ApprovalRateChart));
+const ResponseTimeChart = dynamic(() => import("./response-time-chart").then((m) => m.ResponseTimeChart));
+const PatternSuggestions = dynamic(() => import("./pattern-suggestions").then((m) => m.PatternSuggestions));
 
 // ---- Types ----------------------------------------------------------------
 

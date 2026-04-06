@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getCachedSubscriptionData } from "@/lib/cache/queries";
 import { getActiveOAuthGrants } from "@/lib/api/oauth-grants";
 import { BillingDashboard } from "@/components/billing/billing-dashboard";
-import type { Plan, Subscription } from "@/lib/types/database";
+import type { Subscription } from "@/lib/types/database";
 
 export const metadata = {
   title: "Subscription - OKrunit",
@@ -17,41 +17,24 @@ export default async function OrgBillingPage() {
 
   if (membership.role !== "owner" && membership.role !== "admin") redirect("/org/overview");
 
-  const admin = createAdminClient();
-
-  const [
-    { data: plans },
-    { data: subscription },
-    { count: requestsThisMonth },
-    { count: apiKeyConnectionsCount },
-    { count: membersCount },
-    { count: teamsCount },
-    { data: invoices },
-    oauthGrants,
-  ] = await Promise.all([
-    admin.from("plans").select("*").eq("is_active", true).order("sort_order").returns<Plan[]>(),
-    admin.from("subscriptions").select("*").eq("org_id", org.id).single(),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", org.id).gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
-    admin.from("connections").select("*", { count: "exact", head: true }).eq("org_id", org.id).eq("is_active", true),
-    admin.from("org_memberships").select("*", { count: "exact", head: true }).eq("org_id", org.id),
-    admin.from("teams").select("*", { count: "exact", head: true }).eq("org_id", org.id),
-    admin.from("invoices").select("*").eq("org_id", org.id).order("created_at", { ascending: false }).limit(10),
+  const [cached, oauthGrants] = await Promise.all([
+    getCachedSubscriptionData(org.id),
     getActiveOAuthGrants(org.id),
   ]);
 
-  const connectionsCount = (apiKeyConnectionsCount ?? 0) + oauthGrants.length;
+  const connectionsCount = cached.apiKeyConnectionsCount + oauthGrants.length;
 
   return (
     <BillingDashboard
-      plans={plans ?? []}
-      subscription={subscription as Subscription | null}
+      plans={cached.plans}
+      subscription={cached.subscription as Subscription | null}
       usage={{
-        requests: requestsThisMonth ?? 0,
+        requests: cached.requestsThisMonth,
         connections: connectionsCount,
-        teams: teamsCount ?? 0,
-        teamMembers: membersCount ?? 0,
+        teams: cached.teamsCount,
+        teamMembers: cached.membersCount,
       }}
-      invoices={invoices ?? []}
+      invoices={cached.invoices}
       isAdmin={membership.role === "owner" || membership.role === "admin"}
       orgId={org.id}
     />

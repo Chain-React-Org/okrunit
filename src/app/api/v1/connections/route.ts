@@ -11,6 +11,7 @@ import { createConnectionSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canCreateConnection } from "@/lib/billing/enforce";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Column allowlist (never return api_key_hash) -------------------------
 
@@ -135,6 +136,8 @@ export async function POST(request: Request) {
       details: { name: body.name },
       ipAddress,
     });
+
+    revalidateTags(CacheTags.connections(auth.orgId), CacheTags.overview(auth.orgId));
 
     // Return the connection with the plaintext key (shown only once).
     return NextResponse.json(

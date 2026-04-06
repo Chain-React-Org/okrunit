@@ -10,6 +10,7 @@ import { authenticateRequest, generateApiKey } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -123,6 +124,8 @@ export async function POST(
       },
       ipAddress: getIpAddress(request),
     });
+
+    revalidateTags(CacheTags.connections(auth.orgId));
 
     return NextResponse.json({
       data: connection,

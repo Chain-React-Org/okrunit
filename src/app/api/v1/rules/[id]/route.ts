@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createRuleSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Partial update schema (all fields optional) --------------------------
 
@@ -98,6 +99,8 @@ export async function PATCH(
       ipAddress: getIpAddress(request),
     });
 
+    revalidateTags(CacheTags.rules(auth.orgId));
+
     return NextResponse.json({ data: rule });
   } catch (err) {
     return errorResponse(err);
@@ -159,6 +162,8 @@ export async function DELETE(
       resourceId: id,
       ipAddress: getIpAddress(request),
     });
+
+    revalidateTags(CacheTags.rules(auth.orgId));
 
     return NextResponse.json({ success: true });
   } catch (err) {

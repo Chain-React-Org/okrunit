@@ -9,6 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -128,6 +129,8 @@ export async function PATCH(
       ipAddress,
     });
 
+    revalidateTags(CacheTags.routes(auth.orgId));
+
     return NextResponse.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -181,6 +184,8 @@ export async function DELETE(
       resourceId: id,
       ipAddress,
     });
+
+    revalidateTags(CacheTags.routes(auth.orgId));
 
     return NextResponse.json({ success: true });
   } catch (error) {

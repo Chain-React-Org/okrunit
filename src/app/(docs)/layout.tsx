@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { DocsSidebar, DocsMobileNav } from "@/components/docs/docs-nav";
@@ -14,15 +15,46 @@ export const metadata: Metadata = {
     "OKrunit documentation — API reference, integration guides, webhooks, and getting started instructions.",
 };
 
-export default async function DocsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+async function DocsAuthNav() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (user) {
+    return (
+      <Link
+        href="/dashboard"
+        className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+      >
+        Go to Dashboard
+      </Link>
+    );
+  }
+
+  return (
+    <>
+      <Link
+        href="/login"
+        className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
+      >
+        Sign in
+      </Link>
+      <Link
+        href="/signup"
+        className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+      >
+        Get started
+      </Link>
+    </>
+  );
+}
+
+export default function DocsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -44,29 +76,16 @@ export default async function DocsLayout({
           <span className="text-zinc-300">/</span>
           <span className="text-sm font-medium text-zinc-600">Docs</span>
           <div className="ml-auto flex items-center gap-4">
-            {user ? (
+            <Suspense fallback={
               <Link
-                href="/dashboard"
-                className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+                href="/login"
+                className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
               >
-                Go to Dashboard
+                Sign in
               </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/signup"
-                  className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
-                >
-                  Get started
-                </Link>
-              </>
-            )}
+            }>
+              <DocsAuthNav />
+            </Suspense>
           </div>
         </div>
       </header>
