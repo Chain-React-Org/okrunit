@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Shield,
   ShieldCheck,
@@ -11,6 +11,14 @@ import {
   Link as LinkIcon,
   ChevronDown,
   ChevronRight,
+  Copy,
+  Check,
+  Download,
+  Zap,
+  Upload,
+  Lock,
+  LogOut,
+  KeyRound,
 } from "lucide-react";
 
 interface SSOConfigData {
@@ -20,14 +28,51 @@ interface SSOConfigData {
   sso_url: string;
   sso_domain: string | null;
   certificate_preview: string;
+  certificate_secondary_preview: string | null;
   attribute_mapping: Record<string, string>;
   is_active: boolean;
+  enforce_sso: boolean;
+  slo_url: string | null;
   created_at: string;
   updated_at: string;
 }
 
 interface SSOConfigFormProps {
   orgId: string;
+}
+
+function CopyButton({ value, label }: { value: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] bg-muted/30 px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+      title={`Copy ${label || "value"}`}
+    >
+      {copied ? <Check className="size-3 text-green-600" /> : <Copy className="size-3" />}
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
 }
 
 export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
@@ -42,19 +87,30 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
   const [metadataUrl, setMetadataUrl] = useState("");
   const [importing, setImporting] = useState(false);
   const [importSuccess, setImportSuccess] = useState(false);
+  const [importMode, setImportMode] = useState<"url" | "file">("url");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Test connection
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; error?: string } | null>(null);
 
   // Form state
   const [entityId, setEntityId] = useState("");
   const [ssoUrl, setSsoUrl] = useState("");
   const [certificate, setCertificate] = useState("");
+  const [certificateSecondary, setCertificateSecondary] = useState("");
   const [ssoDomain, setSsoDomain] = useState("");
   const [isActive, setIsActive] = useState(false);
+  const [enforceSso, setEnforceSso] = useState(false);
+  const [sloUrl, setSloUrl] = useState("");
   const [attrEmail, setAttrEmail] = useState("email");
   const [attrFirstName, setAttrFirstName] = useState("firstName");
   const [attrLastName, setAttrLastName] = useState("lastName");
 
   // Advanced section visibility
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -67,6 +123,8 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
         setSsoUrl(data.config.sso_url);
         setSsoDomain(data.config.sso_domain || "");
         setIsActive(data.config.is_active);
+        setEnforceSso(data.config.enforce_sso ?? false);
+        setSloUrl(data.config.slo_url || "");
         if (data.config.attribute_mapping) {
           setAttrEmail(data.config.attribute_mapping.email || "email");
           setAttrFirstName(data.config.attribute_mapping.firstName || "firstName");
@@ -86,7 +144,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
 
   // Import IdP metadata from URL
   async function handleImportMetadata() {
-    if (!metadataUrl.trim()) return;
+    if (importMode === "url" && !metadataUrl.trim()) return;
 
     setImporting(true);
     setError(null);
@@ -96,7 +154,11 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
       const res = await fetch("/api/v1/settings/sso/import-metadata", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ metadata_url: metadataUrl.trim() }),
+        body: JSON.stringify(
+          importMode === "url"
+            ? { metadata_url: metadataUrl.trim() }
+            : { metadata_xml: metadataUrl }, // metadataUrl doubles as XML content for file mode
+        ),
       });
 
       const data = await res.json();
@@ -114,9 +176,43 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
       setImportSuccess(true);
       setTimeout(() => setImportSuccess(false), 3000);
     } catch {
-      setError("Failed to fetch metadata. Check the URL and try again.");
+      setError("Failed to import metadata. Check the input and try again.");
     } finally {
       setImporting(false);
+    }
+  }
+
+  // Handle XML file upload
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const xml = event.target?.result as string;
+      if (xml) {
+        setMetadataUrl(xml); // Store XML content in metadataUrl for submission
+        setImportMode("file");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Test SSO connection
+  async function handleTestConnection() {
+    setTesting(true);
+    setTestResult(null);
+
+    try {
+      const res = await fetch("/api/v1/settings/sso/test", {
+        method: "POST",
+      });
+      const data = await res.json();
+      setTestResult(data);
+    } catch {
+      setTestResult({ success: false, error: "Failed to test connection" });
+    } finally {
+      setTesting(false);
     }
   }
 
@@ -135,8 +231,11 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
           entity_id: entityId,
           sso_url: ssoUrl,
           certificate,
+          certificate_secondary: certificateSecondary,
           sso_domain: ssoDomain,
           is_active: isActive,
+          enforce_sso: enforceSso,
+          slo_url: sloUrl || null,
           attribute_mapping: {
             email: attrEmail,
             firstName: attrFirstName,
@@ -158,6 +257,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
       setExistingConfig(data.config);
       setSaved(true);
       setCertificate("");
+      setCertificateSecondary("");
       setTimeout(() => setSaved(false), 3000);
     } catch {
       setError("Failed to save SSO configuration");
@@ -179,33 +279,69 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
     <div className="space-y-6">
       {/* Status card */}
       <div className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
-        <div className="flex items-center gap-4">
-          <div className={`rounded-lg p-2.5 ${existingConfig?.is_active ? "bg-green-500/10" : "bg-muted/50"}`}>
-            {existingConfig?.is_active ? (
-              <ShieldCheck className="size-6 text-green-600" />
-            ) : (
-              <ShieldX className="size-6 text-muted-foreground" />
-            )}
-          </div>
-          <div>
-            <h3 className="font-medium">
-              SSO Status: {existingConfig?.is_active ? (
-                <span className="text-green-600">Active</span>
-              ) : existingConfig ? (
-                <span className="text-amber-600">Configured (Inactive)</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`rounded-lg p-2.5 ${existingConfig?.is_active ? "bg-green-500/10" : "bg-muted/50"}`}>
+              {existingConfig?.is_active ? (
+                <ShieldCheck className="size-6 text-green-600" />
               ) : (
-                <span className="text-muted-foreground">Not Configured</span>
+                <ShieldX className="size-6 text-muted-foreground" />
               )}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {existingConfig?.is_active
-                ? "Team members can sign in using your identity provider."
-                : existingConfig
-                  ? "SSO is configured but not active. Enable it below to allow SSO sign-in."
-                  : "Configure SAML SSO to allow team members to sign in with your identity provider."}
-            </p>
+            </div>
+            <div>
+              <h3 className="font-medium">
+                SSO Status: {existingConfig?.is_active ? (
+                  <span className="text-green-600">Active</span>
+                ) : existingConfig ? (
+                  <span className="text-amber-600">Configured (Inactive)</span>
+                ) : (
+                  <span className="text-muted-foreground">Not Configured</span>
+                )}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {existingConfig?.is_active
+                  ? "Team members can sign in using your identity provider."
+                  : existingConfig
+                    ? "SSO is configured but not active. Enable it below to allow SSO sign-in."
+                    : "Configure SAML SSO to allow team members to sign in with your identity provider."}
+              </p>
+            </div>
           </div>
+
+          {/* Test Connection button */}
+          {existingConfig && (
+            <button
+              type="button"
+              onClick={handleTestConnection}
+              disabled={testing}
+              className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              {testing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : testResult?.success ? (
+                <CheckCircle2 className="size-4 text-green-600" />
+              ) : testResult && !testResult.success ? (
+                <ShieldX className="size-4 text-red-500" />
+              ) : (
+                <Zap className="size-4" />
+              )}
+              {testing ? "Testing..." : "Test Connection"}
+            </button>
+          )}
         </div>
+
+        {/* Test result message */}
+        {testResult && (
+          <div className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
+            testResult.success
+              ? "border-green-200 bg-green-50 text-green-700 dark:border-green-900/50 dark:bg-green-950/50 dark:text-green-400"
+              : "border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-400"
+          }`}>
+            {testResult.success
+              ? "Connection successful! Your SAML configuration is valid and can generate authentication requests."
+              : `Connection failed: ${testResult.error || "Unknown error"}`}
+          </div>
+        )}
       </div>
 
       {/* Quick setup */}
@@ -215,34 +351,97 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
           <div>
             <h3 className="text-lg font-semibold">Quick Setup</h3>
             <p className="text-sm text-muted-foreground">
-              Paste your identity provider&apos;s metadata URL to auto-configure everything.
+              Import your identity provider&apos;s metadata to auto-configure everything.
               Works with Okta, Azure AD, Google Workspace, OneLogin, and any SAML 2.0 provider.
             </p>
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <input
-            type="url"
-            value={metadataUrl}
-            onChange={(e) => setMetadataUrl(e.target.value)}
-            placeholder="https://your-idp.com/app/metadata"
-            className="flex-1 rounded-lg border border-[var(--border)] bg-white dark:bg-zinc-900 px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
-          />
+        {/* Import mode tabs */}
+        <div className="mb-3 flex gap-1 rounded-lg border border-[var(--border)] bg-muted/30 p-1">
           <button
             type="button"
-            onClick={handleImportMetadata}
-            disabled={importing || !metadataUrl.trim()}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            onClick={() => { setImportMode("url"); setMetadataUrl(""); }}
+            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              importMode === "url"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
           >
-            {importing ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : importSuccess ? (
-              <CheckCircle2 className="size-4" />
-            ) : null}
-            {importing ? "Importing..." : importSuccess ? "Imported!" : "Import"}
+            <LinkIcon className="mr-1.5 inline size-3.5" />
+            Metadata URL
+          </button>
+          <button
+            type="button"
+            onClick={() => { setImportMode("file"); setMetadataUrl(""); }}
+            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              importMode === "file"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Upload className="mr-1.5 inline size-3.5" />
+            Upload XML
           </button>
         </div>
+
+        {importMode === "url" ? (
+          <div className="flex gap-3">
+            <input
+              type="url"
+              value={metadataUrl}
+              onChange={(e) => setMetadataUrl(e.target.value)}
+              placeholder="https://your-idp.com/app/metadata"
+              className="flex-1 rounded-lg border border-[var(--border)] bg-white dark:bg-zinc-900 px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+            <button
+              type="button"
+              onClick={handleImportMetadata}
+              disabled={importing || !metadataUrl.trim()}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {importing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : importSuccess ? (
+                <CheckCircle2 className="size-4" />
+              ) : null}
+              {importing ? "Importing..." : importSuccess ? "Imported!" : "Import"}
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xml,text/xml,application/xml"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[var(--border)] bg-muted/20 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/40"
+              >
+                <Upload className="size-4" />
+                {metadataUrl ? "File loaded — click Import" : "Choose XML metadata file"}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={handleImportMetadata}
+              disabled={importing || !metadataUrl}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {importing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : importSuccess ? (
+                <CheckCircle2 className="size-4" />
+              ) : null}
+              {importing ? "Importing..." : importSuccess ? "Imported!" : "Import"}
+            </button>
+          </div>
+        )}
 
         {importSuccess && (
           <p className="mt-3 text-sm text-green-600">
@@ -309,6 +508,9 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
               {(existingConfig?.certificate_preview || certificate) && (
                 <p className="text-xs text-green-600">Certificate configured</p>
               )}
+              {(existingConfig?.certificate_secondary_preview || certificateSecondary) && (
+                <p className="text-xs text-green-600">Rollover certificate configured</p>
+              )}
             </div>
           )}
 
@@ -362,7 +564,26 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
                 )}
               </div>
 
-              {/* Certificate */}
+              {/* SLO URL */}
+              <div>
+                <label htmlFor="slo-url" className="mb-1.5 block text-sm font-medium">
+                  SLO URL (Single Logout Endpoint)
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">Optional</span>
+                </label>
+                <input
+                  id="slo-url"
+                  type="url"
+                  value={sloUrl}
+                  onChange={(e) => setSloUrl(e.target.value)}
+                  placeholder="https://idp.example.com/saml/slo"
+                  className="w-full rounded-lg border border-[var(--border)] bg-white dark:bg-zinc-900 px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  If provided, users will be signed out of your IdP when they log out of OKrunit.
+                </p>
+              </div>
+
+              {/* Primary Certificate */}
               <div>
                 <label htmlFor="certificate" className="mb-1.5 block text-sm font-medium">
                   X.509 Certificate (PEM)
@@ -382,6 +603,35 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
                 {existingConfig && !certificate && (
                   <p className="mt-1 text-xs text-amber-600">
                     Certificate on file. Paste a new one to replace, or leave blank to keep it.
+                  </p>
+                )}
+              </div>
+
+              {/* Secondary Certificate (rotation) */}
+              <div>
+                <label htmlFor="certificate-secondary" className="mb-1.5 block text-sm font-medium">
+                  <KeyRound className="mr-1.5 inline size-3.5" />
+                  Rollover Certificate
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">Optional</span>
+                </label>
+                <textarea
+                  id="certificate-secondary"
+                  value={certificateSecondary}
+                  onChange={(e) => setCertificateSecondary(e.target.value)}
+                  placeholder={"Paste your IdP's new certificate here during a cert rotation"}
+                  rows={3}
+                  className="w-full rounded-lg border border-[var(--border)] bg-white dark:bg-zinc-900 px-3 py-2 font-mono text-xs outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+                {fieldErrors.certificate_secondary && (
+                  <p className="mt-1 text-xs text-red-500">{fieldErrors.certificate_secondary[0]}</p>
+                )}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  During IdP certificate rotation, add the new certificate here. Both certificates will be accepted
+                  until you remove the old one.
+                </p>
+                {existingConfig?.certificate_secondary_preview && !certificateSecondary && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    Rollover certificate on file. Paste a new one to replace, or leave blank to keep it.
                   </p>
                 )}
               </div>
@@ -434,7 +684,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
             </>
           ) : null}
 
-          {/* Active toggle */}
+          {/* Enable SSO toggle */}
           <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-muted/30 p-4">
             <button
               type="button"
@@ -458,6 +708,37 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
               </p>
             </div>
           </div>
+
+          {/* Enforce SSO toggle — only show when SSO is active */}
+          {isActive && (
+            <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={enforceSso}
+                onClick={() => setEnforceSso(!enforceSso)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
+                  enforceSso ? "bg-amber-500" : "bg-muted-foreground/30"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block size-5 translate-y-0.5 rounded-full bg-white shadow-sm transition-transform ${
+                    enforceSso ? "translate-x-5.5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+              <div>
+                <p className="flex items-center gap-1.5 text-sm font-medium">
+                  <Lock className="size-3.5" />
+                  Require SSO
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  When enabled, users with @{ssoDomain || "company.com"} emails <strong>must</strong> use SSO to sign in.
+                  Password and social login will be blocked for this domain.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -485,27 +766,66 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
 
       {/* Service Provider info */}
       <div className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
-        <h3 className="mb-3 text-sm font-semibold">Service Provider Details</h3>
-        <p className="mb-4 text-xs text-muted-foreground">
-          Provide these values to your identity provider when configuring the SAML integration.
-        </p>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold">Service Provider Details</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Provide these values to your identity provider when configuring the SAML integration.
+            </p>
+          </div>
+          <a
+            href="/api/auth/saml/metadata"
+            download="okrunit-sp-metadata.xml"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+          >
+            <Download className="size-3.5" />
+            Download SP Metadata
+          </a>
+        </div>
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">ACS URL (Assertion Consumer Service)</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">ACS URL (Assertion Consumer Service)</label>
+              <CopyButton value={`${appUrl}/api/auth/saml/callback`} label="ACS URL" />
+            </div>
             <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
-              {typeof window !== "undefined" ? window.location.origin : ""}/api/auth/saml/callback
+              {appUrl}/api/auth/saml/callback
             </code>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Entity ID / Audience URI</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">Entity ID / Audience URI</label>
+              <CopyButton value={`${appUrl}/api/auth/saml/metadata`} label="Entity ID" />
+            </div>
             <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
-              {typeof window !== "undefined" ? window.location.origin : ""}/api/auth/saml/metadata
+              {appUrl}/api/auth/saml/metadata
             </code>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Name ID Format</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">Single Logout URL</label>
+              <CopyButton value={`${appUrl}/api/auth/saml/logout`} label="SLO URL" />
+            </div>
+            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
+              {appUrl}/api/auth/saml/logout
+            </code>
+          </div>
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">Name ID Format</label>
+              <CopyButton value="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress" label="Name ID Format" />
+            </div>
             <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
               urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+            </code>
+          </div>
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">SP Metadata URL</label>
+              <CopyButton value={`${appUrl}/api/auth/saml/metadata`} label="Metadata URL" />
+            </div>
+            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
+              {appUrl}/api/auth/saml/metadata
             </code>
           </div>
         </div>

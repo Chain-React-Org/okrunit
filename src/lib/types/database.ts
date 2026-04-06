@@ -977,6 +977,9 @@ export interface SSOConfig {
   certificate: string;
   attribute_mapping: Record<string, string>;
   is_active: boolean;
+  enforce_sso: boolean;
+  certificate_secondary: string | null;
+  slo_url: string | null;
   created_at: string;
   updated_at: string;
 }

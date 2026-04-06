@@ -23,6 +23,11 @@ const ssoConfigSchema = z.object({
     .max(10000)
     .optional()
     .default(""),
+  certificate_secondary: z
+    .string()
+    .max(10000)
+    .optional()
+    .default(""),
   sso_domain: z
     .string()
     .min(1, "Email domain is required")
@@ -33,6 +38,8 @@ const ssoConfigSchema = z.object({
     .optional()
     .default({}),
   is_active: z.boolean().optional().default(false),
+  enforce_sso: z.boolean().optional().default(false),
+  slo_url: z.string().url().max(2000).optional().nullable(),
 });
 
 /** Validates that a certificate looks like PEM format */
@@ -111,8 +118,13 @@ export async function GET(request: NextRequest) {
             sso_domain: ssoDomain,
             // Do NOT return the full certificate for security; return a truncated preview
             certificate_preview: data.certificate.substring(0, 60) + "...",
+            certificate_secondary_preview: data.certificate_secondary
+              ? data.certificate_secondary.substring(0, 60) + "..."
+              : null,
             attribute_mapping: data.attribute_mapping,
             is_active: data.is_active,
+            enforce_sso: data.enforce_sso,
+            slo_url: data.slo_url,
             created_at: data.created_at,
             updated_at: data.updated_at,
           }
@@ -162,7 +174,7 @@ export async function POST(request: NextRequest) {
     // Check for existing config
     const { data: existing } = await admin
       .from("sso_configs")
-      .select("id, certificate")
+      .select("id, certificate, certificate_secondary")
       .eq("org_id", orgId)
       .single();
 
@@ -183,6 +195,19 @@ export async function POST(request: NextRequest) {
 
     const certificateValue = hasCert ? input.certificate : existing?.certificate;
 
+    // Validate secondary certificate if provided
+    const hasSecondaryCert =
+      input.certificate_secondary && input.certificate_secondary.trim().length > 0;
+    if (hasSecondaryCert && !isValidCertificate(input.certificate_secondary)) {
+      return NextResponse.json(
+        { error: "Validation failed", details: { certificate_secondary: ["Secondary certificate must be in PEM format"] } },
+        { status: 400 },
+      );
+    }
+    const secondaryCertValue = hasSecondaryCert
+      ? input.certificate_secondary
+      : existing?.certificate_secondary ?? null;
+
     let result;
     if (existing) {
       // Update existing config
@@ -192,8 +217,11 @@ export async function POST(request: NextRequest) {
           entity_id: input.entity_id,
           sso_url: input.sso_url,
           certificate: certificateValue,
+          certificate_secondary: secondaryCertValue,
           attribute_mapping: input.attribute_mapping,
           is_active: input.is_active,
+          enforce_sso: input.enforce_sso,
+          slo_url: input.slo_url ?? null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id)
@@ -214,8 +242,11 @@ export async function POST(request: NextRequest) {
           entity_id: input.entity_id,
           sso_url: input.sso_url,
           certificate: certificateValue!,
+          certificate_secondary: secondaryCertValue,
           attribute_mapping: input.attribute_mapping,
           is_active: input.is_active,
+          enforce_sso: input.enforce_sso,
+          slo_url: input.slo_url ?? null,
         })
         .select("*")
         .single<SSOConfig>();
@@ -259,8 +290,13 @@ export async function POST(request: NextRequest) {
           sso_url: result.sso_url,
           sso_domain: input.sso_domain,
           certificate_preview: result.certificate.substring(0, 60) + "...",
+          certificate_secondary_preview: result.certificate_secondary
+            ? result.certificate_secondary.substring(0, 60) + "..."
+            : null,
           attribute_mapping: result.attribute_mapping,
           is_active: result.is_active,
+          enforce_sso: result.enforce_sso,
+          slo_url: result.slo_url,
           created_at: result.created_at,
           updated_at: result.updated_at,
         },

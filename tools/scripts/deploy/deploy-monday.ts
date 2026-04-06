@@ -119,10 +119,10 @@ async function main(): Promise<void> {
 
     logWaiting(PLATFORM,
       'Please configure OAuth 2.0 with these settings:\n\n' +
-      '  Redirect URL:     https://www.okrunit.com/api/v1/oauth/callback\n' +
+      '  Redirect URL:     https://okrunit.com/api/v1/oauth/callback\n' +
       '  Scopes:           approvals:read, approvals:write, comments:write\n' +
-      '  Token URL:        https://www.okrunit.com/api/v1/oauth/token\n' +
-      '  Authorize URL:    https://www.okrunit.com/oauth/authorize\n\n' +
+      '  Token URL:        https://okrunit.com/api/v1/oauth/token\n' +
+      '  Authorize URL:    https://okrunit.com/oauth/authorize\n\n' +
       'Copy the Client ID and Client Secret — you\'ll need them for your .env file.\n' +
       'Press Enter when done.'
     );

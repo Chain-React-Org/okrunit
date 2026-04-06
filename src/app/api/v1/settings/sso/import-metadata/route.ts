@@ -14,9 +14,14 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 
-const importSchema = z.object({
-  metadata_url: z.string().url("Must be a valid URL"),
-});
+const importSchema = z
+  .object({
+    metadata_url: z.string().url("Must be a valid URL").optional(),
+    metadata_xml: z.string().max(100000).optional(),
+  })
+  .refine((data) => data.metadata_url || data.metadata_xml, {
+    message: "Either metadata_url or metadata_xml must be provided",
+  });
 
 /**
  * Naive XML text extraction — avoids adding a full XML parser dependency.
@@ -67,20 +72,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch the metadata XML
-    const metadataRes = await fetch(parsed.data.metadata_url, {
-      headers: { Accept: "application/xml, text/xml" },
-      signal: AbortSignal.timeout(10000),
-    });
+    // Get the metadata XML — either from direct input or by fetching a URL
+    let xml: string;
 
-    if (!metadataRes.ok) {
-      return NextResponse.json(
-        { error: `Failed to fetch metadata: HTTP ${metadataRes.status}` },
-        { status: 400 },
-      );
+    if (parsed.data.metadata_xml) {
+      xml = parsed.data.metadata_xml;
+    } else {
+      const metadataRes = await fetch(parsed.data.metadata_url!, {
+        headers: { Accept: "application/xml, text/xml" },
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (!metadataRes.ok) {
+        return NextResponse.json(
+          { error: `Failed to fetch metadata: HTTP ${metadataRes.status}` },
+          { status: 400 },
+        );
+      }
+
+      xml = await metadataRes.text();
     }
-
-    const xml = await metadataRes.text();
 
     if (!xml.includes("EntityDescriptor") && !xml.includes("entityDescriptor")) {
       return NextResponse.json(

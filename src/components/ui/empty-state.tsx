@@ -27,7 +27,7 @@ export function EmptyState({ icon: Icon, title, description, action, className }
         )}
       </div>
       {action && (
-        <Button variant={action.variant ?? "default"} onClick={action.onClick} className="mt-1">
+        <Button variant={action.variant ?? "default"} onClick={action.onClick} className={cn("mt-1", action.variant === "outline" && "bg-white")}>
           {action.label}
         </Button>
       )}

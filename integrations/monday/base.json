@@ -3,7 +3,7 @@
   "description": "Human-in-the-loop approval gateway for AI agents and automated workflows. Pause any monday.com automation until a human approves or rejects.",
   "version": "1.0.0",
   "language": "en",
-  "baseUrl": "https://www.okrunit.com",
+  "baseUrl": "https://okrunit.com",
   "headers": {
     "Authorization": "Bearer {{connection.accessToken}}",
     "Content-Type": "application/json",

@@ -27,6 +27,8 @@ interface MondayActionPayload {
       userId?: string;
       userName?: string;
       boardName?: string;
+      callback_url?: string;
+      source_url?: string;
     };
     webhookUrl?: string;
     subscriptionId?: number;
@@ -107,7 +109,8 @@ export async function POST(request: Request) {
         source: "monday",
         priority: "medium",
         status: "pending",
-        callback_url: webhookUrl || null,
+        callback_url: inputFields.callback_url || webhookUrl || null,
+        source_url: inputFields.source_url || null,
         metadata,
         idempotency_key: idempotencyKey,
         requested_by_name: inputFields.userName || null,

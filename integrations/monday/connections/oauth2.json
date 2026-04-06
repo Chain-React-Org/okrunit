@@ -6,12 +6,12 @@
     {
       "name": "baseUrl",
       "type": "hidden",
-      "default": "https://www.okrunit.com"
+      "default": "https://okrunit.com"
     }
   ],
   "oauth2": {
-    "authorizeUrl": "https://www.okrunit.com/oauth/authorize",
-    "tokenUrl": "https://www.okrunit.com/api/v1/oauth/token",
+    "authorizeUrl": "https://okrunit.com/oauth/authorize",
+    "tokenUrl": "https://okrunit.com/api/v1/oauth/token",
     "scope": ["approvals:read", "approvals:write", "comments:write"],
     "scopeSeparator": " ",
     "authStyle": "body",
@@ -19,7 +19,7 @@
     "autoRefresh": true
   },
   "test": {
-    "url": "https://www.okrunit.com/api/v1/approvals",
+    "url": "https://okrunit.com/api/v1/approvals",
     "method": "GET",
     "headers": {
       "Authorization": "Bearer {{connection.accessToken}}"
