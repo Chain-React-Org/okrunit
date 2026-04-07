@@ -2,7 +2,7 @@
 
 Human-in-the-loop approval gateway for automated workflows.
 
-## Git Workflow — IMPORTANT
+## Git Workflow - IMPORTANT
 
 **NEVER push directly to `main`.** It is protected and will reject direct pushes.
 
@@ -17,7 +17,7 @@ Always use this workflow:
 
 **NEVER force push to any branch. NEVER disable branch protection.**
 
-## Database Migrations — IMPORTANT
+## Database Migrations - IMPORTANT
 
 When you create a Supabase migration file in `supabase/migrations/`, you **MUST** push it immediately:
 
@@ -25,14 +25,14 @@ When you create a Supabase migration file in `supabase/migrations/`, you **MUST*
 supabase db push --include-all
 ```
 
-Always push migrations right after creating them. Do NOT leave unpushed migrations — they will cause runtime errors when code depends on schema changes that haven't been applied to the remote database.
+Always push migrations right after creating them. Do NOT leave unpushed migrations. They will cause runtime errors when code depends on schema changes that haven't been applied to the remote database.
 
 ## Integration Docs Screenshots (Playwright)
 
 When asked to capture screenshots for the `/docs/integrations` page (Zapier, Make, n8n, etc.):
 
 ### Setup
-1. Save login session: `npx tsx tools/scripts/screenshots/browser.ts login <platform> <login-url>` — opens a browser, user signs in, clicks Resume in Playwright Inspector. Session saves to `tools/scripts/screenshots/.auth/<platform>.json`.
+1. Save login session: `npx tsx tools/scripts/screenshots/browser.ts login <platform> <login-url>`. This opens a browser, user signs in, clicks Resume in Playwright Inspector. Session saves to `tools/scripts/screenshots/.auth/<platform>.json`.
 2. See `tools/scripts/screenshots/zapier-all.ts` as the reference script.
 
 ### Capture pattern
@@ -61,6 +61,10 @@ await page.evaluate(({ x, y, w, h }) => {
 
 ### Adding to docs
 - Output to `public/screenshots/docs/integrations/<platform>-step-<n>-<desc>.webp`
-- Use `DocsImage` component in the integrations page — must be **outside** `<ol>`/`<li>` (use `<div>` wrapper with numbered spans instead)
+- Use `DocsImage` component in the integrations page. Must be **outside** `<ol>`/`<li>` (use `<div>` wrapper with numbered spans instead)
 - If Next.js caches an old image, use a new filename (append `-v2`)
 - Full guide: `tools/scripts/screenshots/README.md`
+
+## Writing Style
+
+**Never use em dashes anywhere in the codebase.** Not in user-facing text, comments, commit messages, or documentation. Use periods, commas, or rephrase the sentence instead.

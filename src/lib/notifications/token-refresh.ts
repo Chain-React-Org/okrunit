@@ -20,7 +20,7 @@ const REFRESH_BUFFER_SECONDS = 300; // Refresh 5 minutes before expiry
 export async function ensureDiscordToken(
   conn: MessagingConnection,
 ): Promise<string | null> {
-  // Prefer the dedicated bot token from env — it never expires
+  // Prefer the dedicated bot token from env. It never expires
   const envBotToken = process.env.DISCORD_BOT_TOKEN;
   if (envBotToken) return envBotToken;
 
@@ -38,14 +38,14 @@ export async function ensureDiscordToken(
       return conn.bot_token;
     }
 
-    // Token expired or about to expire — try refresh
+    // Token expired or about to expire - try refresh
     if (conn.refresh_token) {
       const refreshed = await refreshDiscordToken(conn);
       if (refreshed) return refreshed;
     }
   }
 
-  // No expiry info — assume valid (backwards compat)
+  // No expiry info. Assume valid (backwards compat)
   return conn.bot_token;
 }
 

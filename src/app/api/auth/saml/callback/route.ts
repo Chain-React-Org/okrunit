@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     // We need to find which org's SSO config to validate against.
     // The RelayState or the response itself may carry this info.
-    // We'll try all active SSO configs — in practice there's usually one match.
+    // We'll try all active SSO configs. In practice there's usually one match.
     const admin = createAdminClient();
     const { data: configs } = await admin
       .from("sso_configs")
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
             break;
           }
         } catch {
-          // This IdP cert didn't match — try next
+          // This IdP cert didn't match - try next
           continue;
         }
       }
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
         });
       }
     } else {
-      // Create new user — generate a random password since they'll use SSO
+      // Create new user. Generate a random password since they'll use SSO
       const randomPassword = crypto.randomUUID() + crypto.randomUUID();
       const { data: newUser, error: createError } =
         await admin.auth.admin.createUser({

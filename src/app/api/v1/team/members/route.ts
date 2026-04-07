@@ -2,13 +2,14 @@
 // OKrunit -- Team Members API: List, Update Role, Remove
 // ---------------------------------------------------------------------------
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createInAppNotification } from "@/lib/notifications/in-app";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Validation -----------------------------------------------------------
@@ -223,6 +224,25 @@ export async function PATCH(request: Request) {
     });
 
     revalidateTags(CacheTags.members(auth.orgId));
+
+    // Notify the affected user about their role/permission change
+    after(async () => {
+      const changes: string[] = [];
+      if (body.role) changes.push(`role changed to ${body.role}`);
+      if (body.can_approve !== undefined) changes.push(body.can_approve ? "approval permissions granted" : "approval permissions removed");
+      if (body.can_connect !== undefined) changes.push(body.can_connect ? "connection permissions granted" : "connection permissions removed");
+
+      if (changes.length > 0) {
+        await createInAppNotification({
+          userId: body.user_id,
+          orgId: auth.orgId,
+          category: "role_changed",
+          title: "Your permissions were updated",
+          body: `Your account was updated: ${changes.join(", ")}.`,
+          actorId: auth.user.id,
+        });
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -73,7 +73,7 @@ describe("activateFirstStep", () => {
   });
 });
 
-describe("recordStepVote — approve (not reaching threshold)", () => {
+describe("recordStepVote: approve (not reaching threshold)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -105,7 +105,7 @@ describe("recordStepVote — approve (not reaching threshold)", () => {
   });
 });
 
-describe("recordStepVote — approve reaching threshold", () => {
+describe("recordStepVote: approve reaching threshold", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -179,7 +179,7 @@ describe("recordStepVote — approve reaching threshold", () => {
   });
 });
 
-describe("recordStepVote — reject", () => {
+describe("recordStepVote: reject", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -207,7 +207,7 @@ describe("recordStepVote — reject", () => {
   });
 });
 
-describe("recordStepVote — last step approved", () => {
+describe("recordStepVote: last step approved", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -270,7 +270,7 @@ describe("recordStepVote — last step approved", () => {
   });
 });
 
-describe("recordStepVote — authorization checks", () => {
+describe("recordStepVote: authorization checks", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

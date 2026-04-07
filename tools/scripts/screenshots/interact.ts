@@ -2,19 +2,19 @@
 // Usage: npx tsx tools/scripts/screenshots/interact.ts <platform> <command> [args...]
 //
 // Commands:
-//   goto <url>                      — Navigate to URL
-//   click <selector>                — Click an element
-//   fill <selector> <text>          — Fill an input
-//   type <selector> <text>          — Type text into element (keystroke by keystroke)
-//   wait <ms>                       — Wait milliseconds
-//   snap <filename>                 — Take screenshot
-//   circle <selector> [label]       — Draw red circle annotation
-//   circlexy <x> <y> [label]        — Draw red circle at coordinates
-//   box <selector> [label]          — Draw red box annotation
-//   clearann                        — Clear all annotations
-//   hover <selector>                — Hover over element
-//   scroll <y>                      — Scroll to y position
-//   press <key>                     — Press keyboard key (Enter, Tab, etc.)
+//   goto <url>                       Navigate to URL
+//   click <selector>                 Click an element
+//   fill <selector> <text>           Fill an input
+//   type <selector> <text>           Type text into element (keystroke by keystroke)
+//   wait <ms>                        Wait milliseconds
+//   snap <filename>                  Take screenshot
+//   circle <selector> [label]        Draw red circle annotation
+//   circlexy <x> <y> [label]         Draw red circle at coordinates
+//   box <selector> [label]           Draw red box annotation
+//   clearann                         Clear all annotations
+//   hover <selector>                 Hover over element
+//   scroll <y>                       Scroll to y position
+//   press <key>                      Press keyboard key (Enter, Tab, etc.)
 
 import { chromium, type Page } from "playwright";
 import * as path from "path";

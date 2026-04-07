@@ -7,7 +7,7 @@ test.describe('Landing page', () => {
     // Page should have OKRunit in the title
     await expect(page).toHaveTitle(/OKRunit/i);
 
-    // Hero headline should be visible — the landing page has a prominent heading
+    // Hero headline should be visible. The landing page has a prominent heading
     const heading = page.locator('h1').first();
     await expect(heading).toBeVisible();
   });
@@ -31,7 +31,7 @@ test.describe('Landing page', () => {
     await expect(pricingSection.locator('text=Enterprise').first()).toBeVisible();
   });
 
-  test('navigation links work — Docs, Login, Sign up', async ({ page }) => {
+  test('navigation links work: Docs, Login, Sign up', async ({ page }) => {
     await page.goto('/');
 
     // Click "Log in" link

@@ -1,6 +1,6 @@
 # OKRunit Pipedream Integration
 
-Pipedream components for [OKRunit](https://okrunit.com) — a human-in-the-loop approval gateway for automated workflows.
+Pipedream components for [OKRunit](https://okrunit.com), a human-in-the-loop approval gateway for automated workflows.
 
 ## CLI Setup
 

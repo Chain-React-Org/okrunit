@@ -29,9 +29,9 @@ export default function ShortcutsPage() {
         The command palette lets you:
       </p>
       <ul className="mt-3 list-disc pl-6 space-y-2 text-zinc-600">
-        <li><strong>Search approval requests</strong> — Type 2+ characters to search by title. Results appear instantly with status indicators.</li>
-        <li><strong>Navigate to any page</strong> — Jump to Requests, Connections, Routes, Rules, Analytics, SLA, Teams, Members, Settings, and more.</li>
-        <li><strong>Quick access</strong> — No need to click through menus. Just type and press Enter.</li>
+        <li><strong>Search approval requests</strong>: Type 2+ characters to search by title. Results appear instantly with status indicators.</li>
+        <li><strong>Navigate to any page</strong>: Jump to Requests, Connections, Routes, Rules, Analytics, SLA, Teams, Members, Settings, and more.</li>
+        <li><strong>Quick access</strong>: No need to click through menus. Just type and press Enter.</li>
       </ul>
       <p className="mt-3 text-zinc-600 leading-relaxed">
         You can also click the <strong>Search bar</strong> in the header to open the command palette.

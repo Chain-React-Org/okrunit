@@ -1,9 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageContainer } from "@/components/ui/page-container";
 
 export default function OAuthSettingsLoading() {
   return (
-    <PageContainer>
+    <>
       {/* Page header */}
       <div className="mb-8 space-y-2">
         <Skeleton className="h-7 w-[220px]" />
@@ -24,6 +23,6 @@ export default function OAuthSettingsLoading() {
           </div>
         ))}
       </div>
-    </PageContainer>
+    </>
   );
 }

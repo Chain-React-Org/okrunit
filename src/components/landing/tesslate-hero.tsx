@@ -59,7 +59,7 @@ function AnimatedBackground() {
     ctx.save();
     ctx.scale(dpr, dpr);
 
-    // Aurora blobs — soft, slow-moving
+    // Aurora blobs: soft, slow-moving
     const blobs = [
       { cx: w * 0.2 + Math.sin(t * 0.7) * w * 0.12, cy: h * 0.06 + Math.cos(t * 0.5) * h * 0.03, rx: w * 0.38, ry: h * 0.08, color: "rgba(33,150,243,0.045)" },
       { cx: w * 0.75 + Math.cos(t * 0.5) * w * 0.1, cy: h * 0.04 + Math.sin(t * 0.7) * h * 0.02, rx: w * 0.32, ry: h * 0.07, color: "rgba(0,188,212,0.035)" },
@@ -209,14 +209,14 @@ function MockDashboard() {
 
   const approvals = [
     { title: "Delete user account #4821", desc: "Permanently remove user and all associated data", source: "Zapier", time: "2 min ago", status: "Pending", statusColor: "#f59e0b", priority: "High", prioColor: "#ef4444" },
-    { title: "Send bulk email (2,400 recipients)", desc: "Marketing campaign — Q1 product launch", source: "n8n", time: "8 min ago", status: "Approved", statusColor: "#22c55e", priority: "Medium", prioColor: "#f59e0b" },
+    { title: "Send bulk email (2,400 recipients)", desc: "Marketing campaign, Q1 product launch", source: "n8n", time: "8 min ago", status: "Approved", statusColor: "#22c55e", priority: "Medium", prioColor: "#f59e0b" },
     { title: "Deploy to production v3.2.1", desc: "Release includes auth fix and new webhook endpoint", source: "AI Agent", time: "14 min ago", status: "Pending", statusColor: "#f59e0b", priority: "High", prioColor: "#ef4444" },
     { title: "Update billing plan for org #127", desc: "Upgrade from Pro to Enterprise tier", source: "Zapier", time: "23 min ago", status: "Approved", statusColor: "#22c55e", priority: "Low", prioColor: "#6b7280" },
   ];
 
   return (
     <div className="overflow-hidden rounded-2xl border shadow-2xl" style={{ borderColor: "#e5e7eb" }}>
-      {/* Browser chrome — just traffic light dots, NO url bar */}
+      {/* Browser chrome. Just traffic light dots, NO url bar */}
       <div className="flex items-center gap-2 border-b px-4 py-2.5" style={{ backgroundColor: "#f9fafb", borderColor: "#e5e7eb" }}>
         <div className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
         <div className="h-2.5 w-2.5 rounded-full bg-[#ffbd2e]" />
@@ -393,7 +393,7 @@ export function TesslateHero({ user }: TesslateHeroProps) {
       {/* ── Floating Navigation ────────────────────────────────── */}
       <nav className="fixed left-1/2 top-6 z-50 w-[95%] max-w-4xl -translate-x-1/2">
         <div className="flex items-center justify-between rounded-xl border px-3 py-2 shadow-lg backdrop-blur-md" style={{ backgroundColor: "rgba(255,255,255,0.92)", borderColor: "#e5e7eb" }}>
-          {/* Logo — actual app logo */}
+          {/* Logo, actual app logo */}
           <Link href="/tesslate" className="flex items-center">
             <Image src="/logo_text.png" alt="OKrunit" width={440} height={120} className="h-9 w-auto" />
           </Link>
@@ -476,7 +476,7 @@ export function TesslateHero({ user }: TesslateHeroProps) {
           </div>
         </FadeIn>
 
-        {/* Dashboard preview — realistic mock of the actual app */}
+        {/* Dashboard preview. Realistic mock of the actual app */}
         <FadeIn delay={500}>
           <div className="relative mx-auto mt-16 max-w-5xl">
             <MockDashboard />

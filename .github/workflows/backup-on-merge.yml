@@ -30,7 +30,7 @@ jobs:
           BACKUP_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
         run: |
           if [ -z "$BACKUP_TOKEN" ]; then
-            echo "::warning::BACKUP_REPO_TOKEN secret not set — skipping mirror."
+            echo "::warning::BACKUP_REPO_TOKEN secret not set. Skipping mirror."
             exit 0
           fi
           git remote add backup https://x-access-token:${BACKUP_TOKEN}@github.com/nstoddard17/okrunit-backup.git

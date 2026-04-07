@@ -28,13 +28,13 @@ export default function BulkOperationsPage() {
         When one or more requests are selected, a <strong>batch action bar</strong> appears with these options:
       </p>
       <ul className="mt-3 list-disc pl-6 space-y-2 text-zinc-600">
-        <li><strong>Approve All</strong> — Approve all selected pending requests</li>
-        <li><strong>Reject All</strong> — Reject all selected pending requests</li>
-        <li><strong>Archive</strong> — Archive all selected resolved requests</li>
+        <li><strong>Approve All</strong>: Approve all selected pending requests</li>
+        <li><strong>Reject All</strong>: Reject all selected pending requests</li>
+        <li><strong>Archive</strong>: Archive all selected resolved requests</li>
       </ul>
       <p className="mt-3 text-zinc-600 leading-relaxed">
-        Batch operations process up to <strong>50 requests</strong> at a time. Each request is processed independently —
-        if one fails, the others still complete.
+        Batch operations process up to <strong>50 requests</strong> at a time. Each request is processed independently.
+        If one fails, the others still complete.
       </p>
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">CSV Export</h2>

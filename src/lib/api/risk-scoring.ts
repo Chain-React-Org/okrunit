@@ -135,7 +135,7 @@ export async function calculateRiskScore(
     factors.push({
       name: "no_callback",
       score: -5,
-      reason: "No callback URL — no automation waiting",
+      reason: "No callback URL, no automation waiting",
     });
   }
 

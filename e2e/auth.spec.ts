@@ -30,7 +30,7 @@ test.describe('Auth pages', () => {
   test('empty login form shows validation error', async ({ page }) => {
     await page.goto('/login');
 
-    // Click submit without filling anything — browser validation will prevent submission
+    // Click submit without filling anything. Browser validation will prevent submission
     // Since inputs have `required`, we check that the form does not navigate away
     const submitButton = page.locator('button[type="submit"]');
     await submitButton.click();
@@ -64,7 +64,7 @@ test.describe('Auth pages', () => {
   test('forgot password page renders', async ({ page }) => {
     await page.goto('/forgot-password');
 
-    // Should not 404 — the page exists
+    // Should not 404. The page exists
     await expect(page.locator('input[type="email"]')).toBeVisible();
   });
 

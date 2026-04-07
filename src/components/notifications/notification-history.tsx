@@ -16,6 +16,9 @@ import {
   MessageSquare,
   CheckCheck,
   Filter,
+  Unplug,
+  ShieldAlert,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -43,6 +46,9 @@ const CATEGORY_CONFIG: Record<
   team_added: { icon: Users, color: "text-indigo-500", label: "Team" },
   flow_assigned: { icon: Workflow, color: "text-cyan-500", label: "Flow" },
   welcome: { icon: Sparkles, color: "text-primary", label: "Welcome" },
+  connection_deactivated: { icon: Unplug, color: "text-red-500", label: "Connection" },
+  role_changed: { icon: ShieldAlert, color: "text-amber-500", label: "Permissions" },
+  limit_approaching: { icon: AlertTriangle, color: "text-amber-500", label: "Limit" },
 };
 
 function timeAgo(dateStr: string): string {

@@ -14,6 +14,7 @@ export type NotificationEventType =
   | "approval.comment"
   | "approval.next_approver"
   | "approval.execution_cancelled"
+  | "approval.sla_warning"
   | "approval.sla_breached"
   | "approval.bottleneck"
   | "approval.escalated";

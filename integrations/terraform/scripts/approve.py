@@ -6,8 +6,8 @@ Creates an approval request and polls until a decision is made.
 Cross-platform alternative to approve.sh.
 
 Environment variables:
-    OKRUNIT_API_KEY  (required) — API key starting with gk_
-    OKRUNIT_API_URL  (optional) — Base URL, defaults to https://app.okrunit.com
+    OKRUNIT_API_KEY  (required)  API key starting with gk_
+    OKRUNIT_API_URL  (optional)  Base URL, defaults to https://app.okrunit.com
 
 Usage:
     python approve.py --title "Destroy production DB" --priority critical

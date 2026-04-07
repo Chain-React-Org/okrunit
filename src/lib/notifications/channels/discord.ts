@@ -194,14 +194,14 @@ export async function sendDiscordNotification(
     const headers: Record<string, string> = { "Content-Type": "application/json" };
 
     if (params.botToken && params.channelId) {
-      // Bot token approach — send via Discord API
+      // Bot token approach - send via Discord API
       url = `https://discord.com/api/v10/channels/${params.channelId}/messages`;
       headers["Authorization"] = `Bot ${params.botToken}`;
     } else if (params.webhookUrl) {
       // Webhook URL approach
       url = params.webhookUrl;
     } else {
-      console.warn("[Discord] No webhook URL or bot token — skipping");
+      console.warn("[Discord] No webhook URL or bot token. Skipping.");
       return;
     }
 
@@ -273,7 +273,7 @@ export async function sendDiscordDecisionNotification(
     } else if (params.webhookUrl) {
       url = params.webhookUrl;
     } else {
-      console.warn("[Discord] No webhook URL or bot token — skipping decision");
+      console.warn("[Discord] No webhook URL or bot token. Skipping decision.");
       return;
     }
 

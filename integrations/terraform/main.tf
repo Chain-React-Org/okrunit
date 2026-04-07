@@ -1,4 +1,4 @@
-# OKRunit Approval Gate — Terraform Example Module
+# OKRunit Approval Gate - Terraform Example Module
 #
 # This module demonstrates how to gate destructive Terraform operations
 # behind human approval using OKRunit.

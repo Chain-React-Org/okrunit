@@ -4,7 +4,7 @@
 
 import { revalidateTag } from "next/cache";
 
-// Tag factories — each returns a deterministic string for cacheTag / revalidateTag
+// Tag factories. Each returns a deterministic string for cacheTag / revalidateTag
 export const CacheTags = {
   orgContext: (userId: string) => `user:${userId}:org-context`,
   dashboard: (userId: string) => `user:${userId}:dashboard`,

@@ -30,11 +30,11 @@ import type { Connection } from "@/lib/types/database";
 
 const RATE_LIMIT_PRESETS = [
   { value: "none", label: "No limit", rate: 10000 },
-  { value: "10", label: "10/hr — Low", rate: 10 },
-  { value: "60", label: "60/hr — Standard", rate: 60 },
-  { value: "100", label: "100/hr — Default", rate: 100 },
-  { value: "300", label: "300/hr — High", rate: 300 },
-  { value: "1000", label: "1,000/hr — Very high", rate: 1000 },
+  { value: "10", label: "10/hr - Low", rate: 10 },
+  { value: "60", label: "60/hr - Standard", rate: 60 },
+  { value: "100", label: "100/hr - Default", rate: 100 },
+  { value: "300", label: "300/hr - High", rate: 300 },
+  { value: "1000", label: "1,000/hr - Very high", rate: 1000 },
   { value: "custom", label: "Custom", rate: -1 },
 ] as const;
 

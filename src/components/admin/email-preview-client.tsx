@@ -225,7 +225,7 @@ export function EmailPreviewClient() {
               </div>
             </div>
 
-            {/* Content area — scrollable, full-size rendering */}
+            {/* Content area - scrollable, full-size rendering */}
             {showSource ? (
               <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-border/60 bg-[#1e1e2e] p-6 shadow-sm">
                 <pre className="text-xs leading-6 text-[#cdd6f4]">

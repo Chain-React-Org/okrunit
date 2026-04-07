@@ -2,10 +2,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getOrgContext } from "@/lib/org-context";
-import { getCachedConnectionsData } from "@/lib/cache/queries";
+import { getCachedConnectionsData, getCachedOrgLayoutData } from "@/lib/cache/queries";
 import { getActiveOAuthGrants } from "@/lib/api/oauth-grants";
 import { ConnectionList } from "@/components/connections/connection-list";
 import { ConnectedAppsList } from "@/components/connections/connected-apps-list";
+import { TierLimitBanner } from "@/components/ui/tier-limit-banner";
+import { PLAN_LIMITS, isUnlimited } from "@/lib/billing/plans";
 import { ExternalLink } from "lucide-react";
 import type { Connection } from "@/lib/types/database";
 
@@ -74,13 +76,27 @@ export default async function ConnectionsPage() {
 
   if (membership.role !== "owner" && membership.role !== "admin") redirect("/requests");
 
-  const [connections, oauthGrants] = await Promise.all([
+  const [connections, oauthGrants, { currentPlan }] = await Promise.all([
     getCachedConnectionsData(membership.org_id),
     getActiveOAuthGrants(membership.org_id),
+    getCachedOrgLayoutData(membership.org_id),
   ]);
+
+  const limits = PLAN_LIMITS[currentPlan];
+  const totalConnections = connections.length + oauthGrants.length;
 
   return (
     <div data-tour="connection-section">
+      {!isUnlimited(limits.maxConnections) && (
+        <div className="mb-6">
+          <TierLimitBanner
+            dismissKey="connections-limit"
+            planName={limits.name}
+            message={`supports up to ${limits.maxConnections} connections (${totalConnections} used). Export or remove unused connections to stay within your limit.`}
+          />
+        </div>
+      )}
+
       {/* Integration quick links */}
       <div className="mb-8" data-tour="setup-guides">
         <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">

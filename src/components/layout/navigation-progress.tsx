@@ -19,7 +19,7 @@ export function NavigationProgress() {
     if (pathname === prevPathname.current) return;
     prevPathname.current = pathname;
 
-    // Navigation completed — jump to 100% and fade out
+    // Navigation completed. Jump to 100% and fade out
     setProgress(100);
     setVisible(true);
 
@@ -43,7 +43,7 @@ export function NavigationProgress() {
       if (anchor.target === "_blank") return;
       if (e.metaKey || e.ctrlKey || e.shiftKey) return;
 
-      // Same page — skip
+      // Same page, skip
       if (href === prevPathname.current) return;
 
       // Start progress animation

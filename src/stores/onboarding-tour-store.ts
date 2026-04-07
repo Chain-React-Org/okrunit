@@ -13,13 +13,13 @@ interface OnboardingTourState {
   currentStepInPage: number;
   touredPages: string[];
 
-  // Pause state — true when user clicked outside tooltip
+  // Pause state - true when user clicked outside tooltip
   tourPaused: boolean;
   pausedPageId: string | null;
   pausedStepIndex: number;
   pausedWasFullTour: boolean;
 
-  // Hint state — show "Resume Tour is in Help" hint once
+  // Hint state - show "Resume Tour is in Help" hint once
   hasSeenPauseHint: boolean;
 
   // Test data
@@ -166,7 +166,7 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
               synced: true,
             };
             // Fresh user (no toured pages AND neither completed nor dismissed)
-            // — clear stale localStorage state from a previous account.
+            // Clear stale localStorage state from a previous account.
             if (!data.tourCompleted && !data.tourDismissed && serverPages.length === 0) {
               update.touredPages = [];
               update.fullTourPageIndex = 0;
@@ -184,8 +184,8 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
       name: "okrunit-onboarding-tour",
       partialize: (state) => ({
         fullTourPageIndex: state.fullTourPageIndex,
-        // tourCompleted and tourDismissed are NOT persisted to localStorage —
-        // the database is the source of truth (via syncFromServer). Persisting
+        // tourCompleted and tourDismissed are NOT persisted to localStorage.
+        // The database is the source of truth (via syncFromServer). Persisting
         // these caused stale values from previous accounts to hide the banner
         // for new users on the same browser.
         touredPages: state.touredPages,

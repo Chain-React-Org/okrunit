@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useOnboardingTourStore } from "@/stores/onboarding-tour-store";
 import { TOUR_STEPS, findPageTour } from "@/components/onboarding/tour-steps";
-import { AlertTriangle, Menu, HelpCircle, LogOut, Settings, Check, ChevronsUpDown, Building2, Search, BookOpen, Sparkles } from "lucide-react";
+import { AlertTriangle, Menu, HelpCircle, LogOut, Settings, Check, ChevronsUpDown, Building2, Search, BookOpen, Sparkles, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -41,6 +41,7 @@ interface HeaderProps {
   currentOrgId?: string;
   userOrgs?: OrgItem[];
   userId?: string;
+  currentPlan?: string;
 }
 
 function getInitials(name: string | null, email: string): string {
@@ -55,7 +56,7 @@ function getInitials(name: string | null, email: string): string {
   return email.charAt(0).toUpperCase();
 }
 
-export function Header({ emergencyStopActive, user, orgName: serverOrgName, pendingCount = 0, currentOrgId, userOrgs: serverUserOrgs = [], userId }: HeaderProps) {
+export function Header({ emergencyStopActive, user, orgName: serverOrgName, pendingCount = 0, currentOrgId, userOrgs: serverUserOrgs = [], userId, currentPlan }: HeaderProps) {
   const router = useRouter();
   const { setMobileOpen } = useSidebarStore();
   const { getOrgName } = useOrgName();
@@ -97,7 +98,7 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
       {emergencyStopActive && (
         <div className="emergency-banner flex items-center justify-center gap-2 bg-red-600 px-4 py-2 text-sm font-medium text-white">
           <AlertTriangle className="size-4" />
-          Emergency Stop Active — All approval requests are being held.
+          Emergency Stop Active. All approval requests are being held.
         </div>
       )}
 
@@ -149,6 +150,16 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
 
         {/* Right: actions */}
         <div className="flex items-center gap-1.5">
+          {/* Upgrade prompt for free users */}
+          {currentPlan === "free" && (
+            <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/5 hover:text-primary">
+              <Link href="/org/subscription#plans">
+                <ArrowUpRight className="size-3.5" />
+                <span className="hidden sm:inline text-xs font-medium">Upgrade</span>
+              </Link>
+            </Button>
+          )}
+
           {/* Search / Cmd+K hint */}
           <button
             data-tour="search-bar"
@@ -248,7 +259,7 @@ function HelpDropdown() {
     } else if (currentPageTour) {
       resumeTour(currentPageTour.pageId);
     } else {
-      // No tour for this page — start the full tour
+      // No tour for this page. Start the full tour
       useOnboardingTourStore.getState().startFullTour();
     }
   };

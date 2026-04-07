@@ -229,7 +229,7 @@ export async function POST(
       throw new ApiError(400, "None of the provided users are org members");
     }
 
-    // Bulk insert — skip duplicates
+    // Bulk insert - skip duplicates
     const rows = toAdd.map((uid) => ({ team_id: id, user_id: uid }));
     const { data: inserted, error: insertError } = await admin
       .from("team_memberships")

@@ -53,11 +53,11 @@ export default function SlaPage() {
       </p>
       <p className="mt-3 text-zinc-600 leading-relaxed">The dashboard shows:</p>
       <ul className="mt-3 list-disc pl-6 space-y-2 text-zinc-600">
-        <li><strong>Compliance %</strong> — Percentage of requests decided before their SLA deadline. Higher is better.</li>
-        <li><strong>Tracked</strong> — Total requests that had an SLA deadline set based on their priority.</li>
-        <li><strong>Breached</strong> — Requests still pending when their SLA deadline passed.</li>
-        <li><strong>Avg Response</strong> — Average time from request creation to decision, across all priorities.</li>
-        <li><strong>Per-priority breakdown</strong> — Compliance rate, breach count, and average response time for each priority level with progress bars.</li>
+        <li><strong>Compliance %</strong>: Percentage of requests decided before their SLA deadline. Higher is better.</li>
+        <li><strong>Tracked</strong>: Total requests that had an SLA deadline set based on their priority.</li>
+        <li><strong>Breached</strong>: Requests still pending when their SLA deadline passed.</li>
+        <li><strong>Avg Response</strong>: Average time from request creation to decision, across all priorities.</li>
+        <li><strong>Per-priority breakdown</strong>: Compliance rate, breach count, and average response time for each priority level with progress bars.</li>
       </ul>
       <p className="mt-3 text-zinc-600 leading-relaxed">
         Hover over any metric label to see a tooltip explaining what it means. Click <strong>Edit Targets</strong>

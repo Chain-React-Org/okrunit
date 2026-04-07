@@ -28,6 +28,12 @@ export const DEFAULT_SLA_CONFIG: SlaConfig = {
   critical: 15,
 };
 
+export interface SlaDailyTrendPoint {
+  date: string;
+  tracked: number;
+  breached: number;
+}
+
 export interface SlaMetrics {
   total: number;
   breached: number;
@@ -42,6 +48,7 @@ export interface SlaMetrics {
       avg_response_time_minutes: number;
     }
   >;
+  daily_trend: SlaDailyTrendPoint[];
 }
 
 // ---------------------------------------------------------------------------
@@ -161,12 +168,32 @@ export async function getSlaMetrics(
     };
   }
 
+  // Daily trend: tracked vs breached per day
+  const trendMap = new Map<string, { tracked: number; breached: number }>();
+  const fromDate = new Date(dateRange.from);
+  const toDate = new Date(dateRange.to);
+  for (let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate() + 1)) {
+    trendMap.set(d.toISOString().slice(0, 10), { tracked: 0, breached: 0 });
+  }
+  for (const r of rows) {
+    const day = r.created_at.slice(0, 10);
+    const entry = trendMap.get(day);
+    if (entry) {
+      entry.tracked++;
+      if (r.sla_breached) entry.breached++;
+    }
+  }
+  const dailyTrend: SlaDailyTrendPoint[] = Array.from(trendMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, v]) => ({ date, ...v }));
+
   return {
     total,
     breached,
     breach_rate: breachRate,
     avg_response_time_minutes: avgResponseTimeMinutes,
     per_priority: perPriority,
+    daily_trend: dailyTrend,
   };
 }
 
@@ -207,5 +234,6 @@ function emptyMetrics(): SlaMetrics {
     breach_rate: 0,
     avg_response_time_minutes: 0,
     per_priority: perPriority,
+    daily_trend: [],
   };
 }

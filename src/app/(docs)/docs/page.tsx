@@ -6,7 +6,7 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 export const metadata: Metadata = {
   title: "Getting Started",
   description:
-    "Get started with OKrunit — add human approval to any automation workflow in minutes.",
+    "Get started with OKrunit: add human approval to any automation workflow in minutes.",
 };
 
 export default function GettingStartedPage() {
@@ -97,7 +97,7 @@ export default function GettingStartedPage() {
             The easiest way to get started. Inside Zapier, Make.com, n8n,
             monday.com, or any supported platform, search for the{" "}
             <strong>OKrunit</strong> node/module. Select it, connect your OKrunit
-            account, and you&apos;re done — no code needed.
+            account, and you&apos;re done. No code needed.
           </p>
           <p className="mt-3 text-sm text-emerald-800">
             <Link href="/docs/integrations" className="underline font-medium">
@@ -112,7 +112,7 @@ export default function GettingStartedPage() {
           <p className="mt-2 text-sm text-zinc-600">
             For developers and technical users, call our API directly from any
             language. Create approval requests, poll for decisions, or receive
-            webhook callbacks — all with standard HTTP.
+            webhook callbacks, all with standard HTTP.
           </p>
           <p className="mt-3 text-sm text-zinc-600">
             <Link href="/docs/api" className="underline font-medium text-zinc-900">
@@ -122,7 +122,7 @@ export default function GettingStartedPage() {
         </div>
       </div>
 
-      {/* Quick start — No-code */}
+      {/* Quick start - No-code */}
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">
         Quick start (no-code)
       </h2>
@@ -139,7 +139,7 @@ export default function GettingStartedPage() {
         <Link href="/signup" className="text-emerald-600 hover:underline">
           Sign up for free
         </Link>{" "}
-        — it takes 30 seconds. You&apos;ll get an organization and a free plan
+        . It takes 30 seconds. You&apos;ll get an organization and a free plan
         with 50 approval requests per month.
       </p>
       <DocsImage
@@ -154,12 +154,12 @@ export default function GettingStartedPage() {
       <p className="mt-2 text-zinc-700">
         In your automation platform (Zapier, Make, n8n, etc.), add a new step to
         your workflow and search for <strong>&quot;OKrunit&quot;</strong>. Select
-        the OKrunit action — typically called{" "}
+        the OKrunit action, typically called{" "}
         <strong>&quot;Create Approval Request&quot;</strong>.
       </p>
       <p className="mt-2 text-zinc-700">
         When prompted, connect your OKrunit account. The platform will guide you
-        through the OAuth flow — just sign in to OKrunit and authorize access.
+        through the OAuth flow. Just sign in to OKrunit and authorize access.
         That&apos;s it.
       </p>
 
@@ -172,15 +172,15 @@ export default function GettingStartedPage() {
       <ul className="mt-2 space-y-2 text-zinc-700">
         <li className="flex gap-2">
           <span className="text-emerald-600 font-bold">&#8226;</span>
-          <span><strong>Title</strong> — a short description of what needs approval (e.g. &quot;Deploy v2.4.0 to production&quot;)</span>
+          <span><strong>Title</strong>: a short description of what needs approval (e.g. &quot;Deploy v2.4.0 to production&quot;)</span>
         </li>
         <li className="flex gap-2">
           <span className="text-emerald-600 font-bold">&#8226;</span>
-          <span><strong>Description</strong> — additional context for the approver</span>
+          <span><strong>Description</strong>: additional context for the approver</span>
         </li>
         <li className="flex gap-2">
           <span className="text-emerald-600 font-bold">&#8226;</span>
-          <span><strong>Priority</strong> — low, medium, high, or critical</span>
+          <span><strong>Priority</strong>: low, medium, high, or critical</span>
         </li>
       </ul>
       <p className="mt-3 text-zinc-700">
@@ -194,12 +194,12 @@ export default function GettingStartedPage() {
       </h3>
       <p className="mt-2 text-zinc-700">
         In the OKrunit dashboard, go to{" "}
-        <Link href="/messaging" className="text-emerald-600 hover:underline">
+        <Link href="/requests/messaging" className="text-emerald-600 hover:underline">
           Messaging
         </Link>{" "}
         to connect your notification channels (Slack, Discord, Teams, email, or
         Telegram). Then go to{" "}
-        <Link href="/routes" className="text-emerald-600 hover:underline">
+        <Link href="/requests/routes" className="text-emerald-600 hover:underline">
           Routes
         </Link>{" "}
         to configure who gets notified for which types of requests.
@@ -210,7 +210,7 @@ export default function GettingStartedPage() {
         caption="Connect your notification channels so approvers are instantly notified."
       />
 
-      {/* Quick start — API */}
+      {/* Quick start - API */}
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">
         Quick start (API)
       </h2>
@@ -224,12 +224,12 @@ export default function GettingStartedPage() {
       </h3>
       <p className="mt-2 text-zinc-700">
         Go to{" "}
-        <Link href="/connections" className="text-emerald-600 hover:underline">
+        <Link href="/requests/connections" className="text-emerald-600 hover:underline">
           Connections
         </Link>{" "}
         in the dashboard and click <strong>New Connection</strong>. Give it a name
-        (e.g. &quot;Production API&quot;) and save. Copy the generated API key —
-        it starts with{" "}
+        (e.g. &quot;Production API&quot;) and save. Copy the generated API key.
+        It starts with{" "}
         <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-sm text-zinc-800">
           ok_
         </code>{" "}
@@ -339,7 +339,7 @@ export default function GettingStartedPage() {
         <div className="rounded-lg border border-zinc-200 p-4">
           <h3 className="font-semibold text-zinc-900">Routes</h3>
           <p className="mt-1 text-sm text-zinc-600">
-            Configure approval flows — set required approvals, choose sequential
+            Configure approval flows: set required approvals, choose sequential
             vs. parallel mode, assign approvers, and set expiration rules.
           </p>
         </div>
@@ -360,8 +360,8 @@ export default function GettingStartedPage() {
         <div className="rounded-lg border border-zinc-200 p-4">
           <h3 className="font-semibold text-zinc-900">Audit Log</h3>
           <p className="mt-1 text-sm text-zinc-600">
-            Full history of every action — approvals, rejections, config changes,
-            and more — with timestamps and actor attribution.
+            Full history of every action, including approvals, rejections, config changes,
+            and more, with timestamps and actor attribution.
           </p>
         </div>
       </div>

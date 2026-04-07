@@ -104,7 +104,7 @@ export async function GET(request: Request) {
       );
     }
 
-    // 3. Use a placeholder channel_id — user will select the real channel in the UI.
+    // 3. Use a placeholder channel_id. User will select the real channel in the UI.
     //    Prefix with "pending:" so the orchestrator knows not to send to this.
     const defaultChannelId = `pending:${guildId}`;
     const defaultChannelName = guildName ?? "Server";

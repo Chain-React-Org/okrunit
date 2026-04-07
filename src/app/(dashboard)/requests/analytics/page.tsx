@@ -3,7 +3,7 @@ import { getOrgContext } from "@/lib/org-context";
 import { getCachedAnalyticsData, getCachedOrgLayoutData } from "@/lib/cache/queries";
 import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
 import { PLAN_LIMITS } from "@/lib/billing/plans";
-import { PERIOD_OPTIONS } from "@/components/analytics/date-range-selector";
+import { VALID_DAYS } from "@/components/analytics/analytics-periods";
 import type { VolumeDataPoint } from "@/components/analytics/volume-chart";
 import type { ApprovalRateDataPoint } from "@/components/analytics/approval-rate-chart";
 import type { ResponseTimeDataPoint } from "@/components/analytics/response-time-chart";
@@ -27,9 +27,8 @@ export default async function AnalyticsPage({
 
   // Parse and clamp requested days to plan limit
   const params = await searchParams;
-  const validDays = new Set<number>(PERIOD_OPTIONS.map((o) => o.days));
   const rawDays = Number(params.days) || 30;
-  let days = validDays.has(rawDays) ? rawDays : 30;
+  let days = VALID_DAYS.has(rawDays) ? rawDays : 30;
   if (historyDays !== -1 && days > historyDays) days = historyDays;
 
   const {
@@ -64,7 +63,7 @@ export default async function AnalyticsPage({
   const prevDecided = prevApproved + prevRejected;
   const prevApprovalRate = prevDecided > 0 ? Math.round((prevApproved / prevDecided) * 100) : 0;
 
-  // currentPeriodTotal = total - (items outside last 30 days) — approximate with total for trend
+  // currentPeriodTotal = total - (items outside last 30 days) - approximate with total for trend
   const trends = {
     totalTrend: calcTrend(totalNum, prevTotal),
     pendingTrend: calcTrend(pendingNum, prevPending),

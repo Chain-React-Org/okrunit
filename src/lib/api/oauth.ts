@@ -17,7 +17,7 @@ import {
 /**
  * Generate an opaque OAuth token (access token, refresh token, or auth code).
  * Returns both the plaintext (given to the client) and its SHA-256 hash
- * (stored in the database). Tokens have no prefix — they are distinguished
+ * (stored in the database). Tokens have no prefix; they are distinguished
  * from API keys by the absence of the `ok_` / `gk_` prefix.
  */
 export function generateOAuthToken(): { plaintext: string; hash: string } {

@@ -2,12 +2,15 @@
 
 import { StatCard } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle, Timer, BarChart3, Download } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Clock, CheckCircle, Timer, BarChart3, Download, Info, X } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 import type { VolumeDataPoint } from "./volume-chart";
 import type { ApprovalRateDataPoint } from "./approval-rate-chart";
 import type { ResponseTimeDataPoint } from "./response-time-chart";
 import type { BillingPlan } from "@/lib/types/database";
+import { PLAN_LIMITS } from "@/lib/billing/plans";
 import dynamic from "next/dynamic";
 
 const DateRangeSelector = dynamic(() => import("./date-range-selector").then((m) => m.DateRangeSelector));
@@ -20,7 +23,7 @@ const PatternSuggestions = dynamic(() => import("./pattern-suggestions").then((m
 // ---- Types ----------------------------------------------------------------
 
 export interface AnalyticsDashboardProps {
-  /** Stat card data — all primitives, safe to pass from server components */
+  /** Stat card data, all primitives, safe to pass from server components */
   stats: {
     total: number;
     pending: number;
@@ -36,7 +39,7 @@ export interface AnalyticsDashboardProps {
     approvalRateTrend: number | null;
     decidedTrend: number | null;
   };
-  /** Chart data — arrays of serializable objects */
+  /** Chart data: arrays of serializable objects */
   volumeData: VolumeDataPoint[];
   approvalRateData: ApprovalRateDataPoint[];
   responseTimeData: ResponseTimeDataPoint[];
@@ -56,6 +59,19 @@ export function AnalyticsDashboard({
   days,
   plan,
 }: AnalyticsDashboardProps) {
+  const DISMISS_KEY = "okrunit:analytics-retention-dismissed";
+  const [bannerDismissed, setBannerDismissed] = useState(true); // start hidden to avoid flash
+  useEffect(() => {
+    setBannerDismissed(localStorage.getItem(DISMISS_KEY) === "1");
+  }, []);
+
+  const showBanner = PLAN_LIMITS[plan].historyDays !== -1 && !bannerDismissed;
+
+  function dismissBanner() {
+    localStorage.setItem(DISMISS_KEY, "1");
+    setBannerDismissed(true);
+  }
+
   const makeTrend = (value: number | null, label: string) =>
     value !== null ? { value, label } : undefined;
 
@@ -105,7 +121,30 @@ export function AnalyticsDashboard({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
+      {/* Data retention notice. Dismissible, only for plans with limited history */}
+      {showBanner && (
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
+          <Info className="mt-0.5 size-4 shrink-0" />
+          <p className="flex-1">
+            Your <span className="font-medium">{PLAN_LIMITS[plan].name}</span> plan retains analytics data for{" "}
+            <span className="font-medium">{PLAN_LIMITS[plan].historyDays} days</span>.
+            To keep historical data beyond this window, export it as CSV before it ages out.{" "}
+            <Link href="/org/billing" className="font-medium underline underline-offset-2 hover:text-blue-900 dark:hover:text-blue-200">
+              Upgrade your plan
+            </Link>{" "}
+            for longer retention.
+          </p>
+          <button
+            onClick={dismissBanner}
+            className="mt-0.5 shrink-0 rounded-md p-0.5 hover:bg-blue-200/60 dark:hover:bg-blue-800/40"
+            aria-label="Dismiss"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header with date range + export */}
       <div className="flex items-center justify-end gap-2">
         <DateRangeSelector currentDays={days} plan={plan} />
@@ -116,7 +155,7 @@ export function AnalyticsDashboard({
       </div>
 
       {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Requests"
           value={stats.total}
@@ -156,7 +195,7 @@ export function AnalyticsDashboard({
       </div>
 
       {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         <div className="lg:col-span-2">
           <VolumeChart data={volumeData} days={days} />
         </div>

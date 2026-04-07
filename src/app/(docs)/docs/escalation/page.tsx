@@ -4,7 +4,7 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Escalation",
-  description: "Configure automatic escalation for approval requests that go unacted upon — remind approvers, notify managers, or re-route.",
+  description: "Configure automatic escalation for approval requests that go unacted upon. Remind approvers, notify managers, or re-route.",
 };
 
 export default function EscalationPage() {
@@ -26,9 +26,9 @@ export default function EscalationPage() {
         When a pending approval request hasn&apos;t been acted on within a configured time, OKrunit progressively escalates:
       </p>
       <ol className="mt-4 list-decimal pl-6 space-y-2 text-zinc-600">
-        <li><strong>Level 1 — Remind</strong>: Re-notify the assigned approvers (e.g. after 30 minutes)</li>
-        <li><strong>Level 2 — Escalate</strong>: Notify additional people like team leads or all org admins (e.g. after 60 minutes)</li>
-        <li><strong>Level 3+ — Further escalation</strong>: Notify specific teams or users (configurable)</li>
+        <li><strong>Level 1, Remind</strong>: Re-notify the assigned approvers (e.g. after 30 minutes)</li>
+        <li><strong>Level 2, Escalate</strong>: Notify additional people like team leads or all org admins (e.g. after 60 minutes)</li>
+        <li><strong>Level 3+, Further escalation</strong>: Notify specific teams or users (configurable)</li>
       </ol>
       <p className="mt-3 text-zinc-600 leading-relaxed">
         Escalation deadlines are calculated from request creation time (not from the previous level), so timing is predictable
@@ -45,10 +45,10 @@ export default function EscalationPage() {
         <li>Set the <strong>delay</strong> (minutes after request creation)</li>
         <li>Choose the <strong>target</strong>:
           <ul className="mt-1 list-disc pl-6 space-y-1">
-            <li><strong>Remind approvers</strong> — Re-send notifications to the currently assigned people</li>
-            <li><strong>Notify all admins</strong> — Alert all org owners and admins</li>
-            <li><strong>Notify team</strong> — Alert all members of a specific team</li>
-            <li><strong>Notify specific users</strong> — Alert specific user IDs</li>
+            <li><strong>Remind approvers</strong>: Re-send notifications to the currently assigned people</li>
+            <li><strong>Notify all admins</strong>: Alert all org owners and admins</li>
+            <li><strong>Notify team</strong>: Alert all members of a specific team</li>
+            <li><strong>Notify specific users</strong>: Alert specific user IDs</li>
           </ul>
         </li>
         <li>Add more levels as needed (up to 5)</li>
@@ -75,7 +75,7 @@ export default function EscalationPage() {
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Escalation Notifications</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">
-        Escalation notifications are sent through all configured channels — email, Slack, Discord, Teams, Telegram, web push,
+        Escalation notifications are sent through all configured channels: email, Slack, Discord, Teams, Telegram, web push,
         and in-app notifications. The notification message includes the escalation level and a direct link to the request.
       </p>
 

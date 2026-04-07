@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn("STRIPE_SECRET_KEY not set — billing features disabled");
+  console.warn("STRIPE_SECRET_KEY not set. Billing features disabled.");
 }
 
 export const stripe = process.env.STRIPE_SECRET_KEY

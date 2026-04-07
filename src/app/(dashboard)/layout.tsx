@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { getOrgContext } from "@/lib/org-context";
-import { getCachedDashboardData } from "@/lib/cache/queries";
+import { getCachedDashboardData, getCachedOrgLayoutData } from "@/lib/cache/queries";
 import { createClient } from "@/lib/supabase/server";
 
 function DashboardLoading() {
@@ -60,13 +60,14 @@ async function DashboardContent({
     }
   }
 
-  const { userOrgs, pendingCount } = await getCachedDashboardData(
-    profile.id,
-    org.id,
-  );
+  const [{ userOrgs, pendingCount }, { currentPlan }] = await Promise.all([
+    getCachedDashboardData(profile.id, org.id),
+    getCachedOrgLayoutData(org.id),
+  ]);
 
   return (
     <DashboardShell
+      currentPlan={currentPlan}
       sidebarProps={{
         user: {
           id: profile.id,

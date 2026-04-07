@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// OKrunit -- Usage Alert Email Template (v2 — Vend-inspired)
+// OKrunit -- Usage Alert Email Template (v2, Vend-inspired)
 // ---------------------------------------------------------------------------
 
 import {

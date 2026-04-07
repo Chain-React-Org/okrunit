@@ -26,6 +26,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -42,9 +47,12 @@ interface OrgListProps {
   currentOrgId: string;
   memberCounts: Record<string, number>;
   teamCounts: Record<string, number>;
+  canCreateOrg?: boolean;
+  maxOrganizations?: number;
+  planName?: string;
 }
 
-export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCounts }: OrgListProps) {
+export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCounts, canCreateOrg = true, maxOrganizations, planName }: OrgListProps) {
   const router = useRouter();
   const [switching, setSwitching] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -181,11 +189,11 @@ export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCoun
           });
         }
 
-        // Keep override in place — router.refresh() will bring matching server data.
+        // Keep override in place. router.refresh() will bring matching server data.
         // Override is harmless since it matches what the server now has.
         router.refresh();
       } catch (err) {
-        // Revert on failure — set override back to original name
+        // Revert on failure. Set override back to original name.
         setOrgName(orgId, originalName);
         toast.error(err instanceof Error ? err.message : "Failed to rename");
       }
@@ -203,10 +211,27 @@ export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCoun
             {orgs.length} organization{orgs.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5 h-8">
-          <Plus className="size-3.5" />
-          New Organization
-        </Button>
+        {canCreateOrg ? (
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5 h-8">
+            <Plus className="size-3.5" />
+            New Organization
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0}>
+                <Button size="sm" disabled className="gap-1.5 h-8">
+                  <Plus className="size-3.5" />
+                  New Organization
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>{planName ?? "Your"} plan is limited to {maxOrganizations} organization{maxOrganizations !== 1 ? "s" : ""}.</p>
+              <p className="text-xs text-muted-foreground">Upgrade to create more.</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
       {/* Org list */}

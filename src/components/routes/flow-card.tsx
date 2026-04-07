@@ -60,7 +60,7 @@ import { cn } from "@/lib/utils";
 import type { ApprovalFlow, ApproverMode, UserRole } from "@/lib/types/database";
 import type { TeamOption, MemberOption } from "@/components/routes/routes-hub";
 
-// UI-level approver mode — "by_position" maps to "designated" + assigned_team_id on save
+// UI-level approver mode. "by_position" maps to "designated" + assigned_team_id on save.
 type UIApproverMode = ApproverMode | "by_position";
 
 // ---------------------------------------------------------------------------
@@ -147,7 +147,7 @@ function saveDraft(flowId: string, draft: FlowDraft) {
   try {
     sessionStorage.setItem(getDraftKey(flowId), JSON.stringify(draft));
   } catch {
-    // sessionStorage full or unavailable — ignore
+    // sessionStorage full or unavailable. Ignore.
   }
 }
 
@@ -366,7 +366,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
   // ---- Summary of current config -------------------------------------------
 
   function getConfigSummary(): string {
-    if (!flow.is_configured) return "Not configured — any member can approve";
+    if (!flow.is_configured) return "Not configured, any member can approve";
     // By-position mode: designated with team but no individual approvers
     if (
       flow.approver_mode === "designated" &&
@@ -415,7 +415,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
       applyForNext = parseInt(durationPreset, 10);
     }
 
-    // Map UI mode to API mode — "by_position" saves as "designated" with team
+    // Map UI mode to API mode. "by_position" saves as "designated" with team.
     const apiMode: ApproverMode = approverMode === "by_position" ? "designated" : approverMode;
 
     const payload: Record<string, unknown> = {
@@ -500,7 +500,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
   return (
     <Card className="border-0 shadow-[var(--shadow-card)]">
       <CardContent className="space-y-0">
-        {/* Header — always visible */}
+        {/* Header - always visible */}
         <button
           onClick={() => setExpanded(!expanded)}
           className="flex w-full items-center gap-3 text-left cursor-pointer"
@@ -670,7 +670,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
               </Select>
             </div>
 
-            {/* Individual approvers — only for "Specific people" mode */}
+            {/* Individual approvers - only for "Specific people" mode */}
             {approverMode === "designated" && (
               <div className="space-y-2">
                 <FieldLabel tooltip="Choose which team members can approve requests from this flow. Only members with approval permission are shown.">Select Approvers</FieldLabel>
@@ -748,7 +748,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
               </div>
             )}
 
-            {/* By Position — team + position selection */}
+            {/* By Position - team + position selection */}
             {approverMode === "by_position" && (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -851,7 +851,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
               </div>
             )}
 
-            {/* Team selection — optional scope for any/designated/role_based */}
+            {/* Team selection - optional scope for any/designated/role_based */}
             {approverMode !== "by_position" && teams.length > 0 && (
               <div className="space-y-2">
                 <FieldLabel tooltip="Optionally scope this flow to a team. Only that team's members will be notified and able to approve.">Assign to Team</FieldLabel>

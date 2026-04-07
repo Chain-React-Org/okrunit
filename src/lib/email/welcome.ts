@@ -144,6 +144,6 @@ export function buildWelcomeEmailHtml(params: WelcomeEmailParams): string {
   return emailLayout({
     body,
     heroBanner,
-    preheader: "Your OKrunit account is ready — here's how to get started",
+    preheader: "Your OKrunit account is ready. Here's how to get started",
   });
 }

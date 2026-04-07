@@ -102,7 +102,7 @@ def approval_gate_op(context: OpExecutionContext, config: ApprovalGateConfig) ->
             comment = result.get("decision_comment", "")
             context.log.info(
                 f"Approval {approval_id}: {result['status']} by {decided_by}"
-                + (f" — {comment}" if comment else "")
+                + (f": {comment}" if comment else "")
             )
 
             if result["status"] == "rejected":

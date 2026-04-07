@@ -73,7 +73,7 @@ function normalizeFrame(frame: string): string {
   // Extract the function and file parts
   let normalised = frame;
 
-  // Strip absolute paths — keep from src/ or node_modules/ onwards
+  // Strip absolute paths - keep from src/ or node_modules/ onwards
   normalised = normalised.replace(
     /\(?\/?(?:.*?\/)(src\/[^):\s]+|node_modules\/[^):\s]+)/g,
     "($1",

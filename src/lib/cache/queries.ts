@@ -11,7 +11,7 @@ import type { BillingPlan } from "@/lib/types/database";
 import { PLAN_LIMITS } from "@/lib/billing/plans";
 
 // ---------------------------------------------------------------------------
-// Org context (profile + membership + org) — cached per user
+// Org context (profile + membership + org), cached per user
 // ---------------------------------------------------------------------------
 
 export async function getCachedOrgData(userId: string) {
@@ -121,13 +121,12 @@ export async function getCachedOrgLayoutData(orgId: string) {
   cacheLife("minutes");
 
   const admin = createAdminClient();
-  const { data: subscription } = await admin
-    .from("subscriptions")
-    .select("plan_id")
-    .eq("org_id", orgId)
-    .maybeSingle();
+  const [{ data: org }, { data: subscription }] = await Promise.all([
+    admin.from("organizations").select("plan_override").eq("id", orgId).single(),
+    admin.from("subscriptions").select("plan_id").eq("org_id", orgId).maybeSingle(),
+  ]);
 
-  const currentPlan = (subscription?.plan_id ?? "free") as BillingPlan;
+  const currentPlan = (org?.plan_override ?? subscription?.plan_id ?? "free") as BillingPlan;
   const planName = PLAN_LIMITS[currentPlan]?.name ?? "Free";
 
   return { currentPlan, planName };
@@ -402,6 +401,7 @@ export async function getCachedSubscriptionData(orgId: string) {
   const admin = createAdminClient();
 
   const [
+    { data: org },
     { data: plans },
     { data: subscription },
     { count: requestsThisMonth },
@@ -410,6 +410,7 @@ export async function getCachedSubscriptionData(orgId: string) {
     { count: teamsCount },
     { data: invoices },
   ] = await Promise.all([
+    admin.from("organizations").select("plan_override").eq("id", orgId).single(),
     admin.from("plans").select("*").eq("is_active", true).order("sort_order"),
     admin.from("subscriptions").select("*").eq("org_id", orgId).single(),
     admin
@@ -426,6 +427,7 @@ export async function getCachedSubscriptionData(orgId: string) {
   return {
     plans: plans ?? [],
     subscription,
+    planOverride: (org?.plan_override ?? null) as BillingPlan | null,
     requestsThisMonth: requestsThisMonth ?? 0,
     apiKeyConnectionsCount: apiKeyConnectionsCount ?? 0,
     membersCount: membersCount ?? 0,

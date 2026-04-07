@@ -92,7 +92,7 @@ export async function resolveEscalationTargets(
 
 /**
  * Process all due escalations for a single organization.
- * Fire-and-forget per request — one failure never blocks others.
+ * Fire-and-forget per request. One failure never blocks others.
  */
 export async function processEscalationsForOrg(
   orgId: string,
@@ -128,7 +128,7 @@ export async function processEscalationsForOrg(
       const sorted = [...config.levels].sort((a, b) => a.level - b.level);
       const levelConfig = sorted.find((l) => l.level > currentLevel);
 
-      if (!levelConfig) return; // No matching level — shouldn't happen but be safe
+      if (!levelConfig) return; // No matching level. Shouldn't happen but be safe
 
       // Resolve target users
       const targetUserIds = await resolveEscalationTargets(

@@ -113,7 +113,7 @@ export async function recordStepVote(
     };
   }
 
-  // Approval vote — increment counter
+  // Approval vote - increment counter
   const newCount = (step.current_approvals ?? 0) + 1;
   const stepApproved = newCount >= step.required_approvals;
 
@@ -166,7 +166,7 @@ export async function recordStepVote(
         nextStep: nextStep as ApprovalStep,
       };
     } else {
-      // All steps complete — approve the request
+      // All steps complete - approve the request
       await admin
         .from("approval_requests")
         .update({
@@ -188,7 +188,7 @@ export async function recordStepVote(
       };
     }
   } else {
-    // Step not yet complete — just update counter
+    // Step not yet complete - just update counter
     await admin
       .from("approval_steps")
       .update({
@@ -252,7 +252,7 @@ async function isAuthorizedForStep(step: ApprovalStep, userId: string): Promise<
     return userLevel >= requiredLevel;
   }
 
-  // No assignment restrictions — any org member can vote
+  // No assignment restrictions. Any org member can vote
   return true;
 }
 

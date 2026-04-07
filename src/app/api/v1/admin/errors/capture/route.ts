@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validated = clientErrorSchema.parse(body);
 
-    // Try to get user context from session (optional — errors can happen pre-auth)
+    // Try to get user context from session (optional, errors can happen pre-auth)
     let userId: string | undefined;
     let orgId: string | undefined;
     try {
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         if (membership) orgId = membership.org_id;
       }
     } catch {
-      // Auth context is optional — continue without it
+      // Auth context is optional - continue without it
     }
 
     // Build a synthetic error for fingerprinting

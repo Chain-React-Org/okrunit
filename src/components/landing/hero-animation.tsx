@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle, Clock, Bell, ArrowRight, Zap, Send } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
-/*  Animated approval flow — shows the product story in sequence        */
+/*  Animated approval flow. Shows the product story in sequence         */
 /*                                                                      */
 /*  No fake 3D. Just real UI elements telling the story:                */
 /*  1. API request comes in (code snippet)                              */

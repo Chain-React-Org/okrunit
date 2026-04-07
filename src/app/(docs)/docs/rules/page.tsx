@@ -24,11 +24,11 @@ export default function RulesPage() {
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">How Rules Work</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">
         Rules are evaluated in <strong>priority order</strong> (lowest number first) when a new approval request comes in.
-        The first rule that matches wins — its action is applied and no further rules are checked.
+        The first rule that matches wins. Its action is applied and no further rules are checked.
       </p>
       <p className="mt-3 text-zinc-600 leading-relaxed">
         Each rule has <strong>conditions</strong> (what to match) and an <strong>action</strong> (what to do).
-        All conditions within a rule use AND logic — every condition must match for the rule to fire.
+        All conditions within a rule use AND logic, so every condition must match for the rule to fire.
       </p>
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Creating a Rule</h2>

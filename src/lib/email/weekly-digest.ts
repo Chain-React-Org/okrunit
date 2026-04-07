@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// OKrunit -- Weekly Digest Email Template (v2 — Vend-inspired)
+// OKrunit -- Weekly Digest Email Template (v2, Vend-inspired)
 // ---------------------------------------------------------------------------
 
 import {

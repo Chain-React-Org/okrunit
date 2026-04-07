@@ -16,7 +16,7 @@ export function addBreadcrumb(
   crumb: Omit<Breadcrumb, "timestamp">,
 ): void {
   const store = breadcrumbStorage.getStore();
-  if (!store) return; // No active context — silently skip
+  if (!store) return; // No active context. Silently skip
 
   store.push({
     ...crumb,

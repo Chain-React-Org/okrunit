@@ -17,7 +17,7 @@ const CreateStepsSchema = z.object({
   steps: z.array(StepSchema).min(1).max(10),
 });
 
-/** GET /api/v1/approvals/[id]/steps — List steps for an approval */
+/** GET /api/v1/approvals/[id]/steps - List steps for an approval */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -30,7 +30,7 @@ export async function GET(
   return NextResponse.json({ steps });
 }
 
-/** POST /api/v1/approvals/[id]/steps — Add steps to an approval (must be pending, no existing steps) */
+/** POST /api/v1/approvals/[id]/steps - Add steps to an approval (must be pending, no existing steps) */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

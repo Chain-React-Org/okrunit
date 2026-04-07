@@ -179,7 +179,7 @@ export const ApprovalCard = memo(function ApprovalCard({
 
             {/* Metadata row */}
             <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
-              {/* Source label (text only — avatar already shows the icon) */}
+              {/* Source label (text only, avatar already shows the icon) */}
               <span>{getSourceDisplay(approval, connectionName).label}</span>
               {/* Show the account owner who created the connection */}
               {creatorName && (
@@ -225,7 +225,7 @@ export const ApprovalCard = memo(function ApprovalCard({
                 Activity Log
               </Badge>
             )}
-            {/* Inline approve/reject — visible on hover (hidden for logs) */}
+            {/* Inline approve/reject - visible on hover (hidden for logs) */}
             {isPending && canApprove && onInlineAction && !approval.is_log && (
               <div className={cn(
                 "hidden items-center gap-1.5 sm:flex sm:transition-opacity",
@@ -265,7 +265,7 @@ export const ApprovalCard = memo(function ApprovalCard({
               </span>
             )}
 
-            {/* Action buttons — visible on hover */}
+            {/* Action buttons - visible on hover */}
             <div className={cn(
               "hidden items-center gap-0.5 sm:flex sm:transition-opacity",
               tourForceVisible ? "sm:opacity-100" : "sm:opacity-0 sm:group-hover/card:opacity-100",

@@ -162,7 +162,7 @@ export function ApprovalDetail({
     return () => document.removeEventListener("keydown", handleKey);
   }, [open, approval, canApprove, onRespond]);
 
-  // No local fetch needed — comments are prefetched by the parent dashboard
+  // No local fetch needed. Comments are prefetched by the parent dashboard.
 
   const handleCommentAdded = useCallback((comment: ApprovalComment) => {
     if (!currentId) return;
@@ -194,7 +194,7 @@ export function ApprovalDetail({
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-          {/* Activity log notice — at the top */}
+          {/* Activity log notice - at the top */}
           {approval.is_log && (
             <div className="rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 p-4">
               <p className="text-sm text-blue-700 dark:text-blue-400 font-medium">Activity Log</p>
@@ -236,7 +236,7 @@ export function ApprovalDetail({
 
               <div className="p-3.5">
                 <LabelWithTip label="Action Type" tip="An optional label describing what this request does, like &quot;deploy.production&quot; or &quot;user.delete&quot;. Set by the workflow that created the request." />
-                <p className="text-sm font-mono truncate">{approval.action_type || "—"}</p>
+                <p className="text-sm font-mono truncate">{approval.action_type || "-"}</p>
               </div>
 
               <div className="p-3.5">
@@ -247,7 +247,7 @@ export function ApprovalDetail({
               <div className="p-3.5">
                 <LabelWithTip label="Created By" tip="The person whose account was used to submit this request through the connected platform." />
                 <p className="text-sm font-medium truncate">
-                  {creatorName || "—"}
+                  {creatorName || "-"}
                 </p>
               </div>
 
@@ -457,7 +457,7 @@ export function ApprovalDetail({
 
           {/* Card: Activity */}
           <div className="rounded-xl border border-border/50 p-4">
-            <LabelWithTip label="Activity" tip="A timeline of everything that happened with this request — when it was created, decided, and any comments." />
+            <LabelWithTip label="Activity" tip="A timeline of everything that happened with this request: when it was created, decided, and any comments." />
             <div className="mt-3 space-y-0">
               <div className="flex gap-3">
                 <div className="flex flex-col items-center">

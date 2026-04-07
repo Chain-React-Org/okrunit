@@ -25,9 +25,9 @@ export default function PasskeysPage() {
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Supported Authenticators</h2>
       <ul className="mt-4 list-disc pl-6 space-y-2 text-zinc-600">
-        <li><strong>Hardware keys</strong> — YubiKey 5 series, Google Titan, Feitian, SoloKeys</li>
-        <li><strong>Biometrics</strong> — Touch ID (Mac), Face ID (iPhone/iPad), Windows Hello (fingerprint/face)</li>
-        <li><strong>Platform authenticators</strong> — iCloud Keychain, Google Password Manager, 1Password</li>
+        <li><strong>Hardware keys</strong>: YubiKey 5 series, Google Titan, Feitian, SoloKeys</li>
+        <li><strong>Biometrics</strong>: Touch ID (Mac), Face ID (iPhone/iPad), Windows Hello (fingerprint/face)</li>
+        <li><strong>Platform authenticators</strong>: iCloud Keychain, Google Password Manager, 1Password</li>
       </ul>
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Registering a Passkey</h2>
@@ -37,7 +37,7 @@ export default function PasskeysPage() {
         <li>Click <strong>Add Passkey</strong></li>
         <li>Enter a <strong>name</strong> for the key (e.g. &quot;YubiKey&quot;, &quot;MacBook Touch ID&quot;)</li>
         <li>Click <strong>Register</strong></li>
-        <li>Follow your browser&apos;s prompt — tap your security key, use fingerprint, or confirm with Face ID</li>
+        <li>Follow your browser&apos;s prompt: tap your security key, use fingerprint, or confirm with Face ID</li>
         <li>The passkey appears in your registered list</li>
       </ol>
 

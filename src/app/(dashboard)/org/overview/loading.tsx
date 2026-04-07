@@ -9,7 +9,7 @@ export default function OverviewLoading() {
         <Skeleton className="h-7 w-[200px]" />
       </div>
 
-      {/* Stats row — 5 stat cards */}
+      {/* Stats row - 5 stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
           <div

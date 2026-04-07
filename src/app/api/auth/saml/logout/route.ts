@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
 // OKrunit -- SAML Single Logout (SLO)
 // ---------------------------------------------------------------------------
-// GET  /api/auth/saml/logout  — SP-initiated logout
-// POST /api/auth/saml/logout  — IdP-initiated logout
+// GET  /api/auth/saml/logout  - SP-initiated logout
+// POST /api/auth/saml/logout  - IdP-initiated logout
 // ---------------------------------------------------------------------------
 
 import { NextRequest, NextResponse } from "next/server";
@@ -45,7 +45,7 @@ export async function GET() {
     const user = await getSessionUser();
 
     if (!user?.email) {
-      // No session — just redirect to login
+      // No session, just redirect to login
       return NextResponse.redirect(new URL("/login", APP_URL));
     }
 
@@ -58,13 +58,13 @@ export async function GET() {
 
     // If the config has an SLO URL, redirect to the IdP's SLO endpoint
     if (config?.slo_url) {
-      // Simple redirect to IdP SLO — the IdP will handle the logout
+      // Simple redirect to IdP SLO. The IdP will handle the logout
       const sloUrl = new URL(config.slo_url);
       sloUrl.searchParams.set("RelayState", `${APP_URL}/login`);
       return NextResponse.redirect(sloUrl.toString());
     }
 
-    // No SLO URL configured — just redirect to login
+    // No SLO URL configured, just redirect to login
     return NextResponse.redirect(new URL("/login", APP_URL));
   } catch (err) {
     console.error("[SAML SLO] SP-initiated logout error:", err);

@@ -49,7 +49,7 @@ export async function GET(
   }
 }
 
-// ---- PATCH /api/v1/admin/errors/[id] — Update status ----------------------
+// ---- PATCH /api/v1/admin/errors/[id] - Update status ----------------------
 
 const VALID_STATUSES: ErrorIssueStatus[] = ["unresolved", "resolved", "ignored"];
 
@@ -87,7 +87,7 @@ export async function PATCH(
         process.env.NEXT_PUBLIC_GIT_SHA ??
         null;
     } else if (status === "unresolved") {
-      // Reopening — clear resolution fields
+      // Reopening - clear resolution fields
       updateData.resolved_at = null;
       updateData.resolved_by = null;
       updateData.resolved_in_release = null;

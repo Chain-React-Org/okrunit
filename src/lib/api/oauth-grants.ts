@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 // Fetches and aggregates active OAuth grants for an organization. A "grant"
 // is an OAuth client that holds at least one non-revoked, non-expired refresh
-// token — meaning the external app can still access the org's resources.
+// token, meaning the external app can still access the org's resources.
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -12,7 +12,7 @@ import type { OAuthGrant } from "@/lib/types/oauth-grant";
 /**
  * Fetch all active OAuth grants for a given organization.
  *
- * The result is aggregated by `client_id` — one entry per connected OAuth app.
+ * The result is aggregated by `client_id`: one entry per connected OAuth app.
  * Sorted by most recently authorized first.
  */
 export async function getActiveOAuthGrants(

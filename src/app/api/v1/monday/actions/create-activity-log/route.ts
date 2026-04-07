@@ -4,7 +4,7 @@
 // POST /api/v1/monday/actions/create-activity-log
 //
 // Logs an activity in OKRunit for audit/tracking. Does NOT create an approval
-// request — the automation continues immediately.
+// request. The automation continues immediately.
 // ---------------------------------------------------------------------------
 
 import { NextResponse } from "next/server";

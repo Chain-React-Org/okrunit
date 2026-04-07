@@ -164,7 +164,7 @@ export function TelegramDeepLinkDialog({
             </div>
           )}
 
-          {/* Ready — show QR + link */}
+          {/* Ready - show QR + link */}
           {state.phase === "ready" && (
             <>
               <div className="rounded-xl border bg-white p-3">
@@ -200,7 +200,7 @@ export function TelegramDeepLinkDialog({
             </>
           )}
 
-          {/* Claimed — success */}
+          {/* Claimed - success */}
           {state.phase === "claimed" && (
             <div className="flex flex-col items-center gap-3 py-8">
               <CheckCircle2 className="size-10 text-green-500" />

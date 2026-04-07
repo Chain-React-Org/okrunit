@@ -103,7 +103,7 @@ def my_deploy_pipeline():
 ## Integration Details
 
 - **Source:** All approval creation ops automatically set `source` to `"dagster"`.
-- **Idempotency key format:** `dagster-{timestamp}-{random}` — auto-generated on every `create_approval` call.
+- **Idempotency key format:** `dagster-{timestamp}-{random}`, auto-generated on every `create_approval` call.
 - **Default title:** If no title is provided, defaults to `"Approval request from dagster"`.
 - **Priority validation:** Must be one of `low`, `medium`, `high`, or `critical`.
 - **newApproval trigger:** Not yet implemented as a Dagster sensor. The `approval_decided_sensor` covers the `approvalDecided` trigger only.

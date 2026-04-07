@@ -6,7 +6,7 @@ import { Float, Text } from "@react-three/drei";
 import * as THREE from "three";
 
 /* ------------------------------------------------------------------ */
-/*  Flow node — a glowing sphere with a label                          */
+/*  Flow node: a glowing sphere with a label                           */
 /* ------------------------------------------------------------------ */
 
 function FlowNode({
@@ -256,7 +256,7 @@ export function Hero3D() {
   }, []);
 
   if (!mounted) {
-    // SSR placeholder — matches the canvas dimensions
+    // SSR placeholder. Matches the canvas dimensions
     return (
       <div className="h-[350px] w-full rounded-2xl sm:h-[400px]"
         style={{ background: "linear-gradient(135deg, #0a0f1a 0%, #0f172a 50%, #0a1628 100%)" }}

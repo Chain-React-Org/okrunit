@@ -2,8 +2,8 @@
 // OKrunit -- Telegram Mini App Decision API
 // ---------------------------------------------------------------------------
 //
-// GET  /api/telegram/decide?id=<requestId>  — Fetch request info for the form
-// POST /api/telegram/decide                 — Submit a decision
+// GET  /api/telegram/decide?id=<requestId>  - Fetch request info for the form
+// POST /api/telegram/decide                 - Submit a decision
 //
 // Authentication: Telegram initData is passed via X-Telegram-Init-Data header.
 // We validate it using HMAC-SHA256 with the bot token as specified by the
@@ -83,7 +83,7 @@ function telegramDisplayName(user: TelegramInitUser): string {
 }
 
 // ---------------------------------------------------------------------------
-// GET — Fetch request info for the Mini App form
+// GET - Fetch request info for the Mini App form
 // ---------------------------------------------------------------------------
 
 export async function GET(request: Request) {
@@ -144,7 +144,7 @@ export async function GET(request: Request) {
 }
 
 // ---------------------------------------------------------------------------
-// POST — Submit a decision from the Mini App
+// POST - Submit a decision from the Mini App
 // ---------------------------------------------------------------------------
 
 export async function POST(request: Request) {
@@ -287,7 +287,7 @@ export async function POST(request: Request) {
   }
 
   // Try to update the original Telegram message if we can find it
-  // (best-effort — we may not have the message/chat IDs here)
+  // (best-effort, we may not have the message/chat IDs here)
   const { data: connection } = await admin
     .from("messaging_connections")
     .select("channel_id")

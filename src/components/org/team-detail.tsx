@@ -331,7 +331,7 @@ export function TeamDetail({
         </div>
       )}
 
-      {/* Add members section — multi-select */}
+      {/* Add members section - multi-select */}
       {canManage && availableMembers.length > 0 && (
         <div className="rounded-xl border border-border/50 bg-[var(--card)] p-5">
           <h2 className="text-sm font-semibold mb-1">Add Members</h2>

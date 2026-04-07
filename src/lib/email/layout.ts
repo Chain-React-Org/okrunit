@@ -34,13 +34,13 @@ export const emailTheme = {
   subtle: "#94a394",
   // Structure
   divider: "#e4e9e4",
-  // Brand — green matching the OKrunit logo
+  // Brand - green matching the OKrunit logo
   brand: "#4caf50",
   brandBright: "#66bb6a",
   brandDark: "#388e3c",
   brandSubtle: "#e8f5e9",
   brandDeep: "#2e7d32",
-  // Charcoal — from the logo hexagon
+  // Charcoal - from the logo hexagon
   charcoal: "#37474f",
   charcoalLight: "#546e7a",
   charcoalDark: "#263238",
@@ -461,7 +461,7 @@ export function emailProgressBar(options: {
   `;
 }
 
-/** Personal sign-off block (like "Here's to your success, —Shona") */
+/** Personal sign-off block (like "Here's to your success, -Shona") */
 export function emailSignoff(options: {
   message?: string;
   name: string;

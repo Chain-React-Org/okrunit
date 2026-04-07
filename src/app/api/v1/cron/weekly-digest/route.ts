@@ -147,7 +147,7 @@ async function handleDigest(req: NextRequest) {
 
     const userIds = members.map((m) => m.user_id);
 
-    // Check notification settings — only send to users with email enabled
+    // Check notification settings: only send to users with email enabled
     const { data: settings } = await admin
       .from("notification_settings")
       .select("user_id, email_enabled")

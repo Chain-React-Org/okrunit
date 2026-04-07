@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     template: "%s | OKrunit Docs",
   },
   description:
-    "OKrunit documentation — API reference, integration guides, webhooks, and getting started instructions.",
+    "OKrunit documentation: API reference, integration guides, webhooks, and getting started instructions.",
 };
 
 async function DocsAuthNav() {
@@ -24,7 +24,7 @@ async function DocsAuthNav() {
   if (user) {
     return (
       <Link
-        href="/dashboard"
+        href="/org/overview"
         className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
       >
         Go to Dashboard

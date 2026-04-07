@@ -69,7 +69,7 @@ export function withErrorCapture(
           requestUrl: request.url,
           requestMethod: request.method,
         }).catch(() => {
-          // Swallow — monitoring must never affect the response
+          // Swallow. Monitoring must never affect the response
         });
 
         // Return the standard error response to the client

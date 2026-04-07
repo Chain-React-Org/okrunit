@@ -118,7 +118,7 @@ export function SafetySettings({
 
   return (
     <div className="space-y-6">
-      {/* Personal auto-approval pause — available to everyone */}
+      {/* Personal auto-approval pause - available to everyone */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -177,7 +177,7 @@ export function SafetySettings({
         </CardContent>
       </Card>
 
-      {/* Emergency stop — admin only */}
+      {/* Emergency stop - admin only */}
       {isAdmin && (
         <Card className={emergencyStopActive ? "border-red-500" : undefined}>
           <CardHeader>
@@ -189,7 +189,7 @@ export function SafetySettings({
             </CardTitle>
             <CardDescription>
               Immediately cancel all pending approvals and block new requests
-              across the entire organization. This is a nuclear option — use it
+              across the entire organization. This is a nuclear option, so use it
               only when something has gone seriously wrong.
             </CardDescription>
           </CardHeader>

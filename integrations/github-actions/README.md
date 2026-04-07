@@ -1,4 +1,4 @@
-# OKRunit Approval Gate — GitHub Action
+# OKRunit Approval Gate - GitHub Action
 
 A GitHub Action that pauses a workflow until a human approves or rejects via [OKRunit](https://okrunit.com).
 
@@ -39,14 +39,14 @@ jobs:
 
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `api-key` | Yes | — | OKRunit API key (`gk_...`) |
+| `api-key` | Yes | - | OKRunit API key (`gk_...`) |
 | `api-url` | No | `https://app.okrunit.com` | OKRunit instance URL |
 | `title` | No | Auto-generated | Approval title (defaults to workflow name) |
-| `description` | No | — | Context for the reviewer |
-| `action-type` | No | — | Type of action (e.g. `deploy`, `release`, `data-delete`) |
+| `description` | No | - | Context for the reviewer |
+| `action-type` | No | - | Type of action (e.g. `deploy`, `release`, `data-delete`) |
 | `priority` | No | `medium` | `low`, `medium`, `high`, or `critical` |
-| `metadata` | No | — | JSON metadata (merged with GitHub context) |
-| `context-html` | No | — | Rich HTML context for reviewers (diffs, logs, etc). Max 50KB |
+| `metadata` | No | - | JSON metadata (merged with GitHub context) |
+| `context-html` | No | - | Rich HTML context for reviewers (diffs, logs, etc). Max 50KB |
 | `timeout` | No | `3600` | Max wait time in seconds |
 | `poll-interval` | No | `10` | Polling interval in seconds |
 
@@ -55,31 +55,31 @@ jobs:
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
 | `required-approvals` | No | `1` | Number of approvals needed (1-10) |
-| `assigned-approvers` | No | — | Comma-separated OKRunit user IDs to assign |
-| `assigned-team-id` | No | — | OKRunit team ID to route the approval to |
+| `assigned-approvers` | No | - | Comma-separated OKRunit user IDs to assign |
+| `assigned-team-id` | No | - | OKRunit team ID to route the approval to |
 | `is-sequential` | No | `false` | Multi-step approvals must happen in order |
 
 ### Auto-Action & Expiration
 
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `auto-action` | No | — | Auto-action on timeout: `approve` or `reject` |
-| `auto-action-after-minutes` | No | — | Minutes before auto-action triggers (1-43200) |
-| `expires-at` | No | — | ISO datetime when the request expires |
+| `auto-action` | No | - | Auto-action on timeout: `approve` or `reject` |
+| `auto-action-after-minutes` | No | - | Minutes before auto-action triggers (1-43200) |
+| `expires-at` | No | - | ISO datetime when the request expires |
 
 ### Callbacks & Notifications
 
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `callback-url` | No | — | URL to POST the decision to |
-| `callback-headers` | No | — | JSON object of custom headers for the callback |
-| `notify-channel-ids` | No | — | Comma-separated messaging channel IDs (Slack, Teams, etc.) |
+| `callback-url` | No | - | URL to POST the decision to |
+| `callback-headers` | No | - | JSON object of custom headers for the callback |
+| `notify-channel-ids` | No | - | Comma-separated messaging channel IDs (Slack, Teams, etc.) |
 
 ### Conditions & Policies
 
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `conditions` | No | — | JSON array of conditions (`[{name, check_type, webhook_url}]`) |
+| `conditions` | No | - | JSON array of conditions (`[{name, check_type, webhook_url}]`) |
 | `require-rejection-reason` | No | `false` | Require comment when rejecting |
 
 ## Outputs

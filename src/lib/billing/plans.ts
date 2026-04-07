@@ -1,6 +1,6 @@
 import type { BillingPlan, Plan } from "@/lib/types/database";
 
-/** Static plan definitions — mirrors the database `plans` table.
+/** Static plan definitions. Mirrors the database `plans` table.
  *  Used for quick client-side checks without a DB query. */
 export const PLAN_LIMITS: Record<BillingPlan, {
   name: string;
@@ -8,6 +8,7 @@ export const PLAN_LIMITS: Record<BillingPlan, {
   priceYearly: number;
   maxRequests: number;  // -1 = unlimited
   maxConnections: number;
+  maxOrganizations: number; // -1 = unlimited
   maxTeams: number;     // -1 = unlimited
   maxTeamMembers: number;
   historyDays: number;
@@ -19,6 +20,7 @@ export const PLAN_LIMITS: Record<BillingPlan, {
     priceYearly: 0,
     maxRequests: 100,
     maxConnections: 2,
+    maxOrganizations: 1,
     maxTeams: 1,
     maxTeamMembers: 3,
     historyDays: 7,
@@ -33,6 +35,7 @@ export const PLAN_LIMITS: Record<BillingPlan, {
     priceYearly: 192, // $16/mo billed annually
     maxRequests: -1,
     maxConnections: 15,
+    maxOrganizations: 3,
     maxTeams: 5,
     maxTeamMembers: 15,
     historyDays: 90,
@@ -54,6 +57,7 @@ export const PLAN_LIMITS: Record<BillingPlan, {
     priceYearly: 576, // $48/mo billed annually
     maxRequests: -1,
     maxConnections: -1,
+    maxOrganizations: -1,
     maxTeams: -1,
     maxTeamMembers: -1,
     historyDays: 365,
@@ -83,6 +87,7 @@ export const PLAN_LIMITS: Record<BillingPlan, {
     priceYearly: 0,
     maxRequests: -1,
     maxConnections: -1,
+    maxOrganizations: -1,
     maxTeams: -1,
     maxTeamMembers: -1,
     historyDays: -1,

@@ -16,6 +16,9 @@ import {
   Sparkles,
   CheckCheck,
   MessageSquare,
+  Unplug,
+  ShieldAlert,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +50,9 @@ const CATEGORY_CONFIG: Record<
   team_added: { icon: Users, color: "text-indigo-500" },
   flow_assigned: { icon: Workflow, color: "text-cyan-500" },
   welcome: { icon: Sparkles, color: "text-primary" },
+  connection_deactivated: { icon: Unplug, color: "text-red-500" },
+  role_changed: { icon: ShieldAlert, color: "text-amber-500" },
+  limit_approaching: { icon: AlertTriangle, color: "text-amber-500" },
 };
 
 function getNotificationHref(n: InAppNotification): string {
@@ -84,7 +90,7 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
 
-  // Realtime callbacks — declared before useRealtime to keep hook order stable
+  // Realtime callbacks. Declared before useRealtime to keep hook order stable
   const handleRealtimeInsert = useCallback((record: InAppNotification) => {
     setNotifications((prev) => {
       if (prev.some((n) => n.id === record.id)) return prev;
@@ -258,7 +264,7 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
           </div>
         </div>
 
-        {/* Content — scroll isolated from page */}
+        {/* Content - scroll isolated from page */}
         <div className="max-h-[420px] overflow-y-auto overscroll-contain">
           {loading && !fetched ? (
             <div className="flex items-center justify-center py-12">
@@ -336,7 +342,7 @@ function NotificationRow({
   const DisplayIcon = isRejected ? XCircle : Icon;
   const iconColor = isRejected ? "text-red-500" : config.color;
 
-  // Parse body for pills — only match the structured format: "Medium priority · from Zapier"
+  // Parse body for pills. Only match the structured format: "Medium priority · from Zapier"
   const structuredMatch = n.body?.match(/^(\w+)\s+priority(?:\s+·\s+from\s+(\w+))?$/i);
   const priorityLabel = structuredMatch?.[1];
   const sourceRaw = structuredMatch?.[2];

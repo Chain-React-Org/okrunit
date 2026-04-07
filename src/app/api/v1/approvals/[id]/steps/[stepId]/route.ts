@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { getOrgContext } from "@/lib/org-context";
 import { recordStepVote } from "@/lib/approvals/steps-engine";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
+import { dispatchNotifications } from "@/lib/notifications/orchestrator";
 import { z } from "zod";
 
 const VoteSchema = z.object({
@@ -11,7 +14,7 @@ const VoteSchema = z.object({
   comment: z.string().max(5000).optional(),
 });
 
-/** PATCH /api/v1/approvals/[id]/steps/[stepId] — Vote on a step */
+/** PATCH /api/v1/approvals/[id]/steps/[stepId] - Vote on a step */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; stepId: string }> },
@@ -70,6 +73,48 @@ export async function PATCH(
         request_approved: result.requestApproved,
       },
     });
+
+    // Notify when a step is decided (approved or rejected)
+    if (result.stepComplete) {
+      after(async () => {
+        const notifyAdmin = createAdminClient();
+        const [{ data: stepData }, { data: reqData }] = await Promise.all([
+          notifyAdmin.from("approval_steps").select("name, step_order").eq("id", stepId).single(),
+          notifyAdmin.from("approval_requests").select("title, priority, assigned_approvers, connection_id").eq("id", id).single(),
+        ]);
+        const stepName = stepData?.name ?? `Step ${stepData?.step_order ?? "?"}`;
+        const reqTitle = reqData?.title ?? "Untitled request";
+        const decision = result.stepApproved ? "approved" : "rejected";
+
+        // Dispatch to channels (Slack, email, etc.)
+        const eventType = result.stepApproved ? "approval.approved" : "approval.rejected";
+        await dispatchNotifications({
+          type: eventType,
+          orgId: membership.org_id,
+          requestId: id,
+          requestTitle: `[${stepName}] ${reqTitle}`,
+          requestPriority: reqData?.priority ?? "medium",
+          connectionId: reqData?.connection_id ?? undefined,
+          decidedBy: profile.id,
+        });
+
+        // In-app notification for relevant users
+        const approvers: string[] = reqData?.assigned_approvers ?? [];
+        const recipients = approvers.filter((uid) => uid !== profile.id);
+        if (recipients.length > 0) {
+          await createInAppNotificationBulk(recipients, {
+            orgId: membership.org_id,
+            category: "flow_step_decided",
+            title: `${stepName} ${decision}`,
+            body: `${stepName} was ${decision} for "${reqTitle}"${result.nextStep ? ". The next step is now active." : result.requestApproved ? ". All steps complete, request approved." : ". The request was rejected."}`,
+            resourceType: "approval_request",
+            resourceId: id,
+            actorId: profile.id,
+            actorName: profile.full_name ?? profile.email,
+          });
+        }
+      });
+    }
 
     return NextResponse.json({
       success: true,

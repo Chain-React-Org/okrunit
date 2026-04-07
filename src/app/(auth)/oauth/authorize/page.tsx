@@ -75,7 +75,7 @@ async function AuthorizeContent({ searchParams }: AuthorizePageProps) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    // This shouldn't happen — middleware redirects to login.
+    // This shouldn't happen. Middleware redirects to login.
     redirect("/login");
   }
 

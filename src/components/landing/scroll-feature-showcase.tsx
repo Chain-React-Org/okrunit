@@ -43,7 +43,7 @@ const showcaseFeatures = [
     label: "Notifications",
     title: "Approve from anywhere",
     description:
-      "Get notified via email, Slack, or push notifications the moment a request needs attention. Approve or reject directly from the notification — no context switching required.",
+      "Get notified via email, Slack, or push notifications the moment a request needs attention. Approve or reject directly from the notification. No context switching required.",
   },
   {
     number: "04",
@@ -197,7 +197,7 @@ function RulesVisual() {
 function NotificationsVisual() {
   const channels = [
     { icon: Mail, label: "Email", desc: "Approval request: Delete user #4821", time: "Just now", color: "#6366f1" },
-    { icon: () => <svg viewBox="0 0 16 16" className="h-3 w-3" fill="currentColor"><path d="M5.5 1.5A1.5 1.5 0 0 0 4 3v10l4-3 4 3V3a1.5 1.5 0 0 0-1.5-1.5h-5z"/></svg>, label: "Slack", desc: "#approvals — New request needs review", time: "2s ago", color: "#e01e5a" },
+    { icon: () => <svg viewBox="0 0 16 16" className="h-3 w-3" fill="currentColor"><path d="M5.5 1.5A1.5 1.5 0 0 0 4 3v10l4-3 4 3V3a1.5 1.5 0 0 0-1.5-1.5h-5z"/></svg>, label: "Slack", desc: "#approvals - New request needs review", time: "2s ago", color: "#e01e5a" },
     { icon: Smartphone, label: "Push", desc: "High priority approval waiting", time: "5s ago", color: "#22c55e" },
   ];
 
@@ -331,7 +331,7 @@ function IntegrationsVisual() {
 const visuals = [DashboardVisual, RulesVisual, NotificationsVisual, AnalyticsVisual, IntegrationsVisual];
 
 /* ------------------------------------------------------------------ */
-/*  Main ScrollFeatureShowcase — scroll-locking pattern                */
+/*  Main ScrollFeatureShowcase. Scroll-locking pattern                 */
 /* ------------------------------------------------------------------ */
 
 export function ScrollFeatureShowcase() {
@@ -379,11 +379,11 @@ export function ScrollFeatureShowcase() {
 
   return (
     <section className="relative border-y border-[var(--border)] bg-[var(--muted)]">
-      {/* Tall scroll container — desktop only */}
+      {/* Tall scroll container, desktop only */}
       <div
         ref={containerRef}
         className="hidden lg:block"
-        style={{ height: `${featureCount * 100}vh` }}
+        style={{ height: `${featureCount * 150}vh` }}
       >
         {/* Sticky viewport */}
         <div
@@ -397,11 +397,11 @@ export function ScrollFeatureShowcase() {
                 <button
                   key={feature.number}
                   onClick={() => scrollToFeature(i)}
-                  className="flex items-center gap-2 transition-opacity duration-300"
+                  className="flex items-center gap-2 transition-opacity duration-700 ease-out"
                   style={{ opacity: activeIndex === i ? 1 : 0.35 }}
                 >
                   <span
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-[11px] font-bold transition-colors duration-300"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-[11px] font-bold transition-colors duration-700 ease-out"
                     style={{
                       backgroundColor: activeIndex === i ? "oklch(0.45 0.15 265)" : "oklch(0.92 0.008 265)",
                       color: activeIndex === i ? "oklch(0.985 0.003 265)" : "oklch(0.50 0.03 265)",
@@ -440,21 +440,21 @@ export function ScrollFeatureShowcase() {
                   <button
                     key={feature.number}
                     onClick={() => scrollToFeature(i)}
-                    className="group flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition-all duration-300"
+                    className="group flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition-all duration-700 ease-out"
                     style={{
                       backgroundColor: activeIndex === i ? "oklch(0.45 0.15 265 / 0.06)" : "transparent",
                       borderLeft: activeIndex === i ? "2px solid oklch(0.45 0.15 265)" : "2px solid transparent",
                     }}
                   >
                     <span
-                      className="mt-0.5 shrink-0 text-xs font-bold transition-colors duration-300"
+                      className="mt-0.5 shrink-0 text-xs font-bold transition-colors duration-700 ease-out"
                       style={{ color: activeIndex === i ? "oklch(0.45 0.15 265)" : "oklch(0.80 0.03 265)" }}
                     >
                       {feature.number}
                     </span>
                     <div>
                       <p
-                        className="font-semibold transition-colors duration-300"
+                        className="font-semibold transition-colors duration-700 ease-out"
                         style={{
                           color: activeIndex === i ? "var(--foreground)" : "var(--muted-foreground)",
                           fontSize: "14px",
@@ -477,10 +477,10 @@ export function ScrollFeatureShowcase() {
                 {visuals.map((Visual, i) => (
                   <div
                     key={i}
-                    className="transition-all duration-500"
+                    className="transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
                     style={{
                       opacity: activeIndex === i ? 1 : 0,
-                      transform: activeIndex === i ? "translateY(0) scale(1)" : "translateY(8px) scale(0.98)",
+                      transform: activeIndex === i ? "translateY(0) scale(1)" : "translateY(4px) scale(0.995)",
                       position: activeIndex === i ? "relative" : "absolute",
                       top: 0,
                       left: 0,

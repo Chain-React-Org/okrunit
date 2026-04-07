@@ -9,6 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canCreateOrganization } from "@/lib/billing/enforce";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -41,6 +42,15 @@ export async function POST(request: Request) {
         );
       }
       throw err;
+    }
+
+    // Enforce organization limit based on user's best plan
+    const orgCheck = await canCreateOrganization(auth.user.id);
+    if (!orgCheck.allowed) {
+      return NextResponse.json(
+        { error: orgCheck.reason, upgradeRequired: true },
+        { status: 403 },
+      );
     }
 
     const admin = createAdminClient();
@@ -87,7 +97,7 @@ export async function POST(request: Request) {
 
     if (teamError) {
       console.error("[Org] Failed to create default team:", teamError);
-      // Non-fatal — org still works without a team
+      // Non-fatal. Org still works without a team.
     }
 
     const ipAddress =

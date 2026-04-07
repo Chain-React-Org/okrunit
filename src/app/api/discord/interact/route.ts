@@ -517,7 +517,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Skip prompt — apply the decision immediately.
+    // Skip prompt. Apply the decision immediately.
     const discordUser = interaction.member?.user ?? interaction.user;
     const discordUserId = discordUser?.id ?? "unknown";
     const discordUsername =

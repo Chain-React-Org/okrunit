@@ -129,7 +129,7 @@ export function FAQJsonLd() {
         name: "Why do AI agents need human approval?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "AI agents can make mistakes or take actions with irreversible consequences — deleting data, sending emails, deploying code, or making payments. Human-in-the-loop approval adds a safety layer so destructive actions only execute after a human reviews and approves them.",
+          text: "AI agents can make mistakes or take actions with irreversible consequences, such as deleting data, sending emails, deploying code, or making payments. Human-in-the-loop approval adds a safety layer so destructive actions only execute after a human reviews and approves them.",
         },
       },
     ],

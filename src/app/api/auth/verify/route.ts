@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (!profile) {
-      // New user — send welcome email
+      // New user. Send welcome email
       try {
         const fullName = user.user_metadata?.full_name || "there";
         const resend = new Resend(process.env.RESEND_API_KEY);

@@ -92,7 +92,7 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Position state — prefetch all team positions on mount so selection is instant
+  // Position state. Prefetch all team positions on mount so selection is instant.
   interface PositionOption { id: string; name: string }
   const [positionsByTeam, setPositionsByTeam] = useState<Record<string, PositionOption[]>>({});
   const [selectedPositionId, setSelectedPositionId] = useState<string | null>(null);

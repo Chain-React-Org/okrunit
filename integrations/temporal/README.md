@@ -40,12 +40,12 @@ temporal workflow terminate --workflow-id <workflow-id> --reason "No longer need
 
 ## How It Works
 
-1. **Start the worker** — processes approval gate workflows
-2. **Start a workflow** — creates an OKRunit approval and polls for a decision
-3. **Human decides** — approve or reject in the OKRunit dashboard
-4. **Workflow completes** — returns the decision result
+1. **Start the worker** - processes approval gate workflows
+2. **Start a workflow** - creates an OKRunit approval and polls for a decision
+3. **Human decides** - approve or reject in the OKRunit dashboard
+4. **Workflow completes** - returns the decision result
 
-The workflow is fully durable — if the worker crashes, it resumes exactly where it left off when restarted.
+The workflow is fully durable. If the worker crashes, it resumes exactly where it left off when restarted.
 
 ## Components
 

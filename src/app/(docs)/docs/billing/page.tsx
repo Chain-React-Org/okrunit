@@ -5,7 +5,7 @@ import { DocsImage } from "@/components/docs/docs-image";
 export const metadata: Metadata = {
   title: "Plans & Billing",
   description:
-    "OKrunit pricing plans — compare Free, Pro, Business, and Enterprise features, usage limits, and billing details.",
+    "OKrunit pricing plans: compare Free, Pro, Business, and Enterprise features, usage limits, and billing details.",
 };
 
 /* ------------------------------------------------------------------ */
@@ -123,7 +123,7 @@ export default function BillingPage() {
         </div>
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
           <h3 className="font-semibold text-emerald-900">
-            Pro — most popular
+            Pro (most popular)
           </h3>
           <p className="mt-1 text-sm text-emerald-800">
             For growing teams that need unlimited requests, Slack and webhook

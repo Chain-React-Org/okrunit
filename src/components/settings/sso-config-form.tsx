@@ -143,7 +143,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
     fetchConfig();
   }, [fetchConfig]);
 
-  // Save helper — used by both manual save and auto-save after import
+  // Save helper. Used by both manual save and auto-save after import
   async function saveConfig(overrides?: {
     entityId?: string;
     ssoUrl?: string;
@@ -248,7 +248,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
           sloUrl: newSloUrl,
         });
       } else {
-        // First-time setup — prompt for domain
+        // First-time setup. Prompt for domain
         setShowDomainPrompt(true);
         setTimeout(() => domainInputRef.current?.focus(), 100);
       }
@@ -384,7 +384,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
         )}
       </div>
 
-      {/* 2. Service Provider Details — shown FIRST so admin can configure their IdP */}
+      {/* 2. Service Provider Details - shown FIRST so admin can configure their IdP */}
       <div className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
         <div className="mb-4 flex items-center justify-between">
           <div>
@@ -394,7 +394,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">
               {!existingConfig
-                ? "Start here — copy these values into your identity provider (Okta, Azure AD, Google Workspace, etc.)."
+                ? "Start here: copy these values into your identity provider (Okta, Azure AD, Google Workspace, etc.)."
                 : "Provide these values to your identity provider when configuring the SAML integration."}
             </p>
           </div>
@@ -467,7 +467,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
             </h3>
             <p className="text-sm text-muted-foreground">
               Paste your identity provider&apos;s metadata URL or upload the XML file.
-              This auto-fills everything — Entity ID, SSO URL, SLO URL, and certificate.
+              This auto-fills everything: Entity ID, SSO URL, SLO URL, and certificate.
             </p>
           </div>
         </div>
@@ -539,7 +539,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
                 className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[var(--border)] bg-muted/20 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/40"
               >
                 <Upload className="size-4" />
-                {metadataUrl ? "File loaded — click Import" : "Choose XML metadata file"}
+                {metadataUrl ? "File loaded, click Import" : "Choose XML metadata file"}
               </button>
             </div>
             <button
@@ -605,7 +605,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
         )}
       </div>
 
-      {/* 4. Configuration form — for manual entry or editing */}
+      {/* 4. Configuration form - for manual entry or editing */}
       <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
         <div className="mb-6 flex items-center gap-3">
           <Shield className="size-5 text-muted-foreground" />
@@ -641,7 +641,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
             </p>
           </div>
 
-          {/* Auto-filled fields — show read-only summaries */}
+          {/* Auto-filled fields - show read-only summaries */}
           {(entityId || ssoUrl) && !showAdvanced && (
             <div className="space-y-2 rounded-lg border border-[var(--border)] bg-muted/30 p-4">
               <div className="flex items-center justify-between">
@@ -867,7 +867,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
             </div>
           </div>
 
-          {/* Enforce SSO toggle — only show when SSO is active */}
+          {/* Enforce SSO toggle - only show when SSO is active */}
           {isActive && (
             <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
               <button

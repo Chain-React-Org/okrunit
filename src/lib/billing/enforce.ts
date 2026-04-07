@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveOAuthGrants } from "@/lib/api/oauth-grants";
-import { getPlanLimits, isUnlimited } from "@/lib/billing/plans";
+import { getPlanLimits, isUnlimited, PLAN_ORDER } from "@/lib/billing/plans";
 import type { BillingPlan } from "@/lib/types/database";
 
 interface EnforcementResult {
@@ -136,6 +136,50 @@ export async function canAddTeamMember(orgId: string): Promise<EnforcementResult
   }
 
   return { allowed: true, limit: limits.maxTeamMembers, current, plan };
+}
+
+/** Check if a user can create a new organization.
+ *  Looks at the highest plan across all orgs the user owns to determine the limit. */
+export async function canCreateOrganization(userId: string): Promise<EnforcementResult> {
+  const admin = createAdminClient();
+
+  // Get all orgs this user owns
+  const { data: memberships } = await admin
+    .from("org_memberships")
+    .select("org_id")
+    .eq("user_id", userId)
+    .eq("role", "owner");
+
+  const ownedOrgIds = (memberships ?? []).map((m) => m.org_id);
+  const currentCount = ownedOrgIds.length;
+
+  // Find the highest plan across all owned orgs
+  let bestPlan: BillingPlan = "free";
+  for (const orgId of ownedOrgIds) {
+    const plan = await getOrgPlan(orgId);
+    if (PLAN_ORDER.indexOf(plan) > PLAN_ORDER.indexOf(bestPlan)) {
+      bestPlan = plan;
+    }
+  }
+
+  const limits = getPlanLimits(bestPlan);
+
+  if (isUnlimited(limits.maxOrganizations)) {
+    return { allowed: true, plan: bestPlan };
+  }
+
+  if (currentCount >= limits.maxOrganizations) {
+    return {
+      allowed: false,
+      reason: `Organization limit reached (${limits.maxOrganizations}). Upgrade to create more organizations.`,
+      limit: limits.maxOrganizations,
+      current: currentCount,
+      plan: bestPlan,
+      upgradeRequired: true,
+    };
+  }
+
+  return { allowed: true, limit: limits.maxOrganizations, current: currentCount, plan: bestPlan };
 }
 
 /** Check if a specific feature is available on the org's plan */

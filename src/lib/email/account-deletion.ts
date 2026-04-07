@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// OKrunit -- Account Deletion Confirmation Email (v4 — Vend-inspired)
+// OKrunit -- Account Deletion Confirmation Email (v4, Vend-inspired)
 // ---------------------------------------------------------------------------
 
 import {

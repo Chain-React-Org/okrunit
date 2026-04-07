@@ -1013,7 +1013,7 @@ function DetailSheetPreview() {
         <p className="mt-0.5 text-xs text-slate-500">Critical deployment requiring admin approval</p>
       </div>
 
-      {/* Metadata grid — matches real detail panel */}
+      {/* Metadata grid. Matches real detail panel */}
       <div className="flex-1 space-y-3 overflow-hidden p-4">
         <div className="grid grid-cols-2 gap-2">
           <MetaField label="Status"><StatusPill status="pending" /></MetaField>
@@ -1031,7 +1031,7 @@ function DetailSheetPreview() {
           <MetaField label="Created By">github-actions-prod</MetaField>
         </div>
 
-        {/* Approval progress — matches real approval chain UI */}
+        {/* Approval progress. Matches real approval chain UI */}
         <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-slate-900">2 of 3 approvals</span>
@@ -1058,7 +1058,7 @@ function DetailSheetPreview() {
           </div>
         </div>
 
-        {/* Comment + decision — matches real UI */}
+        {/* Comment + decision. Matches real UI */}
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
             Comment (optional)
@@ -1083,7 +1083,7 @@ function DetailSheetPreview() {
   );
 }
 
-/** The approval feature section visual — mimics the real app layout: request list + slide-out detail sheet */
+/** The approval feature section visual. Mimics the real app layout: request list + slide-out detail sheet */
 function ApprovalFlowVisual() {
   const allItems = [...queueAttention, ...queueResolved.slice(0, 1)];
 
@@ -1115,7 +1115,7 @@ function ApprovalFlowVisual() {
         </ScaledMockup>
       </div>
 
-      {/* Mobile: stacked layout — list then detail */}
+      {/* Mobile: stacked layout, list then detail */}
       <div className="sm:hidden">
         <div className="gk-v2 force-light space-y-3 overflow-hidden rounded-xl border border-slate-200/60 bg-slate-50/80 p-3 shadow-2xl shadow-black/20">
           <div className="space-y-1.5">
@@ -1546,7 +1546,7 @@ function HeroMockupContent() {
         </span>
       </div>
 
-      {/* App shell — no sidebar to keep it compact */}
+      {/* App shell. No sidebar to keep it compact */}
       <div className="flex min-w-0 flex-1 flex-col">
         <HeroTopBar />
         <div className="bg-slate-50/50 p-3 sm:p-4">
@@ -1653,20 +1653,20 @@ function ScrollFeatures({ steps }: { steps: FeatureStep[] }) {
       <div
         ref={containerRef}
         className="relative hidden lg:block"
-        style={{ height: `${steps.length * 100}vh` }}
+        style={{ height: `${steps.length * 150}vh` }}
       >
         <div className="sticky top-0 h-screen overflow-hidden">
           {steps.map((step, i) => (
             <div
               key={step.id}
-              className="absolute inset-0 flex flex-col items-center justify-center px-8 py-8 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+              className="absolute inset-0 flex flex-col items-center justify-center px-8 py-8 transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
               style={{
                 opacity: activeIndex === i ? 1 : 0,
                 transform: activeIndex === i
                   ? "translateY(0) scale(1)"
                   : activeIndex > i
-                    ? "translateY(-24px) scale(0.98)"
-                    : "translateY(24px) scale(0.98)",
+                    ? "translateY(-8px) scale(0.995)"
+                    : "translateY(8px) scale(0.995)",
                 pointerEvents: activeIndex === i ? "auto" : "none",
               }}
             >
@@ -1676,7 +1676,7 @@ function ScrollFeatures({ steps }: { steps: FeatureStep[] }) {
                   <div
                     key={j}
                     className={cn(
-                      "h-1.5 rounded-full transition-all duration-500",
+                      "h-1.5 rounded-full transition-all duration-[800ms] ease-out",
                       activeIndex === j
                         ? "w-8 bg-white"
                         : "w-1.5 bg-white/30",
@@ -1685,7 +1685,7 @@ function ScrollFeatures({ steps }: { steps: FeatureStep[] }) {
                 ))}
               </div>
 
-              {/* Text content — centered, compact */}
+              {/* Text content, centered and compact */}
               <div className="mx-auto mb-4 max-w-2xl shrink-0 text-center">
                 <SectionEyebrow>{step.eyebrow}</SectionEyebrow>
                 <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.18)] md:text-3xl xl:text-[2.25rem]">
@@ -1696,7 +1696,7 @@ function ScrollFeatures({ steps }: { steps: FeatureStep[] }) {
                 </p>
               </div>
 
-              {/* Visual — constrained to max 55vh so it never pushes content off screen */}
+              {/* Visual, constrained to max 55vh so it never pushes content off screen */}
               <div className="w-full max-w-4xl shrink-0" style={{ maxHeight: "55vh" }}>
                 <FitToHeight>{step.visual}</FitToHeight>
               </div>
@@ -1854,7 +1854,7 @@ export function LandingPage({ user }: LandingPageProps) {
               </FadeIn>
             </div>
 
-            {/* Integration marquee — full width below hero grid */}
+            {/* Integration marquee, full width below hero grid */}
             <FadeIn delay={200}>
               <div className="mt-10 space-y-4 sm:mt-12 lg:mt-6 xl:mt-12">
                 <p className="text-center text-sm font-medium text-white/85">
@@ -1873,7 +1873,7 @@ export function LandingPage({ user }: LandingPageProps) {
               {
                 id: "approvals",
                 eyebrow: "Approval Flow",
-                title: "Click a request, review the full context, and decide — all in one view.",
+                title: "Click a request, review the full context, and decide, all in one view.",
                 description: "Each request card shows its source, priority, and status at a glance. Click to open the detail panel with the full metadata grid, approval chain progress, and approve or reject actions.",
                 visual: <ApprovalFlowVisual />,
               },
@@ -1897,7 +1897,7 @@ export function LandingPage({ user }: LandingPageProps) {
               {
                 id: "routing",
                 eyebrow: "Routing & Notifications",
-                title: "Define who approves and which channels get notified — per source.",
+                title: "Define who approves and which channels get notified, per source.",
                 description: "Approval flows carry source ownership, request counts, and last activity. Messaging channels show exactly which sources notify them so route behavior is always visible.",
                 visual: (
                   <div className="gk-v2 force-light overflow-hidden rounded-xl bg-white p-3 shadow-2xl shadow-black/20 sm:p-4">

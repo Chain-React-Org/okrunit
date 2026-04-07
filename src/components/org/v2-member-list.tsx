@@ -147,7 +147,7 @@ export function V2MemberList({
   }
 
   async function handleCanApproveChange(userId: string, canApprove: boolean) {
-    // Optimistic update — toggle immediately
+    // Optimistic update. Toggle immediately.
     setOptimisticApprove((prev) => ({ ...prev, [userId]: canApprove }));
     toast.success(canApprove ? "Approval permission granted" : "Approval permission revoked");
 

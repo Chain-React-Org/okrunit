@@ -5,7 +5,7 @@ import { DocsImage } from "@/components/docs/docs-image";
 export const metadata: Metadata = {
   title: "Webhooks & Callbacks",
   description:
-    "Learn how OKrunit delivers approval decisions via webhooks — HMAC verification, payload format, retry logic, and testing.",
+    "Learn how OKrunit delivers approval decisions via webhooks: HMAC verification, payload format, retry logic, and testing.",
 };
 
 export default function WebhooksPage() {
@@ -26,7 +26,7 @@ export default function WebhooksPage() {
         </h3>
         <p className="mt-1 text-sm text-emerald-800">
           If you connected OKrunit via Zapier, Make, n8n, or another platform
-          integration, webhooks are handled automatically — the platform receives
+          integration, webhooks are handled automatically. The platform receives
           the decision and passes it to the next step. You don&apos;t need to set
           up webhooks manually.{" "}
           <Link href="/docs/integrations" className="underline font-medium">
@@ -154,12 +154,12 @@ X-OKrunit-Signature: sha256=a1b2c3d4e5f6...
       <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
         <h4 className="font-semibold text-zinc-900">Payload fields</h4>
         <div className="mt-3 space-y-2 text-sm text-zinc-700">
-          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">event</code> — Always <code className="rounded bg-zinc-100 px-1 py-0.5 text-zinc-800">&quot;approval.decided&quot;</code></div>
-          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">request_id</code> — The approval request ID</div>
-          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">status</code> — &quot;approved&quot;, &quot;rejected&quot;, or &quot;cancelled&quot;</div>
-          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">decided_by</code> — The user who made the decision (id, email, name)</div>
-          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">comment</code> — Optional comment from the approver</div>
-          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">metadata</code> — The metadata you passed when creating the request (unchanged)</div>
+          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">event</code>: Always <code className="rounded bg-zinc-100 px-1 py-0.5 text-zinc-800">&quot;approval.decided&quot;</code></div>
+          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">request_id</code>: The approval request ID</div>
+          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">status</code>: &quot;approved&quot;, &quot;rejected&quot;, or &quot;cancelled&quot;</div>
+          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">decided_by</code>: The user who made the decision (id, email, name)</div>
+          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">comment</code>: Optional comment from the approver</div>
+          <div><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">metadata</code>: The metadata you passed when creating the request (unchanged)</div>
         </div>
       </div>
 
@@ -236,7 +236,7 @@ if (payload.status === "approved") {
   // Continue with the action
   await performAction(payload.metadata);
 } else {
-  // Abort — request was rejected or cancelled
+  // Abort - request was rejected or cancelled
   await cancelAction(payload.metadata);
 }`}</code>
       </pre>

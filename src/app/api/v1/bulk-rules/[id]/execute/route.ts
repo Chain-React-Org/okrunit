@@ -74,7 +74,7 @@ export async function POST(
     if (org.emergency_stop_active) {
       throw new ApiError(
         503,
-        "Emergency stop is active — bulk operations are disabled",
+        "Emergency stop is active. Bulk operations are disabled",
         "EMERGENCY_STOP",
       );
     }

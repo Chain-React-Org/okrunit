@@ -19,7 +19,7 @@ async function screenshot(page: Page, name: string) {
 }
 
 for (const [device, viewport] of Object.entries(VIEWPORTS)) {
-  test.describe(`Landing page — ${device} (${viewport.width}x${viewport.height})`, () => {
+  test.describe(`Landing page - ${device} (${viewport.width}x${viewport.height})`, () => {
     test.use({ viewport });
 
     test("full page screenshot", async ({ page }) => {
