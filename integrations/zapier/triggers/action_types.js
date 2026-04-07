@@ -13,7 +13,7 @@ const actionTypes = {
 
   display: {
     label: "Action Types",
-    description: "Lists the action types configured in your OKRunit organization.",
+    description: "Lists the action types configured in your organization.",
     hidden: true,
   },
 

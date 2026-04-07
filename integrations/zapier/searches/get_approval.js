@@ -9,8 +9,8 @@ const getApproval = {
   noun: "Approval Request",
 
   display: {
-    label: "Get Approval Request",
-    description: "Fetch a single approval request by its ID.",
+    label: "Find Approval Request",
+    description: "Find a specific approval request by its ID.",
   },
 
   operation: {
@@ -26,11 +26,19 @@ const getApproval = {
     ],
 
     perform: async (z, bundle) => {
-      const response = await z.request({
-        url: `${OKRUNIT_URL}/api/v1/approvals/${bundle.inputData.approval_id}`,
-      });
+      try {
+        const response = await z.request({
+          url: `${OKRUNIT_URL}/api/v1/approvals/${bundle.inputData.approval_id}`,
+        });
 
-      return [response.json];
+        return [response.json];
+      } catch (err) {
+        // Zapier searches must return [] when no result is found, not throw.
+        if (err.status === 404) {
+          return [];
+        }
+        throw err;
+      }
     },
 
     sample: {

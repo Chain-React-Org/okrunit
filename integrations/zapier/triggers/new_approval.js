@@ -15,7 +15,7 @@ const newApproval = {
   display: {
     label: "New Approval Request",
     description:
-      "Triggers when a new approval request is created in your OKRunit organization.",
+      "Triggers when a new approval request is created in your organization.",
   },
 
   operation: {
@@ -66,7 +66,7 @@ const newApproval = {
         params,
       });
 
-      // Return newest first — Zapier deduplicates by `id`
+      // Return newest first. Zapier deduplicates by `id`
       return response.json.data || [];
     },
 

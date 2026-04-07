@@ -135,7 +135,7 @@ describe("List Approvals", () => {
     expect(sample.decision_comment).toBeNull();
     expect(sample.created_at).toBe("2026-02-21T10:00:00.000Z");
     expect(sample.updated_at).toBe("2026-02-21T10:00:00.000Z");
-    // Verify exact number of sample fields (16 per spec — same as getApproval)
+    // Verify exact number of sample fields (16 per spec, same as getApproval)
     expect(Object.keys(sample).length).toBe(16);
   });
 

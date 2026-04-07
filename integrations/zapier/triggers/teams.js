@@ -13,7 +13,7 @@ const teams = {
 
   display: {
     label: "Teams",
-    description: "Lists the teams in your OKRunit organization.",
+    description: "Lists the teams in your organization.",
     hidden: true,
   },
 

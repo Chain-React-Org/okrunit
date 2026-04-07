@@ -14,7 +14,7 @@ const teamMembers = {
 
   display: {
     label: "Team Members",
-    description: "Lists the team members in your OKRunit organization.",
+    description: "Lists the team members in your organization.",
     hidden: true,
   },
 

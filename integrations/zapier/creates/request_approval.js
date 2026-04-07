@@ -25,7 +25,7 @@ const requestApproval = {
         type: "string",
         required: false,
         helpText:
-          "A short description of what you want approved (e.g. 'Send invoice #1234 to client'). If left blank, you'll need to edit the title in your OKRunit dashboard at okrunit.com. Use the + button to insert dynamic data from previous steps.",
+          "A short description of what you want approved (e.g. 'Send invoice #1234 to client'). If left blank, you'll need to edit the title in your dashboard. Use the + button to insert dynamic data from previous steps.",
       },
       {
         key: "description",
@@ -41,7 +41,7 @@ const requestApproval = {
         type: "string",
         required: false,
         helpText:
-          'Optional JSON data to attach (e.g. {"order_id": "123"}). Routing rules, priority, expiration, and approvers are all configured in your OKRunit dashboard at okrunit.com.',
+          'Optional JSON data to attach (e.g. {"order_id": "123"}). Routing rules, priority, expiration, and approvers are all configured in your dashboard.',
       },
     ],
 

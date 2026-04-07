@@ -11,7 +11,7 @@ const createApproval = {
   display: {
     label: "Create Activity Log",
     description:
-      "Log an activity in OKRunit for audit and tracking purposes. This does not create an approval request — the Zap continues immediately.",
+      "Log an activity for audit and tracking purposes. This does not create an approval request. The Zap continues immediately.",
   },
 
   operation: {
@@ -38,7 +38,7 @@ const createApproval = {
         type: "string",
         required: false,
         helpText:
-          "Paste the URL of this Zap from your browser address bar so team members can jump back to it from OKRunit.",
+          "Paste the URL of this Zap from your browser address bar so team members can jump back to it from the dashboard.",
       },
       {
         key: "metadata",
