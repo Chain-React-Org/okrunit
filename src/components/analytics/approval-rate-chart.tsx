@@ -28,17 +28,18 @@ export interface ApprovalRateDataPoint {
 
 interface ApprovalRateChartProps {
   data: ApprovalRateDataPoint[];
+  days?: number;
 }
 
 // ---- Component ------------------------------------------------------------
 
-export function ApprovalRateChart({ data }: ApprovalRateChartProps) {
+export function ApprovalRateChart({ data, days = 30 }: ApprovalRateChartProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Approval vs Rejection Rate</CardTitle>
         <CardDescription>
-          Daily approved and rejected counts over the last 30 days
+          Daily approved and rejected counts over the last {days} days
         </CardDescription>
       </CardHeader>
       <CardContent>

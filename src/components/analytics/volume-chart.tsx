@@ -26,17 +26,18 @@ export interface VolumeDataPoint {
 
 interface VolumeChartProps {
   data: VolumeDataPoint[];
+  days?: number;
 }
 
 // ---- Component ------------------------------------------------------------
 
-export function VolumeChart({ data }: VolumeChartProps) {
+export function VolumeChart({ data, days = 30 }: VolumeChartProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Request Volume</CardTitle>
         <CardDescription>
-          Daily approval requests over the last 30 days
+          Daily approval requests over the last {days} days
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -26,17 +26,18 @@ export interface ResponseTimeDataPoint {
 
 interface ResponseTimeChartProps {
   data: ResponseTimeDataPoint[];
+  days?: number;
 }
 
 // ---- Component ------------------------------------------------------------
 
-export function ResponseTimeChart({ data }: ResponseTimeChartProps) {
+export function ResponseTimeChart({ data, days = 30 }: ResponseTimeChartProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Average Response Time</CardTitle>
         <CardDescription>
-          Time to decision per day over the last 30 days (hours)
+          Time to decision per day over the last {days} days (hours)
         </CardDescription>
       </CardHeader>
       <CardContent>

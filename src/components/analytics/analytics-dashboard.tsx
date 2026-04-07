@@ -7,7 +7,10 @@ import { toast } from "sonner";
 import type { VolumeDataPoint } from "./volume-chart";
 import type { ApprovalRateDataPoint } from "./approval-rate-chart";
 import type { ResponseTimeDataPoint } from "./response-time-chart";
+import type { BillingPlan } from "@/lib/types/database";
 import dynamic from "next/dynamic";
+
+const DateRangeSelector = dynamic(() => import("./date-range-selector").then((m) => m.DateRangeSelector));
 
 const VolumeChart = dynamic(() => import("./volume-chart").then((m) => m.VolumeChart));
 const ApprovalRateChart = dynamic(() => import("./approval-rate-chart").then((m) => m.ApprovalRateChart));
@@ -37,6 +40,9 @@ export interface AnalyticsDashboardProps {
   volumeData: VolumeDataPoint[];
   approvalRateData: ApprovalRateDataPoint[];
   responseTimeData: ResponseTimeDataPoint[];
+  /** Current period in days and billing plan for the date range selector */
+  days: number;
+  plan: BillingPlan;
 }
 
 // ---- Component ------------------------------------------------------------
@@ -47,6 +53,8 @@ export function AnalyticsDashboard({
   volumeData,
   approvalRateData,
   responseTimeData,
+  days,
+  plan,
 }: AnalyticsDashboardProps) {
   const makeTrend = (value: number | null, label: string) =>
     value !== null ? { value, label } : undefined;
@@ -98,8 +106,9 @@ export function AnalyticsDashboard({
 
   return (
     <div className="space-y-8">
-      {/* Header with export */}
-      <div className="flex items-center justify-end">
+      {/* Header with date range + export */}
+      <div className="flex items-center justify-end gap-2">
+        <DateRangeSelector currentDays={days} plan={plan} />
         <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5 bg-white dark:bg-card">
           <Download className="size-3.5" />
           Export CSV
@@ -113,7 +122,7 @@ export function AnalyticsDashboard({
           value={stats.total}
           icon={BarChart3}
           subtitle={!trends.totalTrend ? "All time" : undefined}
-          trend={makeTrend(trends.totalTrend, "vs last 30 days")}
+          trend={makeTrend(trends.totalTrend, "vs prev. period")}
           iconColor="text-violet-500"
         />
         <StatCard
@@ -121,7 +130,7 @@ export function AnalyticsDashboard({
           value={stats.pending}
           icon={Clock}
           subtitle={!trends.pendingTrend ? "Awaiting decision" : undefined}
-          trend={makeTrend(trends.pendingTrend, "vs last 30 days")}
+          trend={makeTrend(trends.pendingTrend, "vs prev. period")}
           iconColor="text-amber-500"
         />
         <StatCard
@@ -133,7 +142,7 @@ export function AnalyticsDashboard({
               ? `${stats.approved} approved, ${stats.rejected} rejected`
               : undefined
           }
-          trend={makeTrend(trends.approvalRateTrend, "vs last 30 days")}
+          trend={makeTrend(trends.approvalRateTrend, "vs prev. period")}
           iconColor="text-emerald-500"
         />
         <StatCard
@@ -141,7 +150,7 @@ export function AnalyticsDashboard({
           value={stats.decided}
           icon={Timer}
           subtitle={!trends.decidedTrend ? "Approved + rejected" : undefined}
-          trend={makeTrend(trends.decidedTrend, "vs last 30 days")}
+          trend={makeTrend(trends.decidedTrend, "vs prev. period")}
           iconColor="text-blue-500"
         />
       </div>
@@ -149,10 +158,10 @@ export function AnalyticsDashboard({
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="lg:col-span-2">
-          <VolumeChart data={volumeData} />
+          <VolumeChart data={volumeData} days={days} />
         </div>
-        <ApprovalRateChart data={approvalRateData} />
-        <ResponseTimeChart data={responseTimeData} />
+        <ApprovalRateChart data={approvalRateData} days={days} />
+        <ResponseTimeChart data={responseTimeData} days={days} />
       </div>
 
       {/* Rule suggestions based on approval history */}

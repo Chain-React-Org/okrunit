@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
 import { canUseFeature } from "@/lib/billing/enforce";
-import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/layout/page-header";
 import { SSOConfigForm } from "@/components/settings/sso-config-form";
 import { Shield } from "lucide-react";
@@ -26,7 +25,7 @@ export default async function SSOSettingsPage() {
   const ssoFeature = await canUseFeature(org.id, "sso_saml");
 
   return (
-    <PageContainer>
+    <div className="w-full px-4 py-5 sm:px-6 md:px-8 lg:px-10">
       <PageHeader
         title="SSO"
         description="Configure SAML Single Sign-On for your organization."
@@ -52,6 +51,6 @@ export default async function SSOSettingsPage() {
           </Link>
         </div>
       )}
-    </PageContainer>
+    </div>
   );
 }
