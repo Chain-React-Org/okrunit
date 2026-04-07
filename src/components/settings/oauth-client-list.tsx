@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Copy, Check, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Copy, Check, ExternalLink, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,8 @@ export function OAuthClientList({ clients, role }: OAuthClientListProps) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState<string | null>(null);
+  const [rotateOpen, setRotateOpen] = useState<string | null>(null);
+  const [rotating, setRotating] = useState(false);
   const [creating, setCreating] = useState(false);
   const [secretDisplay, setSecretDisplay] = useState<{
     clientId: string;
@@ -101,6 +103,27 @@ export function OAuthClientList({ clients, role }: OAuthClientListProps) {
     await fetch(`/api/v1/oauth/clients/${id}`, { method: "DELETE" });
     setDeleteOpen(null);
     router.refresh();
+  }
+
+  async function handleRotate(id: string) {
+    setRotating(true);
+    try {
+      const response = await fetch(
+        `/api/v1/oauth/clients/${id}/rotate-secret`,
+        { method: "POST" },
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setSecretDisplay({
+          clientId: data.data.client_id,
+          clientSecret: data.client_secret,
+        });
+        router.refresh();
+      }
+    } finally {
+      setRotating(false);
+      setRotateOpen(null);
+    }
   }
 
   function copyToClipboard(text: string, key: string) {
@@ -272,42 +295,81 @@ export function OAuthClientList({ clients, role }: OAuthClientListProps) {
                     </CardDescription>
                   </div>
                   {canManage && (
-                    <Dialog
-                      open={deleteOpen === client.id}
-                      onOpenChange={(open) =>
-                        setDeleteOpen(open ? client.id : null)
-                      }
-                    >
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon-sm">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Delete OAuth App</DialogTitle>
-                          <DialogDescription>
-                            This will revoke all tokens and permanently delete
-                            &ldquo;{client.name}&rdquo;. This action cannot be
-                            undone.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter>
-                          <Button
-                            variant="outline"
-                            onClick={() => setDeleteOpen(null)}
-                          >
-                            Cancel
+                    <div className="flex items-center gap-1">
+                      <Dialog
+                        open={rotateOpen === client.id}
+                        onOpenChange={(open) =>
+                          setRotateOpen(open ? client.id : null)
+                        }
+                      >
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon-sm">
+                            <RefreshCw className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() => handleDelete(client.id)}
-                          >
-                            Delete
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Rotate Client Secret</DialogTitle>
+                            <DialogDescription>
+                              This will generate a new secret for &ldquo;
+                              {client.name}&rdquo; and revoke all existing
+                              tokens. Any integrations using the old secret will
+                              need to be reconnected.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setRotateOpen(null)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => handleRotate(client.id)}
+                              disabled={rotating}
+                            >
+                              {rotating ? "Rotating..." : "Rotate Secret"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      <Dialog
+                        open={deleteOpen === client.id}
+                        onOpenChange={(open) =>
+                          setDeleteOpen(open ? client.id : null)
+                        }
+                      >
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon-sm">
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Delete OAuth App</DialogTitle>
+                            <DialogDescription>
+                              This will revoke all tokens and permanently delete
+                              &ldquo;{client.name}&rdquo;. This action cannot be
+                              undone.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setDeleteOpen(null)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleDelete(client.id)}
+                            >
+                              Delete
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   )}
                 </div>
               </CardHeader>
