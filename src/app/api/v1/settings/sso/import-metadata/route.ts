@@ -141,6 +141,25 @@ export async function POST(request: NextRequest) {
       certificate = `-----BEGIN CERTIFICATE-----\n${lines.join("\n")}\n-----END CERTIFICATE-----`;
     }
 
+    // Extract SLO URL
+    let sloUrl: string | null = null;
+    const sloServicePattern =
+      /SingleLogoutService[^>]*Binding="[^"]*(?:Redirect|POST)"[^>]*Location="([^"]*)"/gi;
+    let sloMatch;
+    while ((sloMatch = sloServicePattern.exec(xml)) !== null) {
+      if (!sloUrl) sloUrl = sloMatch[1];
+      if (sloMatch[0].includes("Redirect")) {
+        sloUrl = sloMatch[1];
+        break;
+      }
+    }
+    if (!sloUrl) {
+      const altSloPattern =
+        /SingleLogoutService[^>]*Location="([^"]*)"[^>]*Binding="[^"]*(?:Redirect|POST)"/gi;
+      const altSloMatch = altSloPattern.exec(xml);
+      if (altSloMatch) sloUrl = altSloMatch[1];
+    }
+
     if (!entityId && !ssoUrl && !certificate) {
       return NextResponse.json(
         { error: "Could not extract any SAML configuration from the metadata" },
@@ -151,6 +170,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       entity_id: entityId,
       sso_url: ssoUrl,
+      slo_url: sloUrl,
       certificate,
     });
   } catch (err) {

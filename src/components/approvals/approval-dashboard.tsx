@@ -220,27 +220,8 @@ export function ApprovalDashboard({
     loadPreferences();
   }, []);
 
-  // Mark all notifications as read when the requests page mounts,
-  // and continuously mark new ones as read while the user stays on the page.
-  useEffect(() => {
-    // Mark existing notifications as read immediately
-    fetch("/api/v1/notifications/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ all: true }),
-    }).catch(() => {});
-
-    // Listen for new notifications arriving via realtime and mark them read
-    const handler = () => {
-      fetch("/api/v1/notifications/read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ all: true }),
-      }).catch(() => {});
-    };
-    window.addEventListener("notification-received", handler);
-    return () => window.removeEventListener("notification-received", handler);
-  }, []);
+  // NOTE: Notifications are marked as read when the user clicks them
+  // in the notification panel, not automatically on page mount.
 
   // Fetch usage/billing info to show limit banner
   useEffect(() => {

@@ -142,11 +142,11 @@ export function ConsentForm({
             {getInitials(userFullName, userEmail)}
           </AvatarFallback>
         </Avatar>
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div className="flex flex-col min-w-0">
           {userFullName && (
-            <span className="text-sm font-medium truncate">{userFullName}</span>
+            <span className="text-sm font-medium leading-tight truncate">{userFullName}</span>
           )}
-          <span className="text-xs text-muted-foreground truncate">{userEmail}</span>
+          <span className="text-xs text-muted-foreground leading-tight truncate">{userEmail}</span>
         </div>
       </div>
 

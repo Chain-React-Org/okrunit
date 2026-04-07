@@ -1,6 +1,10 @@
 <p align="center">
   <a href="https://okrunit.com">
-    <img src="public/logo_text.png" alt="OKRunit" width="280" />
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="public/logo_text_white.png" />
+      <source media="(prefers-color-scheme: light)" srcset="public/logo_text.png" />
+      <img src="public/logo_text.png" alt="OKRunit" width="280" />
+    </picture>
   </a>
 </p>
 
@@ -137,15 +141,15 @@ OKRunit connects with the tools you already use.
 
 <table>
 <tr>
-<td align="center" width="11%"><img src="public/logos/zapier.svg" width="40" /><br /><sub>Zapier</sub></td>
-<td align="center" width="11%"><img src="public/logos/make.svg" width="40" /><br /><sub>Make</sub></td>
-<td align="center" width="11%"><img src="public/logos/n8n.svg" width="40" /><br /><sub>n8n</sub></td>
-<td align="center" width="11%"><img src="public/logos/github-actions.svg" width="40" /><br /><sub>GitHub Actions</sub></td>
-<td align="center" width="11%"><img src="public/logos/windmill.svg" width="40" /><br /><sub>Windmill</sub></td>
-<td align="center" width="11%"><img src="public/logos/temporal.svg" width="40" /><br /><sub>Temporal</sub></td>
-<td align="center" width="11%"><img src="public/logos/dagster.svg" width="40" /><br /><sub>Dagster</sub></td>
-<td align="center" width="11%"><img src="public/logos/pipedream.svg" width="40" /><br /><sub>Pipedream</sub></td>
-<td align="center" width="11%"><img src="public/logos/prefect.svg" width="40" /><br /><sub>Prefect</sub></td>
+<td align="center" width="11%"><img src="public/logos/platforms/zapier.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Zapier</sub></td>
+<td align="center" width="11%"><img src="public/logos/platforms/make.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Make</sub></td>
+<td align="center" width="11%"><img src="public/logos/platforms/n8n.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>n8n</sub></td>
+<td align="center" width="11%"><img src="public/logos/platforms/github.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>GitHub Actions</sub></td>
+<td align="center" width="11%"><img src="public/logos/platforms/windmill.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Windmill</sub></td>
+<td align="center" width="11%"><img src="public/logos/platforms/temporal.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Temporal</sub></td>
+<td align="center" width="11%"><img src="public/logos/platforms/dagster.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Dagster</sub></td>
+<td align="center" width="11%"><img src="public/logos/platforms/pipedream.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Pipedream</sub></td>
+<td align="center" width="11%"><img src="public/logos/platforms/prefect.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Prefect</sub></td>
 </tr>
 </table>
 
@@ -153,13 +157,11 @@ OKRunit connects with the tools you already use.
 
 <table>
 <tr>
-<td align="center" width="14%"><img src="public/logos/slack.svg" width="40" /><br /><sub>Slack</sub></td>
-<td align="center" width="14%"><img src="public/logos/discord.svg" width="40" /><br /><sub>Discord</sub></td>
-<td align="center" width="14%"><img src="public/logos/teams.svg" width="40" /><br /><sub>Teams</sub></td>
-<td align="center" width="14%"><img src="public/logos/telegram.svg" width="40" /><br /><sub>Telegram</sub></td>
-<td align="center" width="14%"><img src="public/logos/resend.svg" width="40" /><br /><sub>Email</sub></td>
-<td align="center" width="14%"><img src="public/logos/webhook.svg" width="40" /><br /><sub>Webhooks</sub></td>
-<td align="center" width="14%"><img src="public/logos/api.svg" width="40" /><br /><sub>REST API</sub></td>
+<td align="center" width="14%"><img src="public/logos/platforms/slack.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Slack</sub></td>
+<td align="center" width="14%"><img src="public/logos/platforms/discord.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Discord</sub></td>
+<td align="center" width="14%"><img src="public/logos/platforms/teams.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Teams</sub></td>
+<td align="center" width="14%"><img src="public/logos/platforms/telegram.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Telegram</sub></td>
+<td align="center" width="14%"><img src="public/logos/platforms/resend.png" width="40" height="40" style="border-radius: 8px;" /><br /><sub>Email</sub></td>
 </tr>
 </table>
 

@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
-import { getCachedAnalyticsData } from "@/lib/cache/queries";
+import { getCachedAnalyticsData, getCachedOrgLayoutData } from "@/lib/cache/queries";
 import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
+import { PLAN_LIMITS } from "@/lib/billing/plans";
+import { PERIOD_OPTIONS } from "@/components/analytics/date-range-selector";
 import type { VolumeDataPoint } from "@/components/analytics/volume-chart";
 import type { ApprovalRateDataPoint } from "@/components/analytics/approval-rate-chart";
 import type { ResponseTimeDataPoint } from "@/components/analytics/response-time-chart";
@@ -11,11 +13,24 @@ export const metadata = {
   description: "Dashboard analytics and approval statistics.",
 };
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
 
   const orgId = ctx.membership.org_id;
+  const { currentPlan } = await getCachedOrgLayoutData(orgId);
+  const historyDays = PLAN_LIMITS[currentPlan].historyDays;
+
+  // Parse and clamp requested days to plan limit
+  const params = await searchParams;
+  const validDays = new Set<number>(PERIOD_OPTIONS.map((o) => o.days));
+  const rawDays = Number(params.days) || 30;
+  let days = validDays.has(rawDays) ? rawDays : 30;
+  if (historyDays !== -1 && days > historyDays) days = historyDays;
 
   const {
     totalCount: total,
@@ -29,7 +44,7 @@ export default async function AnalyticsPage() {
     volumeData: recentRequests,
     decisionData: decidedRequests,
     responseTimeData: timedRequests,
-  } = await getCachedAnalyticsData(orgId);
+  } = await getCachedAnalyticsData(orgId, days);
 
   const now = new Date();
 
@@ -58,7 +73,7 @@ export default async function AnalyticsPage() {
   };
 
   const volumeMap = new Map<string, number>();
-  for (let i = 29; i >= 0; i--) {
+  for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     volumeMap.set(d.toISOString().slice(0, 10), 0);
@@ -70,7 +85,7 @@ export default async function AnalyticsPage() {
   const volumeData: VolumeDataPoint[] = Array.from(volumeMap.entries()).map(([date, count]) => ({ date, count }));
 
   const rateMap = new Map<string, { approved: number; rejected: number }>();
-  for (let i = 29; i >= 0; i--) {
+  for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     rateMap.set(d.toISOString().slice(0, 10), { approved: 0, rejected: 0 });
@@ -86,7 +101,7 @@ export default async function AnalyticsPage() {
   const approvalRateData: ApprovalRateDataPoint[] = Array.from(rateMap.entries()).map(([date, counts]) => ({ date, ...counts }));
 
   const timeMap = new Map<string, { totalHours: number; count: number }>();
-  for (let i = 29; i >= 0; i--) {
+  for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     timeMap.set(d.toISOString().slice(0, 10), { totalHours: 0, count: 0 });
@@ -119,6 +134,8 @@ export default async function AnalyticsPage() {
       volumeData={volumeData}
       approvalRateData={approvalRateData}
       responseTimeData={responseTimeData}
+      days={days}
+      plan={currentPlan}
     />
   );
 }

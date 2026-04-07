@@ -193,8 +193,30 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
 
   const badgeCount = unreadCount;
 
+  // Mark all unread as read when the panel closes
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen && unreadCount > 0) {
+      handleMarkAllRead();
+    }
+    setOpen(nextOpen);
+  }, [unreadCount]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleClearAll() {
+    try {
+      await fetch("/api/v1/notifications/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clear: true }),
+      });
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch {
+      // Silently fail
+    }
+  }
+
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -242,7 +264,7 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
             </div>
-          ) : notifications.filter((n) => !n.is_read).length === 0 ? (
+          ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-12 text-center">
               <div className="rounded-xl bg-muted p-3">
                 <Inbox className="size-6 text-muted-foreground" />
@@ -257,7 +279,7 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
             </div>
           ) : (
             <div>
-              {notifications.filter((n) => !n.is_read).map((n) => (
+              {notifications.map((n) => (
                 <NotificationRow
                   key={n.id}
                   notification={n}
@@ -273,11 +295,17 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
 
         {/* Footer */}
         {notifications.length > 0 && (
-          <div className="border-t px-4 py-2.5">
+          <div className="flex items-center justify-between border-t px-4 py-2.5">
+            <button
+              onClick={handleClearAll}
+              className="text-xs font-medium text-muted-foreground hover:text-destructive transition-colors"
+            >
+              Clear all
+            </button>
             <Link
               href="/requests"
               onClick={() => setOpen(false)}
-              className="flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:underline"
+              className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
             >
               View all requests
               <ArrowRight className="size-3" />
@@ -332,7 +360,12 @@ function NotificationRow({
     <Link
       href={getNotificationHref(n)}
       onClick={onNavigate}
-      className="flex items-start gap-3 px-4 py-3 transition-colors bg-white dark:bg-card hover:bg-accent border-b border-border/30 last:border-b-0"
+      className={cn(
+        "flex items-start gap-3 px-4 py-3 transition-colors border-b border-border/30 last:border-b-0 hover:bg-accent",
+        n.is_read
+          ? "bg-muted/50 dark:bg-muted/20"
+          : "bg-white dark:bg-card",
+      )}
     >
       {/* Icon */}
       <DisplayIcon className={cn("size-4 shrink-0 mt-0.5", iconColor)} />

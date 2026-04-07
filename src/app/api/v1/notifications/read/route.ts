@@ -19,6 +19,18 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const now = new Date().toISOString();
 
+  if (body.clear === true) {
+    const { error } = await admin
+      .from("in_app_notifications")
+      .delete()
+      .eq("user_id", user.id);
+
+    if (error) {
+      return NextResponse.json({ error: "Failed to clear notifications" }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
+  }
+
   if (body.all === true) {
     let query = admin
       .from("in_app_notifications")

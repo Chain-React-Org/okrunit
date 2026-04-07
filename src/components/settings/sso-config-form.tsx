@@ -17,7 +17,6 @@ import {
   Zap,
   Upload,
   Lock,
-  LogOut,
   KeyRound,
 } from "lucide-react";
 
@@ -50,7 +49,6 @@ function CopyButton({ value, label }: { value: string; label?: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for older browsers
       const textarea = document.createElement("textarea");
       textarea.value = value;
       document.body.appendChild(textarea);
@@ -109,6 +107,9 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
 
   // Advanced section visibility
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // After import, show the domain prompt
+  const [showDomainPrompt, setShowDomainPrompt] = useState(false);
+  const domainInputRef = useRef<HTMLInputElement>(null);
 
   const appUrl = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -142,7 +143,64 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
     fetchConfig();
   }, [fetchConfig]);
 
-  // Import IdP metadata from URL
+  // Save helper — used by both manual save and auto-save after import
+  async function saveConfig(overrides?: {
+    entityId?: string;
+    ssoUrl?: string;
+    certificate?: string;
+    sloUrl?: string;
+    ssoDomain?: string;
+    isActive?: boolean;
+  }) {
+    setSaving(true);
+    setError(null);
+    setFieldErrors({});
+    setSaved(false);
+
+    try {
+      const res = await fetch("/api/v1/settings/sso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entity_id: overrides?.entityId ?? entityId,
+          sso_url: overrides?.ssoUrl ?? ssoUrl,
+          certificate: overrides?.certificate ?? certificate,
+          certificate_secondary: certificateSecondary,
+          sso_domain: overrides?.ssoDomain ?? ssoDomain,
+          is_active: overrides?.isActive ?? isActive,
+          enforce_sso: enforceSso,
+          slo_url: (overrides?.sloUrl ?? sloUrl) || null,
+          attribute_mapping: {
+            email: attrEmail,
+            firstName: attrFirstName,
+            lastName: attrLastName,
+          },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.details) setFieldErrors(data.details);
+        setError(data.error || "Failed to save SSO configuration");
+        return false;
+      }
+
+      setExistingConfig(data.config);
+      setSaved(true);
+      setCertificate("");
+      setCertificateSecondary("");
+      setTimeout(() => setSaved(false), 3000);
+      return true;
+    } catch {
+      setError("Failed to save SSO configuration");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Import IdP metadata
   async function handleImportMetadata() {
     if (importMode === "url" && !metadataUrl.trim()) return;
 
@@ -157,7 +215,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
         body: JSON.stringify(
           importMode === "url"
             ? { metadata_url: metadataUrl.trim() }
-            : { metadata_xml: metadataUrl }, // metadataUrl doubles as XML content for file mode
+            : { metadata_xml: metadataUrl },
         ),
       });
 
@@ -168,17 +226,46 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
         return;
       }
 
-      // Auto-fill the form fields
-      if (data.entity_id) setEntityId(data.entity_id);
-      if (data.sso_url) setSsoUrl(data.sso_url);
+      // Auto-fill form fields
+      const newEntityId = data.entity_id || entityId;
+      const newSsoUrl = data.sso_url || ssoUrl;
+      const newCert = data.certificate || certificate;
+      const newSloUrl = data.slo_url || sloUrl;
+
+      setEntityId(newEntityId);
+      setSsoUrl(newSsoUrl);
       if (data.certificate) setCertificate(data.certificate);
+      if (data.slo_url) setSloUrl(data.slo_url);
 
       setImportSuccess(true);
-      setTimeout(() => setImportSuccess(false), 3000);
+
+      // If domain is already set (editing existing config), auto-save immediately
+      if (ssoDomain) {
+        await saveConfig({
+          entityId: newEntityId,
+          ssoUrl: newSsoUrl,
+          certificate: newCert,
+          sloUrl: newSloUrl,
+        });
+      } else {
+        // First-time setup — prompt for domain
+        setShowDomainPrompt(true);
+        setTimeout(() => domainInputRef.current?.focus(), 100);
+      }
     } catch {
       setError("Failed to import metadata. Check the input and try again.");
     } finally {
       setImporting(false);
+    }
+  }
+
+  // Save after entering domain in the quick setup flow
+  async function handleDomainSave() {
+    if (!ssoDomain.trim()) return;
+    const success = await saveConfig({ isActive: true });
+    if (success) {
+      setShowDomainPrompt(false);
+      setIsActive(true);
     }
   }
 
@@ -191,7 +278,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
     reader.onload = (event) => {
       const xml = event.target?.result as string;
       if (xml) {
-        setMetadataUrl(xml); // Store XML content in metadataUrl for submission
+        setMetadataUrl(xml);
         setImportMode("file");
       }
     };
@@ -218,52 +305,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setError(null);
-    setFieldErrors({});
-    setSaved(false);
-
-    try {
-      const res = await fetch("/api/v1/settings/sso", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          entity_id: entityId,
-          sso_url: ssoUrl,
-          certificate,
-          certificate_secondary: certificateSecondary,
-          sso_domain: ssoDomain,
-          is_active: isActive,
-          enforce_sso: enforceSso,
-          slo_url: sloUrl || null,
-          attribute_mapping: {
-            email: attrEmail,
-            firstName: attrFirstName,
-            lastName: attrLastName,
-          },
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (data.details) {
-          setFieldErrors(data.details);
-        }
-        setError(data.error || "Failed to save SSO configuration");
-        return;
-      }
-
-      setExistingConfig(data.config);
-      setSaved(true);
-      setCertificate("");
-      setCertificateSecondary("");
-      setTimeout(() => setSaved(false), 3000);
-    } catch {
-      setError("Failed to save SSO configuration");
-    } finally {
-      setSaving(false);
-    }
+    await saveConfig();
   };
 
   if (loading) {
@@ -277,7 +319,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
 
   return (
     <div className="space-y-6">
-      {/* Status card */}
+      {/* 1. Status card */}
       <div className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -308,7 +350,6 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
             </div>
           </div>
 
-          {/* Test Connection button */}
           {existingConfig && (
             <button
               type="button"
@@ -330,7 +371,6 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
           )}
         </div>
 
-        {/* Test result message */}
         {testResult && (
           <div className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
             testResult.success
@@ -344,15 +384,90 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
         )}
       </div>
 
-      {/* Quick setup */}
+      {/* 2. Service Provider Details — shown FIRST so admin can configure their IdP */}
+      <div className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold">
+              {!existingConfig && <span className="mr-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">Step 1</span>}
+              Service Provider Details
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {!existingConfig
+                ? "Start here — copy these values into your identity provider (Okta, Azure AD, Google Workspace, etc.)."
+                : "Provide these values to your identity provider when configuring the SAML integration."}
+            </p>
+          </div>
+          <a
+            href="/api/auth/saml/metadata"
+            download="okrunit-sp-metadata.xml"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+          >
+            <Download className="size-3.5" />
+            Download SP Metadata
+          </a>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">ACS URL (Assertion Consumer Service)</label>
+              <CopyButton value={`${appUrl}/api/auth/saml/callback`} label="ACS URL" />
+            </div>
+            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
+              {appUrl}/api/auth/saml/callback
+            </code>
+          </div>
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">Entity ID / Audience URI</label>
+              <CopyButton value={`${appUrl}/api/auth/saml/metadata`} label="Entity ID" />
+            </div>
+            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
+              {appUrl}/api/auth/saml/metadata
+            </code>
+          </div>
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">Single Logout URL</label>
+              <CopyButton value={`${appUrl}/api/auth/saml/logout`} label="SLO URL" />
+            </div>
+            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
+              {appUrl}/api/auth/saml/logout
+            </code>
+          </div>
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">Name ID Format</label>
+              <CopyButton value="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress" label="Name ID Format" />
+            </div>
+            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
+              urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+            </code>
+          </div>
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground">SP Metadata URL</label>
+              <CopyButton value={`${appUrl}/api/auth/saml/metadata`} label="Metadata URL" />
+            </div>
+            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
+              {appUrl}/api/auth/saml/metadata
+            </code>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Import IdP metadata */}
       <div className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
         <div className="mb-4 flex items-center gap-3">
           <LinkIcon className="size-5 text-muted-foreground" />
           <div>
-            <h3 className="text-lg font-semibold">Quick Setup</h3>
+            <h3 className="text-lg font-semibold">
+              {!existingConfig && <span className="mr-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">Step 2</span>}
+              Import IdP Metadata
+            </h3>
             <p className="text-sm text-muted-foreground">
-              Import your identity provider&apos;s metadata to auto-configure everything.
-              Works with Okta, Azure AD, Google Workspace, OneLogin, and any SAML 2.0 provider.
+              Paste your identity provider&apos;s metadata URL or upload the XML file.
+              This auto-fills everything — Entity ID, SSO URL, SLO URL, and certificate.
             </p>
           </div>
         </div>
@@ -443,14 +558,54 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
           </div>
         )}
 
-        {importSuccess && (
+        {/* Domain prompt after first-time import */}
+        {showDomainPrompt && (
+          <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-950/30">
+            <p className="mb-3 text-sm font-medium text-green-800 dark:text-green-300">
+              <CheckCircle2 className="mr-1.5 inline size-4" />
+              IdP configuration imported. Enter your email domain to finish setup.
+            </p>
+            <div className="flex gap-3">
+              <input
+                ref={domainInputRef}
+                type="text"
+                value={ssoDomain}
+                onChange={(e) => setSsoDomain(e.target.value.toLowerCase())}
+                placeholder="company.com"
+                className="flex-1 rounded-lg border border-[var(--border)] bg-white dark:bg-zinc-900 px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleDomainSave();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleDomainSave}
+                disabled={saving || !ssoDomain.trim()}
+                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+                {saving ? "Saving..." : "Enable SSO"}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-green-700 dark:text-green-400">
+              Users with @{ssoDomain || "company.com"} emails will be able to sign in via SSO.
+            </p>
+          </div>
+        )}
+
+        {/* Success message for import-then-auto-save */}
+        {importSuccess && !showDomainPrompt && (
           <p className="mt-3 text-sm text-green-600">
-            IdP configuration imported. Enter your email domain below and save.
+            <CheckCircle2 className="mr-1.5 inline size-4" />
+            Configuration imported and saved.
           </p>
         )}
       </div>
 
-      {/* Configuration form */}
+      {/* 4. Configuration form — for manual entry or editing */}
       <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
         <div className="mb-6 flex items-center gap-3">
           <Shield className="size-5 text-muted-foreground" />
@@ -464,7 +619,7 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
         )}
 
         <div className="space-y-5">
-          {/* Email domain — the most important field, shown first */}
+          {/* Email domain */}
           <div>
             <label htmlFor="sso-domain" className="mb-1.5 block text-sm font-medium">
               Email Domain
@@ -504,6 +659,9 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
               )}
               {ssoUrl && (
                 <p className="truncate text-xs text-muted-foreground">{ssoUrl}</p>
+              )}
+              {sloUrl && (
+                <p className="truncate text-xs text-muted-foreground">SLO: {sloUrl}</p>
               )}
               {(existingConfig?.certificate_preview || certificate) && (
                 <p className="text-xs text-green-600">Certificate configured</p>
@@ -763,73 +921,6 @@ export function SSOConfigForm({ orgId }: SSOConfigFormProps) {
           )}
         </div>
       </form>
-
-      {/* Service Provider info */}
-      <div className="rounded-xl border border-[var(--border)] bg-card p-6 shadow-[var(--shadow-card)]">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold">Service Provider Details</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Provide these values to your identity provider when configuring the SAML integration.
-            </p>
-          </div>
-          <a
-            href="/api/auth/saml/metadata"
-            download="okrunit-sp-metadata.xml"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
-          >
-            <Download className="size-3.5" />
-            Download SP Metadata
-          </a>
-        </div>
-        <div className="space-y-3">
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="text-xs font-medium text-muted-foreground">ACS URL (Assertion Consumer Service)</label>
-              <CopyButton value={`${appUrl}/api/auth/saml/callback`} label="ACS URL" />
-            </div>
-            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
-              {appUrl}/api/auth/saml/callback
-            </code>
-          </div>
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="text-xs font-medium text-muted-foreground">Entity ID / Audience URI</label>
-              <CopyButton value={`${appUrl}/api/auth/saml/metadata`} label="Entity ID" />
-            </div>
-            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
-              {appUrl}/api/auth/saml/metadata
-            </code>
-          </div>
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="text-xs font-medium text-muted-foreground">Single Logout URL</label>
-              <CopyButton value={`${appUrl}/api/auth/saml/logout`} label="SLO URL" />
-            </div>
-            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
-              {appUrl}/api/auth/saml/logout
-            </code>
-          </div>
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="text-xs font-medium text-muted-foreground">Name ID Format</label>
-              <CopyButton value="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress" label="Name ID Format" />
-            </div>
-            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
-              urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
-            </code>
-          </div>
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="text-xs font-medium text-muted-foreground">SP Metadata URL</label>
-              <CopyButton value={`${appUrl}/api/auth/saml/metadata`} label="Metadata URL" />
-            </div>
-            <code className="block rounded-md border border-[var(--border)] bg-muted/30 px-3 py-2 text-xs">
-              {appUrl}/api/auth/saml/metadata
-            </code>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

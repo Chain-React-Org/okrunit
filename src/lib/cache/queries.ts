@@ -551,7 +551,7 @@ export async function getCachedRequestsData(orgId: string) {
 // Analytics page data
 // ---------------------------------------------------------------------------
 
-export async function getCachedAnalyticsData(orgId: string) {
+export async function getCachedAnalyticsData(orgId: string, days: number = 30) {
   "use cache";
   cacheTag(CacheTags.analytics(orgId), CacheTags.requests(orgId));
   cacheLife("minutes");
@@ -559,8 +559,8 @@ export async function getCachedAnalyticsData(orgId: string) {
   const admin = createAdminClient();
 
   const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString();
+  const periodStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+  const prevPeriodStart = new Date(now.getTime() - days * 2 * 24 * 60 * 60 * 1000).toISOString();
 
   const [
     { count: totalCount },
@@ -579,13 +579,13 @@ export async function getCachedAnalyticsData(orgId: string) {
     admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending"),
     admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved"),
     admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "rejected"),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).gte("created_at", sixtyDaysAgo).lte("created_at", thirtyDaysAgo),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending").gte("created_at", sixtyDaysAgo).lte("created_at", thirtyDaysAgo),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved").gte("created_at", sixtyDaysAgo).lte("created_at", thirtyDaysAgo),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "rejected").gte("created_at", sixtyDaysAgo).lte("created_at", thirtyDaysAgo),
-    admin.from("approval_requests").select("created_at").eq("org_id", orgId).gte("created_at", thirtyDaysAgo).order("created_at"),
-    admin.from("approval_requests").select("status, decided_at").eq("org_id", orgId).not("decided_at", "is", null).gte("decided_at", thirtyDaysAgo),
-    admin.from("approval_requests").select("created_at, decided_at").eq("org_id", orgId).not("decided_at", "is", null).gte("created_at", thirtyDaysAgo),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).gte("created_at", prevPeriodStart).lte("created_at", periodStart),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending").gte("created_at", prevPeriodStart).lte("created_at", periodStart),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved").gte("created_at", prevPeriodStart).lte("created_at", periodStart),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "rejected").gte("created_at", prevPeriodStart).lte("created_at", periodStart),
+    admin.from("approval_requests").select("created_at").eq("org_id", orgId).gte("created_at", periodStart).order("created_at"),
+    admin.from("approval_requests").select("status, decided_at").eq("org_id", orgId).not("decided_at", "is", null).gte("decided_at", periodStart),
+    admin.from("approval_requests").select("created_at, decided_at").eq("org_id", orgId).not("decided_at", "is", null).gte("created_at", periodStart),
   ]);
 
   return {
