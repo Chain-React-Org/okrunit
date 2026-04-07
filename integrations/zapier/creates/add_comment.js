@@ -33,13 +33,24 @@ const addComment = {
     ],
 
     perform: async (z, bundle) => {
-      const response = await z.request({
-        method: "POST",
-        url: `${OKRUNIT_URL}/api/v1/approvals/${bundle.inputData.approval_id}/comments`,
-        body: { body: bundle.inputData.body },
-      });
+      try {
+        const response = await z.request({
+          method: "POST",
+          url: `${OKRUNIT_URL}/api/v1/approvals/${bundle.inputData.approval_id}/comments`,
+          body: { body: bundle.inputData.body },
+        });
 
-      return response.json;
+        return response.json;
+      } catch (err) {
+        if (err.status === 404) {
+          throw new z.errors.Error(
+            "The approval request was not found. It may have been deleted.",
+            "NOT_FOUND",
+            404,
+          );
+        }
+        throw err;
+      }
     },
 
     sample: {

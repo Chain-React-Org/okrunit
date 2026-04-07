@@ -6,17 +6,17 @@ Native Zapier integration for the [OKRunit](https://www.okrunit.com) human-in-th
 
 ### Triggers
 
-- **Approval Decided** — Fires when an approval request is approved or rejected. Supports filtering by decision type and priority.
+- **Approval Decided** - Fires when an approval request is approved or rejected. Supports filtering by decision type and priority.
 
 ### Actions (Creates)
 
-- **Create Approval Request** — Submit a new approval request for human review with title, priority, description, metadata, and more.
-- **Add Comment** — Add a comment to an existing approval request.
+- **Create Approval Request** - Submit a new approval request for human review with title, priority, description, metadata, and more.
+- **Add Comment** - Add a comment to an existing approval request.
 
 ### Searches
 
-- **Get Approval Request** — Fetch a single approval by its UUID.
-- **Find Approvals** — Search approval requests with status, priority, and full-text filters.
+- **Get Approval Request** - Fetch a single approval by its UUID.
+- **Find Approvals** - Search approval requests with status, priority, and full-text filters.
 
 ## Setup
 

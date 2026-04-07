@@ -1,6 +1,6 @@
 ## 1.5.0
 
-- New trigger! New Approval Request — triggers when a new approval is created
+- New trigger! New Approval Request - triggers when a new approval is created
 - Add status and priority filter fields to Approval Decided trigger
 - Add priority filter to Find Approvals search
 - Register hidden dropdown triggers (action types, team members, teams) in app definition

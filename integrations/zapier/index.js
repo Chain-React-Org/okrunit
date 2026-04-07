@@ -12,7 +12,7 @@ const {
 const newApproval = require("./triggers/new_approval");
 const approvalDecided = require("./triggers/approval_decided");
 
-// Triggers (hidden — power dynamic dropdowns in the Zap editor)
+// Triggers (hidden, power dynamic dropdowns in the Zap editor)
 const actionTypes = require("./triggers/action_types");
 const teamMembers = require("./triggers/team_members");
 const teams = require("./triggers/teams");

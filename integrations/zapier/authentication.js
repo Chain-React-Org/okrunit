@@ -2,7 +2,7 @@
 // OKRunit Zapier Integration -- OAuth 2.0 Authentication
 // ---------------------------------------------------------------------------
 // The OKRUNIT_URL is set via the Zapier Developer Portal environment
-// variables. Users do NOT need to enter any URL — they just click "Connect".
+// variables. Users do NOT need to enter any URL. They just click "Connect".
 // ---------------------------------------------------------------------------
 
 const OKRUNIT_URL =
@@ -67,7 +67,7 @@ const authentication = {
     scope: "approvals:read approvals:write comments:write",
   },
 
-  // No pre-auth fields — users just click "Connect" and authorize.
+  // No pre-auth fields. Users just click "Connect" and authorize.
   fields: [],
 
   test: async (z, bundle) => {
@@ -107,11 +107,14 @@ const handleErrors = (response, z) => {
   }
   if (response.status >= 400) {
     const body = response.json;
-    throw new z.errors.Error(
-      body.error || body.error_description || `API error: ${response.status}`,
+    const message = body.error || body.error_description || `API error: ${response.status}`;
+    const err = new z.errors.Error(
+      message,
       body.code || "API_ERROR",
       response.status,
     );
+    err.status = response.status;
+    throw err;
   }
   return response;
 };
