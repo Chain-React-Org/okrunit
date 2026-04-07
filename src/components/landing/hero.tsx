@@ -55,7 +55,7 @@ function AnimatedBackground() {
     ctx.save();
     ctx.scale(dpr, dpr);
 
-    // Aurora blobs — large, slow, subtle orange/amber tinted for dark theme
+    // Aurora blobs: large, slow, subtle orange/amber tinted for dark theme
     const blobs = [
       { cx: w * 0.2 + Math.sin(t * 0.7) * w * 0.12, cy: h * 0.05 + Math.cos(t * 0.5) * h * 0.02, rx: w * 0.4, ry: h * 0.06, color: "rgba(255,145,29,0.03)" },
       { cx: w * 0.75 + Math.cos(t * 0.5) * w * 0.1, cy: h * 0.03 + Math.sin(t * 0.7) * h * 0.015, rx: w * 0.35, ry: h * 0.05, color: "rgba(255,100,0,0.02)" },
@@ -74,7 +74,7 @@ function AnimatedBackground() {
       ctx.fill();
     }
 
-    // Flowing wave lines — very subtle
+    // Flowing wave lines, very subtle
     for (let i = 0; i < 6; i++) {
       const yBase = h * (0.03 + i * 0.07);
       const alpha = 0.015 + (i % 3) * 0.005;
@@ -88,7 +88,7 @@ function AnimatedBackground() {
       ctx.stroke();
     }
 
-    // Floating motes — tiny glowing particles
+    // Floating motes: tiny glowing particles
     for (let i = 0; i < 20; i++) {
       const seed = i * 137.508;
       const mx = ((seed * 7.3 + t * 8 * (0.3 + (i % 5) * 0.1)) % w + w) % w;
@@ -330,7 +330,7 @@ function MockDashboard() {
 
   const approvals = [
     { title: "Delete user account #4821", desc: "Permanently remove user and all associated data", source: "Zapier", time: "2 min ago", status: "Pending", statusColor: "#f59e0b", priority: "High", prioColor: "#ef4444" },
-    { title: "Send bulk email (2,400 recipients)", desc: "Marketing campaign — Q1 product launch", source: "n8n", time: "8 min ago", status: "Approved", statusColor: "#22c55e", priority: "Medium", prioColor: "#f59e0b" },
+    { title: "Send bulk email (2,400 recipients)", desc: "Marketing campaign, Q1 product launch", source: "n8n", time: "8 min ago", status: "Approved", statusColor: "#22c55e", priority: "Medium", prioColor: "#f59e0b" },
     { title: "Deploy to production v3.2.1", desc: "Release includes auth fix and new webhook endpoint", source: "Make", time: "14 min ago", status: "Pending", statusColor: "#f59e0b", priority: "High", prioColor: "#ef4444" },
     { title: "Update billing plan for org #127", desc: "Upgrade from Pro to Enterprise tier", source: "Zapier", time: "23 min ago", status: "Approved", statusColor: "#22c55e", priority: "Low", prioColor: "#6b7280" },
   ];
@@ -353,7 +353,7 @@ function MockDashboard() {
         <div className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
       </div>
 
-      {/* App layout — dark themed */}
+      {/* App layout, dark themed */}
       <div className="flex" style={{ backgroundColor: "#0a0a0a", height: "380px" }}>
         {/* Sidebar */}
         <div
@@ -716,7 +716,7 @@ export function Hero({ user }: HeroProps) {
               step: "3",
               icon: MessageSquare,
               title: "Decide",
-              description: "Approve or reject from anywhere — dashboard, email, Slack, or mobile. Your automation resumes instantly with the decision.",
+              description: "Approve or reject from anywhere: dashboard, email, Slack, or mobile. Your automation resumes instantly with the decision.",
             },
           ].map((item, i) => (
             <FadeIn key={item.step} delay={i * 100}>

@@ -3,8 +3,8 @@
 # Creates an approval request and polls until a decision is made.
 #
 # Environment variables:
-#   OKRUNIT_API_KEY  (required) — API key starting with gk_
-#   OKRUNIT_API_URL  (optional) — Base URL, defaults to https://app.okrunit.com
+#   OKRUNIT_API_KEY  (required)  API key starting with gk_
+#   OKRUNIT_API_URL  (optional)  Base URL, defaults to https://app.okrunit.com
 #
 # Usage:
 #   ./approve.sh --title "Destroy production DB" --priority critical
@@ -136,14 +136,14 @@ while [[ $(date +%s) -lt $DEADLINE ]]; do
   if [[ "$STATUS" == "approved" ]]; then
     DECIDED_BY=$(echo "$POLL_RESPONSE" | jq -r '.decided_by_name // "unknown"')
     COMMENT=$(echo "$POLL_RESPONSE" | jq -r '.decision_comment // empty')
-    echo "Approved by ${DECIDED_BY}${COMMENT:+ — $COMMENT}"
+    echo "Approved by ${DECIDED_BY}${COMMENT:+: $COMMENT}"
     exit 0
   fi
 
   if [[ "$STATUS" == "rejected" ]]; then
     DECIDED_BY=$(echo "$POLL_RESPONSE" | jq -r '.decided_by_name // "unknown"')
     COMMENT=$(echo "$POLL_RESPONSE" | jq -r '.decision_comment // empty')
-    echo "Rejected by ${DECIDED_BY}${COMMENT:+ — $COMMENT}" >&2
+    echo "Rejected by ${DECIDED_BY}${COMMENT:+: $COMMENT}" >&2
     exit 1
   fi
 

@@ -42,7 +42,7 @@ function extractStringValue(src, key) {
 }
 
 // ===========================================================================
-// 1. okrunit.app — shared app component
+// 1. okrunit.app - shared app component
 // ===========================================================================
 
 describe("okrunit.app.mts", () => {
@@ -71,7 +71,7 @@ describe("okrunit.app.mts", () => {
   describe("priority propDefinition", () => {
     test("has 'All' option", () => {
       // Already tested via status, but verify priority block specifically
-      // Both status and priority have All — just verify all priority values
+      // Both status and priority have All. Just verify all priority values
       for (const p of ["Low", "Medium", "High", "Critical"]) {
         expect(appSrc).toContain(`"${p}"`);
       }
@@ -551,7 +551,7 @@ describe("cross-component consistency", () => {
 });
 
 // ===========================================================================
-// 9. Spec compliance — field name alignment with module-specs.md
+// 9. Spec compliance - field name alignment with module-specs.md
 // ===========================================================================
 
 describe("spec compliance", () => {

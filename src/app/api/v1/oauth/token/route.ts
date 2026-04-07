@@ -3,9 +3,9 @@
 // POST /api/v1/oauth/token
 // ---------------------------------------------------------------------------
 // Supports three grant types:
-//   1. authorization_code — exchange an auth code for access + refresh tokens
-//   2. refresh_token      — rotate a refresh token for new tokens
-//   3. client_credentials — machine-to-machine (no user context)
+//   1. authorization_code - exchange an auth code for access + refresh tokens
+//   2. refresh_token      - rotate a refresh token for new tokens
+//   3. client_credentials - machine-to-machine (no user context)
 // ---------------------------------------------------------------------------
 
 import { NextResponse } from "next/server";
@@ -111,7 +111,7 @@ async function handleAuthorizationCode(
   }
 
   // Verify client_secret for confidential (org-scoped) clients.
-  // Platform clients (org_id is null) are public clients — they skip secret
+  // Platform clients (org_id is null) are public clients. They skip secret
   // validation and rely on redirect URI validation + authorization code flow.
   const isPlatformClient = client.org_id === null;
   if (client_secret && client_secret !== "not_required") {
@@ -152,7 +152,7 @@ async function handleAuthorizationCode(
   }
 
   // Verify PKCE if the code was issued with a challenge.
-  // Confidential clients (authenticated via client_secret) can skip PKCE —
+  // Confidential clients (authenticated via client_secret) can skip PKCE.
   // it's primarily a protection for public clients that can't store secrets.
   if (authCode.code_challenge && code_verifier) {
     if (
@@ -175,7 +175,7 @@ async function handleAuthorizationCode(
     );
   }
 
-  // Mark the code as used (atomic — prevents race conditions).
+  // Mark the code as used (atomic, prevents race conditions).
   const { error: updateError } = await admin
     .from("oauth_authorization_codes")
     .update({ used_at: new Date().toISOString() })
@@ -319,7 +319,7 @@ async function handleRefreshToken(
       return oauthError("invalid_grant", "Invalid refresh token.");
     }
 
-    // Grace period hit — return the existing new tokens' info.
+    // Grace period hit. Return the existing new tokens' info.
     // This handles network retries where the client didn't receive the response.
     // For simplicity, generate fresh tokens again.
   }
@@ -334,7 +334,7 @@ async function handleRefreshToken(
   }
 
   if (token.used_at) {
-    // Token reuse detected — potential token theft. Revoke all tokens for this chain.
+    // Token reuse detected. Potential token theft. Revoke all tokens for this chain.
     await admin
       .from("oauth_refresh_tokens")
       .update({ revoked_at: new Date().toISOString() })

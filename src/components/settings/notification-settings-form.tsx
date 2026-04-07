@@ -116,7 +116,7 @@ export function NotificationSettingsForm({
   const [isSaving, setIsSaving] = useState(false);
 
   // ---------------------------------------------------------------------------
-  // Save handler — accepts overrides so it can be called immediately on toggle
+  // Save handler. Accepts overrides so it can be called immediately on toggle
   // ---------------------------------------------------------------------------
 
   async function saveSettings(overrides: Record<string, unknown> = {}) {

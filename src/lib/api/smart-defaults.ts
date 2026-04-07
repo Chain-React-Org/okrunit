@@ -70,7 +70,7 @@ export async function applyUserNotificationDefaults(
   const defaults = getSmartDefaults(timezone);
   const admin = createAdminClient();
 
-  // Upsert notification settings — only if they don't already exist
+  // Upsert notification settings - only if they don't already exist
   const { data: existing } = await admin
     .from("notification_settings")
     .select("id")

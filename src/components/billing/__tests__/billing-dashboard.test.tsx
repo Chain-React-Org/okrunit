@@ -72,7 +72,7 @@ describe("BillingDashboard", () => {
       render(<BillingDashboard {...defaultProps} />);
       expect(screen.getByText("Subscription")).toBeTruthy();
       expect(screen.getByText("My plan")).toBeTruthy();
-      // Plan name appears in badge and elsewhere — use getAllByText
+      // Plan name appears in badge and elsewhere. Use getAllByText.
       expect(screen.getAllByText("Free").length).toBeGreaterThanOrEqual(1);
     });
 
@@ -97,25 +97,25 @@ describe("BillingDashboard", () => {
 
     it("displays connection usage", () => {
       render(<BillingDashboard {...defaultProps} />);
-      // "Connections" appears in subscription table and comparison — use getAllByText
+      // "Connections" appears in subscription table and comparison. Use getAllByText.
       expect(screen.getAllByText("Connections").length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText(/1 \/ 2 active/)).toBeTruthy();
+      expect(screen.getByText(/1 \/ 2$/m)).toBeTruthy();
     });
 
     it("displays team member usage", () => {
       render(<BillingDashboard {...defaultProps} />);
       expect(screen.getByText("Members")).toBeTruthy();
-      expect(screen.getByText(/2 \/ 3 members/)).toBeTruthy();
+      expect(screen.getByText(/2 \/ 3$/m)).toBeTruthy();
     });
 
-    it("shows 'used' label for unlimited plan requests", () => {
+    it("shows unlimited label for unlimited plan requests", () => {
       render(
         <BillingDashboard
           {...defaultProps}
           subscription={makeSubscription("pro")}
         />,
       );
-      expect(screen.getByText(/42 used/)).toBeTruthy();
+      expect(screen.getByText(/42 \/ Unlimited/)).toBeTruthy();
     });
   });
 

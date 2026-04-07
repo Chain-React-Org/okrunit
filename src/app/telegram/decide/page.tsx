@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 // ---------------------------------------------------------------------------
-// Telegram Mini App — Decision Form
+// Telegram Mini App - Decision Form
 // ---------------------------------------------------------------------------
 //
 // Opened as a Telegram Web App popup when a user clicks Approve or Reject

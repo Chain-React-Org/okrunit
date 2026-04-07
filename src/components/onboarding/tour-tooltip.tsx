@@ -192,7 +192,7 @@ export function TourTooltip({
       const spaceAbove = r.top;
       const spaceBelow = vh - r.bottom;
       if (spaceAbove > spaceBelow) finalPos = "top";
-      // Otherwise stay at bottom — clampTop will keep it on screen
+      // Otherwise stay at bottom. clampTop will keep it on screen
     }
     if (finalPos === "top" && r.top - gap - 200 < 0) finalPos = "bottom";
 
@@ -242,9 +242,9 @@ export function TourTooltip({
       {/* Overlay */}
       {targetRect && !isCentered && highlightMode === "full-width" ? (
         <div className="fixed inset-0 z-[9998] pointer-events-none animate-in fade-in duration-200" onClick={onClose}>
-          {/* Top bar — full width, from top of viewport to top of content */}
+          {/* Top bar: full width, from top of viewport to top of content */}
           <div className="absolute inset-x-0 top-0 bg-black/40 pointer-events-auto" style={{ height: targetRect.top - 8 }} />
-          {/* Left bar — sidebar column, from content top to bottom of viewport */}
+          {/* Left bar: sidebar column, from content top to bottom of viewport */}
           <div className="absolute bottom-0 left-0 bg-black/40 pointer-events-auto" style={{ top: targetRect.top - 8, width: targetRect.left - 8 }} />
         </div>
       ) : targetRect && !isCentered && highlightMode === "no-ring" ? (
@@ -262,7 +262,7 @@ export function TourTooltip({
         <div className="fixed inset-0 z-[9998] bg-black/40 animate-in fade-in duration-200" onClick={onClose} />
       )}
 
-      {/* Highlight ring around target — clamped so it doesn't go off-screen */}
+      {/* Highlight ring around target, clamped so it doesn't go off-screen */}
       {targetRect && !isCentered && highlightMode !== "full-width" && highlightMode !== "no-ring" && (() => {
         const ringPad = 4;
         const ringTop = Math.max(0, targetRect.top - ringPad);
@@ -303,7 +303,7 @@ export function TourTooltip({
               </Button>
             </div>
           </div>
-          {/* Progress bar — integrated inside the card padding */}
+          {/* Progress bar, integrated inside the card padding */}
           <div className="mt-4 h-1 rounded-full bg-muted overflow-hidden">
             <div className="h-full rounded-full bg-primary transition-all duration-500 ease-out" style={{ width: `${(stepNumber / totalSteps) * 100}%` }} />
           </div>

@@ -554,7 +554,7 @@ export function AccountSettings({
             Notification Preferences
           </CardTitle>
           <CardDescription>
-            These settings control notifications sent directly to you — like
+            These settings control notifications sent directly to you, like
             emails when a new approval request is created or decided. Org-wide
             messaging channels (Slack, Discord, etc.) are configured separately
             under Messaging.

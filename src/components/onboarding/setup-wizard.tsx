@@ -45,14 +45,14 @@ export function SetupWizard({
     if (!loaded || finishing) return;
 
     if (displayedStep === null) {
-      // Initial render — show immediately
+      // Initial render. Show immediately
       setDisplayedStep(currentStep);
       prevStepRef.current = currentStep;
       return;
     }
 
     if (currentStep !== prevStepRef.current) {
-      // Step changed — trigger exit animation, then swap content
+      // Step changed. Trigger exit animation, then swap content
       setIsAnimating(true);
       const timer = setTimeout(() => {
         setDisplayedStep(currentStep);
@@ -105,7 +105,7 @@ export function SetupWizard({
     try {
       await fetch("/api/auth/complete-setup", { method: "POST" });
     } catch {
-      // Non-blocking — the layout gate will still redirect if this fails
+      // Non-blocking. The layout gate will still redirect if this fails
     }
     // Mark complete in localStorage after the DB call so the reset effect
     // doesn't fire before we navigate away.
@@ -164,7 +164,7 @@ export function SetupWizard({
               />
             )}
 
-            {/* Edge case: step past the end — handled by effect below */}
+            {/* Edge case: step past the end, handled by effect below */}
           </div>
         </CardContent>
       </Card>

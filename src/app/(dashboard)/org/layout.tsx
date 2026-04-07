@@ -18,19 +18,19 @@ export default async function OrgLayout({
 
   return (
     <div className="flex w-full flex-col md:flex-row md:min-h-[calc(100vh-52px)]">
-      {/* Left sidebar — desktop, sticks to top while content scrolls */}
+      {/* Left sidebar - desktop, sticks to top while content scrolls */}
       <aside className="hidden md:block w-56 shrink-0 border-r border-border/40 bg-[var(--card)]">
         <div className="sticky top-0 pt-5">
           <V2OrgNav isAdmin={isAdmin} pendingInviteCount={0} planName={planName} />
         </div>
       </aside>
 
-      {/* Mobile nav — top dropdown */}
+      {/* Mobile nav - top dropdown */}
       <div className="md:hidden border-b border-border/40 bg-background px-4 py-3">
         <V2OrgNav isAdmin={isAdmin} pendingInviteCount={0} planName={planName} mobile />
       </div>
 
-      {/* Main content — fills remaining space */}
+      {/* Main content - fills remaining space */}
       <main className="flex-1 min-w-0">
         <div className="px-6 lg:px-8 py-6">
           {children}

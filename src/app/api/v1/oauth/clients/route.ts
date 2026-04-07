@@ -12,7 +12,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateClientCredentials, validateScopes } from "@/lib/api/oauth";
 import { OAUTH_SCOPES } from "@/lib/constants";
 
-// Column allowlist — never return client_secret_hash.
+// Column allowlist. Never return client_secret_hash.
 const CLIENT_COLUMNS =
   "id, org_id, name, logo_url, client_id, client_secret_prefix, redirect_uris, scopes, is_active, created_by, created_at, updated_at" as const;
 

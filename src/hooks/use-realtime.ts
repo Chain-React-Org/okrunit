@@ -99,12 +99,12 @@ export function useRealtime<T extends { [key: string]: any }>(
     let entry = channelRegistry.get(key);
 
     if (entry) {
-      // Reuse existing channel — just register our callbacks.
+      // Reuse existing channel. Just register our callbacks.
       entry.refCount++;
       entry.callbacks.set(id, callbackEntry);
       channelRef.current = entry.channel;
     } else {
-      // First subscriber — create the channel.
+      // First subscriber. Create the channel.
       const supabase = createClient();
       const channelName = `realtime-${options.table}-${Math.random().toString(36).slice(2)}`;
       const channel = supabase.channel(channelName);
@@ -161,7 +161,7 @@ export function useRealtime<T extends { [key: string]: any }>(
       current.refCount--;
 
       if (current.refCount <= 0) {
-        // Last consumer — tear down the channel.
+        // Last consumer. Tear down the channel.
         const supabase = createClient();
         supabase.removeChannel(current.channel);
         channelRegistry.delete(key);

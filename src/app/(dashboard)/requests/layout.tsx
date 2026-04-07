@@ -15,17 +15,17 @@ export default async function RequestsLayout({
 
   return (
     <div className="flex w-full flex-col md:h-[calc(100vh-52px)] md:flex-row md:overflow-hidden">
-      {/* Left sidebar — desktop */}
+      {/* Left sidebar - desktop */}
       <aside className="hidden md:block w-56 shrink-0 border-r border-border/40 bg-[var(--card)] pt-5 overflow-y-auto">
         <RequestsNav isAdmin={isAdmin} pendingCount={0} />
       </aside>
 
-      {/* Mobile nav — top dropdown */}
+      {/* Mobile nav - top dropdown */}
       <div className="md:hidden border-b border-border/40 bg-background px-4 py-3">
         <RequestsNav isAdmin={isAdmin} pendingCount={0} mobile />
       </div>
 
-      {/* Main content — sole scroll container */}
+      {/* Main content - sole scroll container */}
       <div className="relative flex-1 min-w-0 overflow-y-auto">
         <div className="px-6 lg:px-8 py-6">
           {children}

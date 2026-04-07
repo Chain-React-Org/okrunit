@@ -108,7 +108,7 @@ async function annotateFieldsWithConnector(
     defs.appendChild(marker);
     svg.appendChild(defs);
 
-    // Label pill center (approximate — pill is ~200px wide, 28px tall)
+    // Label pill center (approximate, pill is ~200px wide, 28px tall)
     const pillCx = labelSide === "left" ? labelX + 100 : labelX + 100;
     const pillCy = labelY + 14;
     const pillEdgeX = labelSide === "left" ? labelX + 200 + 4 : labelX - 4;
@@ -149,8 +149,8 @@ async function main() {
   const page = await ctx.newPage();
 
   // ---- Step 1: Navigate to Make dashboard and create new scenario ----
-  console.log("\n📸 Step 1: Scenario editor — add module...");
-  // Navigate to Make app dashboard — go to root, let it redirect to the right page
+  console.log("\n📸 Step 1: Scenario editor - add module...");
+  // Navigate to Make app dashboard. Go to root, let it redirect to the right page
   await page.goto("https://us2.make.com");
   await page.waitForTimeout(5000);
 
@@ -189,10 +189,10 @@ async function main() {
 
   console.log(`  Editor URL: ${page.url()}`);
 
-  // Wait for the editor to fully load — Make often shows a "Recover unsaved changes?" modal
+  // Wait for the editor to fully load. Make often shows a "Recover unsaved changes?" modal
   await page.waitForTimeout(4000);
 
-  // Dismiss recovery modal — try multiple approaches
+  // Dismiss recovery modal. Try multiple approaches
   // First try the X close button
   const closeX = page.locator('button[aria-label="Close"], button[aria-label="close"], .close-button, imt-scenario-recovery-modal button').first();
   if (await closeX.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -263,7 +263,7 @@ async function main() {
   await page.waitForTimeout(3000);
 
   // Step 1 screenshot: show the editor with the app picker open, annotate the + area
-  // The + circle is the large purple element — find its visible bounding box for annotation
+  // The + circle is the large purple element. Find its visible bounding box for annotation
   // We annotate it even though the picker is open, to show WHERE the user clicked
   const plusCircle = await page.evaluate(() => {
     // Find the large purple circle by looking for SVG/canvas elements
@@ -289,8 +289,8 @@ async function main() {
   await snap(page, "make-step-1-editor");
   await clearAnn(page);
 
-  // ---- Step 2: App picker — search for OKrunit ----
-  console.log("\n📸 Step 2: App picker — search...");
+  // ---- Step 2: App picker - search for OKrunit ----
+  console.log("\n📸 Step 2: App picker - search...");
 
   const searchInput = page.locator('input[placeholder*="Search"], input[placeholder*="search"], input[type="search"], input[type="text"]').first();
   const searchBox = await searchInput.boundingBox().catch(() => null);
@@ -322,7 +322,7 @@ async function main() {
     await okrunitResult.click();
     await page.waitForTimeout(3000);
   } else {
-    console.log("  ⚠️  OKrunit not found in search results — taking debug screenshot");
+    console.log("  ⚠️  OKrunit not found in search results. Taking debug screenshot");
     await snap(page, "make-step-3-debug");
   }
 
@@ -377,7 +377,7 @@ async function main() {
     await snap(page, "make-step-4-debug");
   }
 
-  // ---- Step 5: Connection — Add/select OKrunit connection ----
+  // ---- Step 5: Connection - Add/select OKrunit connection ----
   console.log("\n📸 Step 5: Connection setup...");
   await page.waitForTimeout(2000);
 
@@ -506,7 +506,7 @@ async function main() {
   }
 
   // ---- Step 7: Click + to add a module ----
-  console.log("\n📸 Step 7: Scenario 2 — add module...");
+  console.log("\n📸 Step 7: Scenario 2 - add module...");
   let addBox3: { x: number; y: number; width: number; height: number } | null = null;
   for (const sel of plusSelectors) {
     const el = page.locator(sel).first();
@@ -522,7 +522,7 @@ async function main() {
   await page.waitForTimeout(3000);
 
   // ---- Step 8: Search for OKrunit (same as step 2-3 but for scenario 2) ----
-  console.log("\n📸 Step 8: Scenario 2 — search for OKrunit...");
+  console.log("\n📸 Step 8: Scenario 2 - search for OKrunit...");
   const searchInput2 = page.locator('input[placeholder*="Search"], input[placeholder*="search"]').first();
   if (await searchInput2.isVisible({ timeout: 3000 }).catch(() => false)) {
     await searchInput2.fill("OKrunit");
@@ -542,9 +542,9 @@ async function main() {
 
   // ---- Step 9: Select "Approval Decision Received" instant trigger ----
   if (!okrunitClicked2) {
-    console.log("  ⚠️  Skipping trigger selection — OKrunit app not found");
+    console.log("  ⚠️  Skipping trigger selection. OKrunit app not found");
   } else {
-    console.log("\n📸 Step 9: Scenario 2 — select Approval Decision Received trigger...");
+    console.log("\n📸 Step 9: Scenario 2 - select Approval Decision Received trigger...");
 
     // The OKrunit module list has Triggers at top (may need scrolling up) and Actions below.
     // Scroll the panel UP to find the Triggers section with "Approval Decision Received".
@@ -601,13 +601,13 @@ async function main() {
       await page.mouse.click(triggerBox.x + triggerBox.width / 2, triggerBox.y + triggerBox.height / 2);
       await page.waitForTimeout(3000);
     } else {
-      console.log("  ⚠️  'Approval Decision Received' trigger not found — taking debug screenshot");
+      console.log("  ⚠️  'Approval Decision Received' trigger not found. Taking debug screenshot");
       await snap(page, "make-step-7-debug");
     }
   }
 
   // ---- Step 10: Click "Create a webhook" and capture the generated URL ----
-  console.log("\n📸 Step 10: Scenario 2 — create webhook & copy URL...");
+  console.log("\n📸 Step 10: Scenario 2 - create webhook & copy URL...");
   await page.waitForTimeout(2000);
 
   // The trigger config panel shows a "Create a webhook" button. Click it to open the naming dialog.
@@ -634,7 +634,7 @@ async function main() {
     }
   }
 
-  // Now the URL should be visible — look for it in inputs or text containing "hook.make.com"
+  // Now the URL should be visible. Look for it in inputs or text containing "hook.make.com"
   const triggerUrl = page.locator('input[value*="hook"], input[value*="make.com"]').first();
   const triggerUrlText = page.locator('text=/https:\\/\\/hook/').first();
 
@@ -654,7 +654,7 @@ async function main() {
   }
 
   if (!urlCaptured) {
-    // Try finding the URL via evaluate — it might be in a non-standard element
+    // Try finding the URL via evaluate. It might be in a non-standard element
     const urlBox2 = await page.evaluate(() => {
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
       while (walker.nextNode()) {
@@ -679,7 +679,7 @@ async function main() {
   }
 
   if (!urlCaptured) {
-    console.log("  ⚠️  Trigger URL not found — taking current state");
+    console.log("  ⚠️  Trigger URL not found. Taking current state");
     await snap(page, "make-step-8-trigger-url");
   }
 

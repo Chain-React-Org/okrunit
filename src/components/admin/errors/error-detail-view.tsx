@@ -218,7 +218,7 @@ export function ErrorDetailView({ issueId }: ErrorDetailViewProps) {
         </div>
       </div>
 
-      {/* Copy for AI — single block with all context for pasting to Claude */}
+      {/* Copy for AI - single block with all context for pasting to Claude */}
       {latestEvent && (
         <Card>
           <CardHeader className="pb-3">
@@ -280,13 +280,13 @@ export function ErrorDetailView({ issueId }: ErrorDetailViewProps) {
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground">
-              One-click copy of this error with all context — paste directly into Claude or any AI assistant to get a fix.
+              One-click copy of this error with all context. Paste directly into Claude or any AI assistant to get a fix.
             </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Likely source files — maps URL path to Next.js file conventions */}
+      {/* Likely source files - maps URL path to Next.js file conventions */}
       {latestEvent?.request_url && (() => {
         try {
           const pathname = new URL(latestEvent.request_url).pathname;

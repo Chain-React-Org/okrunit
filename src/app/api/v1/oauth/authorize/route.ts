@@ -28,7 +28,7 @@ const authorizeSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    // This endpoint requires a session — the user must be logged in.
+    // This endpoint requires a session. The user must be logged in.
     const auth = await authenticateRequest(request);
 
     if (auth.type !== "session") {

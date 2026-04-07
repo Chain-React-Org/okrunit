@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     const body = visitSchema.parse(await request.json());
     const admin = createAdminClient();
 
-    // Duration update — patch the most recent visit for this visitor
+    // Duration update: patch the most recent visit for this visitor
     if (body.duration) {
       await admin
         .from("visitor_tracking")

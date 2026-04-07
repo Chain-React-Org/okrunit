@@ -241,7 +241,7 @@ export function ApprovalDashboard({
           nearLimit: used >= limit * 0.8 && used < limit,
         });
       } catch {
-        // Silently fail — banner is non-critical
+        // Silently fail. Banner is non-critical.
       }
     };
     fetchUsage();
@@ -325,7 +325,7 @@ export function ApprovalDashboard({
   const approvedCount = approvals.filter((a) => a.status === "approved").length;
   const rejectedCount = approvals.filter((a) => a.status === "rejected").length;
 
-  // Sort: pending first, then resolved — both within page size limit
+  // Sort: pending first, then resolved. Both within page size limit.
   const sortedApprovals = useMemo(() => {
     const pending = approvals.filter((a) => a.status === "pending");
     const resolved = approvals.filter((a) => a.status !== "pending");
@@ -865,7 +865,7 @@ export function ApprovalDashboard({
         <div className="flex items-center gap-3 rounded-lg border border-amber-100 bg-amber-50/50 px-4 py-3 dark:border-amber-900/30 dark:bg-amber-950/20">
           <AlertTriangle className="size-4 shrink-0 text-amber-500" />
           <p className="flex-1 text-sm text-amber-800 dark:text-amber-300">
-            Approaching request limit — {usageInfo.requestsUsed}/{usageInfo.requestsLimit} used this month.{" "}
+            Approaching request limit: {usageInfo.requestsUsed}/{usageInfo.requestsLimit} used this month.{" "}
             <a href="/org/subscription" className="font-medium underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-200">
               Upgrade for unlimited
             </a>
@@ -958,7 +958,7 @@ export function ApprovalDashboard({
         />
       )}
 
-      {/* Approval list — always grouped */}
+      {/* Approval list - always grouped */}
       <div className={isFetching ? "pointer-events-none opacity-60 transition-opacity" : "transition-opacity"}>
         {(!showArchived || approvals.length > 0) && (
           <ApprovalListGrouped {...sharedListProps} />

@@ -4,7 +4,7 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Approval Workflow",
-  description: "How approval requests work in OKrunit — from creation to decision, with comments, delegation, and archiving.",
+  description: "How approval requests work in OKrunit, from creation to decision, with comments, delegation, and archiving.",
 };
 
 export default function ApprovalsPage() {
@@ -37,12 +37,12 @@ export default function ApprovalsPage() {
         and &quot;Previously Resolved&quot; (approved/rejected/expired). Each card shows:
       </p>
       <ul className="mt-4 list-disc pl-6 space-y-2 text-zinc-600">
-        <li><strong>Source icon</strong> — Which integration sent the request (Zapier, Make, API, etc.)</li>
-        <li><strong>Title</strong> — The main subject of what needs approval</li>
-        <li><strong>Priority badge</strong> — Low, Medium, High, or Critical</li>
-        <li><strong>Status badge</strong> — Pending, Approved, Rejected, Cancelled, or Expired</li>
-        <li><strong>Action type</strong> — What kind of action this is (deploy, delete, purchase, etc.)</li>
-        <li><strong>Timestamp</strong> — When the request was created</li>
+        <li><strong>Source icon</strong>: Which integration sent the request (Zapier, Make, API, etc.)</li>
+        <li><strong>Title</strong>: The main subject of what needs approval</li>
+        <li><strong>Priority badge</strong>: Low, Medium, High, or Critical</li>
+        <li><strong>Status badge</strong>: Pending, Approved, Rejected, Cancelled, or Expired</li>
+        <li><strong>Action type</strong>: What kind of action this is (deploy, delete, purchase, etc.)</li>
+        <li><strong>Timestamp</strong>: When the request was created</li>
       </ul>
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Opening the Detail Panel</h2>
@@ -50,12 +50,12 @@ export default function ApprovalsPage() {
         Click any request card to open the <strong>detail panel</strong> on the right side of the screen. The detail panel shows:
       </p>
       <ul className="mt-4 list-disc pl-6 space-y-2 text-zinc-600">
-        <li><strong>Full context</strong> — Rich HTML context provided by the automation, often including tables, diffs, or summaries</li>
-        <li><strong>Metadata grid</strong> — Key-value pairs with all the structured data about the request</li>
-        <li><strong>Approval progress</strong> — How many approvals are needed vs. received, and who has voted</li>
-        <li><strong>Activity timeline</strong> — Created, escalated, decided events with timestamps</li>
-        <li><strong>Comments</strong> — Discussion thread where team members can ask questions or leave notes</li>
-        <li><strong>Approve/Reject form</strong> — The decision form with optional comment</li>
+        <li><strong>Full context</strong>: Rich HTML context provided by the automation, often including tables, diffs, or summaries</li>
+        <li><strong>Metadata grid</strong>: Key-value pairs with all the structured data about the request</li>
+        <li><strong>Approval progress</strong>: How many approvals are needed vs. received, and who has voted</li>
+        <li><strong>Activity timeline</strong>: Created, escalated, decided events with timestamps</li>
+        <li><strong>Comments</strong>: Discussion thread where team members can ask questions or leave notes</li>
+        <li><strong>Approve/Reject form</strong>: The decision form with optional comment</li>
       </ul>
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Approving or Rejecting</h2>
@@ -63,12 +63,12 @@ export default function ApprovalsPage() {
         There are several ways to approve or reject a request:
       </p>
       <ul className="mt-4 list-disc pl-6 space-y-2 text-zinc-600">
-        <li><strong>From the detail panel</strong> — Click the Approve or Reject button at the bottom of the panel</li>
-        <li><strong>Inline on hover</strong> — On desktop, hover over a pending request card to reveal Approve/Reject buttons directly on the card</li>
-        <li><strong>Keyboard shortcuts</strong> — Press <kbd className="rounded border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 text-xs font-mono">a</kbd> to approve or <kbd className="rounded border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 text-xs font-mono">r</kbd> to reject when the detail panel is open</li>
-        <li><strong>From email</strong> — Click the one-click approve/reject link in notification emails</li>
-        <li><strong>From Slack/Discord</strong> — Use the interactive buttons in Slack or Discord notifications</li>
-        <li><strong>Via API</strong> — PATCH the approval request with your decision programmatically</li>
+        <li><strong>From the detail panel</strong>: Click the Approve or Reject button at the bottom of the panel</li>
+        <li><strong>Inline on hover</strong>: On desktop, hover over a pending request card to reveal Approve/Reject buttons directly on the card</li>
+        <li><strong>Keyboard shortcuts</strong>: Press <kbd className="rounded border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 text-xs font-mono">a</kbd> to approve or <kbd className="rounded border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 text-xs font-mono">r</kbd> to reject when the detail panel is open</li>
+        <li><strong>From email</strong>: Click the one-click approve/reject link in notification emails</li>
+        <li><strong>From Slack/Discord</strong>: Use the interactive buttons in Slack or Discord notifications</li>
+        <li><strong>Via API</strong>: PATCH the approval request with your decision programmatically</li>
       </ul>
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Adding Comments</h2>
@@ -104,8 +104,8 @@ export default function ApprovalsPage() {
           </thead>
           <tbody className="divide-y divide-zinc-100">
             <tr><td className="py-3 px-4 font-medium">Pending</td><td className="py-3 px-4 text-zinc-600">Waiting for human review</td></tr>
-            <tr><td className="py-3 px-4 font-medium">Approved</td><td className="py-3 px-4 text-zinc-600">Approved by required number of reviewers — callback fires</td></tr>
-            <tr><td className="py-3 px-4 font-medium">Rejected</td><td className="py-3 px-4 text-zinc-600">Rejected by a reviewer — callback fires with rejection</td></tr>
+            <tr><td className="py-3 px-4 font-medium">Approved</td><td className="py-3 px-4 text-zinc-600">Approved by required number of reviewers, callback fires</td></tr>
+            <tr><td className="py-3 px-4 font-medium">Rejected</td><td className="py-3 px-4 text-zinc-600">Rejected by a reviewer, callback fires with rejection</td></tr>
             <tr><td className="py-3 px-4 font-medium">Cancelled</td><td className="py-3 px-4 text-zinc-600">Cancelled by the requester or an admin</td></tr>
             <tr><td className="py-3 px-4 font-medium">Expired</td><td className="py-3 px-4 text-zinc-600">No decision before the expiration deadline</td></tr>
           </tbody>

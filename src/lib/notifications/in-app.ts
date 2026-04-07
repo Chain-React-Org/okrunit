@@ -23,7 +23,7 @@ interface CreateNotificationParams {
 
 /**
  * Create a single in-app notification for a user.
- * Fire-and-forget — errors are logged but not thrown.
+ * Fire-and-forget. Errors are logged but not thrown.
  */
 export async function createInAppNotification(params: CreateNotificationParams): Promise<void> {
   const admin = createAdminClient();

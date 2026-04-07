@@ -25,7 +25,7 @@ export function MfaVerifyForm() {
       const { required, factorId: fid } = await checkMfaRequired(supabase);
 
       if (!required || !fid) {
-        // No MFA needed — go to dashboard
+        // No MFA needed, go to dashboard
         router.replace(safeRedirectUrl(searchParams.get("redirect_to")));
         return;
       }

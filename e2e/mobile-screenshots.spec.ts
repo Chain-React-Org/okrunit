@@ -1,9 +1,9 @@
 import { test, type Page } from "@playwright/test";
 
-// Mobile viewport — iPhone 14
+// Mobile viewport: iPhone 14
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
 
-// Test credentials — set via env vars:
+// Test credentials. Set via env vars:
 //   E2E_EMAIL=your@email.com E2E_PASSWORD=yourpassword npx playwright test e2e/mobile-screenshots.spec.ts
 const E2E_EMAIL = process.env.E2E_EMAIL ?? "";
 const E2E_PASSWORD = process.env.E2E_PASSWORD ?? "";
@@ -17,7 +17,7 @@ async function screenshot(page: Page, name: string) {
   });
 }
 
-test.describe("Mobile screenshots — public pages", () => {
+test.describe("Mobile screenshots - public pages", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
   test("landing page", async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe("Mobile screenshots — public pages", () => {
   });
 });
 
-test.describe("Mobile screenshots — authenticated pages", () => {
+test.describe("Mobile screenshots - authenticated pages", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
   test.skip(!E2E_EMAIL || !E2E_PASSWORD, "Set E2E_EMAIL and E2E_PASSWORD env vars to run authenticated tests");

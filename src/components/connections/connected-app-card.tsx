@@ -115,7 +115,7 @@ export function ConnectedAppCard({ grant, onRevoke }: ConnectedAppCardProps) {
             </div>
           </div>
 
-          {/* Revoke button — far right */}
+          {/* Revoke button - far right */}
           <Button
             variant="outline"
             size="sm"

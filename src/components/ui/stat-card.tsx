@@ -31,23 +31,23 @@ export function StatCard({
 
   return (
     <Card
-      className={cn("stat-card-hover border border-border/50 shadow-[var(--shadow-card)]", onClick && "cursor-pointer hover:border-border transition-colors", className)}
+      className={cn("border border-border/50 shadow-[var(--shadow-card)]", onClick && "stat-card-hover cursor-pointer hover:border-border transition-colors", className)}
       onClick={onClick}
     >
-      <CardContent className="p-6">
+      <CardContent className="p-4">
         <div className="flex items-start justify-between">
-          <div className="space-y-3">
+          <div className="space-y-1.5">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
               {title}
             </p>
-            <p className="text-4xl font-bold tracking-tight">{value}</p>
+            <p className="text-3xl font-bold tracking-tight">{value}</p>
           </div>
-          <div className={cn("rounded-lg bg-muted/60 p-3", iconColor)}>
-            {Icon ? <Icon className="size-5" /> : iconNode}
+          <div className={cn("rounded-lg bg-muted/60 p-2.5", iconColor)}>
+            {Icon ? <Icon className="size-4" /> : iconNode}
           </div>
         </div>
         {(subtitle || trend) && (
-          <div className="mt-4 flex items-center gap-2 text-xs">
+          <div className="mt-2 flex items-center gap-2 text-xs">
             {trend ? (
               <>
                 <span className={cn(

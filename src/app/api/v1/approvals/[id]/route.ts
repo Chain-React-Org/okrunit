@@ -179,6 +179,28 @@ export async function GET(
     // 3. Lazy expiration check
     const expired = await checkAndExpire(admin, approval);
     if (expired) {
+      // Notify about expiration (fire-and-forget)
+      after(async () => {
+        await dispatchNotifications({
+          type: "approval.expired",
+          orgId: auth.orgId,
+          requestId: approval.id,
+          requestTitle: approval.title,
+          requestPriority: approval.priority,
+          connectionId: approval.connection_id ?? undefined,
+        });
+        const expApprovers: string[] = approval.assigned_approvers ?? [];
+        if (expApprovers.length > 0) {
+          await createInAppNotificationBulk(expApprovers, {
+            orgId: auth.orgId,
+            category: "approval_decided",
+            title: "Request expired",
+            body: `"${approval.title}" has expired without a decision.`,
+            resourceType: "approval_request",
+            resourceId: approval.id,
+          });
+        }
+      });
       return NextResponse.json(
         { ...approval, status: "expired", decided_by_name: null },
       );
@@ -216,6 +238,19 @@ export async function GET(
         requestPriority: approval.priority,
         connectionId: approval.connection_id ?? undefined,
       });
+
+      // In-app notification for assigned approvers
+      const breachApprovers: string[] = approval.assigned_approvers ?? [];
+      if (breachApprovers.length > 0) {
+        createInAppNotificationBulk(breachApprovers, {
+          orgId: auth.orgId,
+          category: "approval_expiring",
+          title: "SLA breached",
+          body: `"${approval.title}" has passed its SLA deadline.`,
+          resourceType: "approval_request",
+          resourceId: approval.id,
+        });
+      }
 
       // Update local object for the response
       approval.sla_breached = true;
@@ -1125,8 +1160,8 @@ export async function DELETE(
     }
 
     // 7. Dispatch notifications
-    after(
-      dispatchNotifications({
+    after(async () => {
+      await dispatchNotifications({
         type: isScheduledExecution ? "approval.execution_cancelled" : "approval.cancelled",
         orgId: auth.orgId,
         requestId: id,
@@ -1134,8 +1169,21 @@ export async function DELETE(
         requestPriority: updated.priority,
         connectionId: approval.connection_id,
         decidedBy: deleteActorId,
-      })
-    );
+      });
+
+      // In-app notification for assigned approvers
+      const cancelApprovers: string[] = approval.assigned_approvers ?? [];
+      if (cancelApprovers.length > 0) {
+        await createInAppNotificationBulk(cancelApprovers, {
+          orgId: auth.orgId,
+          category: "approval_decided",
+          title: isScheduledExecution ? "Scheduled execution cancelled" : "Request cancelled",
+          body: `"${updated.title}" was cancelled.`,
+          resourceType: "approval_request",
+          resourceId: id,
+        });
+      }
+    });
 
     return NextResponse.json(updated);
   } catch (error) {

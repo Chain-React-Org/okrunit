@@ -172,7 +172,7 @@
 /* ── V2 Design System ──────────────────────────────────────────────────── */
 
 .gk-v2 {
-  /* Refined neutrals — cooler, higher contrast */
+  /* Refined neutrals - cooler, higher contrast */
   --background: oklch(0.985 0.002 265);
   --foreground: oklch(0.145 0.035 265);
   --card: oklch(1 0 0);
@@ -180,7 +180,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0.035 265);
 
-  /* OKrunit green primary — from logo checkmark */
+  /* OKrunit green primary - from logo checkmark */
   --primary: oklch(0.62 0.19 145);
   --primary-foreground: oklch(1 0 0);
 
@@ -197,7 +197,7 @@
   --input: oklch(0.92 0.008 265);
   --ring: oklch(0.62 0.19 145);
 
-  /* Sidebar — gradient green from logo */
+  /* Sidebar - gradient green from logo */
   --sidebar: oklch(0.35 0.12 155);
   --sidebar-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.40 0.10 155 / 0.3);
@@ -416,7 +416,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Card hover effects — reusable utility class */
+/* Card hover effects - reusable utility class */
 .gk-v2 .card-hover {
   transition: box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
               transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -426,7 +426,7 @@
   transform: translateY(-1px);
 }
 
-/* Stat card hover — subtle scale + elevated shadow */
+/* Stat card hover - subtle scale + elevated shadow */
 .gk-v2 .stat-card-hover {
   transition: box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
               transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -436,17 +436,17 @@
   transform: translateY(-1px) scale(1.02);
 }
 
-/* Sidebar nav items — smooth background transition */
+/* Sidebar nav items - smooth background transition */
 .gk-v2 .sidebar-nav-item {
   transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
-/* Sidebar icon bar — gradient background */
+/* Sidebar icon bar - gradient background */
 .gk-v2 .sidebar-icon-bar {
   background: linear-gradient(180deg, var(--sidebar-gradient-from), var(--sidebar-gradient-to));
 }
 
-/* Sidebar active indicator — text brightens, icon gets bg via component */
+/* Sidebar active indicator - text brightens, icon gets bg via component */
 .gk-v2 .sidebar-nav-active {
   font-weight: 500;
   color: var(--sidebar-accent-foreground);
@@ -604,7 +604,7 @@
     0 16px 48px rgba(0,0,0,0.1);
 }
 
-/* Scroll-triggered fade-up — smoother, Tesslate-inspired motion */
+/* Scroll-triggered fade-up - smoother, Tesslate-inspired motion */
 @keyframes lp-fade-up {
   from { opacity: 0; transform: translateY(32px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -621,7 +621,7 @@
 .lp-delay-5 { animation-delay: 400ms; }
 .lp-delay-6 { animation-delay: 480ms; }
 
-/* Hero floating cards — smoother, more organic */
+/* Hero floating cards - smoother, more organic */
 @keyframes lp-float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
@@ -644,7 +644,7 @@
   animation: lp-float-offset 7s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
-/* Card hover lift — with stronger shadow transition */
+/* Card hover lift - with stronger shadow transition */
 .lp-lift {
   transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 400ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -653,7 +653,7 @@
   transform: translateY(-4px);
 }
 
-/* Tab content transition — smoother */
+/* Tab content transition - smoother */
 @keyframes lp-tab-in {
   from { opacity: 0; transform: translateY(8px) scale(0.99); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -677,7 +677,7 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 4px 16px rgba(0,0,0,0.04);
 }
 
-/* Section backgrounds — stronger contrast than plain white/fafafa */
+/* Section backgrounds - stronger contrast than plain white/fafafa */
 .lp-bg-elevated {
   background: linear-gradient(180deg, #f8f9fa 0%, #f3f4f6 100%);
 }

@@ -140,7 +140,7 @@ Every integration must implement these modules with matching fields, filters, an
 | callbackUrl | url  | Callback URL    | no       | Webhook URL to receive the decision.                           |
 | metadata    | text | Metadata (JSON) | no       | Optional JSON data to attach to the approval.                  |
 
-\* Title is technically optional — if omitted, a default is generated. Some platforms (like Zapier) make it optional, others may require it.
+\* Title is technically optional. If omitted, a default is generated. Some platforms (like Zapier) make it optional, others may require it.
 
 ### Request Body (sent to API)
 

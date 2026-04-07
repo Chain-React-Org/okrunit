@@ -26,7 +26,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   saml_session_failed: "Failed to establish a session after SSO login. Please try again.",
   saml_error: "An unexpected error occurred during SSO login. Please try again.",
   invalid_verification_link: "Invalid or expired verification link. Please request a new one.",
-  verification_failed: "Email verification failed. The link may have expired — please try signing up again.",
+  verification_failed: "Email verification failed. The link may have expired, please try signing up again.",
 };
 
 export function LoginForm() {
@@ -101,7 +101,7 @@ export function LoginForm() {
         return;
       }
 
-      // Check if user has MFA enrolled — redirect to verification if so
+      // Check if user has MFA enrolled. Redirect to verification if so
       const { required } = await checkMfaRequired(supabase);
       const redirectTo = searchParams.get("redirect_to");
 

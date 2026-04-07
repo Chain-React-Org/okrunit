@@ -107,10 +107,10 @@ export default async function V2OrgOverviewPage() {
         </div>
       )}
 
-      {/* Onboarding tutorial — shown until dismissed */}
+      {/* Onboarding tutorial - shown until dismissed */}
       <OnboardingTutorial />
 
-      {/* Org header — only on overview */}
+      {/* Org header - only on overview */}
       <div data-tour="overview-main" className="space-y-8">
         <div>
           <p className="text-xs font-medium text-primary mb-0.5">Organization</p>
@@ -143,7 +143,7 @@ export default async function V2OrgOverviewPage() {
           })}
         </div>
 
-        {/* Recent activity — realtime client component */}
+        {/* Recent activity - realtime client component */}
         <RecentActivity
           initialItems={recentActivity as unknown as ApprovalRequest[]}
           connectionNameMap={connectionNameMap}

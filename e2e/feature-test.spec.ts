@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 const E2E_EMAIL = process.env.E2E_EMAIL ?? "test@okrunit.com";
 const E2E_PASSWORD = process.env.E2E_PASSWORD ?? "E2eScreenshot2026!";
 
-// Run serially — tests share the onboarding test request
+// Run serially. Tests share the onboarding test request
 test.describe.configure({ mode: "serial", timeout: 120_000 });
 
 test.describe("Notification, Watcher & Responsible Badge", () => {

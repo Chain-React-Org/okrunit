@@ -66,7 +66,7 @@ export async function GET(request: Request) {
         state = null;
       }
     } catch {
-      // State parsing failed — continue without it
+      // State parsing failed - continue without it
     }
   }
 

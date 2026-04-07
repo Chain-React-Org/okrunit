@@ -33,20 +33,20 @@ interface VolumeChartProps {
 
 export function VolumeChart({ data, days = 30 }: VolumeChartProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Request Volume</CardTitle>
+    <Card className="gap-3 py-4">
+      <CardHeader className="px-4">
+        <CardTitle className="text-sm">Request Volume</CardTitle>
         <CardDescription>
           Daily approval requests over the last {days} days
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4">
         {data.length === 0 ? (
-          <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
             No volume data available
           </div>
         ) : (
-          <div className="h-[300px] w-full">
+          <div className="h-[220px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}

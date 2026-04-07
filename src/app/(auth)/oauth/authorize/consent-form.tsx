@@ -172,7 +172,7 @@ export function ConsentForm({
       </CardHeader>
 
       <CardContent className="space-y-2.5 px-4">
-        {/* Org selector — only shown when user belongs to multiple orgs */}
+        {/* Org selector - only shown when user belongs to multiple orgs */}
         {orgOptions && orgOptions.length > 1 && (
           <div className="rounded-lg border bg-muted/30 p-2.5">
             <label className="text-xs font-medium text-muted-foreground mb-1 block">

@@ -5,7 +5,7 @@ Work through each section. Check items off as you complete them.
 ---
 
 ## Billing (Stripe)
-*You're already testing this — don't skip any of these flows.*
+*You're already testing this. Don't skip any of these flows.*
 
 - [ ] Upgrade from Free to Pro
 - [ ] Upgrade from Pro to Business
@@ -24,13 +24,13 @@ Work through each section. Check items off as you complete them.
 ## Messaging Channels (Re-test Round-Trip)
 *For each channel: send an approval request, verify the notification arrives, click Approve/Reject, verify the decision is recorded in the dashboard.*
 
-- [ ] **Slack** — notification arrives, approve button works, decision recorded
-- [ ] **Slack** — reject button works with reason
-- [ ] **Discord** — notification arrives, approve button works, decision recorded
-- [ ] **Discord** — reject button works with reason modal
-- [ ] **Telegram** — notification arrives, inline keyboard works, decision recorded
-- [ ] **Email** — notification arrives, approve/reject links work, decision recorded
-- [ ] ~~**Teams** — skip for now (need Microsoft 365 tenant)~~
+- [ ] **Slack**: notification arrives, approve button works, decision recorded
+- [ ] **Slack**: reject button works with reason
+- [ ] **Discord**: notification arrives, approve button works, decision recorded
+- [ ] **Discord**: reject button works with reason modal
+- [ ] **Telegram**: notification arrives, inline keyboard works, decision recorded
+- [ ] **Email**: notification arrives, approve/reject links work, decision recorded
+- [ ] ~~**Teams**: skip for now (need Microsoft 365 tenant)~~
 
 ---
 
@@ -39,7 +39,7 @@ Work through each section. Check items off as you complete them.
 
 - [ ] Sign up for free Okta Developer account
 - [ ] Create a SAML 2.0 application in Okta pointing to your ACS URL
-- [ ] Configure SSO in OKRunit dashboard (Business tier required — temporarily upgrade or test locally)
+- [ ] Configure SSO in OKRunit dashboard (Business tier required, temporarily upgrade or test locally)
 - [ ] Test SAML login flow end-to-end
 - [ ] Verify user auto-provisioning works (new user created on first SAML login)
 - [ ] Test logout / SLO (Single Logout)
@@ -51,8 +51,8 @@ Work through each section. Check items off as you complete them.
 
 - [ ] Create approval via API (curl or playground)
 - [ ] Verify webhook callback fires with correct HMAC signature
-- [ ] Approve from dashboard — callback delivers "approved"
-- [ ] Reject from dashboard — callback delivers "rejected" with reason
+- [ ] Approve from dashboard: callback delivers "approved"
+- [ ] Reject from dashboard: callback delivers "rejected" with reason
 - [ ] Test approval expiry (set short TTL, let it expire)
 - [ ] Test batch approve/reject
 
@@ -60,7 +60,7 @@ Work through each section. Check items off as you complete them.
 
 ## Rules Engine
 - [ ] Create a routing rule (e.g., "critical priority → specific team member")
-- [ ] Send a request matching the rule — verify it routes correctly
+- [ ] Send a request matching the rule, verify it routes correctly
 - [ ] Verify non-matching requests use default routing
 - [ ] Test auto-approve rule
 
@@ -87,16 +87,16 @@ Work through each section. Check items off as you complete them.
 ## Other Integrations
 *These use your REST API directly. If the API works (it does), these work. But if you want to be thorough:*
 
-- [ ] GitHub Actions — test the action in a test repo workflow
-- [ ] CLI — `npx okrunit-cli request "Test" --api-key YOUR_KEY`
+- [ ] GitHub Actions: test the action in a test repo workflow
+- [ ] CLI: `npx okrunit-cli request "Test" --api-key YOUR_KEY`
 
 *Lower priority (these are code libraries, they'll work if the API works):*
 
-- [ ] Temporal — run a test workflow
-- [ ] Dagster — run a test op
-- [ ] Windmill — run a test script
-- [ ] Pipedream — run a test component
-- [ ] Prefect — run a test flow
+- [ ] Temporal: run a test workflow
+- [ ] Dagster: run a test op
+- [ ] Windmill: run a test script
+- [ ] Pipedream: run a test component
+- [ ] Prefect: run a test flow
 
 ---
 

@@ -24,9 +24,10 @@ interface DashboardShellProps {
   currentOrgId: string;
   userOrgs: { id: string; org_id: string; org_name: string; role: string; is_default: boolean }[];
   userId: string;
+  currentPlan?: string;
 }
 
-export function DashboardShell({ children, sidebarProps, emergencyStopActive, user, orgName, pendingCount, currentOrgId, userOrgs, userId }: DashboardShellProps) {
+export function DashboardShell({ children, sidebarProps, emergencyStopActive, user, orgName, pendingCount, currentOrgId, userOrgs, userId, currentPlan }: DashboardShellProps) {
   const { mobileOpen, setMobileOpen, setActivePanel } = useSidebarStore();
 
   // Close mobile sidebar on Escape
@@ -56,7 +57,7 @@ export function DashboardShell({ children, sidebarProps, emergencyStopActive, us
         />
       )}
 
-      {/* Sidebar — desktop: always visible, mobile: slide-in overlay */}
+      {/* Sidebar. Desktop: always visible, mobile: slide-in overlay */}
       <div className="hidden md:flex md:shrink-0">
         <Sidebar {...sidebarProps} />
       </div>
@@ -72,7 +73,7 @@ export function DashboardShell({ children, sidebarProps, emergencyStopActive, us
 
       {/* Main content area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Skip to main content — accessibility */}
+        {/* Skip to main content (accessibility) */}
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-white"
@@ -87,6 +88,7 @@ export function DashboardShell({ children, sidebarProps, emergencyStopActive, us
           currentOrgId={currentOrgId}
           userOrgs={userOrgs}
           userId={userId}
+          currentPlan={currentPlan}
         />
         <main id="main-content" className="flex-1 overflow-y-auto">
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">

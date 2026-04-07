@@ -425,7 +425,7 @@ export async function POST(request: Request) {
 
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
   const secretHeader = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
-  // Only verify if both sides have a secret configured — Telegram sends the
+  // Only verify if both sides have a secret configured. Telegram sends the
   // header only when secret_token was passed to setWebhook.
   if (webhookSecret && secretHeader) {
     if (!verifyTelegramSecret(webhookSecret, secretHeader)) {
@@ -451,7 +451,7 @@ export async function POST(request: Request) {
     if (!fromUser || !msg.text) return NextResponse.json({ ok: true });
 
     // -----------------------------------------------------------------------
-    // /start <nonce> — deep-link connection flow
+    // /start <nonce> - deep-link connection flow
     // -----------------------------------------------------------------------
     const startMatch = msg.text.match(/^\/start\s+(.+)$/);
     if (startMatch) {
@@ -470,7 +470,7 @@ export async function POST(request: Request) {
     const isSkip = msg.text.trim().toLowerCase() === "/skip";
 
     if (isSkip && pending.reasonRequired) {
-      // Reason is required — don't allow skip
+      // Reason is required, don't allow skip
       await sendBotMessage(
         botToken,
         msg.chat.id,
@@ -509,7 +509,7 @@ export async function POST(request: Request) {
   const messageId = cb.message?.message_id;
 
   // -------------------------------------------------------------------------
-  // Approve — prompt for reason (unless org skips it)
+  // Approve - prompt for reason (unless org skips it)
   // -------------------------------------------------------------------------
   if (parts[1] === "approve" && parts.length === 3) {
     const requestId = parts[2];
@@ -529,7 +529,7 @@ export async function POST(request: Request) {
       : { showPrompt: true };
 
     if (!showPrompt) {
-      // Skip prompt — apply immediately.
+      // Skip prompt. Apply immediately.
       await answerCallbackQuery(cb.id, "Approved!");
       await applyDecision(request, {
         decision: "approve",
@@ -553,7 +553,7 @@ export async function POST(request: Request) {
       await editMessage(
         String(chatId),
         messageId,
-        "✅ Approving — type your reason below, or send /skip to approve without a reason:",
+        "✅ Approving: type your reason below, or send /skip to approve without a reason.",
         undefined,
         false,
       );
@@ -562,7 +562,7 @@ export async function POST(request: Request) {
   }
 
   // -------------------------------------------------------------------------
-  // Reject — prompt for reason (unless org skips it and reason not required)
+  // Reject - prompt for reason (unless org skips it and reason not required)
   // -------------------------------------------------------------------------
   if (parts[1] === "reject" && parts.length === 3) {
     const requestId = parts[2];
@@ -582,7 +582,7 @@ export async function POST(request: Request) {
       : { showPrompt: true, reasonRequired: false };
 
     if (!showPrompt) {
-      // Skip prompt — apply immediately.
+      // Skip prompt. Apply immediately.
       await answerCallbackQuery(cb.id, "Rejected!");
       await applyDecision(request, {
         decision: "reject",
@@ -605,8 +605,8 @@ export async function POST(request: Request) {
       });
 
       const prompt = reasonRequired
-        ? "❌ Rejecting — a reason is required.\n\nType your reason below:"
-        : "❌ Rejecting — type your reason below, or send /skip to reject without a reason:";
+        ? "❌ Rejecting: a reason is required.\n\nType your reason below."
+        : "❌ Rejecting: type your reason below, or send /skip to reject without a reason.";
 
       await editMessage(
         String(chatId),

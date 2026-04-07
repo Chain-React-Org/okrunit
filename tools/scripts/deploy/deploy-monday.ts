@@ -123,7 +123,7 @@ async function main(): Promise<void> {
       '  Scopes:           approvals:read, approvals:write, comments:write\n' +
       '  Token URL:        https://okrunit.com/api/v1/oauth/token\n' +
       '  Authorize URL:    https://okrunit.com/oauth/authorize\n\n' +
-      'Copy the Client ID and Client Secret — you\'ll need them for your .env file.\n' +
+      'Copy the Client ID and Client Secret. You\'ll need them for your .env file.\n' +
       'Press Enter when done.'
     );
     await page.pause();
@@ -148,15 +148,15 @@ async function main(): Promise<void> {
     logWaiting(PLATFORM,
       'Please add an "Integration" feature to the app, then configure these recipes:\n\n' +
       '  TRIGGERS:\n' +
-      '    1. New Approval Request — polls GET /api/v1/approvals for new items\n' +
-      '    2. Approval Decided    — polls GET /api/v1/approvals for decided items\n' +
-      '    3. Approval Decision Received — instant webhook trigger\n\n' +
+      '    1. New Approval Request - polls GET /api/v1/approvals for new items\n' +
+      '    2. Approval Decided    - polls GET /api/v1/approvals for decided items\n' +
+      '    3. Approval Decision Received - instant webhook trigger\n\n' +
       '  ACTIONS:\n' +
-      '    4. Request Approval    — POST /api/v1/approvals (creates approval)\n' +
-      '    5. Add Comment         — POST /api/v1/approvals/{id}/comments\n\n' +
+      '    4. Request Approval    - POST /api/v1/approvals (creates approval)\n' +
+      '    5. Add Comment         - POST /api/v1/approvals/{id}/comments\n\n' +
       '  SEARCHES:\n' +
-      '    6. Get Approval        — GET /api/v1/approvals/{id}\n' +
-      '    7. List Approvals      — GET /api/v1/approvals with filters\n\n' +
+      '    6. Get Approval        - GET /api/v1/approvals/{id}\n' +
+      '    7. List Approvals      - GET /api/v1/approvals with filters\n\n' +
       `  Module definitions are at: ${modulesDir}\n` +
       '  Each JSON file describes the parameters, URL, method, and sample output.\n\n' +
       'Press Enter when done.'

@@ -39,7 +39,7 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Skip auth validation for paths that don't need it — saves a Supabase round-trip
+  // Skip auth validation for paths that don't need it. Saves a Supabase round-trip
   const pathname = request.nextUrl.pathname;
   const isPublicPath =
     PUBLIC_PATHS.has(pathname) ||

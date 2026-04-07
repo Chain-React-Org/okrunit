@@ -12,9 +12,9 @@ How to capture annotated screenshots for the `/docs/integrations` page. This pro
 
 The process has 3 phases:
 
-1. **Login** — Open browser, sign in manually, save session cookies
-2. **Capture** — Script navigates the platform UI, adds red annotation overlays, takes screenshots
-3. **Wire into docs** — Add `DocsImage` components to the integrations page
+1. **Login** - Open browser, sign in manually, save session cookies
+2. **Capture** - Script navigates the platform UI, adds red annotation overlays, takes screenshots
+3. **Wire into docs** - Add `DocsImage` components to the integrations page
 
 ## Phase 1: Save Login Session
 
@@ -181,7 +181,7 @@ await page.locator('text=Select the event for your Zap to run').first().click();
 - If you can't find an element, take a debug screenshot first to see the current page state
 - Use `await page.pause()` to open the Playwright Inspector and explore the DOM interactively
 - Run `browser.ts login` again if the session expires
-- Use `page.waitForTimeout(2000-4000)` after navigation/clicks — third-party UIs are often slow
+- Use `page.waitForTimeout(2000-4000)` after navigation/clicks. Third-party UIs are often slow
 - If Next.js caches an old image, use a new filename (e.g., `-v2.webp`)
 
 ## Phase 3: Add to Docs Page
@@ -256,14 +256,14 @@ Examples:
 
 For each new platform, capture these standard steps:
 
-- [ ] **Editor/builder** — The main workflow editor before adding OKrunit
-- [ ] **Search** — Typing "OKrunit" in the app/module search
-- [ ] **Select OKrunit** — OKrunit appearing in search results
-- [ ] **Select action** — Choosing the specific action (Request Approval, etc.)
-- [ ] **Auth/connect** — The account connection or API key entry screen
-- [ ] **Configure fields** — The field mapping/configuration screen
-- [ ] **Test** — The test button or test results screen
-- [ ] **Platform-specific** — Any unique steps (e.g., Make's webhook scenario, n8n's Wait node)
+- [ ] **Editor/builder** - The main workflow editor before adding OKrunit
+- [ ] **Search** - Typing "OKrunit" in the app/module search
+- [ ] **Select OKrunit** - OKrunit appearing in search results
+- [ ] **Select action** - Choosing the specific action (Request Approval, etc.)
+- [ ] **Auth/connect** - The account connection or API key entry screen
+- [ ] **Configure fields** - The field mapping/configuration screen
+- [ ] **Test** - The test button or test results screen
+- [ ] **Platform-specific** - Any unique steps (e.g., Make's webhook scenario, n8n's Wait node)
 
 ## Design Guidelines
 

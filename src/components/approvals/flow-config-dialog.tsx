@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { ApprovalFlow, ApprovalRequest, UserRole, ApproverMode } from "@/lib/types/database";
 
-// UI-level approver mode — "by_position" maps to "designated" + assigned_team_id on save
+// UI-level approver mode. "by_position" maps to "designated" + assigned_team_id on save.
 type UIApproverMode = ApproverMode | "by_position";
 
 // ---- Types ------------------------------------------------------------------
@@ -294,7 +294,7 @@ export function FlowConfigDialog({
       applyForNext = parseInt(durationPreset, 10);
     }
 
-    // Map UI mode to API mode — "by_position" saves as "designated" with team
+    // Map UI mode to API mode. "by_position" saves as "designated" with team.
     const apiMode: ApproverMode = approverMode === "by_position" ? "designated" : approverMode;
 
     const payload: Record<string, unknown> = {
@@ -417,7 +417,7 @@ export function FlowConfigDialog({
               </p>
             </div>
 
-            {/* By Position — team + position selection */}
+            {/* By Position - team + position selection */}
             {approverMode === "by_position" && (
               <div className="space-y-4">
                 <div className="space-y-2">

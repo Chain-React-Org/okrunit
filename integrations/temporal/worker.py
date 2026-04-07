@@ -1,4 +1,4 @@
-"""OKRunit Temporal worker — run this to process approval gate workflows."""
+"""OKRunit Temporal worker. Run this to process approval gate workflows."""
 
 import asyncio
 

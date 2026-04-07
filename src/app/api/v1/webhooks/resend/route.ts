@@ -95,7 +95,7 @@ export async function POST(request: Request) {
           );
 
         console.warn(
-          `[Resend] Hard bounce for ${email} — disabled email notifications`,
+          `[Resend] Hard bounce for ${email}, disabled email notifications`,
         );
       }
     }

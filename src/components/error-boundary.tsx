@@ -40,7 +40,7 @@ export class GlobalErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoun
         errorType: error.name,
       }),
     }).catch(() => {
-      // Swallow — error reporting must not cause more errors
+      // Swallow. Error reporting must not cause more errors
     });
   }
 

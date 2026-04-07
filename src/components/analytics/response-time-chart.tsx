@@ -33,20 +33,20 @@ interface ResponseTimeChartProps {
 
 export function ResponseTimeChart({ data, days = 30 }: ResponseTimeChartProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Average Response Time</CardTitle>
+    <Card className="gap-3 py-4">
+      <CardHeader className="px-4">
+        <CardTitle className="text-sm">Average Response Time</CardTitle>
         <CardDescription>
           Time to decision per day over the last {days} days (hours)
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4">
         {data.length === 0 ? (
-          <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
             No response time data available
           </div>
         ) : (
-          <div className="h-[300px] w-full">
+          <div className="h-[220px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={data}

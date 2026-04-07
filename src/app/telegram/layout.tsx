@@ -1,7 +1,7 @@
 import Script from "next/script";
 
 export const metadata = {
-  title: "OKrunit — Telegram",
+  title: "OKrunit - Telegram",
 };
 
 export default function TelegramLayout({

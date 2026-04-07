@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms of Service - OKrunit",
-  description: "Terms of Service for OKrunit — the human-in-the-loop approval gateway.",
+  description: "Terms of Service for OKrunit, the human-in-the-loop approval gateway.",
   alternates: { canonical: "https://okrunit.com/terms" },
 };
 

@@ -7,7 +7,7 @@
 // Called before login to determine if the user should be redirected to SSO
 // instead of using password-based authentication.
 //
-// No authentication required — this is called before login.
+// No authentication required. This is called before login.
 // ---------------------------------------------------------------------------
 
 import { NextRequest, NextResponse } from "next/server";

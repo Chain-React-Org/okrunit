@@ -16,7 +16,7 @@ export function OnboardingTutorial() {
     syncFromServer().finally(() => setServerLoaded(true));
   }, [syncFromServer]);
 
-  // Wait for server state before deciding visibility — localStorage may have stale values
+  // Wait for server state before deciding visibility. localStorage may have stale values
   if (!mounted || !serverLoaded || tourCompleted || tourDismissed || fullTourActive) return null;
 
   return (

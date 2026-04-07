@@ -5,7 +5,7 @@ import { DocsImage } from "@/components/docs/docs-image";
 export const metadata: Metadata = {
   title: "API Reference",
   description:
-    "Complete API reference for OKrunit — endpoints, authentication, request/response formats, and code examples.",
+    "Complete API reference for OKrunit: endpoints, authentication, request/response formats, and code examples.",
 };
 
 /* ------------------------------------------------------------------ */
@@ -94,7 +94,7 @@ export default function ApiReferencePage() {
         <p className="mt-1 text-sm text-emerald-800">
           You don&apos;t need to use the API directly. The easiest way to connect
           is to select the OKrunit node inside your automation platform (Zapier,
-          Make, n8n, etc.) and connect your account — no code required.{" "}
+          Make, n8n, etc.) and connect your account. No code required.{" "}
           <Link href="/docs/integrations" className="underline font-medium">
             See Integrations &rarr;
           </Link>
@@ -154,7 +154,7 @@ export default function ApiReferencePage() {
           <span className="font-bold">1.</span>
           <span>
             Go to{" "}
-            <Link href="/connections" className="text-emerald-600 hover:underline">
+            <Link href="/requests/connections" className="text-emerald-600 hover:underline">
               Connections
             </Link>{" "}
             in the dashboard
@@ -171,7 +171,7 @@ export default function ApiReferencePage() {
         <li className="flex gap-2">
           <span className="font-bold">4.</span>
           <span>
-            Copy the API key immediately — it&apos;s SHA-256 hashed before
+            Copy the API key immediately. It&apos;s SHA-256 hashed before
             storage and cannot be retrieved again
           </span>
         </li>
@@ -359,22 +359,22 @@ X-RateLimit-Reset: 1711296000`}</code>
         <div className="mt-3 space-y-2 text-sm text-zinc-700">
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">title</code>{" "}
-            <span className="text-red-600 text-xs font-medium">required</span> — Short
+            <span className="text-red-600 text-xs font-medium">required</span>: Short
             description of what needs approval
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">description</code>{" "}
-            <span className="text-red-600 text-xs font-medium">required</span> — Detailed
+            <span className="text-red-600 text-xs font-medium">required</span>: Detailed
             context for the approver
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">priority</code>{" "}
-            <span className="text-red-600 text-xs font-medium">required</span> — One of:
+            <span className="text-red-600 text-xs font-medium">required</span>: One of:
             low, medium, high, critical
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">callback_url</code>{" "}
-            <span className="text-zinc-400 text-xs">optional</span> — URL to POST the
+            <span className="text-zinc-400 text-xs">optional</span>: URL to POST the
             decision to (see{" "}
             <Link href="/docs/webhooks" className="text-emerald-600 hover:underline">
               Webhooks
@@ -383,42 +383,42 @@ X-RateLimit-Reset: 1711296000`}</code>
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">callback_headers</code>{" "}
-            <span className="text-zinc-400 text-xs">optional</span> — Custom headers
+            <span className="text-zinc-400 text-xs">optional</span>: Custom headers
             included in the webhook callback
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">action_type</code>{" "}
-            <span className="text-zinc-400 text-xs">optional</span> — Custom label for
+            <span className="text-zinc-400 text-xs">optional</span>: Custom label for
             filtering and routing (e.g. &quot;user.delete&quot;, &quot;deploy.production&quot;)
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">metadata</code>{" "}
-            <span className="text-zinc-400 text-xs">optional</span> — Arbitrary JSON
+            <span className="text-zinc-400 text-xs">optional</span>: Arbitrary JSON
             object passed through to the callback
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">expires_at</code>{" "}
-            <span className="text-zinc-400 text-xs">optional</span> — ISO 8601 timestamp;
+            <span className="text-zinc-400 text-xs">optional</span>: ISO 8601 timestamp;
             auto-expires if no decision by this time
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">required_approvals</code>{" "}
-            <span className="text-zinc-400 text-xs">optional</span> — Number of approvals
+            <span className="text-zinc-400 text-xs">optional</span>: Number of approvals
             needed (default: 1)
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">is_sequential</code>{" "}
-            <span className="text-zinc-400 text-xs">optional</span> — If true, approvers
+            <span className="text-zinc-400 text-xs">optional</span>: If true, approvers
             must approve in order (default: false)
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">source</code>{" "}
-            <span className="text-zinc-400 text-xs">optional</span> — Name of the
+            <span className="text-zinc-400 text-xs">optional</span>: Name of the
             integration for filtering and analytics
           </div>
           <div>
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800">idempotency_key</code>{" "}
-            <span className="text-zinc-400 text-xs">optional</span> — Prevents duplicate
+            <span className="text-zinc-400 text-xs">optional</span>: Prevents duplicate
             requests (see Idempotency below)
           </div>
         </div>
@@ -512,14 +512,14 @@ X-RateLimit-Reset: 1711296000`}</code>
         path="/api/v1/approvals/:id/comments"
         description="Add a comment to an approval request. Comments are visible to all org members and are included in the audit trail."
         body={`{
-  "body": "Checked the database — this user has no active subscriptions. Safe to proceed."
+  "body": "Checked the database. This user has no active subscriptions. Safe to proceed."
 }`}
         response={`// 201 Created
 {
   "id": "comment-uuid",
   "approval_request_id": "a1b2c3d4-...",
   "user_id": "user-uuid",
-  "body": "Checked the database — this user has no active subscriptions. Safe to proceed.",
+  "body": "Checked the database. This user has no active subscriptions. Safe to proceed.",
   "created_at": "2026-03-24T10:15:00.000Z"
 }`}
       />

@@ -191,7 +191,7 @@ export function V2OrgNav({ isAdmin, pendingInviteCount, planName, mobile }: V2Or
         );
       })}
 
-      {/* SSO & Settings — pinned at bottom */}
+      {/* SSO & Settings - pinned at bottom */}
       {((!ssoItem.adminOnly || isAdmin) || (!settingsItem.adminOnly || isAdmin)) && (
         <div className="mt-4">
           <div className="flex items-center gap-2 px-3 mb-2">

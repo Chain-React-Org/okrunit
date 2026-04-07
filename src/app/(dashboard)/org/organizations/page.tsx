@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
-import { getCachedOrganizationsData } from "@/lib/cache/queries";
+import { getCachedOrganizationsData, getCachedOrgLayoutData } from "@/lib/cache/queries";
 import { OrgList } from "@/components/org/org-list";
+import { PLAN_LIMITS } from "@/lib/billing/plans";
 
 export const metadata = {
   title: "Organizations - OKrunit",
@@ -13,8 +14,14 @@ export default async function OrganizationsPage() {
   if (!ctx) redirect("/login");
   const { profile, membership } = ctx;
 
-  const { orgs, memberCounts, teamCounts } =
-    await getCachedOrganizationsData(profile.id);
+  const [{ orgs, memberCounts, teamCounts }, { currentPlan }] = await Promise.all([
+    getCachedOrganizationsData(profile.id),
+    getCachedOrgLayoutData(membership.org_id),
+  ]);
+
+  const limits = PLAN_LIMITS[currentPlan];
+  const ownedCount = orgs.filter((o) => o.role === "owner").length;
+  const canCreateOrg = limits.maxOrganizations === -1 || ownedCount < limits.maxOrganizations;
 
   return (
     <OrgList
@@ -22,6 +29,9 @@ export default async function OrganizationsPage() {
       currentOrgId={membership.org_id}
       memberCounts={memberCounts}
       teamCounts={teamCounts}
+      canCreateOrg={canCreateOrg}
+      maxOrganizations={limits.maxOrganizations}
+      planName={limits.name}
     />
   );
 }

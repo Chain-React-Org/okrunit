@@ -28,6 +28,7 @@ export default async function OrgBillingPage() {
     <BillingDashboard
       plans={cached.plans}
       subscription={cached.subscription as Subscription | null}
+      planOverride={cached.planOverride}
       usage={{
         requests: cached.requestsThisMonth,
         connections: connectionsCount,

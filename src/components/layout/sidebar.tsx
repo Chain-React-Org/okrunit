@@ -59,7 +59,7 @@ export function Sidebar({ pendingCount: initialPendingCount, userRole, isAppAdmi
   const navRef = useRef<HTMLElement>(null);
   const isAdmin = userRole === "owner" || userRole === "admin";
 
-  // Live pending count — starts from server value, updated via realtime
+  // Live pending count. Starts from server value, updated via realtime
   const [livePendingCount, setLivePendingCount] = useState(initialPendingCount);
   // Deduplicate events: track IDs recently processed to avoid double-counting
   // when both the realtime subscription and the DOM event fire for the same record.
@@ -276,13 +276,13 @@ export function Sidebar({ pendingCount: initialPendingCount, userRole, isAppAdmi
           <img src="/logo-icon.png" alt="OKrunit" className="size-14 object-contain drop-shadow-md" />
         </Link>
 
-        {/* First item (Org/Home) — above divider like Make.com */}
+        {/* First item (Org/Home), above divider like Make.com */}
         {visibleItems.length > 0 && renderNavItem(visibleItems[0])}
 
-        {/* Divider — between first item and rest */}
+        {/* Divider between first item and rest */}
         <div className="mx-auto my-2 h-px w-7 bg-white/25" />
 
-        {/* Remaining nav items — all rendered for measurement, overflow hidden */}
+        {/* Remaining nav items, all rendered for measurement, overflow hidden */}
         <nav ref={navRef} className="flex w-full flex-1 flex-col items-center overflow-hidden">
           {remainingItems.slice(0, maxVisible).map((item) => renderNavItem(item))}
         </nav>

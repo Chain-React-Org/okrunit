@@ -690,7 +690,10 @@ export type NotificationCategory =
   | "team_invite"
   | "team_added"
   | "flow_assigned"
-  | "welcome";
+  | "welcome"
+  | "connection_deactivated"
+  | "role_changed"
+  | "limit_approaching";
 
 export interface InAppNotification {
   id: string;

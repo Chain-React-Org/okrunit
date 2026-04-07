@@ -111,7 +111,7 @@ export function RouteCard({
 
   function toggleAllSources() {
     if (localSources.length === 0) {
-      // Currently "all" — switch to none
+      // Currently "all". Switch to none.
       // Don't save yet, they need to pick sources
       return;
     }

@@ -6,7 +6,7 @@
  */
 
 // ---------------------------------------------------------------------------
-// Mock setup — must be declared before any imports.
+// Mock setup. Must be declared before any imports.
 // We keep stable references so that after jest.resetModules() the re-required
 // source module binds to the same mock objects we assert against.
 // ---------------------------------------------------------------------------
@@ -154,7 +154,7 @@ async function runAction(): Promise<void> {
 
   require("../src/index");
 
-  // Drain micro-tasks — the run() promise chains multiple awaits (fetch calls,
+  // Drain micro-tasks. The run() promise chains multiple awaits (fetch calls,
   // sleep, JSON parsing). We flush generously to cover all of them.
   // Each poll cycle involves: sleep resolve -> fetch -> resp.json() parse,
   // so we need enough ticks to cover the worst case (multiple polls).

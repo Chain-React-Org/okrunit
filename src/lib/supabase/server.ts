@@ -29,7 +29,7 @@ export async function createClient() {
 }
 
 /**
- * Cached getUser() — deduplicates the Supabase Auth call within a single
+ * Cached getUser(). Deduplicates the Supabase Auth call within a single
  * React server render. Without this, the layout and page each call
  * getUser() independently, doubling the auth latency on every navigation.
  */

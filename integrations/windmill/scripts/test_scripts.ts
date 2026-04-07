@@ -86,7 +86,7 @@ function restoreFetch() {
 }
 
 // ---------------------------------------------------------------------------
-// Dynamic imports — we import each script's `main` at runtime so the mock
+// Dynamic imports. We import each script's `main` at runtime so the mock
 // fetch is in place when the function runs. Because Deno caches modules, we
 // import once and the mock is swapped per-test around calls.
 // ---------------------------------------------------------------------------

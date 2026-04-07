@@ -4,7 +4,7 @@
 -- rules, settings, or invites.
 -- ---------------------------------------------------------------------------
 
--- 1. org_memberships.role — drop and recreate CHECK constraint
+-- 1. org_memberships.role: drop and recreate CHECK constraint
 DO $$
 DECLARE
   cname TEXT;

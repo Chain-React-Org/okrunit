@@ -22,7 +22,7 @@ export default function RequestsLoading() {
           <Skeleton className="h-8 w-[120px]" />
         </div>
 
-        {/* Stat cards skeleton — 3 column grid */}
+        {/* Stat cards skeleton - 3 column grid */}
         <div className="grid grid-cols-3 gap-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="rounded-xl border-0 p-5 shadow-[var(--shadow-card)]">

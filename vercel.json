@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/v1/cron/sla-warnings",
+      "schedule": "*/2 * * * *"
+    },
+    {
       "path": "/api/v1/cron/process-escalations",
       "schedule": "*/5 * * * *"
     },

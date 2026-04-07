@@ -2,8 +2,8 @@
 
 Provides two ways to integrate with AutoGen:
 
-1. OKRunitApprovalTool class — register with an agent via register_for_llm/register_for_execution
-2. request_approval function — use directly or register manually as a callable
+1. OKRunitApprovalTool class - register with an agent via register_for_llm/register_for_execution
+2. request_approval function - use directly or register manually as a callable
 
 Usage with ConversableAgent:
     from autogen import ConversableAgent

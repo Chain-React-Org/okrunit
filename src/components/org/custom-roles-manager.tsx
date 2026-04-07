@@ -288,9 +288,9 @@ export function CustomRolesManager({ initialRoles }: CustomRolesManagerProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Member — can view approvals</SelectItem>
-                  <SelectItem value="approver">Approver — can approve/reject</SelectItem>
-                  <SelectItem value="admin">Admin — can manage settings</SelectItem>
+                  <SelectItem value="member">Member - can view approvals</SelectItem>
+                  <SelectItem value="approver">Approver - can approve/reject</SelectItem>
+                  <SelectItem value="admin">Admin - can manage settings</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function MessagingLoading() {
   return (
     <div className="space-y-8">
-      {/* Platform cards — 5 columns on md */}
+      {/* Platform cards - 5 columns on md */}
       <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
           <div

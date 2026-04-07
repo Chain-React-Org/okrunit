@@ -4,11 +4,21 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, ExternalLink, CreditCard } from "lucide-react";
+import { Check, ExternalLink, CreditCard, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PLAN_LIMITS, isUnlimited, PLAN_ORDER } from "@/lib/billing/plans";
 import type { Plan, Subscription, Invoice, BillingPlan } from "@/lib/types/database";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /** Human-readable labels for feature keys */
 const FEATURE_LABELS: Record<string, string> = {
@@ -48,6 +58,7 @@ function featureLabel(key: string): string {
 interface BillingDashboardProps {
   plans: Plan[];
   subscription: Subscription | null;
+  planOverride?: BillingPlan | null;
   usage: {
     requests: number;
     connections: number;
@@ -59,10 +70,13 @@ interface BillingDashboardProps {
   orgId: string;
 }
 
-export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin, orgId }: BillingDashboardProps) {
+export function BillingDashboard({ plans, subscription, planOverride, usage, invoices, isAdmin, orgId }: BillingDashboardProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
-  const currentPlan = (subscription?.plan_id ?? "free") as BillingPlan;
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmDowngrade, setConfirmDowngrade] = useState<string | null>(null);
+  const subscriptionPlan = (subscription?.plan_id ?? "free") as BillingPlan;
+  const currentPlan = (planOverride ?? subscriptionPlan) as BillingPlan;
   const limits = PLAN_LIMITS[currentPlan];
 
   const handleCheckout = async (planId: string) => {
@@ -93,9 +107,37 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
     finally { setLoading(null); }
   };
 
+  const handleCancel = async () => {
+    setConfirmCancel(false);
+    setLoading("cancel");
+    try {
+      const res = await fetch("/api/v1/billing/cancel", { method: "POST" });
+      const data = await res.json();
+      if (data.success) { toast.success("Subscription cancelled. You'll keep access until your billing period ends."); window.location.reload(); }
+      else toast.error(data.error ?? "Failed to cancel subscription");
+    } catch { toast.error("Failed to cancel subscription"); }
+    finally { setLoading(null); }
+  };
+
+  const handleDowngrade = async (planId: string) => {
+    setConfirmDowngrade(null);
+    setLoading(`downgrade-${planId}`);
+    try {
+      const res = await fetch("/api/v1/billing/change-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan_id: planId }),
+      });
+      const data = await res.json();
+      if (data.success) { toast.success(`Downgraded to ${PLAN_LIMITS[planId as BillingPlan]?.name ?? planId}`); window.location.reload(); }
+      else toast.error(data.error ?? "Failed to downgrade");
+    } catch { toast.error("Failed to downgrade"); }
+    finally { setLoading(null); }
+  };
+
   const requestsPct = isUnlimited(limits.maxRequests) ? 0 : Math.round((usage.requests / limits.maxRequests) * 100);
   const requestsLabel = isUnlimited(limits.maxRequests)
-    ? `${usage.requests} used`
+    ? `${usage.requests} / Unlimited`
     : `${usage.requests} / ${limits.maxRequests} used (${requestsPct}%)`;
 
   return (
@@ -111,11 +153,13 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
               <Badge variant={currentPlan === "free" ? "secondary" : "default"} className="text-xs">
                 {limits.name}
               </Badge>
-              <span className="text-sm text-black dark:text-foreground">
-                {isUnlimited(limits.maxRequests) ? "Unlimited" : `${limits.maxRequests}`} requests/month
-              </span>
+              {planOverride && (
+                <Badge variant="outline" className="text-xs border-amber-500 text-amber-600 dark:text-amber-400">
+                  Admin override
+                </Badge>
+              )}
             </div>
-{/* Compare plans button removed — plan cards are visible below */}
+{/* Compare plans button removed. Plan cards are visible below. */}
           </div>
 
           {/* Row: Billing */}
@@ -189,7 +233,7 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Connections</span>
               <span className="text-sm">
-                {usage.connections} / {isUnlimited(limits.maxConnections) ? "Unlimited" : limits.maxConnections} active
+                {usage.connections} / {isUnlimited(limits.maxConnections) ? "Unlimited" : limits.maxConnections}
               </span>
             </div>
           </div>
@@ -199,7 +243,7 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Teams</span>
               <span className="text-sm">
-                {usage.teams} / {isUnlimited(limits.maxTeams) ? "Unlimited" : limits.maxTeams} teams
+                {usage.teams} / {isUnlimited(limits.maxTeams) ? "Unlimited" : limits.maxTeams}
               </span>
             </div>
           </div>
@@ -209,7 +253,7 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Members</span>
               <span className="text-sm">
-                {usage.teamMembers} / {isUnlimited(limits.maxTeamMembers) ? "Unlimited" : limits.maxTeamMembers} members
+                {usage.teamMembers} / {isUnlimited(limits.maxTeamMembers) ? "Unlimited" : limits.maxTeamMembers}
               </span>
             </div>
           </div>
@@ -266,7 +310,7 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
                   </div>
                 )}
                 <CardContent className="pt-6">
-                  {/* Price area — fixed height */}
+                  {/* Price area - fixed height */}
                   <div className="mb-5 h-[100px]">
                     <h4 className={cn("text-base font-bold", !isEnterprise && "text-black dark:text-foreground")}>{plan.name}</h4>
                     <p className="mt-1">
@@ -296,16 +340,17 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
 
                   {/* CTA button */}
                   <div className="mb-5">
+                    {/* Upgrade */}
                     {isAdmin && isUpgrade && !isEnterprise && (
                       <Button
                         className="w-full"
-                        variant={isEnterprise ? "outline" : "default"}
                         onClick={() => handleCheckout(planId)}
                         disabled={loading === planId}
                       >
                         {loading === planId ? "Loading..." : `Buy ${billingCycle} plan`}
                       </Button>
                     )}
+                    {/* Enterprise upsell */}
                     {isEnterprise && isUpgrade && (
                       <a
                         href="mailto:support@okrunit.com"
@@ -314,12 +359,42 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
                         Talk to sales
                       </a>
                     )}
+                    {/* Current plan */}
                     {isCurrent && (
                       <p className={cn("text-center text-xs", isEnterprise ? "text-white/60" : "text-muted-foreground")}>
                         Your current plan
                       </p>
                     )}
-                    {!isCurrent && !isUpgrade && !isEnterprise && (
+                    {/* Downgrade to a lower paid plan */}
+                    {isAdmin && !isCurrent && !isUpgrade && !isEnterprise && planId !== "free" && currentPlan !== "free" && (
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => setConfirmDowngrade(planId)}
+                        disabled={loading === `downgrade-${planId}`}
+                      >
+                        {loading === `downgrade-${planId}` ? "Loading..." : "Downgrade"}
+                      </Button>
+                    )}
+                    {/* Cancel subscription (downgrade to free) */}
+                    {isAdmin && !isCurrent && planId === "free" && currentPlan !== "free" && !subscription?.cancelled_at && (
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => setConfirmCancel(true)}
+                        disabled={loading === "cancel"}
+                      >
+                        {loading === "cancel" ? "Loading..." : "Cancel Subscription"}
+                      </Button>
+                    )}
+                    {/* Already cancelling */}
+                    {!isCurrent && planId === "free" && currentPlan !== "free" && subscription?.cancelled_at && (
+                      <p className="text-center text-xs text-muted-foreground">
+                        Cancellation pending
+                      </p>
+                    )}
+                    {/* Non-admin or free user looking at lower plans - show nothing */}
+                    {((!isAdmin && !isCurrent && !isUpgrade) || (currentPlan === "free" && planId === "free")) && !isCurrent && (
                       <p className="text-center text-xs text-muted-foreground">&nbsp;</p>
                     )}
                   </div>
@@ -333,6 +408,10 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
                       <li className="flex items-start gap-2">
                         <Check className={cn("size-4 shrink-0 mt-0.5", isEnterprise ? "text-white/80" : "text-primary")} />
                         {isUnlimited(plan.maxRequests) ? "Unlimited" : plan.maxRequests} requests/mo
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className={cn("size-4 shrink-0 mt-0.5", isEnterprise ? "text-white/80" : "text-primary")} />
+                        {isUnlimited(plan.maxOrganizations) ? "Unlimited" : plan.maxOrganizations} organization{plan.maxOrganizations !== 1 ? "s" : ""}
                       </li>
                       <li className="flex items-start gap-2">
                         <Check className={cn("size-4 shrink-0 mt-0.5", isEnterprise ? "text-white/80" : "text-primary")} />
@@ -391,6 +470,7 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
             <tbody className="divide-y">
               {[
                 { label: "Requests per month", key: "maxRequests" },
+                { label: "Organizations", key: "maxOrganizations" },
                 { label: "Connections", key: "maxConnections" },
                 { label: "Teams", key: "maxTeams" },
                 { label: "Team members", key: "maxTeamMembers" },
@@ -427,10 +507,12 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
                   {PLAN_ORDER.map((planId) => {
                     const plan = PLAN_LIMITS[planId];
                     const isCurrent = planId === currentPlan;
-                    let value: string | React.ReactNode = "—";
+                    let value: string | React.ReactNode = "-";
 
                     if (row.key === "maxRequests") {
                       value = isUnlimited(plan.maxRequests) ? "Unlimited" : String(plan.maxRequests);
+                    } else if (row.key === "maxOrganizations") {
+                      value = isUnlimited(plan.maxOrganizations) ? "Unlimited" : String(plan.maxOrganizations);
                     } else if (row.key === "maxConnections") {
                       value = isUnlimited(plan.maxConnections) ? "Unlimited" : String(plan.maxConnections);
                     } else if (row.key === "maxTeams") {
@@ -442,7 +524,7 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
                     } else if (row.feature) {
                       value = plan.features.includes(row.feature)
                         ? <Check className="mx-auto size-4 text-primary" />
-                        : <span className="text-muted-foreground/40">—</span>;
+                        : <span className="text-muted-foreground/40">-</span>;
                     }
 
                     return (
@@ -502,6 +584,57 @@ export function BillingDashboard({ plans, subscription, usage, invoices, isAdmin
           </div>
         </div>
       )}
+
+      {/* ── Cancel Subscription Modal ── */}
+      <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Subscription</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel your subscription? You&apos;ll keep access to your current plan until the end of your billing period
+              {subscription?.current_period_end && (
+                <> on <strong>{new Date(subscription.current_period_end).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</strong></>
+              )}.
+              After that, your account will revert to the Free plan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleCancel}>
+              Cancel Subscription
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Downgrade Plan Modal ── */}
+      <AlertDialog open={!!confirmDowngrade} onOpenChange={(open) => !open && setConfirmDowngrade(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Downgrade to {confirmDowngrade ? PLAN_LIMITS[confirmDowngrade as BillingPlan]?.name : ""}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your plan limits will update immediately. Your billing will adjust at the next renewal
+              {subscription?.current_period_end && (
+                <> on <strong>{new Date(subscription.current_period_end).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</strong></>
+              )}.
+              {confirmDowngrade && (() => {
+                const target = PLAN_LIMITS[confirmDowngrade as BillingPlan];
+                return (
+                  <span className="mt-3 block text-xs">
+                    New limits: {isUnlimited(target.maxConnections) ? "Unlimited" : target.maxConnections} connections, {isUnlimited(target.maxTeams) ? "Unlimited" : target.maxTeams} teams, {isUnlimited(target.maxTeamMembers) ? "Unlimited" : target.maxTeamMembers} members, {isUnlimited(target.historyDays) ? "Unlimited" : `${target.historyDays}-day`} history
+                  </span>
+                );
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Current Plan</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmDowngrade && handleDowngrade(confirmDowngrade)}>
+              Downgrade
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

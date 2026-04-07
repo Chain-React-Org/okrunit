@@ -462,7 +462,7 @@ export async function POST(request: Request) {
           return;
         }
 
-        // Skip prompt — apply the decision immediately.
+        // Skip prompt. Apply the decision immediately.
         const result = await applyDecisionAndRespond(request, {
           decision,
           requestId,

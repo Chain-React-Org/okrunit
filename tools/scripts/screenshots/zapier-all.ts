@@ -77,8 +77,8 @@ async function main() {
   });
   const page = await ctx.newPage();
 
-  // ---- Step 1: Zap editor — highlight the Action card ----
-  console.log("\n📸 Step 1: Zap editor — click Action...");
+  // ---- Step 1: Zap editor - highlight the Action card ----
+  console.log("\n📸 Step 1: Zap editor - click Action...");
   await page.goto("https://zapier.com/editor");
   await page.waitForTimeout(4000);
   const actionBox = await parentBox(page, "text=Select the event for your Zap to run");
@@ -87,7 +87,7 @@ async function main() {
   await clearAnn(page);
 
   // ---- Step 2: Click Action to open app picker, highlight search ----
-  console.log("\n📸 Step 2: App picker — search bar...");
+  console.log("\n📸 Step 2: App picker - search bar...");
   await page.locator("text=Select the event for your Zap to run").first().click();
   await page.waitForTimeout(2000);
   const searchInput = page.locator('input[placeholder*="Search"]').first();

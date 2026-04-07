@@ -22,7 +22,7 @@ CREATE TABLE custom_roles (
 
 CREATE INDEX idx_custom_roles_org ON custom_roles(org_id);
 
--- Add custom_role_id to org_memberships (nullable — null means using built-in role)
+-- Add custom_role_id to org_memberships (nullable, null means using built-in role)
 ALTER TABLE org_memberships
   ADD COLUMN custom_role_id UUID REFERENCES custom_roles(id) ON DELETE SET NULL;
 

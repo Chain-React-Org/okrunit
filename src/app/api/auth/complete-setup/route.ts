@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createInAppNotification } from "@/lib/notifications/in-app";
 
 export async function POST() {
   const supabase = await createClient();
@@ -31,6 +32,26 @@ export async function POST() {
       { error: "Failed to update profile" },
       { status: 500 },
     );
+  }
+
+  // Send welcome in-app notification (fire-and-forget)
+  const { data: membership } = await admin
+    .from("org_memberships")
+    .select("org_id")
+    .eq("user_id", user.id)
+    .eq("is_default", true)
+    .single();
+
+  if (membership) {
+    createInAppNotification({
+      userId: user.id,
+      orgId: membership.org_id,
+      category: "welcome",
+      title: "Welcome to OKrunit!",
+      body: "You're all set. Create a connection to start sending approval requests, or explore the dashboard.",
+      resourceType: "org",
+      resourceId: membership.org_id,
+    });
   }
 
   return NextResponse.json({ success: true });

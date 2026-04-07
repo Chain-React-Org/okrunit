@@ -529,7 +529,7 @@ function RoutingConfig({
 }
 
 // ---------------------------------------------------------------------------
-// Discord Channel Picker — lightweight inline dropdown
+// Discord Channel Picker - lightweight inline dropdown
 // ---------------------------------------------------------------------------
 
 function DiscordChannelPicker({

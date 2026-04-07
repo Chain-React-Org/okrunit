@@ -45,7 +45,7 @@ test.describe("Onboarding Tour", () => {
 
     await page.waitForTimeout(2000);
 
-    // Step 1: See request — should be on /requests
+    // Step 1: See request. Should be on /requests
     await page.waitForURL(/\/requests/, { timeout: 10000 });
     const step1Tooltip = page.locator(".z-\\[10000\\]");
     await expect(step1Tooltip).toBeVisible({ timeout: 10000 });

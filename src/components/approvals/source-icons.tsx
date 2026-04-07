@@ -33,7 +33,7 @@ function MondayLogo({ className }: { className?: string }) {
 function N8nLogo({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      {/* Three connected workflow nodes — n8n brand style */}
+      {/* Three connected workflow nodes - n8n brand style */}
       <circle cx="7" cy="15.5" r="3" />
       <circle cx="17" cy="15.5" r="3" />
       <circle cx="17" cy="7.5" r="3" />
@@ -194,7 +194,7 @@ export function getSourceDisplay(
     for (const [key, config] of Object.entries(SOURCE_CONFIG)) {
       if (lower.includes(key)) return config;
     }
-    // Unknown but explicit source — show as-is
+    // Unknown but explicit source. Show as-is.
     return {
       label: approval.source,
       icon: Globe,
@@ -223,7 +223,7 @@ export function getSourceDisplay(
     };
   }
 
-  // 5. Fallback — generic integration
+  // 5. Fallback - generic integration
   return {
     label: "Integration",
     icon: Globe,

@@ -24,7 +24,7 @@ const importSchema = z
   });
 
 /**
- * Naive XML text extraction — avoids adding a full XML parser dependency.
+ * Naive XML text extraction. Avoids adding a full XML parser dependency.
  * Pulls text content from the first occurrence of a given tag.
  */
 function extractTag(xml: string, tag: string): string | null {
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the metadata XML — either from direct input or by fetching a URL
+    // Get the metadata XML, either from direct input or by fetching a URL
     let xml: string;
 
     if (parsed.data.metadata_xml) {
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       extractAttribute(xml, "EntityDescriptor", "entityID") ||
       extractAttribute(xml, "entityDescriptor", "entityID");
 
-    // Extract SSO URL — look for HTTP-Redirect binding first, then HTTP-POST
+    // Extract SSO URL: look for HTTP-Redirect binding first, then HTTP-POST
     let ssoUrl: string | null = null;
     const ssoServicePattern =
       /SingleSignOnService[^>]*Binding="[^"]*(?:Redirect|POST)"[^>]*Location="([^"]*)"/gi;

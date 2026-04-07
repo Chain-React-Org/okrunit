@@ -74,9 +74,9 @@ func main() {
 ### `NewClient(apiKey string, opts ...Option) *Client`
 
 Options:
-- `WithBaseURL(url)` — custom API base URL (default: `https://okrunit.com`)
-- `WithTimeout(duration)` — HTTP timeout (default: 30s)
-- `WithHTTPClient(client)` — custom `*http.Client`
+- `WithBaseURL(url)` - custom API base URL (default: `https://okrunit.com`)
+- `WithTimeout(duration)` - HTTP timeout (default: 30s)
+- `WithHTTPClient(client)` - custom `*http.Client`
 
 ### Methods
 

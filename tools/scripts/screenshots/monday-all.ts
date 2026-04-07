@@ -86,8 +86,8 @@ async function main() {
   });
   const page = await ctx.newPage();
 
-  // ---- Step 1: Board view — highlight the Integrate button ----
-  console.log("\n📸 Step 1: Board view — Integrate button...");
+  // ---- Step 1: Board view - highlight the Integrate button ----
+  console.log("\n📸 Step 1: Board view - Integrate button...");
   // Navigate to the main board (user's first board)
   await page.goto("https://monday.com", { waitUntil: "networkidle" });
   await page.waitForTimeout(4000);
@@ -132,8 +132,8 @@ async function main() {
   await snap(page, "monday-step-1-board");
   await clearAnn(page);
 
-  // ---- Step 2: Integration center — search for OKrunit ----
-  console.log("\n📸 Step 2: Integration center — search...");
+  // ---- Step 2: Integration center - search for OKrunit ----
+  console.log("\n📸 Step 2: Integration center - search...");
   if (
     await integrateBtn
       .isVisible({ timeout: 3000 })
@@ -159,7 +159,7 @@ async function main() {
   await snap(page, "monday-step-2-integration-center");
   await clearAnn(page);
 
-  // ---- Step 3: Search results — select OKrunit ----
+  // ---- Step 3: Search results - select OKrunit ----
   console.log("\n📸 Step 3: Search results...");
   if (
     await searchInput
@@ -189,7 +189,7 @@ async function main() {
   await snap(page, "monday-step-3-search-okrunit");
   await clearAnn(page);
 
-  // ---- Step 4: Recipe selection — choose a recipe ----
+  // ---- Step 4: Recipe selection - choose a recipe ----
   console.log("\n📸 Step 4: Recipe selection...");
   if (
     await okrunitResult

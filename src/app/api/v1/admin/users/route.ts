@@ -28,7 +28,7 @@ const deleteUserSchema = z.object({
   user_id: z.string().uuid(),
 });
 
-// ---- POST /api/v1/admin/users — Create user -------------------------------
+// ---- POST /api/v1/admin/users - Create user -------------------------------
 
 export async function POST(request: Request) {
   try {
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
   }
 }
 
-// ---- PATCH /api/v1/admin/users — Update user ------------------------------
+// ---- PATCH /api/v1/admin/users - Update user ------------------------------
 
 export async function PATCH(request: Request) {
   try {
@@ -173,7 +173,7 @@ export async function PATCH(request: Request) {
   }
 }
 
-// ---- DELETE /api/v1/admin/users — Delete user -----------------------------
+// ---- DELETE /api/v1/admin/users - Delete user -----------------------------
 
 export async function DELETE(request: Request) {
   try {

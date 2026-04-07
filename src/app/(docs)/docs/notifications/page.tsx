@@ -36,13 +36,13 @@ export default function NotificationsPage() {
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Notification Events</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">Notifications are sent for these events:</p>
       <ul className="mt-3 list-disc pl-6 space-y-1 text-zinc-600">
-        <li><strong>New request</strong> — When an approval request is created</li>
-        <li><strong>Decision made</strong> — When a request is approved, rejected, cancelled, or expired</li>
-        <li><strong>Comment added</strong> — When someone comments on a request</li>
-        <li><strong>Next approver</strong> — When it&apos;s your turn in a sequential approval chain</li>
-        <li><strong>SLA breached</strong> — When a request passes its SLA deadline</li>
-        <li><strong>Escalated</strong> — When a request is escalated to a higher level</li>
-        <li><strong>Team invite</strong> — When you&apos;re invited to an organization</li>
+        <li><strong>New request</strong>: When an approval request is created</li>
+        <li><strong>Decision made</strong>: When a request is approved, rejected, cancelled, or expired</li>
+        <li><strong>Comment added</strong>: When someone comments on a request</li>
+        <li><strong>Next approver</strong>: When it&apos;s your turn in a sequential approval chain</li>
+        <li><strong>SLA breached</strong>: When a request passes its SLA deadline</li>
+        <li><strong>Escalated</strong>: When a request is escalated to a higher level</li>
+        <li><strong>Team invite</strong>: When you&apos;re invited to an organization</li>
       </ul>
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Per-User Preferences</h2>
@@ -50,10 +50,10 @@ export default function NotificationsPage() {
         Each user can configure their notification preferences in <strong>Settings → Account</strong>:
       </p>
       <ul className="mt-3 list-disc pl-6 space-y-2 text-zinc-600">
-        <li><strong>Email enabled/disabled</strong> — Toggle email notifications on or off</li>
-        <li><strong>Push enabled/disabled</strong> — Toggle browser push notifications</li>
-        <li><strong>Minimum priority</strong> — Only notify for requests at or above this priority (e.g. only High and Critical)</li>
-        <li><strong>Skip confirmation</strong> — Skip the confirmation dialog when approving/rejecting</li>
+        <li><strong>Email enabled/disabled</strong>: Toggle email notifications on or off</li>
+        <li><strong>Push enabled/disabled</strong>: Toggle browser push notifications</li>
+        <li><strong>Minimum priority</strong>: Only notify for requests at or above this priority (e.g. only High and Critical)</li>
+        <li><strong>Skip confirmation</strong>: Skip the confirmation dialog when approving/rejecting</li>
       </ul>
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Quiet Hours</h2>
@@ -61,10 +61,10 @@ export default function NotificationsPage() {
         Set times when you don&apos;t want to receive notifications. Navigate to <strong>Settings → Account → Notifications</strong>:
       </p>
       <ul className="mt-3 list-disc pl-6 space-y-2 text-zinc-600">
-        <li><strong>Enable quiet hours</strong> — Toggle on to suppress notifications during set hours</li>
-        <li><strong>Start/end time</strong> — e.g. 10:00 PM to 8:00 AM</li>
-        <li><strong>Timezone</strong> — Select your timezone so hours are calculated correctly</li>
-        <li><strong>Per-day schedule</strong> — Set different quiet hours for different days of the week (e.g. all day on weekends, evenings only on weekdays)</li>
+        <li><strong>Enable quiet hours</strong>: Toggle on to suppress notifications during set hours</li>
+        <li><strong>Start/end time</strong>: e.g. 10:00 PM to 8:00 AM</li>
+        <li><strong>Timezone</strong>: Select your timezone so hours are calculated correctly</li>
+        <li><strong>Per-day schedule</strong>: Set different quiet hours for different days of the week (e.g. all day on weekends, evenings only on weekdays)</li>
       </ul>
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Notification History</h2>

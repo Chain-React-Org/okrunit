@@ -169,7 +169,7 @@ export function ApprovalSteps({ requestId, canApprove, currentUserId }: Approval
                             )}
                             <span className="text-muted-foreground">
                               {vote.vote === "approve" ? "Approved" : "Rejected"}
-                              {vote.comment && ` — "${vote.comment}"`}
+                              {vote.comment && `: "${vote.comment}"`}
                             </span>
                           </div>
                         ))}

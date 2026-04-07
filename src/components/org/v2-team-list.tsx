@@ -150,7 +150,7 @@ export function V2TeamList({
 
   return (
     <div className="space-y-6">
-      {/* Header — matches org page style */}
+      {/* Header - matches org page style */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs font-medium text-primary mb-0.5">Organization</p>
@@ -230,7 +230,7 @@ export function V2TeamList({
                   </div>
                 </div>
 
-                {/* Actions — visible on hover */}
+                {/* Actions - visible on hover */}
                 {canManage && (
                   <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button

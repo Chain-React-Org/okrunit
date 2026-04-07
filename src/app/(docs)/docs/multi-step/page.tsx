@@ -4,7 +4,7 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Multi-Step Approvals",
-  description: "Configure sequential approval chains where multiple people must approve in order — manager first, then VP, then compliance.",
+  description: "Configure sequential approval chains where multiple people must approve in order: manager first, then VP, then compliance.",
 };
 
 export default function MultiStepPage() {

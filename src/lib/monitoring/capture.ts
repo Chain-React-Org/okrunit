@@ -15,7 +15,7 @@ import { sendErrorDiscordAlert } from "./discord-alerts";
 import { getBreadcrumbs } from "./breadcrumbs";
 import type { CaptureErrorParams, ErrorSeverity } from "./types";
 
-/** Current release — read once from env. */
+/** Current release. Read once from env. */
 const RELEASE =
   process.env.VERCEL_GIT_COMMIT_SHA ??
   process.env.NEXT_PUBLIC_GIT_SHA ??
@@ -25,7 +25,7 @@ const ENVIRONMENT = process.env.NODE_ENV ?? "production";
 
 /**
  * Capture an error and store it in the monitoring system.
- * Fire-and-forget — never throws.
+ * Fire-and-forget. Never throws.
  */
 export async function captureError(params: CaptureErrorParams): Promise<void> {
   try {
@@ -50,7 +50,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
     let eventCount = 1;
 
     if (!existing) {
-      // 2a. New issue — insert
+      // 2a. New issue - insert
       isNew = true;
       const { data: inserted, error: insertErr } = await admin
         .from("error_issues")
@@ -77,7 +77,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
       }
       issueId = inserted.id;
     } else {
-      // 2b. Existing issue — update
+      // 2b. Existing issue - update
       issueId = existing.id;
       eventCount = existing.event_count + 1;
 
@@ -131,7 +131,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
         .eq("issue_id", issueId)
         .not("user_id", "is", null);
 
-      // Use a rough unique count — exact distinct requires RPC
+      // Use a rough unique count. Exact distinct requires RPC
       // For now, the event count with user_id is a reasonable proxy
       if (count !== null) {
         await admin
@@ -164,7 +164,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
             orgName = orgResult.data.name;
           }
         } catch {
-          // Names are optional — continue without them
+          // Names are optional - continue without them
         }
       }
 
@@ -183,7 +183,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
         isRegression,
         eventCount,
       }).catch(() => {
-        // Swallow — Discord alert failure should never propagate
+        // Swallow. Discord alert failure should never propagate
       });
     }
   } catch (err) {

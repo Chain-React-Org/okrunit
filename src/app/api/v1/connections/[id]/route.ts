@@ -2,7 +2,7 @@
 // OKrunit -- Connections API: Update + Deactivate (single connection)
 // ---------------------------------------------------------------------------
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/api/auth";
@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { updateConnectionSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 // ---- Column allowlist (never return api_key_hash) -------------------------
@@ -102,6 +103,30 @@ export async function PATCH(
 
     revalidateTags(CacheTags.connections(auth.orgId), CacheTags.overview(auth.orgId));
 
+    // Notify admins when a connection is deactivated
+    if (body.is_active === false) {
+      after(async () => {
+        const notifyAdmin = createAdminClient();
+        const { data: admins } = await notifyAdmin
+          .from("org_memberships")
+          .select("user_id")
+          .eq("org_id", auth.orgId)
+          .in("role", ["owner", "admin"]);
+        const adminIds = (admins ?? []).map((m) => m.user_id).filter((uid) => uid !== auth.user.id);
+        if (adminIds.length > 0) {
+          await createInAppNotificationBulk(adminIds, {
+            orgId: auth.orgId,
+            category: "connection_deactivated",
+            title: "Connection deactivated",
+            body: `"${connection.name}" was deactivated. Requests using this connection will be rejected.`,
+            resourceType: "connection",
+            resourceId: id,
+            actorId: auth.user.id,
+          });
+        }
+      });
+    }
+
     return NextResponse.json({ data: connection });
   } catch (err) {
     return errorResponse(err);
@@ -168,6 +193,28 @@ export async function DELETE(
     });
 
     revalidateTags(CacheTags.connections(auth.orgId), CacheTags.overview(auth.orgId));
+
+    // Notify admins about the deletion
+    after(async () => {
+      const notifyAdmin = createAdminClient();
+      const { data: admins } = await notifyAdmin
+        .from("org_memberships")
+        .select("user_id")
+        .eq("org_id", auth.orgId)
+        .in("role", ["owner", "admin"]);
+      const adminIds = (admins ?? []).map((m) => m.user_id).filter((uid) => uid !== auth.user.id);
+      if (adminIds.length > 0) {
+        await createInAppNotificationBulk(adminIds, {
+          orgId: auth.orgId,
+          category: "connection_deactivated",
+          title: "Connection deleted",
+          body: `A connection was deleted. Requests using this connection will no longer work.`,
+          resourceType: "connection",
+          resourceId: id,
+          actorId: auth.user.id,
+        });
+      }
+    });
 
     return NextResponse.json({ data: { id } });
   } catch (err) {

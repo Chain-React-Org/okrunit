@@ -437,7 +437,7 @@ const webhookDeliveriesSteps: TourStepConfig[] = [
     targetSelector: "[data-tour='delivery-table']",
     title: "Delivery Details",
     description:
-      "Click any row to expand it and see the full request and response — headers, body, status code, and duration. Failed deliveries show the error message and can be retried with the Retry button.",
+      "Click any row to expand it and see the full request and response: headers, body, status code, and duration. Failed deliveries show the error message and can be retried with the Retry button.",
     position: "bottom",
     highlightMode: "no-ring",
   },

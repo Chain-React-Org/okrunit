@@ -612,7 +612,7 @@ export function RequestBuilder({
                 )}
               </div>
 
-              {/* Existing connections dropdown — hidden while creating */}
+              {/* Existing connections dropdown - hidden while creating */}
               {!showCreateConnection && connections.length > 0 && (
                 <Select onValueChange={selectConnection}>
                   <SelectTrigger id="connection" className="w-full">
@@ -679,7 +679,7 @@ export function RequestBuilder({
                       </div>
                       <p className="text-xs text-slate-600">API key has been filled into the Authorization header.</p>
                       <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-slate-500">Your API key (save it now — it won&apos;t be shown again):</p>
+                        <p className="text-xs font-medium text-slate-500">Your API key (save it now, it won&apos;t be shown again):</p>
                         <div className="flex gap-1.5">
                           <code className="flex-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-900 break-all select-all">
                             {newApiKey}

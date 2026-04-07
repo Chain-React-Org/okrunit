@@ -1,9 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageContainer } from "@/components/ui/page-container";
 
 export default function SettingsLoading() {
   return (
-    <PageContainer>
+    <>
       {/* Page header skeleton */}
       <div className="flex items-start justify-between gap-4 pb-6">
         <div className="space-y-1">
@@ -59,6 +58,6 @@ export default function SettingsLoading() {
           </div>
         </div>
       </div>
-    </PageContainer>
+    </>
   );
 }

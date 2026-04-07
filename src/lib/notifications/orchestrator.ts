@@ -252,6 +252,7 @@ export async function dispatchNotifications(
       const isCreateEvent =
         event.type === "approval.created" ||
         event.type === "approval.next_approver" ||
+        event.type === "approval.sla_warning" ||
         event.type === "approval.sla_breached" ||
         event.type === "approval.bottleneck" ||
         event.type === "approval.escalated";
@@ -490,6 +491,7 @@ const TITLE_MAP: Record<NotificationEventType, string> = {
   "approval.comment": "New Comment",
   "approval.next_approver": "Your Approval Needed",
   "approval.execution_cancelled": "Scheduled Execution Cancelled",
+  "approval.sla_warning": "SLA Deadline Approaching",
   "approval.sla_breached": "SLA Breached",
   "approval.bottleneck": "Approval Bottleneck Detected",
   "approval.escalated": "Approval Escalated",
@@ -515,6 +517,8 @@ function getNotificationBody(event: NotificationEvent): string {
       return `New comment on "${event.requestTitle}".`;
     case "approval.next_approver":
       return `Your approval is now needed for "${event.requestTitle}".`;
+    case "approval.sla_warning":
+      return `"${event.requestTitle}" is approaching its SLA deadline. Act soon to avoid a breach.`;
     case "approval.sla_breached":
       return `"${event.requestTitle}" has breached its SLA deadline.`;
     case "approval.bottleneck":

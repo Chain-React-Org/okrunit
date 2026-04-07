@@ -14,7 +14,7 @@ function getUserId(auth: AuthResult): string | null {
   return null;
 }
 
-// ---- GET /api/v1/approvals/[id]/watch — watcher list + status -------------
+// ---- GET /api/v1/approvals/[id]/watch - watcher list + status -------------
 
 export async function GET(
   request: Request,
@@ -56,7 +56,7 @@ export async function GET(
   }
 }
 
-// ---- POST /api/v1/approvals/[id]/watch — start watching ------------------
+// ---- POST /api/v1/approvals/[id]/watch - start watching ------------------
 
 export async function POST(
   request: Request,
@@ -98,7 +98,7 @@ export async function POST(
   }
 }
 
-// ---- DELETE /api/v1/approvals/[id]/watch — stop watching ------------------
+// ---- DELETE /api/v1/approvals/[id]/watch - stop watching ------------------
 
 export async function DELETE(
   request: Request,

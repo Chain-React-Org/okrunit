@@ -8,7 +8,7 @@ export default function AnalyticsLoading() {
         <Skeleton className="h-9 w-[110px] rounded-md" />
       </div>
 
-      {/* Stat cards — 4 columns */}
+      {/* Stat cards - 4 columns */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="rounded-xl border-0 p-5 shadow-[var(--shadow-card)]">
@@ -26,7 +26,7 @@ export default function AnalyticsLoading() {
 
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Volume chart — full width */}
+        {/* Volume chart - full width */}
         <div className="lg:col-span-2">
           <div className="rounded-xl border border-border/50 bg-[var(--card)] p-6">
             <Skeleton className="h-4 w-[120px] mb-4" />

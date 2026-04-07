@@ -1,4 +1,4 @@
-// Zapier screenshot capture — opens browser, pauses for login, then controlled step by step
+// Zapier screenshot capture. Opens browser, pauses for login, then controlled step by step
 // Usage: npx tsx tools/scripts/screenshots/zapier-capture.ts
 // After login, the script saves browser state and exits.
 // Subsequent steps use the saved state.
@@ -23,7 +23,7 @@ async function main() {
     const page = await context.newPage();
     await page.goto("https://zapier.com/app/login");
 
-    // Pause — user signs in, then clicks Resume in Inspector
+    // Pause. User signs in, then clicks Resume in Inspector
     await page.pause();
 
     // Save signed-in state

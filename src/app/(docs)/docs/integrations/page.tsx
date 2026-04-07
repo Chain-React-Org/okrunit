@@ -5,7 +5,7 @@ import { DocsImage } from "@/components/docs/docs-image";
 export const metadata: Metadata = {
   title: "Integrations",
   description:
-    "OKrunit integrations — connect with Zapier, Make, n8n, GitHub Actions, Terraform, LangChain, and more.",
+    "OKrunit integrations: connect with Zapier, Make, n8n, GitHub Actions, Terraform, LangChain, and more.",
 };
 
 /* ------------------------------------------------------------------ */
@@ -207,7 +207,7 @@ export default function IntegrationsPage() {
       <p className="mt-4 text-lg text-zinc-600 leading-relaxed">
         OKrunit connects to 19 platforms across automation, AI agents,
         infrastructure, and workflow engines. The easiest way to connect is to
-        select the OKrunit node directly inside your automation platform — no
+        select the OKrunit node directly inside your automation platform. No
         code required.
       </p>
 
@@ -316,7 +316,7 @@ export default function IntegrationsPage() {
 
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">5</span>
-          <span>Connect your OKrunit account — click <strong>Sign in to OKrunit</strong> to authorize via OAuth, or select an existing connection.</span>
+          <span>Connect your OKrunit account. Click <strong>Sign in to OKrunit</strong> to authorize via OAuth, or select an existing connection.</span>
         </div>
         <DocsImage
           src="/screenshots/docs/integrations/zapier-step-5-account.webp"
@@ -326,7 +326,7 @@ export default function IntegrationsPage() {
 
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">6</span>
-          <span>Map your trigger data to the approval fields — <strong>What needs approval?</strong>, <strong>Details</strong>, and optional <strong>Metadata</strong>.</span>
+          <span>Map your trigger data to the approval fields: <strong>What needs approval?</strong>, <strong>Details</strong>, and optional <strong>Metadata</strong>.</span>
         </div>
         <DocsImage
           src="/screenshots/docs/integrations/zapier-step-6-fields.webp"
@@ -336,7 +336,7 @@ export default function IntegrationsPage() {
 
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">7</span>
-          <span>Click <strong>Test</strong> to verify the connection works — you should see a new pending request in your OKrunit dashboard.</span>
+          <span>Click <strong>Test</strong> to verify the connection works. You should see a new pending request in your OKrunit dashboard.</span>
         </div>
         <DocsImage
           src="/screenshots/docs/integrations/zapier-step-7-test-v2.webp"
@@ -348,7 +348,7 @@ export default function IntegrationsPage() {
         Zapier also supports triggers for <strong>Approval Decided</strong> and
         <strong> Approval Created</strong>, so you can build Zaps that react to
         decisions. The Zap will wait <strong>indefinitely</strong> until someone
-        approves or rejects — there is no timeout.
+        approves or rejects. There is no timeout.
       </p>
 
       {/* Make */}
@@ -373,7 +373,7 @@ export default function IntegrationsPage() {
         </p>
       </div>
 
-      <p className="mt-4 text-sm font-medium text-zinc-900">Scenario 1 — Listen for the decision:</p>
+      <p className="mt-4 text-sm font-medium text-zinc-900">Scenario 1: Listen for the decision</p>
       <div className="mt-2 space-y-2">
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">1</span>
@@ -387,26 +387,26 @@ export default function IntegrationsPage() {
         <DocsImage
           src="/screenshots/docs/integrations/make-step-7-select-trigger.webp"
           alt="Make module list showing OKrunit Approval Decision Received trigger"
-          caption="Select 'Approval Decision Received' — this is an instant trigger that fires when a decision is made."
+          caption="Select 'Approval Decision Received'. This is an instant trigger that fires when a decision is made."
         />
 
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
-          <span>Click <strong>Create a webhook</strong>, save it, then <strong>copy the trigger URL</strong> — you&apos;ll paste it into Scenario 2&apos;s Callback URL field.</span>
+          <span>Click <strong>Create a webhook</strong>, save it, then <strong>copy the trigger URL</strong>. You&apos;ll paste it into Scenario 2&apos;s Callback URL field.</span>
         </div>
         <DocsImage
           src="/screenshots/docs/integrations/make-step-8-trigger-url.webp"
           alt="Make trigger configuration showing the generated webhook URL to copy"
-          caption="Copy this URL — you'll paste it into the Callback URL field in Scenario 2."
+          caption="Copy this URL. You'll paste it into the Callback URL field in Scenario 2."
         />
 
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
-          <span>Add your follow-up modules after the trigger — these will run when OKrunit sends the approval decision.</span>
+          <span>Add your follow-up modules after the trigger. These will run when OKrunit sends the approval decision.</span>
         </div>
       </div>
 
-      <p className="mt-4 text-sm font-medium text-zinc-900">Scenario 2 — Send the approval request:</p>
+      <p className="mt-4 text-sm font-medium text-zinc-900">Scenario 2: Send the approval request</p>
       <div className="mt-2 space-y-2">
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">1</span>
@@ -460,7 +460,7 @@ export default function IntegrationsPage() {
 
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">6</span>
-          <span>Fill in the request fields — <strong>What needs approval?</strong>, <strong>Details</strong>, and paste the trigger URL from Scenario 1 into <strong>Callback URL</strong>.</span>
+          <span>Fill in the request fields: <strong>What needs approval?</strong>, <strong>Details</strong>, and paste the trigger URL from Scenario 1 into <strong>Callback URL</strong>.</span>
         </div>
         <DocsImage
           src="/screenshots/docs/integrations/make-step-6-fields-v2.webp"
@@ -474,7 +474,7 @@ export default function IntegrationsPage() {
       <p className="mt-2 text-zinc-700">
         OKrunit provides a community node for n8n. Use n8n&apos;s built-in{" "}
         <strong>Wait</strong> node to pause the workflow until the approval
-        decision comes back — there is <strong>no timeout</strong> on self-hosted
+        decision comes back. There is <strong>no timeout</strong> on self-hosted
         n8n.
       </p>
       <ol className="mt-4 space-y-3 text-zinc-700">
@@ -496,7 +496,7 @@ export default function IntegrationsPage() {
         </li>
         <li className="flex gap-3">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">5</span>
-          <span>Add your follow-up nodes after the Wait node — these run once the approval decision is received.</span>
+          <span>Add your follow-up nodes after the Wait node. These run once the approval decision is received.</span>
         </li>
       </ol>
 
@@ -520,7 +520,7 @@ export default function IntegrationsPage() {
       </pre>
       <p className="mt-3 text-sm text-zinc-500">
         The action polls OKrunit every 30 seconds until a decision is made.
-        GitHub Actions steps have a default <strong>6-hour timeout</strong> — you
+        GitHub Actions steps have a default <strong>6-hour timeout</strong>, but you
         can increase it with{" "}
         <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">timeout-minutes</code> in
         your workflow YAML.
@@ -552,7 +552,7 @@ export default function IntegrationsPage() {
         </li>
         <li className="flex gap-3">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">5</span>
-          <span>Add a second recipe: <strong>When OKrunit approval decided, update status</strong> — this listens for the decision webhook and updates your board automatically.</span>
+          <span>Add a second recipe: <strong>When OKrunit approval decided, update status</strong>. This listens for the decision webhook and updates your board automatically.</span>
         </li>
       </ol>
       <p className="mt-3 text-sm text-zinc-500">
@@ -584,7 +584,7 @@ export default function IntegrationsPage() {
         </li>
         <li className="flex gap-3">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
-          <span>Start the workflow from your application code — it creates the approval request and polls until a decision is made, using heartbeats to stay alive.</span>
+          <span>Start the workflow from your application code. It creates the approval request and polls until a decision is made, using heartbeats to stay alive.</span>
         </li>
       </ol>
       <pre className="mt-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm leading-relaxed">
@@ -692,7 +692,7 @@ def deploy_with_approval():
         </li>
         <li className="flex gap-3">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
-          <span>Use the <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">wait_for_approval</code> flow in your Windmill workflows — it creates the request and polls until decided.</span>
+          <span>Use the <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">wait_for_approval</code> flow in your Windmill workflows. It creates the request and polls until decided.</span>
         </li>
       </ol>
 
@@ -742,12 +742,12 @@ def deploy_with_approval():
       <div className="mt-6 space-y-4">
         {/* Zapier */}
         <div className="rounded-lg border border-zinc-200 p-5">
-          <h4 className="font-semibold text-zinc-900">Zapier — Waits indefinitely</h4>
+          <h4 className="font-semibold text-zinc-900">Zapier: Waits indefinitely</h4>
           <p className="mt-2 text-sm text-zinc-700 leading-relaxed">
             The <strong>Request Approval</strong> action uses Zapier&apos;s native callback
             pattern. When the Zap reaches the OKrunit step, it pauses execution and
-            waits for OKrunit to send back the decision. There is <strong>no timeout</strong> —
-            the Zap stays paused until someone approves or rejects, or you manually
+            waits for OKrunit to send back the decision. There is <strong>no timeout</strong>.
+            The Zap stays paused until someone approves or rejects, or you manually
             replay/cancel the execution. If the request is rejected, downstream
             steps are automatically skipped.
           </p>
@@ -758,7 +758,7 @@ def deploy_with_approval():
 
         {/* Make */}
         <div className="rounded-lg border border-zinc-200 p-5">
-          <h4 className="font-semibold text-zinc-900">Make (Integromat) — Two-scenario pattern</h4>
+          <h4 className="font-semibold text-zinc-900">Make (Integromat): Two-scenario pattern</h4>
           <p className="mt-2 text-sm text-zinc-700 leading-relaxed">
             Make&apos;s HTTP modules have a 40-second default timeout (configurable
             up to 5 minutes), which isn&apos;t enough for human approvals. Instead,
@@ -769,13 +769,13 @@ def deploy_with_approval():
             immediately. This pattern allows the approval to take as long as needed.
           </p>
           <p className="mt-2 text-xs text-zinc-500">
-            Pattern: Two scenarios — fire-and-forget + webhook listener
+            Pattern: Two scenarios, fire-and-forget + webhook listener
           </p>
         </div>
 
         {/* n8n */}
         <div className="rounded-lg border border-zinc-200 p-5">
-          <h4 className="font-semibold text-zinc-900">n8n — Waits indefinitely</h4>
+          <h4 className="font-semibold text-zinc-900">n8n: Waits indefinitely</h4>
           <p className="mt-2 text-sm text-zinc-700 leading-relaxed">
             n8n&apos;s <strong>Wait</strong> node can pause a workflow until a
             webhook callback is received. Add the OKrunit node to create the
@@ -791,7 +791,7 @@ def deploy_with_approval():
 
         {/* GitHub Actions */}
         <div className="rounded-lg border border-zinc-200 p-5">
-          <h4 className="font-semibold text-zinc-900">GitHub Actions — Polls until decided (6-hour default timeout)</h4>
+          <h4 className="font-semibold text-zinc-900">GitHub Actions: Polls until decided (6-hour default timeout)</h4>
           <p className="mt-2 text-sm text-zinc-700 leading-relaxed">
             The <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">okrunit/approve-action</code> GitHub
             Action creates the approval request and then polls OKrunit&apos;s API every
@@ -808,7 +808,7 @@ def deploy_with_approval():
 
         {/* monday.com */}
         <div className="rounded-lg border border-zinc-200 p-5">
-          <h4 className="font-semibold text-zinc-900">monday.com — Two-recipe pattern (no timeout)</h4>
+          <h4 className="font-semibold text-zinc-900">monday.com: Two-recipe pattern (no timeout)</h4>
           <p className="mt-2 text-sm text-zinc-700 leading-relaxed">
             monday.com&apos;s integration recipes don&apos;t support long-running
             pauses, so OKrunit uses a two-recipe approach: <strong>Recipe 1</strong> triggers
@@ -819,18 +819,18 @@ def deploy_with_approval():
             the approval decision.
           </p>
           <p className="mt-2 text-xs text-zinc-500">
-            Pattern: Two recipes — event trigger + webhook listener
+            Pattern: Two recipes, event trigger + webhook listener
           </p>
         </div>
 
         {/* Workflow engines */}
         <div className="rounded-lg border border-zinc-200 p-5">
-          <h4 className="font-semibold text-zinc-900">Temporal, Prefect, Dagster, Windmill, Pipedream — Waits indefinitely</h4>
+          <h4 className="font-semibold text-zinc-900">Temporal, Prefect, Dagster, Windmill, Pipedream: Waits indefinitely</h4>
           <p className="mt-2 text-sm text-zinc-700 leading-relaxed">
             Workflow engines are designed for long-running, durable workflows.
             The OKrunit activity/task creates the request and polls for the decision
             with configurable intervals and heartbeats. These engines handle
-            retries, timeouts, and resumption natively — your workflow will wait as
+            retries, timeouts, and resumption natively, so your workflow will wait as
             long as needed. Temporal and Prefect support <strong>heartbeats</strong> to
             keep the activity alive during extended waits.
           </p>

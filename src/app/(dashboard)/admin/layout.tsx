@@ -12,14 +12,14 @@ export default async function AdminLayout({
 
   return (
     <div className="flex w-full flex-col md:flex-row md:min-h-[calc(100vh-52px)]">
-      {/* Left sidebar — desktop */}
+      {/* Left sidebar - desktop */}
       <aside className="hidden md:block w-56 shrink-0 border-r border-border/40 bg-[var(--card)]">
         <div className="sticky top-0 pt-5">
           <AdminNav />
         </div>
       </aside>
 
-      {/* Mobile nav — top dropdown */}
+      {/* Mobile nav - top dropdown */}
       <div className="md:hidden border-b border-border/40 bg-background px-4 py-3">
         <AdminNav mobile />
       </div>

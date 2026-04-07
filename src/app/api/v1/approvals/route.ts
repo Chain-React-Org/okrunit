@@ -298,7 +298,7 @@ export async function POST(request: Request) {
             org_id: auth.orgId,
             source: validated.source,
             source_id: validated.source_id,
-            name: validated.source_name || `${validated.source.charAt(0).toUpperCase() + validated.source.slice(1)} — ${validated.title.slice(0, 80)}`,
+            name: validated.source_name || `${validated.source.charAt(0).toUpperCase() + validated.source.slice(1)}: ${validated.title.slice(0, 80)}`,
             source_url: validated.source_url ?? null,
             is_configured: false,
             request_count: 1,
@@ -824,6 +824,24 @@ export async function POST(request: Request) {
               requestTitle: `Bottleneck: ${overloadedUserIds.length} approver(s) overloaded`,
               requestPriority: "high",
             });
+            // In-app notification for org admins
+            const botAdmin = createAdminClient();
+            const { data: adminMembers } = await botAdmin
+              .from("org_memberships")
+              .select("user_id")
+              .eq("org_id", auth.orgId)
+              .in("role", ["owner", "admin"]);
+            const adminIds = (adminMembers ?? []).map((m) => m.user_id);
+            if (adminIds.length > 0) {
+              await createInAppNotificationBulk(adminIds, {
+                orgId: auth.orgId,
+                category: "approval_awaiting",
+                title: "Approver bottleneck detected",
+                body: `${overloadedUserIds.length} approver(s) have too many pending requests. Consider redistributing workload.`,
+                resourceType: "approval_request",
+                resourceId: approval.id,
+              });
+            }
           }
         } catch (err) {
           console.error("[Approvals] Bottleneck check failed:", err);
@@ -852,6 +870,38 @@ export async function POST(request: Request) {
           console.error("[Approvals] Auto-register action type failed:", err);
         }
       });
+    }
+
+    // 15d. Request limit approaching notification (fire-and-forget)
+    if (billingCheck.current !== undefined && billingCheck.limit !== undefined && billingCheck.limit > 0) {
+      const usageAfter = (billingCheck.current ?? 0) + 1;
+      const pct = usageAfter / billingCheck.limit;
+      if (pct >= 0.8) {
+        after(async () => {
+          try {
+            const limitAdmin = createAdminClient();
+            const { data: adminMembers } = await limitAdmin
+              .from("org_memberships")
+              .select("user_id")
+              .eq("org_id", auth.orgId)
+              .in("role", ["owner", "admin"]);
+            const adminIds = (adminMembers ?? []).map((m) => m.user_id);
+            if (adminIds.length > 0) {
+              const isAtLimit = usageAfter >= billingCheck.limit!;
+              await createInAppNotificationBulk(adminIds, {
+                orgId: auth.orgId,
+                category: "limit_approaching",
+                title: isAtLimit ? "Monthly request limit reached" : "Approaching request limit",
+                body: `${usageAfter}/${billingCheck.limit} requests used this month.${isAtLimit ? " New API requests will be rejected." : ""} Upgrade for unlimited requests.`,
+                resourceType: "org",
+                resourceId: auth.orgId,
+              });
+            }
+          } catch {
+            // Non-critical
+          }
+        });
+      }
     }
 
     // 16. Invalidate caches
@@ -1042,6 +1092,18 @@ export async function GET(request: Request) {
             requestPriority: breachedApproval.priority,
             connectionId: breachedApproval.connection_id ?? undefined,
           });
+          // In-app notification for assigned approvers
+          const approvers: string[] = breachedApproval.assigned_approvers ?? [];
+          if (approvers.length > 0) {
+            await createInAppNotificationBulk(approvers, {
+              orgId: auth.orgId,
+              category: "approval_expiring",
+              title: "SLA breached",
+              body: `"${breachedApproval.title}" has passed its SLA deadline.`,
+              resourceType: "approval_request",
+              resourceId: breachedApproval.id,
+            });
+          }
         }
       });
     }

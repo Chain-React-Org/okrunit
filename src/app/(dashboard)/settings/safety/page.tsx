@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
-import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/layout/page-header";
 import { SafetySettings } from "@/components/settings/safety-settings";
 
@@ -17,7 +16,7 @@ export default async function SafetySettingsPage() {
   const isAdmin = membership.role === "owner" || membership.role === "admin";
 
   return (
-    <PageContainer>
+    <>
       <PageHeader
         title="Safety"
         description="Control auto-approval behavior and emergency stop settings."
@@ -31,6 +30,6 @@ export default async function SafetySettingsPage() {
         orgId={org.id}
         isAdmin={isAdmin}
       />
-    </PageContainer>
+    </>
   );
 }
