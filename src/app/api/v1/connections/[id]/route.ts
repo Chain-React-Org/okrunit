@@ -8,7 +8,7 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { updateConnectionSchema } from "@/lib/api/validation";
-import { logAuditEvent } from "@/lib/api/audit";
+import { logAuditEvent, computeAuditChanges } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
@@ -64,10 +64,10 @@ export async function PATCH(
 
     const admin = createAdminClient();
 
-    // Verify the connection exists and belongs to this org.
+    // Fetch the current state before update (for change tracking).
     const { data: existing, error: fetchError } = await admin
       .from("connections")
-      .select("id")
+      .select(CONNECTION_COLUMNS)
       .eq("id", id)
       .eq("org_id", auth.orgId)
       .single();
@@ -90,6 +90,17 @@ export async function PATCH(
       throw new ApiError(500, "Failed to update connection");
     }
 
+    // Build before/after changes for the audit log
+    const connectionTrackedFields = [
+      "name", "description", "is_active", "rate_limit_per_hour",
+      "allowed_action_types", "max_priority", "scoping_rules",
+    ];
+    const changes = computeAuditChanges(
+      existing as Record<string, unknown>,
+      body as Record<string, unknown>,
+      connectionTrackedFields,
+    );
+
     // Audit the update.
     await logAuditEvent({
       orgId: auth.orgId,
@@ -99,6 +110,7 @@ export async function PATCH(
       resourceId: id,
       details: body as Record<string, unknown>,
       ipAddress: getIpAddress(request),
+      changes: changes.length > 0 ? changes : undefined,
     });
 
     revalidateTags(CacheTags.connections(auth.orgId), CacheTags.overview(auth.orgId));

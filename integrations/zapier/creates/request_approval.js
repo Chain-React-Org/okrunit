@@ -20,6 +20,15 @@ const requestApproval = {
   operation: {
     inputFields: [
       {
+        key: "template_id",
+        label: "Template",
+        type: "string",
+        required: false,
+        dynamic: "templates.id.name",
+        helpText:
+          "Select a template to pre-fill fields like priority, action type, and assigned approvers. Any fields you fill in below will override the template defaults.",
+      },
+      {
         key: "title",
         label: "What needs approval?",
         type: "string",
@@ -63,6 +72,10 @@ const requestApproval = {
         source: "zapier",
         source_id: String(bundle.meta.zap?.id || ""),
       };
+
+      if (bundle.inputData.template_id) {
+        body.template_id = bundle.inputData.template_id;
+      }
 
       if (bundle.inputData.description) {
         body.description = bundle.inputData.description;

@@ -16,6 +16,7 @@ const approvalDecided = require("./triggers/approval_decided");
 const actionTypes = require("./triggers/action_types");
 const teamMembers = require("./triggers/team_members");
 const teams = require("./triggers/teams");
+const templates = require("./triggers/templates");
 
 // Actions
 const requestApproval = require("./creates/request_approval");
@@ -46,6 +47,7 @@ module.exports = {
     [actionTypes.key]: actionTypes,
     [teamMembers.key]: teamMembers,
     [teams.key]: teams,
+    [templates.key]: templates,
   },
 
   creates: {

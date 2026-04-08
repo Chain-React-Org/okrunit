@@ -136,6 +136,7 @@ export interface UserProfile {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
+  phone_number: string | null;
   is_app_admin: boolean;
   deletion_scheduled_at: string | null;
   setup_completed_at: string | null;
@@ -334,6 +335,7 @@ export interface NotificationSettings {
   user_id: string;
   email_enabled: boolean;
   push_enabled: boolean;
+  sms_enabled: boolean;
   quiet_hours_enabled: boolean;
   quiet_hours_start: string | null;
   quiet_hours_end: string | null;

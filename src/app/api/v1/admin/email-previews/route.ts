@@ -146,13 +146,13 @@ export async function GET() {
     {
       id: "weekly-digest",
       name: "Weekly Digest",
-      description: "Weekly summary of org activity with stats, approval rates, and top sources.",
+      description: "Weekly summary of org activity with analytics metrics, trend comparison, and top sources.",
       category: "Reports",
       html: buildWeeklyDigestEmailHtml({
         fullName: "Sarah",
         orgName: "Acme Corp",
-        periodStart: "Mar 20",
-        periodEnd: "Mar 27, 2026",
+        periodStart: "Mar 31",
+        periodEnd: "Apr 7, 2026",
         stats: {
           totalRequests: 47,
           approved: 38,
@@ -166,6 +166,16 @@ export async function GET() {
           { name: "n8n Staging Workflows", count: 9 },
           { name: "Make.com Automations", count: 6 },
         ],
+        analytics: {
+          avgDecisionTimeMinutes: 108,
+          medianDecisionTimeMinutes: 95,
+          avgDecisionTimeChangePercent: -18.2,
+          slaComplianceRate: 0.92,
+          autoApprovedCount: 12,
+          escalatedCount: 3,
+          topBottleneckName: "Alex Rivera",
+          topBottleneckAvgMinutes: 245,
+        },
       }),
     },
 

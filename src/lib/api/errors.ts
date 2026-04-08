@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { captureError } from "@/lib/monitoring/capture";
+import { getCorrelationId } from "@/lib/monitoring/logger";
 
 /**
  * Structured API error with an HTTP status code and optional machine-readable
@@ -53,8 +54,18 @@ export function errorResponse(error: unknown): NextResponse {
   // Capture in error monitoring system (fire-and-forget)
   captureError({ error, severity: "error", service: "API" }).catch(() => {});
 
-  return NextResponse.json(
-    { error: "Internal server error" },
+  const correlationId = getCorrelationId();
+  const response = NextResponse.json(
+    {
+      error: "Internal server error",
+      ...(correlationId ? { correlationId } : {}),
+    },
     { status: 500 },
   );
+
+  if (correlationId) {
+    response.headers.set("x-correlation-id", correlationId);
+  }
+
+  return response;
 }

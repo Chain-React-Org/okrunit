@@ -19,6 +19,14 @@
     {
       "path": "/api/v1/cron/data-retention",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/v1/cron/process-webhooks",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/v1/cron/check-calendar-ooo",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
