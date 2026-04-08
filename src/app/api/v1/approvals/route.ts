@@ -983,6 +983,21 @@ export async function GET(request: Request) {
       });
     }
 
+    // 4b. Exclude approvals from a specific source_id (used by n8n triggers to skip self-created approvals)
+    const excludeSourceId = searchParams.get("exclude_source_id");
+    if (excludeSourceId) {
+      // Find flow IDs matching this source_id and exclude them
+      const { data: flows } = await admin
+        .from("approval_flows")
+        .select("id")
+        .eq("org_id", auth.orgId)
+        .eq("source_id", excludeSourceId);
+      const excludeFlowIds = (flows ?? []).map((f: { id: string }) => f.id);
+      if (excludeFlowIds.length > 0) {
+        query = query.not("flow_id", "in", `(${excludeFlowIds.join(",")})`);
+      }
+    }
+
     // 5. Paginate
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
