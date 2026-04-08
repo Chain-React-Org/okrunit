@@ -14,6 +14,8 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { exportQuerySchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
+
+export const dynamic = "force-dynamic";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import {
   fetchExportData,

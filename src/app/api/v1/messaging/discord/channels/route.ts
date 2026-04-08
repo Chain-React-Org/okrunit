@@ -13,6 +13,8 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 
 export async function GET(request: Request) {

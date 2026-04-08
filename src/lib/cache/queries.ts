@@ -233,6 +233,96 @@ export async function getCachedOverviewData(orgId: string) {
       : Promise.resolve({} as Record<string, string>),
   ]);
 
+  // ---------------------------------------------------------------------------
+  // Analytics: 7-day window for decision time, SLA compliance, approval rate
+  // ---------------------------------------------------------------------------
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [
+    { data: recentDecided },
+    { data: prevDecided },
+    { data: recentSlaRows },
+    { data: prevSlaRows },
+  ] = await Promise.all([
+    // Current 7 days: decided requests with timestamps
+    admin
+      .from("approval_requests")
+      .select("status, created_at, decided_at, sla_breached")
+      .eq("org_id", orgId)
+      .not("decided_at", "is", null)
+      .gte("decided_at", sevenDaysAgo),
+    // Previous 7 days: decided requests with timestamps
+    admin
+      .from("approval_requests")
+      .select("status, created_at, decided_at, sla_breached")
+      .eq("org_id", orgId)
+      .not("decided_at", "is", null)
+      .gte("decided_at", fourteenDaysAgo)
+      .lt("decided_at", sevenDaysAgo),
+    // Current 7 days: all requests for SLA compliance
+    admin
+      .from("approval_requests")
+      .select("sla_breached")
+      .eq("org_id", orgId)
+      .gte("created_at", sevenDaysAgo),
+    // Previous 7 days: all requests for SLA compliance
+    admin
+      .from("approval_requests")
+      .select("sla_breached")
+      .eq("org_id", orgId)
+      .gte("created_at", fourteenDaysAgo)
+      .lt("created_at", sevenDaysAgo),
+  ]);
+
+  // Avg decision time (minutes) for current and previous periods
+  function avgDecisionMinutes(rows: Array<{ created_at: string; decided_at: string }> | null): number {
+    if (!rows || rows.length === 0) return 0;
+    let totalMs = 0;
+    for (const r of rows) {
+      totalMs += new Date(r.decided_at).getTime() - new Date(r.created_at).getTime();
+    }
+    return Math.round(totalMs / rows.length / 60000);
+  }
+
+  const currentAvgDecisionMin = avgDecisionMinutes(
+    (recentDecided ?? []) as Array<{ created_at: string; decided_at: string }>,
+  );
+  const prevAvgDecisionMin = avgDecisionMinutes(
+    (prevDecided ?? []) as Array<{ created_at: string; decided_at: string }>,
+  );
+
+  // SLA compliance
+  const currentSlaTotal = (recentSlaRows ?? []).length;
+  const currentSlaCompliant = (recentSlaRows ?? []).filter(
+    (r) => !r.sla_breached,
+  ).length;
+  const currentSlaRate =
+    currentSlaTotal > 0 ? Math.round((currentSlaCompliant / currentSlaTotal) * 100) : 100;
+
+  const prevSlaTotal = (prevSlaRows ?? []).length;
+  const prevSlaCompliant = (prevSlaRows ?? []).filter(
+    (r) => !r.sla_breached,
+  ).length;
+  const prevSlaRate =
+    prevSlaTotal > 0 ? Math.round((prevSlaCompliant / prevSlaTotal) * 100) : 100;
+
+  // 7-day approval rate
+  const recentApproved = (recentDecided ?? []).filter(
+    (r) => r.status === "approved",
+  ).length;
+  const recentDecidedCount = (recentDecided ?? []).length;
+  const recentApprovalRate =
+    recentDecidedCount > 0 ? Math.round((recentApproved / recentDecidedCount) * 100) : 0;
+
+  const prevApproved = (prevDecided ?? []).filter(
+    (r) => r.status === "approved",
+  ).length;
+  const prevDecidedCount = (prevDecided ?? []).length;
+  const prevApprovalRate =
+    prevDecidedCount > 0 ? Math.round((prevApproved / prevDecidedCount) * 100) : 0;
+
   return {
     statusCounts,
     connectionCount: connectionCount ?? 0,
@@ -242,6 +332,16 @@ export async function getCachedOverviewData(orgId: string) {
     escalatedCount: escalatedCount ?? 0,
     connectionNameMap,
     creatorNameMap,
+    // Analytics
+    analytics: {
+      avgDecisionMinutes: currentAvgDecisionMin,
+      prevAvgDecisionMinutes: prevAvgDecisionMin,
+      slaComplianceRate: currentSlaRate,
+      prevSlaComplianceRate: prevSlaRate,
+      pendingCount: statusCounts.pending,
+      approvalRate7d: recentApprovalRate,
+      prevApprovalRate7d: prevApprovalRate,
+    },
   };
 }
 
