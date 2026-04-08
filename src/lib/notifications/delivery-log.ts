@@ -16,7 +16,7 @@ export interface DeliveryLogEntry {
   orgId: string;
   requestId?: string;
   recipientUserId?: string;
-  channel: "email" | "slack" | "discord" | "teams" | "telegram" | "web_push" | "webhook";
+  channel: "email" | "slack" | "discord" | "teams" | "telegram" | "web_push" | "webhook" | "sms";
   status: "sent" | "failed" | "suppressed";
   suppressionReason?: string;
   errorMessage?: string;

@@ -159,6 +159,39 @@ export async function POST(request: Request) {
 
     const validated = createApprovalSchema.parse(body);
 
+    // 5a. Apply template defaults (if template_id is provided)
+    if (validated.template_id) {
+      const { data: template } = await admin
+        .from("approval_templates")
+        .select("*")
+        .eq("id", validated.template_id)
+        .eq("org_id", auth.orgId)
+        .eq("is_active", true)
+        .single();
+
+      if (template) {
+        // Apply template defaults for fields not explicitly provided in the request
+        if (!validated.action_type && template.action_type) validated.action_type = template.action_type;
+        if (!validated.priority && template.default_priority) validated.priority = template.default_priority as "low" | "medium" | "high" | "critical";
+        if (!validated.assigned_approvers && template.assigned_approvers?.length) validated.assigned_approvers = template.assigned_approvers;
+        if (!validated.callback_url && template.callback_url_pattern) validated.callback_url = template.callback_url_pattern;
+
+        // Apply title pattern with metadata substitution: "Deploy {service} to {env}"
+        if (template.title_pattern && validated.title === template.title_pattern) {
+          // Title matches pattern exactly, try to fill placeholders from metadata
+          if (validated.metadata) {
+            let filledTitle = template.title_pattern;
+            for (const [key, value] of Object.entries(validated.metadata)) {
+              if (typeof value === "string") {
+                filledTitle = filledTitle.replace(`{${key}}`, value);
+              }
+            }
+            validated.title = filledTitle;
+          }
+        }
+      }
+    }
+
     // 5b. Auto-detect source from OAuth client name when not explicitly provided
     let autoDetectedSource: string | null = null;
     let oauthClientName: string | null = null;
@@ -593,6 +626,7 @@ export async function POST(request: Request) {
         sla_deadline: slaDeadline,
         next_escalation_at: firstEscalation?.nextEscalationAt ?? null,
         notify_channel_ids: validated.notify_channel_ids ?? null,
+        template_id: validated.template_id ?? null,
       })
       .select("*")
       .single();

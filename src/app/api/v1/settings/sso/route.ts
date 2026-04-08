@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import { authenticateRequest, type AuthResult } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
-import { logAuditEvent } from "@/lib/api/audit";
+import { logAuditEvent, computeAuditChanges } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canUseFeature } from "@/lib/billing/enforce";
@@ -171,10 +171,10 @@ export async function POST(request: NextRequest) {
     const input: SSOConfigInput = parsed.data;
     const admin = createAdminClient();
 
-    // Check for existing config
+    // Check for existing config (fetch all tracked fields for change tracking)
     const { data: existing } = await admin
       .from("sso_configs")
-      .select("id, certificate, certificate_secondary")
+      .select("id, entity_id, sso_url, certificate, certificate_secondary, attribute_mapping, is_active, enforce_sso, slo_url")
       .eq("org_id", orgId)
       .single();
 
@@ -265,6 +265,25 @@ export async function POST(request: NextRequest) {
       .update({ sso_domain: input.sso_domain })
       .eq("id", orgId);
 
+    // Build before/after changes for updates
+    const ssoTrackedFields = [
+      "entity_id", "sso_url", "is_active", "enforce_sso", "slo_url", "attribute_mapping",
+    ];
+    const changes = existing
+      ? computeAuditChanges(
+          existing as Record<string, unknown>,
+          {
+            entity_id: input.entity_id,
+            sso_url: input.sso_url,
+            is_active: input.is_active,
+            enforce_sso: input.enforce_sso,
+            slo_url: input.slo_url ?? null,
+            attribute_mapping: input.attribute_mapping,
+          },
+          ssoTrackedFields,
+        )
+      : undefined;
+
     // Audit log
     await logAuditEvent({
       orgId,
@@ -278,6 +297,7 @@ export async function POST(request: NextRequest) {
         sso_url: input.sso_url,
         is_active: input.is_active,
       },
+      changes,
     });
 
     return NextResponse.json(

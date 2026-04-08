@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWeeklyDigestEmailHtml } from "@/lib/email/weekly-digest";
+import type { WeeklyDigestAnalytics } from "@/lib/email/weekly-digest";
 import { verifyCronAuth } from "@/lib/api/cron-auth";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
@@ -14,6 +15,178 @@ const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 export async function POST(req: NextRequest) {
   return handleDigest(req);
 }
+
+// ---- Helpers --------------------------------------------------------------
+
+function responseTimeMinutes(createdAt: string, decidedAt: string): number {
+  const created = new Date(createdAt).getTime();
+  const decided = new Date(decidedAt).getTime();
+  return Math.round(((decided - created) / 60_000) * 100) / 100;
+}
+
+/**
+ * Compute analytics metrics for a single org within a date range.
+ * Also computes previous-period avg decision time for trend comparison.
+ */
+async function computeOrgAnalytics(
+  orgId: string,
+  from: Date,
+  to: Date,
+): Promise<WeeklyDigestAnalytics> {
+  const admin = createAdminClient();
+
+  // Previous period (same duration, shifted back)
+  const duration = to.getTime() - from.getTime();
+  const prevFrom = new Date(from.getTime() - duration);
+  const prevTo = from;
+
+  // Current period: decided requests, auto-approved, SLA, escalations
+  const [
+    { data: decidedCurrent },
+    { data: decidedPrev },
+    { data: slaRows },
+    { count: autoApprovedCount },
+    { count: escalatedCount },
+  ] = await Promise.all([
+    admin
+      .from("approval_requests")
+      .select("decided_by, created_at, decided_at")
+      .eq("org_id", orgId)
+      .not("decided_at", "is", null)
+      .in("status", ["approved", "rejected"])
+      .gte("created_at", from.toISOString())
+      .lte("created_at", to.toISOString()),
+    admin
+      .from("approval_requests")
+      .select("created_at, decided_at")
+      .eq("org_id", orgId)
+      .not("decided_at", "is", null)
+      .in("status", ["approved", "rejected"])
+      .gte("created_at", prevFrom.toISOString())
+      .lte("created_at", prevTo.toISOString()),
+    admin
+      .from("approval_requests")
+      .select("sla_deadline, sla_breached")
+      .eq("org_id", orgId)
+      .not("sla_deadline", "is", null)
+      .gte("created_at", from.toISOString())
+      .lte("created_at", to.toISOString()),
+    admin
+      .from("approval_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("org_id", orgId)
+      .eq("auto_approved", true)
+      .gte("created_at", from.toISOString())
+      .lte("created_at", to.toISOString()),
+    admin
+      .from("approval_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("org_id", orgId)
+      .gt("escalation_level", 0)
+      .gte("created_at", from.toISOString())
+      .lte("created_at", to.toISOString()),
+  ]);
+
+  // Compute current avg and median decision time
+  const currentTimes: number[] = [];
+  for (const row of decidedCurrent ?? []) {
+    if (row.decided_at) {
+      currentTimes.push(responseTimeMinutes(row.created_at, row.decided_at));
+    }
+  }
+
+  const avgDecisionTimeMinutes =
+    currentTimes.length > 0
+      ? Math.round((currentTimes.reduce((a, b) => a + b, 0) / currentTimes.length) * 100) / 100
+      : 0;
+
+  const sortedTimes = [...currentTimes].sort((a, b) => a - b);
+  let medianDecisionTimeMinutes = 0;
+  if (sortedTimes.length > 0) {
+    const mid = Math.floor(sortedTimes.length / 2);
+    medianDecisionTimeMinutes =
+      sortedTimes.length % 2 === 0
+        ? Math.round(((sortedTimes[mid - 1] + sortedTimes[mid]) / 2) * 100) / 100
+        : Math.round(sortedTimes[mid] * 100) / 100;
+  }
+
+  // Compute previous period avg for trend comparison
+  const prevTimes: number[] = [];
+  for (const row of decidedPrev ?? []) {
+    if (row.decided_at) {
+      prevTimes.push(responseTimeMinutes(row.created_at, row.decided_at));
+    }
+  }
+
+  let avgDecisionTimeChangePercent: number | null = null;
+  if (prevTimes.length > 0 && currentTimes.length > 0) {
+    const prevAvg = prevTimes.reduce((a, b) => a + b, 0) / prevTimes.length;
+    if (prevAvg > 0) {
+      avgDecisionTimeChangePercent =
+        Math.round(((avgDecisionTimeMinutes - prevAvg) / prevAvg) * 10000) / 100;
+    }
+  }
+
+  // SLA compliance
+  const slaTotal = (slaRows ?? []).length;
+  const slaCompliant = (slaRows ?? []).filter((r) => !r.sla_breached).length;
+  const slaComplianceRate = slaTotal > 0 ? Math.round((slaCompliant / slaTotal) * 100) / 100 : 1;
+
+  // Top bottleneck: slowest approver by avg decision time
+  const userTimesMap = new Map<string, number[]>();
+  for (const row of decidedCurrent ?? []) {
+    if (row.decided_by && row.decided_at) {
+      if (!userTimesMap.has(row.decided_by)) {
+        userTimesMap.set(row.decided_by, []);
+      }
+      userTimesMap.get(row.decided_by)!.push(
+        responseTimeMinutes(row.created_at, row.decided_at),
+      );
+    }
+  }
+
+  let topBottleneckName: string | null = null;
+  let topBottleneckAvgMinutes: number | null = null;
+
+  if (userTimesMap.size > 0) {
+    // Find the user with the highest average decision time
+    let slowestUserId: string | null = null;
+    let slowestAvg = 0;
+
+    for (const [userId, times] of userTimesMap) {
+      const avg = times.reduce((a, b) => a + b, 0) / times.length;
+      if (avg > slowestAvg) {
+        slowestAvg = avg;
+        slowestUserId = userId;
+      }
+    }
+
+    if (slowestUserId) {
+      topBottleneckAvgMinutes = Math.round(slowestAvg * 100) / 100;
+
+      const { data: profile } = await admin
+        .from("user_profiles")
+        .select("full_name, email")
+        .eq("id", slowestUserId)
+        .single();
+
+      topBottleneckName = profile?.full_name || profile?.email || "Unknown";
+    }
+  }
+
+  return {
+    avgDecisionTimeMinutes,
+    medianDecisionTimeMinutes,
+    avgDecisionTimeChangePercent,
+    slaComplianceRate,
+    autoApprovedCount: autoApprovedCount ?? 0,
+    escalatedCount: escalatedCount ?? 0,
+    topBottleneckName,
+    topBottleneckAvgMinutes,
+  };
+}
+
+// ---- Main handler ---------------------------------------------------------
 
 async function handleDigest(req: NextRequest) {
   if (!verifyCronAuth(req)) {
@@ -96,6 +269,14 @@ async function handleDigest(req: NextRequest) {
       avgResponseTimeHours = Math.round((totalMs / decidedRequests.length / 3600000) * 10) / 10;
     }
 
+    // Compute analytics metrics for this org
+    let analytics: WeeklyDigestAnalytics | undefined;
+    try {
+      analytics = await computeOrgAnalytics(org.id, weekAgo, now);
+    } catch (err) {
+      console.error(`[Weekly Digest] Failed to compute analytics for org ${org.id}:`, err);
+    }
+
     // Get top connections by request count
     const { data: connectionStats } = await admin
       .from("approval_requests")
@@ -176,6 +357,7 @@ async function handleDigest(req: NextRequest) {
           periodEnd,
           stats,
           topConnections,
+          analytics,
         });
 
         await resend.emails.send({

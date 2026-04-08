@@ -66,6 +66,7 @@ export const createApprovalSchema = z.object({
   })).max(20).optional(),
   notify_channel_ids: z.array(z.uuid()).min(1).max(50).optional(),
   is_log: z.boolean().optional(),
+  template_id: z.uuid().optional(),
 });
 
 export type CreateApprovalInput = z.infer<typeof createApprovalSchema>;
@@ -360,3 +361,24 @@ export const webhookLogQuerySchema = z.object({
 });
 
 export type WebhookLogQueryInput = z.infer<typeof webhookLogQuerySchema>;
+
+// ---- Approval Templates ---------------------------------------------------
+
+export const createTemplateSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  title_pattern: z.string().max(500).optional(),
+  action_type: z.string().max(200).optional(),
+  default_priority: priorityEnum.optional(),
+  assigned_approvers: z.array(z.uuid()).max(10).optional(),
+  conditions: z.record(z.string(), z.unknown()).optional(),
+  metadata_schema: z.record(z.string(), z.unknown()).optional(),
+  callback_url_pattern: z.string().max(2000).optional(),
+  is_active: z.boolean().optional(),
+});
+
+export type CreateTemplateInput = z.infer<typeof createTemplateSchema>;
+
+export const updateTemplateSchema = createTemplateSchema.partial();
+
+export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;

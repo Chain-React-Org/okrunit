@@ -2,16 +2,18 @@
 // OKrunit -- Notification Orchestrator
 // ---------------------------------------------------------------------------
 //
-// Central fan-out for all notification channels (web push, email, Slack,
-// Teams, Telegram, Discord).
+// Central fan-out for all notification channels (web push, email, SMS, Slack,
+// Teams, Telegram, Discord, generic webhooks).
 //
 // Usage:
 //   import { dispatchNotifications } from "@/lib/notifications/orchestrator";
 //   await dispatchNotifications({ type: "approval.created", ... });
 //
-// Per-user channels: email, web push (controlled by notification_settings).
+// Per-user channels: email, web push, SMS (controlled by notification_settings).
 // Org-wide channels: Slack, Teams, Telegram, Discord (controlled by
 // messaging_connections table).
+// Org-wide webhooks: generic HTTP webhook channels (controlled by
+// webhook_notification_channels table).
 // ---------------------------------------------------------------------------
 
 import type { NotificationEvent, NotificationEventType } from "@/lib/notifications/types";
@@ -40,12 +42,20 @@ import {
   sendDiscordNotification,
   sendDiscordDecisionNotification,
 } from "@/lib/notifications/channels/discord";
+import { sendSms, isTwilioConfigured } from "@/lib/notifications/channels/sms";
+import {
+  getOrgWebhookChannels,
+  sendWebhookNotification,
+} from "@/lib/notifications/channels/webhook";
+import type { WebhookNotificationPayload } from "@/lib/notifications/channels/webhook";
 import { generateActionTokens } from "@/lib/notifications/tokens";
 import { getOrgMessagingConnections } from "@/lib/notifications/messaging";
 import type { NotificationSettings, MessagingConnection, RoutingRules } from "@/lib/types/database";
 import type { PushPayload } from "@/lib/notifications/channels/web-push";
 import { PRIORITY_ORDER } from "@/lib/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getOrgPlan } from "@/lib/billing/enforce";
+import { hasFeature } from "@/lib/billing/plans";
 import { logNotificationDelivery, logNotificationDeliveryBatch } from "@/lib/notifications/delivery-log";
 import type { DeliveryLogEntry } from "@/lib/notifications/delivery-log";
 
@@ -100,11 +110,20 @@ export async function dispatchNotifications(
       event = { ...event, decidedBy: await resolveUserName(event.decidedBy) };
     }
 
-    // Load per-user settings and org-wide messaging connections in parallel
-    const [orgUsers, messagingConnections] = await Promise.all([
-      getOrgNotificationSettings(event.orgId),
-      getOrgMessagingConnections(event.orgId),
-    ]);
+    // Load per-user settings, org-wide messaging connections, and webhook
+    // channels in parallel
+    const [orgUsers, messagingConnections, webhookChannels, orgPlan] =
+      await Promise.all([
+        getOrgNotificationSettings(event.orgId),
+        getOrgMessagingConnections(event.orgId),
+        getOrgWebhookChannels(event.orgId),
+        getOrgPlan(event.orgId),
+      ]);
+
+    // Feature checks for gated channels
+    const smsAllowed =
+      isTwilioConfigured() && hasFeature(orgPlan, "webhook_notifications");
+    const webhooksAllowed = hasFeature(orgPlan, "webhook_notifications");
 
     // If targeted, only notify specific users
     let recipients = orgUsers;
@@ -115,7 +134,15 @@ export async function dispatchNotifications(
     const promises: Promise<void>[] = [];
     const suppressionLogs: DeliveryLogEntry[] = [];
 
-    // -- Per-user channels (email + web push) ---------------------------------
+    // -- Per-user channels (email + web push + SMS) ----------------------------
+    // Pre-load phone numbers for SMS if SMS is available
+    let phoneMap: Map<string, string> | null = null;
+    if (smsAllowed) {
+      phoneMap = await loadUserPhoneNumbers(
+        recipients.map((r) => r.userId),
+      );
+    }
+
     for (const { userId, email, settings } of recipients) {
       const effective = settings ?? (DEFAULT_SETTINGS as NotificationSettings);
 
@@ -138,6 +165,16 @@ export async function dispatchNotifications(
             requestId: event.requestId,
             recipientUserId: userId,
             channel: "email",
+            status: "suppressed",
+            suppressionReason: reason,
+          });
+        }
+        if (effective.sms_enabled && smsAllowed) {
+          suppressionLogs.push({
+            orgId: event.orgId,
+            requestId: event.requestId,
+            recipientUserId: userId,
+            channel: "sms",
             status: "suppressed",
             suppressionReason: reason,
           });
@@ -267,6 +304,43 @@ export async function dispatchNotifications(
           );
         }
       }
+
+      // -- SMS ----------------------------------------------------------------
+      if (smsAllowed && effective.sms_enabled) {
+        const phone = phoneMap?.get(userId);
+        if (phone) {
+          const smsBody = buildSmsBody(event);
+          promises.push(
+            sendSms({ to: phone, body: smsBody })
+              .then((result) => {
+                logNotificationDelivery({
+                  orgId: event.orgId,
+                  requestId: event.requestId,
+                  recipientUserId: userId,
+                  channel: "sms",
+                  status: "sent",
+                  externalId: result?.sid,
+                  metadata: { to: phone },
+                });
+              })
+              .catch((err: unknown) => {
+                console.error(
+                  `[Notifications] SMS failed for user ${userId}:`,
+                  err,
+                );
+                logNotificationDelivery({
+                  orgId: event.orgId,
+                  requestId: event.requestId,
+                  recipientUserId: userId,
+                  channel: "sms",
+                  status: "failed",
+                  errorMessage: err instanceof Error ? err.message : String(err),
+                  metadata: { to: phone },
+                });
+              }),
+          );
+        }
+      }
     }
 
     // -- Org-wide messaging connections (Slack, Teams, Telegram, Discord) ------
@@ -351,6 +425,67 @@ export async function dispatchNotifications(
       const channelPromise = dispatchToMessagingConnection(conn, event);
       if (channelPromise) {
         promises.push(channelPromise);
+      }
+    }
+
+    // -- Generic webhook channels ---------------------------------------------
+    if (webhooksAllowed && webhookChannels.length > 0) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const eventName = mapEventToWebhookEvent(event.type);
+
+      for (const channel of webhookChannels) {
+        // Check if the channel is subscribed to this event type
+        if (
+          channel.events.length > 0 &&
+          !channel.events.includes(eventName) &&
+          !channel.events.includes("*")
+        ) {
+          continue;
+        }
+
+        const payload: WebhookNotificationPayload = {
+          event_type: event.type,
+          request_id: event.requestId,
+          title: event.requestTitle,
+          description: event.requestDescription,
+          priority: event.requestPriority,
+          action_type: event.actionType,
+          status: extractDecision(event.type),
+          approve_url: `${appUrl}/api/v1/approvals/${event.requestId}/approve`,
+          reject_url: `${appUrl}/api/v1/approvals/${event.requestId}/reject`,
+          dashboard_url: `${appUrl}/org/overview`,
+          decided_by: event.decidedBy,
+          decision_comment: event.decisionComment,
+          timestamp: new Date().toISOString(),
+        };
+
+        const logBase = {
+          orgId: event.orgId,
+          requestId: event.requestId,
+          channel: "webhook" as const,
+          metadata: {
+            webhookChannelId: channel.id,
+            webhookChannelName: channel.name,
+          },
+        };
+
+        promises.push(
+          sendWebhookNotification(channel, payload)
+            .then(() => {
+              logNotificationDelivery({ ...logBase, status: "sent" });
+            })
+            .catch((err: unknown) => {
+              console.error(
+                `[Notifications] Webhook failed for channel ${channel.id} (${channel.name}):`,
+                err,
+              );
+              logNotificationDelivery({
+                ...logBase,
+                status: "failed",
+                errorMessage: err instanceof Error ? err.message : String(err),
+              });
+            }),
+        );
       }
     }
 
@@ -915,4 +1050,86 @@ async function loadTeamMemberIds(teamId: string): Promise<Set<string>> {
     console.error("[Notifications] Team membership lookup error:", err);
     return new Set();
   }
+}
+
+/**
+ * Load phone numbers for a set of users. Returns a map of userId to phone.
+ * Only includes users who have a phone number set.
+ */
+async function loadUserPhoneNumbers(
+  userIds: string[],
+): Promise<Map<string, string>> {
+  if (userIds.length === 0) return new Map();
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("user_profiles")
+      .select("id, phone_number")
+      .in("id", userIds)
+      .not("phone_number", "is", null);
+
+    if (error || !data) {
+      console.error("[Notifications] Failed to load phone numbers:", error);
+      return new Map();
+    }
+
+    const map = new Map<string, string>();
+    for (const row of data) {
+      if (row.phone_number) {
+        map.set(row.id, row.phone_number);
+      }
+    }
+    return map;
+  } catch (err) {
+    console.error("[Notifications] Phone number lookup error:", err);
+    return new Map();
+  }
+}
+
+/**
+ * Build an SMS body for a notification event.
+ */
+function buildSmsBody(event: NotificationEvent): string {
+  switch (event.type) {
+    case "approval.created":
+    case "approval.next_approver":
+      return `OKRunit: "${event.requestTitle}" needs your approval. Reply APPROVE or REJECT.`;
+    case "approval.approved":
+      return `OKRunit: "${event.requestTitle}" was approved${event.decidedBy ? ` by ${event.decidedBy}` : ""}.`;
+    case "approval.rejected":
+      return `OKRunit: "${event.requestTitle}" was rejected${event.decidedBy ? ` by ${event.decidedBy}` : ""}.`;
+    case "approval.cancelled":
+      return `OKRunit: "${event.requestTitle}" was cancelled.`;
+    case "approval.expired":
+      return `OKRunit: "${event.requestTitle}" has expired.`;
+    case "approval.sla_warning":
+      return `OKRunit: "${event.requestTitle}" is approaching its SLA deadline. Act soon.`;
+    case "approval.sla_breached":
+      return `OKRunit: "${event.requestTitle}" has breached its SLA deadline.`;
+    case "approval.escalated":
+      return `OKRunit: "${event.requestTitle}" has been escalated and requires immediate attention.`;
+    default:
+      return `OKRunit: "${event.requestTitle}" has been updated.`;
+  }
+}
+
+/**
+ * Map notification event types to webhook event names for filtering.
+ */
+function mapEventToWebhookEvent(type: NotificationEventType): string {
+  const map: Record<NotificationEventType, string> = {
+    "approval.created": "request.created",
+    "approval.approved": "request.approved",
+    "approval.rejected": "request.rejected",
+    "approval.cancelled": "request.cancelled",
+    "approval.expired": "request.expired",
+    "approval.comment": "request.comment",
+    "approval.next_approver": "request.created",
+    "approval.execution_cancelled": "request.cancelled",
+    "approval.sla_warning": "request.sla_warning",
+    "approval.sla_breached": "request.sla_breached",
+    "approval.bottleneck": "request.bottleneck",
+    "approval.escalated": "request.escalated",
+  };
+  return map[type] ?? "request.updated";
 }

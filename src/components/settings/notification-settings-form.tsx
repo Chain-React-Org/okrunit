@@ -71,6 +71,7 @@ const DEFAULT_SETTINGS: Omit<NotificationSettings, "id" | "created_at" | "update
   minimum_priority: "low",
   skip_approval_confirmation: false,
   dashboard_layout: "cards",
+  sms_enabled: false,
 };
 
 // ---------------------------------------------------------------------------

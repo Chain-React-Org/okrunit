@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// OKrunit -- Weekly Digest Email Template (v2, Vend-inspired)
+// OKrunit -- Weekly Digest Email Template (v3, with analytics metrics)
 // ---------------------------------------------------------------------------
 
 import {
@@ -17,6 +17,19 @@ import {
   escapeHtml,
 } from "@/lib/email/layout";
 
+export interface WeeklyDigestAnalytics {
+  avgDecisionTimeMinutes: number;
+  medianDecisionTimeMinutes: number;
+  /** Change from the previous week as a percentage (e.g., -12.5 means 12.5% faster). */
+  avgDecisionTimeChangePercent: number | null;
+  slaComplianceRate: number;
+  autoApprovedCount: number;
+  escalatedCount: number;
+  /** Name of the slowest approver, if available. */
+  topBottleneckName: string | null;
+  topBottleneckAvgMinutes: number | null;
+}
+
 export interface WeeklyDigestEmailParams {
   fullName: string;
   orgName: string;
@@ -30,12 +43,13 @@ export interface WeeklyDigestEmailParams {
     avgResponseTimeHours: number | null;
   };
   topConnections: { name: string; count: number }[];
+  analytics?: WeeklyDigestAnalytics;
 }
 
 export function buildWeeklyDigestEmailHtml(
   params: WeeklyDigestEmailParams,
 ): string {
-  const { fullName, orgName, periodStart, periodEnd, stats, topConnections } =
+  const { fullName, orgName, periodStart, periodEnd, stats, topConnections, analytics } =
     params;
 
   const approvalRate =
@@ -137,6 +151,167 @@ export function buildWeeklyDigestEmailHtml(
     { tone: "neutral", marginTop: 20 },
   );
 
+  // --- Analytics Insights Card (new in v3) ---
+  let analyticsCard = "";
+  if (analytics) {
+    const rows: string[] = [];
+
+    // Decision time with trend indicator
+    if (analytics.avgDecisionTimeMinutes > 0) {
+      let trendHtml = "";
+      if (analytics.avgDecisionTimeChangePercent !== null) {
+        const pct = analytics.avgDecisionTimeChangePercent;
+        const absPct = Math.abs(Math.round(pct));
+        if (pct < -1) {
+          // Faster is good (green arrow down)
+          trendHtml = ` <span style="color:${emailTheme.success};font-size:12px;font-weight:700;">&darr; ${absPct}%</span>`;
+        } else if (pct > 1) {
+          // Slower is bad (red arrow up)
+          trendHtml = ` <span style="color:${emailTheme.danger};font-size:12px;font-weight:700;">&uarr; ${absPct}%</span>`;
+        }
+      }
+
+      const decisionLabel = analytics.avgDecisionTimeMinutes < 60
+        ? `${Math.round(analytics.avgDecisionTimeMinutes)} min`
+        : `${(analytics.avgDecisionTimeMinutes / 60).toFixed(1)} hrs`;
+
+      rows.push(`
+        <tr>
+          <td style="padding:12px 0;border-bottom:1px solid ${emailTheme.divider};">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="color:${emailTheme.ink};font-size:14px;font-weight:600;line-height:22px;">
+                  Avg. decision time
+                </td>
+                <td align="right" style="color:${emailTheme.text};font-size:14px;font-weight:700;line-height:22px;">
+                  ${decisionLabel}${trendHtml}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      `);
+    }
+
+    // SLA compliance rate
+    const slaPercent = Math.round(analytics.slaComplianceRate * 100);
+    const slaTone = slaPercent >= 90 ? "brand" : slaPercent >= 70 ? "warning" : "danger";
+    rows.push(`
+      <tr>
+        <td style="padding:12px 0;border-bottom:1px solid ${emailTheme.divider};">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="color:${emailTheme.ink};font-size:14px;font-weight:600;line-height:22px;">
+                SLA compliance
+              </td>
+              <td align="right">
+                ${emailPill({ label: `${slaPercent}%`, tone: slaTone })}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `);
+
+    // Auto-approved count
+    if (analytics.autoApprovedCount > 0) {
+      rows.push(`
+        <tr>
+          <td style="padding:12px 0;border-bottom:1px solid ${emailTheme.divider};">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="color:${emailTheme.ink};font-size:14px;font-weight:600;line-height:22px;">
+                  Auto-approved
+                </td>
+                <td align="right" style="color:${emailTheme.muted};font-size:13px;font-weight:600;line-height:22px;">
+                  ${analytics.autoApprovedCount} request${analytics.autoApprovedCount !== 1 ? "s" : ""}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      `);
+    }
+
+    // Escalated count
+    if (analytics.escalatedCount > 0) {
+      rows.push(`
+        <tr>
+          <td style="padding:12px 0;border-bottom:1px solid ${emailTheme.divider};">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="color:${emailTheme.ink};font-size:14px;font-weight:600;line-height:22px;">
+                  Escalated
+                </td>
+                <td align="right" style="color:${emailTheme.warning};font-size:13px;font-weight:600;line-height:22px;">
+                  ${analytics.escalatedCount} request${analytics.escalatedCount !== 1 ? "s" : ""}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      `);
+    }
+
+    // Top bottleneck (slowest approver)
+    if (analytics.topBottleneckName && analytics.topBottleneckAvgMinutes !== null) {
+      const bottleneckLabel = analytics.topBottleneckAvgMinutes < 60
+        ? `${Math.round(analytics.topBottleneckAvgMinutes)} min avg.`
+        : `${(analytics.topBottleneckAvgMinutes / 60).toFixed(1)} hrs avg.`;
+
+      rows.push(`
+        <tr>
+          <td style="padding:12px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="color:${emailTheme.ink};font-size:14px;font-weight:600;line-height:22px;">
+                  Slowest approver
+                </td>
+                <td align="right" style="color:${emailTheme.muted};font-size:13px;font-weight:600;line-height:22px;">
+                  ${escapeHtml(analytics.topBottleneckName)} (${bottleneckLabel})
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      `);
+    }
+
+    if (rows.length > 0) {
+      analyticsCard = emailCard(
+        `
+          <p style="margin:0 0 16px;color:${emailTheme.muted};font-size:11px;font-weight:700;line-height:16px;letter-spacing:1.4px;text-transform:uppercase;">
+            Performance Insights
+          </p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            ${rows.join("")}
+          </table>
+        `,
+        { tone: "neutral", marginTop: 20 },
+      );
+    }
+  }
+
+  // --- Pending attention callout ---
+  let pendingCallout = "";
+  if (stats.pending > 0) {
+    pendingCallout = emailCard(
+      `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="color:${emailTheme.ink};font-size:14px;font-weight:700;line-height:22px;">
+              Requests awaiting your attention
+            </td>
+            <td align="right">
+              ${emailPill({ label: `${stats.pending} pending`, tone: "warning" })}
+            </td>
+          </tr>
+        </table>
+      `,
+      { tone: "warning", marginTop: 20 },
+    );
+  }
+
   // --- Top Sources ---
   const connectionRows =
     topConnections.length > 0
@@ -193,7 +368,7 @@ export function buildWeeklyDigestEmailHtml(
     align: "center",
   });
 
-  const body = [hero, statGrid, performanceCard, sourcesCard, cta, signoff].join("");
+  const body = [hero, statGrid, performanceCard, analyticsCard, pendingCallout, sourcesCard, cta, signoff].join("");
 
   return emailLayout({
     body,
