@@ -13,7 +13,6 @@ import { randomBytes } from "crypto";
 import { authenticateRequest } from "@/lib/api/auth";
 import { errorResponse } from "@/lib/api/errors";
 
-export const dynamic = "force-dynamic";
 
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID!;
 const DISCORD_OAUTH_URL = "https://discord.com/api/oauth2/authorize";

@@ -13,7 +13,6 @@ import { randomBytes } from "crypto";
 import { authenticateRequest } from "@/lib/api/auth";
 import { errorResponse } from "@/lib/api/errors";
 
-export const dynamic = "force-dynamic";
 
 const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID!;
 const SLACK_OAUTH_URL = "https://slack.com/oauth/v2/authorize";

@@ -13,7 +13,6 @@ import { randomBytes } from "crypto";
 import { authenticateRequest } from "@/lib/api/auth";
 import { errorResponse } from "@/lib/api/errors";
 
-export const dynamic = "force-dynamic";
 
 const TEAMS_CLIENT_ID = process.env.TEAMS_CLIENT_ID!;
 const TEAMS_TENANT_ID = process.env.TEAMS_TENANT_ID || "common";
