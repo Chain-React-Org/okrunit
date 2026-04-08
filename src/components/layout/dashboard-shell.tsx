@@ -18,7 +18,7 @@ interface DashboardShellProps {
   children: React.ReactNode;
   sidebarProps: React.ComponentProps<typeof Sidebar>;
   emergencyStopActive: boolean;
-  user: { email: string; full_name: string | null };
+  user: { email: string; full_name: string | null; avatar_url: string | null };
   orgName: string;
   pendingCount: number;
   currentOrgId: string;

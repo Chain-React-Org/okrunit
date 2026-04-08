@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, Loader2, AlertTriangle, CheckCircle, Clock, Bell, ShieldCheck, SlidersHorizontal, Sun, Moon, Monitor } from "lucide-react";
+import { User, Mail, Lock, Loader2, AlertTriangle, CheckCircle, Clock, Bell, ShieldCheck, SlidersHorizontal, Sun, Moon, Monitor, Camera, ExternalLink } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { createClient } from "@/lib/supabase/client";
 import { MfaSettings } from "@/components/settings/mfa-settings";
 import { PasskeySettings } from "@/components/settings/passkey-settings";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -64,6 +65,7 @@ interface AccountSettingsProps {
   userId: string;
   initialFullName: string;
   initialEmail: string;
+  initialAvatarUrl: string | null;
   deletionScheduledAt?: string | null;
   notificationSettings: NotificationSettings | null;
 }
@@ -72,6 +74,7 @@ export function AccountSettings({
   userId,
   initialFullName,
   initialEmail,
+  initialAvatarUrl,
   deletionScheduledAt,
   notificationSettings,
 }: AccountSettingsProps) {
@@ -83,6 +86,12 @@ export function AccountSettings({
   // Profile
   const [fullName, setFullName] = useState(initialFullName);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Avatar
+  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Email change
   const [emailSent, setEmailSent] = useState(false);
@@ -155,6 +164,69 @@ export function AccountSettings({
       toast.error("Failed to update profile. Please try again.");
     } finally {
       setIsSavingProfile(false);
+    }
+  }
+
+  // -- Avatar upload --
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset the input so re-selecting the same file triggers onChange
+    e.target.value = "";
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2 MB.");
+      return;
+    }
+
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      toast.error("Please upload a JPEG, PNG, WebP, or GIF image.");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/v1/account/avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to upload avatar");
+      }
+
+      const data = await res.json();
+      setAvatarUrl(data.avatar_url);
+      toast.success("Profile picture updated.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload avatar.");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  }
+
+  async function handleAvatarDelete() {
+    setIsDeletingAvatar(true);
+    try {
+      const res = await fetch("/api/v1/account/avatar", { method: "DELETE" });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to remove avatar");
+      }
+
+      setAvatarUrl(null);
+      toast.success("Profile picture removed.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove avatar.");
+    } finally {
+      setIsDeletingAvatar(false);
     }
   }
 
@@ -373,6 +445,82 @@ export function AccountSettings({
               {isSavingProfile && <Loader2 className="size-4 animate-spin" />}
               Save profile
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* -- Profile Picture -- */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Camera className="size-5" />
+            Profile Picture
+          </CardTitle>
+          <CardDescription>
+            Your profile picture is visible to other members of your organization.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-5">
+            {/* Avatar with hover camera overlay + remove badge */}
+            <div className="group/avatar-wrap relative shrink-0">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingAvatar}
+                className="group relative block rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <UserAvatar
+                  fullName={fullName}
+                  email={initialEmail}
+                  avatarUrl={avatarUrl}
+                  size="lg"
+                  className="size-16"
+                />
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/50">
+                  {isUploadingAvatar ? (
+                    <Loader2 className="size-5 text-white opacity-0 group-hover:opacity-100 animate-spin transition-opacity" />
+                  ) : (
+                    <Camera className="size-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </button>
+
+              {/* Remove badge on the avatar (visible on hover) */}
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={handleAvatarDelete}
+                  disabled={isDeletingAvatar}
+                  className="absolute -top-1 -right-1 z-10 flex size-5 items-center justify-center rounded-full bg-destructive text-white shadow-sm opacity-0 transition-opacity hover:bg-destructive/80 group-hover/avatar-wrap:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2"
+                >
+                  {isDeletingAvatar ? (
+                    <Loader2 className="size-3 animate-spin" />
+                  ) : (
+                    <span className="text-xs font-bold leading-none">&times;</span>
+                  )}
+                </button>
+              )}
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+
+            {/* Edit Gravatar link */}
+            <a
+              href="https://en.gravatar.com/emails"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors"
+            >
+              <ExternalLink className="size-3.5" />
+              Edit Gravatar
+            </a>
           </div>
         </CardContent>
       </Card>

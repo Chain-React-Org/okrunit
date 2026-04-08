@@ -620,12 +620,30 @@ export function ApprovalDashboard({
   }, []);
 
   const toggleSelectAll = useCallback(() => {
-    setSelectedIds((prev) =>
-      prev.size === approvals.length
-        ? new Set()
-        : new Set(approvals.map((a) => a.id))
-    );
-  }, [approvals]);
+    const pageIds = paginatedApprovals.map((a) => a.id);
+    setSelectedIds((prev) => {
+      const allPageSelected = pageIds.every((id) => prev.has(id));
+      if (allPageSelected) {
+        const next = new Set(prev);
+        pageIds.forEach((id) => next.delete(id));
+        return next;
+      }
+      return new Set([...prev, ...pageIds]);
+    });
+  }, [paginatedApprovals]);
+
+  const toggleSelectSection = useCallback((sectionIds: string[]) => {
+    setSelectedIds((prev) => {
+      const allSelected = sectionIds.every((id) => prev.has(id));
+      const next = new Set(prev);
+      if (allSelected) {
+        sectionIds.forEach((id) => next.delete(id));
+      } else {
+        sectionIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  }, []);
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
 
@@ -788,6 +806,7 @@ export function ApprovalDashboard({
     newIds,
     selectedIds,
     onToggleSelect: toggleSelect,
+    onToggleSelectSection: toggleSelectSection,
     onArchive: handleSingleArchive,
     onUnarchive: handleSingleUnarchive,
     onConfigureFlow: handleConfigureFlow,
@@ -934,17 +953,17 @@ export function ApprovalDashboard({
       />
 
       {/* Select all bar */}
-      {approvals.length > 0 && (
+      {paginatedApprovals.length > 0 && (
         <div className="flex items-center gap-2 px-4">
           <Checkbox
-            checked={selectedIds.size === approvals.length && approvals.length > 0}
+            checked={paginatedApprovals.every((a) => selectedIds.has(a.id)) && paginatedApprovals.length > 0}
             onCheckedChange={toggleSelectAll}
             className="bg-white dark:bg-zinc-900"
           />
           <span className="text-xs text-muted-foreground">
             {selectedIds.size > 0
-              ? `${selectedIds.size} of ${approvals.length} selected`
-              : "Select all"}
+              ? `${selectedIds.size} selected`
+              : `Select all on this page (${paginatedApprovals.length})`}
           </span>
         </div>
       )}
