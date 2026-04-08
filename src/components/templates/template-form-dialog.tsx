@@ -1,0 +1,290 @@
+"use client";
+
+// ---------------------------------------------------------------------------
+// OKrunit -- Template Form Dialog
+// Dialog for creating or editing an approval template.
+// ---------------------------------------------------------------------------
+
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import type { ApprovalTemplate } from "@/components/templates/templates-page";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface TemplateFormDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  template: ApprovalTemplate | null;
+  onSaved: (template: ApprovalTemplate) => void;
+}
+
+interface FormState {
+  name: string;
+  description: string;
+  title_pattern: string;
+  action_type: string;
+  default_priority: string;
+  assigned_approvers: string;
+  callback_url_pattern: string;
+}
+
+const PRIORITIES = ["low", "medium", "high", "critical"] as const;
+
+const DEFAULT_FORM: FormState = {
+  name: "",
+  description: "",
+  title_pattern: "",
+  action_type: "",
+  default_priority: "medium",
+  assigned_approvers: "",
+  callback_url_pattern: "",
+};
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export function TemplateFormDialog({
+  open,
+  onOpenChange,
+  template,
+  onSaved,
+}: TemplateFormDialogProps) {
+  const isEditing = template !== null;
+  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [isPending, startTransition] = useTransition();
+
+  // Reset form when dialog opens or template changes
+  useEffect(() => {
+    if (open) {
+      if (template) {
+        setForm({
+          name: template.name,
+          description: template.description ?? "",
+          title_pattern: template.title_pattern ?? "",
+          action_type: template.action_type ?? "",
+          default_priority: template.default_priority,
+          assigned_approvers: template.assigned_approvers.join(", "),
+          callback_url_pattern: template.callback_url_pattern ?? "",
+        });
+      } else {
+        setForm(DEFAULT_FORM);
+      }
+    }
+  }, [open, template]);
+
+  const updateField = useCallback(
+    <K extends keyof FormState>(key: K, value: FormState[K]) => {
+      setForm((prev) => ({ ...prev, [key]: value }));
+    },
+    [],
+  );
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!form.name.trim()) {
+        toast.error("Name is required");
+        return;
+      }
+
+      startTransition(async () => {
+        const approvers = form.assigned_approvers
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+
+        const body = {
+          name: form.name.trim(),
+          description: form.description.trim() || null,
+          title_pattern: form.title_pattern.trim() || null,
+          action_type: form.action_type.trim() || null,
+          default_priority: form.default_priority,
+          assigned_approvers: approvers,
+          callback_url_pattern: form.callback_url_pattern.trim() || null,
+        };
+
+        const url = isEditing
+          ? `/api/v1/templates/${template.id}`
+          : "/api/v1/templates";
+        const method = isEditing ? "PATCH" : "POST";
+
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        if (res.ok) {
+          const saved = await res.json();
+          toast.success(isEditing ? "Template updated" : "Template created");
+          onSaved(saved.data ?? saved);
+        } else {
+          const err = await res.json().catch(() => null);
+          toast.error(err?.error ?? "Failed to save template");
+        }
+      });
+    },
+    [form, isEditing, template, onSaved],
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? "Edit Template" : "Create Template"}</DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Update the template configuration."
+              : "Define a reusable template for approval requests."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Name */}
+          <div className="space-y-2">
+            <Label htmlFor="template-name">
+              Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="template-name"
+              value={form.name}
+              onChange={(e) => updateField("name", e.target.value)}
+              placeholder="e.g., Production Deploy"
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="template-description">Description</Label>
+            <Textarea
+              id="template-description"
+              value={form.description}
+              onChange={(e) => updateField("description", e.target.value)}
+              placeholder="A brief description of this template"
+              rows={2}
+            />
+          </div>
+
+          {/* Title Pattern */}
+          <div className="space-y-2">
+            <Label htmlFor="template-title-pattern">Title Pattern</Label>
+            <Input
+              id="template-title-pattern"
+              value={form.title_pattern}
+              onChange={(e) => updateField("title_pattern", e.target.value)}
+              placeholder="e.g., Deploy {service} to {environment}"
+            />
+            <p className="text-xs text-muted-foreground">
+              Use {"{variable}"} placeholders, e.g., &quot;Deploy {"{service}"} to {"{environment}"}&quot;
+            </p>
+          </div>
+
+          {/* Action Type */}
+          <div className="space-y-2">
+            <Label htmlFor="template-action-type">Action Type</Label>
+            <Input
+              id="template-action-type"
+              value={form.action_type}
+              onChange={(e) => updateField("action_type", e.target.value)}
+              placeholder="e.g., deploy, database_change, access_request"
+            />
+          </div>
+
+          {/* Default Priority */}
+          <div className="space-y-2">
+            <Label htmlFor="template-priority">Default Priority</Label>
+            <Select
+              value={form.default_priority}
+              onValueChange={(v) => updateField("default_priority", v)}
+            >
+              <SelectTrigger id="template-priority" className="bg-white dark:bg-card text-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITIES.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p.charAt(0).toUpperCase() + p.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Assigned Approvers */}
+          <div className="space-y-2">
+            <Label htmlFor="template-approvers">Assigned Approvers</Label>
+            <Input
+              id="template-approvers"
+              value={form.assigned_approvers}
+              onChange={(e) => updateField("assigned_approvers", e.target.value)}
+              placeholder="user-id-1, user-id-2"
+            />
+            <p className="text-xs text-muted-foreground">
+              Comma-separated list of user IDs or email addresses.
+            </p>
+          </div>
+
+          {/* Callback URL Pattern */}
+          <div className="space-y-2">
+            <Label htmlFor="template-callback">Callback URL Pattern</Label>
+            <Input
+              id="template-callback"
+              value={form.callback_url_pattern}
+              onChange={(e) => updateField("callback_url_pattern", e.target.value)}
+              placeholder="https://api.example.com/webhooks/approval"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : isEditing ? (
+                "Update Template"
+              ) : (
+                "Create Template"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
