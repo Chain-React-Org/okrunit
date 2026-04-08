@@ -8,7 +8,6 @@
 // ---------------------------------------------------------------------------
 
 import { NextRequest, NextResponse } from "next/server";
-import * as samlify from "samlify";
 import {
   createServiceProvider,
   createIdentityProvider,
@@ -39,10 +38,7 @@ export async function GET(request: NextRequest) {
     const sp = createServiceProvider();
     const idp = createIdentityProvider(config);
 
-    const loginRequest = sp.createLoginRequest(
-      idp,
-      samlify.Constants.namespace.binding.redirect,
-    );
+    const loginRequest = sp.createLoginRequest(idp, "redirect");
 
     // loginRequest has { id, context } where context is the redirect URL
     let redirectUrl = loginRequest.context;
