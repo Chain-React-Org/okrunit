@@ -1,6 +1,7 @@
 "use client";
 
 import { ApprovalCard } from "@/components/approvals/approval-card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InboxIcon } from "lucide-react";
 import { getCurrentlyResponsible } from "@/lib/approvals/responsible";
@@ -21,6 +22,7 @@ interface ApprovalListGroupedProps {
   newIds?: Set<string>;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
+  onToggleSelectSection?: (ids: string[]) => void;
   onArchive?: (approvalId: string) => void;
   onUnarchive?: (approvalId: string) => void;
   onConfigureFlow?: (approval: ApprovalRequest) => void;
@@ -41,6 +43,7 @@ export function ApprovalListGrouped({
   newIds,
   selectedIds,
   onToggleSelect,
+  onToggleSelectSection,
   onArchive,
   onUnarchive,
   onConfigureFlow,
@@ -66,6 +69,13 @@ export function ApprovalListGrouped({
       {needsAttention.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-3">
+            {onToggleSelectSection && (
+              <Checkbox
+                checked={needsAttention.every((a) => selectedIds?.has(a.id))}
+                onCheckedChange={() => onToggleSelectSection(needsAttention.map((a) => a.id))}
+                className="bg-white dark:bg-zinc-900"
+              />
+            )}
             <span className="text-sm font-medium text-foreground">
               Needs Your Attention
             </span>
@@ -106,6 +116,13 @@ export function ApprovalListGrouped({
       {resolved.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-3">
+            {onToggleSelectSection && (
+              <Checkbox
+                checked={resolved.every((a) => selectedIds?.has(a.id))}
+                onCheckedChange={() => onToggleSelectSection(resolved.map((a) => a.id))}
+                className="bg-white dark:bg-zinc-900"
+              />
+            )}
             <span className="text-sm font-medium text-muted-foreground">
               Previously Resolved
             </span>

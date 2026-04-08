@@ -7,7 +7,7 @@ import { useOnboardingTourStore } from "@/stores/onboarding-tour-store";
 import { TOUR_STEPS, findPageTour } from "@/components/onboarding/tour-steps";
 import { AlertTriangle, Menu, HelpCircle, LogOut, Settings, Check, ChevronsUpDown, Building2, Search, BookOpen, Sparkles, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +35,7 @@ interface HeaderProps {
   user?: {
     email: string;
     full_name: string | null;
+    avatar_url: string | null;
   };
   orgName?: string;
   pendingCount?: number;
@@ -42,18 +43,6 @@ interface HeaderProps {
   userOrgs?: OrgItem[];
   userId?: string;
   currentPlan?: string;
-}
-
-function getInitials(name: string | null, email: string): string {
-  if (name) {
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  }
-  return email.charAt(0).toUpperCase();
 }
 
 export function Header({ emergencyStopActive, user, orgName: serverOrgName, pendingCount = 0, currentOrgId, userOrgs: serverUserOrgs = [], userId, currentPlan }: HeaderProps) {
@@ -186,11 +175,12 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="ml-1 flex cursor-pointer items-center justify-center rounded-full outline-none ring-2 ring-primary/20 transition-shadow hover:ring-primary/40 focus-visible:ring-primary/50">
-                  <Avatar className="size-8">
-                    <AvatarFallback className="bg-primary text-white text-xs font-bold">
-                      {getInitials(user.full_name, user.email)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    fullName={user.full_name}
+                    email={user.email}
+                    avatarUrl={user.avatar_url}
+                    className="size-8"
+                  />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">

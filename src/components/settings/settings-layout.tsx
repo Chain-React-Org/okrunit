@@ -11,6 +11,7 @@ interface SettingsLayoutProps {
   userId: string;
   initialFullName: string;
   initialEmail: string;
+  initialAvatarUrl: string | null;
   deletionScheduledAt?: string | null;
   notificationSettings: NotificationSettings | null;
   isAdmin: boolean;
@@ -26,6 +27,7 @@ export function SettingsLayout({
   userId,
   initialFullName,
   initialEmail,
+  initialAvatarUrl,
   deletionScheduledAt,
   notificationSettings,
   isAdmin,
@@ -50,6 +52,7 @@ export function SettingsLayout({
               userId={userId}
               initialFullName={initialFullName}
               initialEmail={initialEmail}
+              initialAvatarUrl={initialAvatarUrl}
               deletionScheduledAt={deletionScheduledAt}
               notificationSettings={notificationSettings}
             />

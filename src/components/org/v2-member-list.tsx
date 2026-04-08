@@ -23,7 +23,7 @@ import {
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { TransferOwnershipDialog } from "@/components/org/transfer-ownership-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,18 +62,6 @@ interface TeamMember {
   can_connect: boolean;
   created_at: string;
   updated_at: string;
-}
-
-function getInitials(name: string | null, email: string): string {
-  if (name) {
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  }
-  return email.charAt(0).toUpperCase();
 }
 
 const roleConfig = {
@@ -330,11 +318,12 @@ export function V2MemberList({
                 className="group flex items-center gap-4 rounded-xl border border-border/50 bg-white dark:bg-card px-4 py-3 transition-colors hover:border-border"
               >
                 {/* Avatar */}
-                <Avatar size="sm">
-                  <AvatarFallback className="text-xs font-medium">
-                    {getInitials(member.full_name, member.email)}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  fullName={member.full_name}
+                  email={member.email}
+                  avatarUrl={member.avatar_url}
+                  size="sm"
+                />
 
                 {/* Name & email */}
                 <div className="flex-1 min-w-0">

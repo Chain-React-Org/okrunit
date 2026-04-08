@@ -35,6 +35,7 @@ export default async function AccountSettingsPage() {
         userId={profile.id}
         initialFullName={profile.full_name ?? ""}
         initialEmail={profile.email}
+        initialAvatarUrl={profile.avatar_url}
         notificationSettings={notificationSettings ?? null}
       />
 

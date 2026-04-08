@@ -85,6 +85,7 @@ async function DashboardContent({
       user={{
         email: profile.email,
         full_name: profile.full_name,
+        avatar_url: profile.avatar_url,
       }}
       orgName={org.name}
       pendingCount={pendingCount}
