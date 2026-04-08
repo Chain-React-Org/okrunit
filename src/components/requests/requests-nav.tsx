@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   ClipboardList,
+  FileText,
   Key,
   Route,
   MessageSquare,
@@ -64,6 +65,7 @@ export function RequestsNav({ isAdmin, pendingCount, mobile }: RequestsNavProps)
         { id: "routes", label: "Routes", href: "/requests/routes", icon: Route, adminOnly: true },
         { id: "rules", label: "Rules", href: "/requests/rules", icon: GitBranch, adminOnly: true },
         { id: "messaging", label: "Messaging", href: "/requests/messaging", icon: MessageSquare, adminOnly: true },
+        { id: "templates", label: "Templates", href: "/requests/templates", icon: FileText, adminOnly: true },
       ],
     },
     {
