@@ -13,6 +13,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateFingerprint } from "./fingerprint";
 import { sendErrorDiscordAlert } from "./discord-alerts";
 import { getBreadcrumbs } from "./breadcrumbs";
+import { getCorrelationId } from "./logger";
 import type { CaptureErrorParams, ErrorSeverity } from "./types";
 
 /** Current release. Read once from env. */
@@ -32,6 +33,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
     const { type, message, stack } = extractErrorInfo(params.error);
     const fingerprint = generateFingerprint(params.error);
     const severity = params.severity ?? "error";
+    const correlationId = params.correlationId ?? getCorrelationId() ?? null;
     const breadcrumbs =
       params.breadcrumbs ?? getBreadcrumbs();
 
@@ -104,7 +106,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
       await admin.from("error_issues").update(updateData).eq("id", issueId);
     }
 
-    // 3. Insert error event
+    // 3. Insert error event (correlation_id included for request tracing)
     await admin.from("error_events").insert({
       issue_id: issueId,
       error_type: type,
@@ -116,6 +118,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
       release: RELEASE,
       request_url: params.requestUrl ?? null,
       request_method: params.requestMethod ?? null,
+      correlation_id: correlationId,
       user_id: params.userId ?? null,
       org_id: params.orgId ?? null,
       tags: params.tags ?? {},
@@ -176,6 +179,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
         stackSnippet: stack ?? "No stack trace",
         service: params.service,
         requestUrl: params.requestUrl,
+        correlationId: correlationId ?? undefined,
         userId: params.userId,
         userName,
         orgId: params.orgId,

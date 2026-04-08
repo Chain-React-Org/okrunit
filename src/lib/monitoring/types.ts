@@ -19,6 +19,7 @@ export interface CaptureErrorParams {
   service?: string;
   requestUrl?: string;
   requestMethod?: string;
+  correlationId?: string;
   userId?: string;
   orgId?: string;
   tags?: Record<string, string>;
@@ -59,6 +60,7 @@ export interface ErrorEvent {
   release: string | null;
   request_url: string | null;
   request_method: string | null;
+  correlation_id: string | null;
   user_id: string | null;
   org_id: string | null;
   tags: Record<string, string>;

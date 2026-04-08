@@ -395,7 +395,7 @@ function NotificationRow({
       )}
     >
       {/* Icon */}
-      <DisplayIcon className={cn("size-4 shrink-0 mt-0.5", iconColor)} />
+      <DisplayIcon className={cn("size-4 shrink-0 self-center", iconColor)} />
 
       {/* Content */}
       <div className="min-w-0 flex-1">

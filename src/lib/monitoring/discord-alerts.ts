@@ -27,6 +27,7 @@ interface ErrorAlertParams {
   stackSnippet: string;
   service?: string;
   requestUrl?: string;
+  correlationId?: string;
   userId?: string;
   userName?: string;
   orgId?: string;
@@ -56,27 +57,20 @@ export async function sendErrorDiscordAlert(
   lastAlertTimes.set(params.fingerprint, now);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://okrunit.com";
-  const prefix = params.isRegression ? "🔄 Regression" : "🆕 New Error";
+  const prefix = params.isRegression ? "Regression" : "New Error";
 
-  // Truncate stack to first 10 lines for the embed
-  const stackLines = (params.stackSnippet || "No stack trace").split("\n");
-  const truncatedStack =
-    stackLines.slice(0, 10).join("\n") +
-    (stackLines.length > 10 ? "\n  ..." : "");
-
-  const fields = [
+  // Build concise fields. Stack traces are available on the admin page,
+  // so we keep the Discord embed short and actionable.
+  const fields: { name: string; value: string; inline: boolean }[] = [
     { name: "Severity", value: params.severity.toUpperCase(), inline: true },
     ...(params.service
       ? [{ name: "Service", value: params.service, inline: true }]
       : []),
     ...(params.eventCount > 1
-      ? [
-          {
-            name: "Occurrences",
-            value: String(params.eventCount),
-            inline: true,
-          },
-        ]
+      ? [{ name: "Count", value: String(params.eventCount), inline: true }]
+      : []),
+    ...(params.correlationId
+      ? [{ name: "Correlation ID", value: `\`${params.correlationId}\``, inline: false }]
       : []),
     ...(params.requestUrl
       ? [{ name: "URL", value: params.requestUrl, inline: false }]
@@ -105,14 +99,16 @@ export async function sendErrorDiscordAlert(
       : []),
   ];
 
+  const adminUrl = `${appUrl}/admin/errors/${params.issueId}`;
+
   const payload = {
     embeds: [
       {
-        title: `${prefix}: ${params.title.slice(0, 200)}`,
-        description: `\`\`\`\n${truncatedStack.slice(0, 1800)}\n\`\`\``,
+        title: `${prefix}: ${params.title.slice(0, 100)}`,
+        description: `[View details in admin dashboard](${adminUrl})`,
         color: SEVERITY_COLORS[params.severity] ?? SEVERITY_COLORS.error,
         fields,
-        footer: { text: "OKrunit Error Monitor" },
+        footer: { text: `Fingerprint: ${params.fingerprint.slice(0, 16)}` },
         timestamp: new Date().toISOString(),
       },
     ],
@@ -124,7 +120,7 @@ export async function sendErrorDiscordAlert(
             type: 2,
             style: 5, // Link button
             label: "View in Dashboard",
-            url: `${appUrl}/admin/errors/${params.issueId}`,
+            url: adminUrl,
           },
         ],
       },

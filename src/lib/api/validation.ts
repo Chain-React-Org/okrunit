@@ -119,6 +119,8 @@ export const paginationSchema = z.object({
   status: z.union([statusEnum, z.string().transform((s) => s.split(",").map((v) => v.trim())).pipe(z.array(statusEnum))]).optional(),
   priority: priorityEnum.optional(),
   search: z.string().max(500).optional(),
+  created_after: z.string().datetime().optional(),
+  created_before: z.string().datetime().optional(),
 });
 
 export type PaginationInput = z.infer<typeof paginationSchema>;

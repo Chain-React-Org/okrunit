@@ -42,7 +42,16 @@ export async function GET(
       return NextResponse.json({ error: "Issue not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ issue, events: events ?? [] });
+    // Build a single string that can be copied into Claude for debugging.
+    // Includes the most recent event's details combined with the issue summary.
+    const latestEvent = (events ?? [])[0] as ErrorEvent | undefined;
+    const aiDebugContext = buildAiDebugContext(issue as ErrorIssue, latestEvent);
+
+    return NextResponse.json({
+      issue,
+      events: events ?? [],
+      ai_debug_context: aiDebugContext,
+    });
   } catch (error) {
     console.error("[AdminErrors] GET detail error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -109,4 +118,111 @@ export async function PATCH(
     console.error("[AdminErrors] PATCH error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+// ---------------------------------------------------------------------------
+// AI Debug Context Builder
+// ---------------------------------------------------------------------------
+// Produces a single copyable string with all relevant error details for
+// pasting into an AI assistant (Claude, etc.) to aid debugging.
+// ---------------------------------------------------------------------------
+
+const SENSITIVE_HEADERS = new Set([
+  "authorization",
+  "cookie",
+  "x-api-key",
+  "x-secret",
+]);
+
+function buildAiDebugContext(
+  issue: ErrorIssue,
+  latestEvent?: ErrorEvent,
+): string {
+  const sections: string[] = [];
+
+  sections.push("## Error Summary");
+  sections.push(`Title: ${issue.title}`);
+  sections.push(`Severity: ${issue.severity}`);
+  sections.push(`Status: ${issue.status}`);
+  sections.push(`Service: ${issue.service ?? "unknown"}`);
+  sections.push(`First seen: ${issue.first_seen_at}`);
+  sections.push(`Last seen: ${issue.last_seen_at}`);
+  sections.push(`Occurrences: ${issue.event_count}`);
+  sections.push(`Affected users: ${issue.affected_users}`);
+
+  if (latestEvent) {
+    sections.push("");
+    sections.push("## Latest Event");
+    sections.push(`Error type: ${latestEvent.error_type}`);
+    sections.push(`Message: ${latestEvent.message}`);
+    sections.push(`Environment: ${latestEvent.environment}`);
+    sections.push(`Release: ${latestEvent.release ?? "unknown"}`);
+    sections.push(`Timestamp: ${latestEvent.created_at}`);
+
+    if (latestEvent.correlation_id) {
+      sections.push(`Correlation ID: ${latestEvent.correlation_id}`);
+    }
+
+    if (latestEvent.request_url || latestEvent.request_method) {
+      sections.push("");
+      sections.push("## Request");
+      if (latestEvent.request_method) {
+        sections.push(`Method: ${latestEvent.request_method}`);
+      }
+      if (latestEvent.request_url) {
+        sections.push(`URL: ${latestEvent.request_url}`);
+      }
+    }
+
+    // Include context but strip sensitive headers
+    if (latestEvent.context && Object.keys(latestEvent.context).length > 0) {
+      const safeContext = { ...latestEvent.context };
+      if (
+        safeContext.headers &&
+        typeof safeContext.headers === "object"
+      ) {
+        const safeHeaders: Record<string, unknown> = {};
+        for (const [key, val] of Object.entries(
+          safeContext.headers as Record<string, unknown>,
+        )) {
+          if (!SENSITIVE_HEADERS.has(key.toLowerCase())) {
+            safeHeaders[key] = val;
+          }
+        }
+        safeContext.headers = safeHeaders;
+      }
+      sections.push("");
+      sections.push("## Context");
+      sections.push(JSON.stringify(safeContext, null, 2));
+    }
+
+    if (latestEvent.stack_trace) {
+      sections.push("");
+      sections.push("## Stack Trace");
+      sections.push(latestEvent.stack_trace);
+    }
+
+    if (latestEvent.breadcrumbs && latestEvent.breadcrumbs.length > 0) {
+      sections.push("");
+      sections.push("## Breadcrumbs (most recent last)");
+      for (const crumb of latestEvent.breadcrumbs) {
+        const dataStr = crumb.data
+          ? ` ${JSON.stringify(crumb.data)}`
+          : "";
+        sections.push(
+          `[${crumb.timestamp}] [${crumb.type}/${crumb.category}] ${crumb.message}${dataStr}`,
+        );
+      }
+    }
+  }
+
+  if (issue.tags && Object.keys(issue.tags).length > 0) {
+    sections.push("");
+    sections.push("## Tags");
+    for (const [key, val] of Object.entries(issue.tags)) {
+      sections.push(`${key}: ${val}`);
+    }
+  }
+
+  return sections.join("\n");
 }

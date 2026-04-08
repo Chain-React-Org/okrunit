@@ -46,6 +46,8 @@ import type { NotificationSettings, MessagingConnection, RoutingRules } from "@/
 import type { PushPayload } from "@/lib/notifications/channels/web-push";
 import { PRIORITY_ORDER } from "@/lib/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logNotificationDelivery, logNotificationDeliveryBatch } from "@/lib/notifications/delivery-log";
+import type { DeliveryLogEntry } from "@/lib/notifications/delivery-log";
 
 // ---------------------------------------------------------------------------
 // Default settings applied when a user has not configured preferences
@@ -111,6 +113,7 @@ export async function dispatchNotifications(
     }
 
     const promises: Promise<void>[] = [];
+    const suppressionLogs: DeliveryLogEntry[] = [];
 
     // -- Per-user channels (email + web push) ---------------------------------
     for (const { userId, email, settings } of recipients) {
@@ -118,6 +121,27 @@ export async function dispatchNotifications(
 
       // Gate: quiet hours + priority threshold
       if (!shouldNotify(effective, event.requestPriority)) {
+        const reason = getSuppressionReason(effective, event.requestPriority);
+        if (effective.push_enabled) {
+          suppressionLogs.push({
+            orgId: event.orgId,
+            requestId: event.requestId,
+            recipientUserId: userId,
+            channel: "web_push",
+            status: "suppressed",
+            suppressionReason: reason,
+          });
+        }
+        if (effective.email_enabled) {
+          suppressionLogs.push({
+            orgId: event.orgId,
+            requestId: event.requestId,
+            recipientUserId: userId,
+            channel: "email",
+            status: "suppressed",
+            suppressionReason: reason,
+          });
+        }
         continue;
       }
 
@@ -131,12 +155,30 @@ export async function dispatchNotifications(
           tag: `gk-${event.requestId}`,
         };
         promises.push(
-          sendWebPush(userId, pushPayload).catch((err: unknown) => {
-            console.error(
-              `[Notifications] Web push failed for user ${userId}:`,
-              err,
-            );
-          }),
+          sendWebPush(userId, pushPayload)
+            .then(() => {
+              logNotificationDelivery({
+                orgId: event.orgId,
+                requestId: event.requestId,
+                recipientUserId: userId,
+                channel: "web_push",
+                status: "sent",
+              });
+            })
+            .catch((err: unknown) => {
+              console.error(
+                `[Notifications] Web push failed for user ${userId}:`,
+                err,
+              );
+              logNotificationDelivery({
+                orgId: event.orgId,
+                requestId: event.requestId,
+                recipientUserId: userId,
+                channel: "web_push",
+                status: "failed",
+                errorMessage: err instanceof Error ? err.message : String(err),
+              });
+            }),
         );
       }
 
@@ -159,12 +201,32 @@ export async function dispatchNotifications(
             }),
           );
           promises.push(
-            emailPromise.catch((err: unknown) => {
-              console.error(
-                `[Notifications] Approval email failed for ${email}:`,
-                err,
-              );
-            }),
+            emailPromise
+              .then(() => {
+                logNotificationDelivery({
+                  orgId: event.orgId,
+                  requestId: event.requestId,
+                  recipientUserId: userId,
+                  channel: "email",
+                  status: "sent",
+                  metadata: { to: email },
+                });
+              })
+              .catch((err: unknown) => {
+                console.error(
+                  `[Notifications] Approval email failed for ${email}:`,
+                  err,
+                );
+                logNotificationDelivery({
+                  orgId: event.orgId,
+                  requestId: event.requestId,
+                  recipientUserId: userId,
+                  channel: "email",
+                  status: "failed",
+                  errorMessage: err instanceof Error ? err.message : String(err),
+                  metadata: { to: email },
+                });
+              }),
           );
         } else {
           const decision = extractDecision(event.type);
@@ -176,12 +238,32 @@ export async function dispatchNotifications(
               decision,
               decidedBy: event.decidedBy,
               comment: event.decisionComment,
-            }).catch((err: unknown) => {
-              console.error(
-                `[Notifications] Decision email failed for ${email}:`,
-                err,
-              );
-            }),
+            })
+              .then(() => {
+                logNotificationDelivery({
+                  orgId: event.orgId,
+                  requestId: event.requestId,
+                  recipientUserId: userId,
+                  channel: "email",
+                  status: "sent",
+                  metadata: { to: email },
+                });
+              })
+              .catch((err: unknown) => {
+                console.error(
+                  `[Notifications] Decision email failed for ${email}:`,
+                  err,
+                );
+                logNotificationDelivery({
+                  orgId: event.orgId,
+                  requestId: event.requestId,
+                  recipientUserId: userId,
+                  channel: "email",
+                  status: "failed",
+                  errorMessage: err instanceof Error ? err.message : String(err),
+                  metadata: { to: email },
+                });
+              }),
           );
         }
       }
@@ -273,6 +355,11 @@ export async function dispatchNotifications(
     }
 
     await Promise.allSettled(promises);
+
+    // Flush suppression logs in a single batch (fire-and-forget)
+    if (suppressionLogs.length > 0) {
+      logNotificationDeliveryBatch(suppressionLogs);
+    }
   } catch (error) {
     console.error("[Notifications] Orchestrator error:", error);
   }
@@ -311,6 +398,13 @@ function dispatchSlack(
   const webhookUrl = conn.webhook_url;
   if (!webhookUrl) return Promise.resolve();
 
+  const logBase = {
+    orgId: event.orgId,
+    requestId: event.requestId,
+    channel: "slack" as const,
+    metadata: { connectionId: conn.id, connectionName: conn.channel_name },
+  };
+
   if (isCreateEvent) {
     return sendSlackNotification({
       webhookUrl,
@@ -319,12 +413,21 @@ function dispatchSlack(
       description: event.requestDescription,
       priority: event.requestPriority,
       connectionName: event.connectionName,
-    }).catch((err: unknown) => {
-      console.error(
-        `[Notifications] Slack notification failed for connection ${conn.id}:`,
-        err,
-      );
-    });
+    })
+      .then(() => {
+        logNotificationDelivery({ ...logBase, status: "sent" });
+      })
+      .catch((err: unknown) => {
+        console.error(
+          `[Notifications] Slack notification failed for connection ${conn.id}:`,
+          err,
+        );
+        logNotificationDelivery({
+          ...logBase,
+          status: "failed",
+          errorMessage: err instanceof Error ? err.message : String(err),
+        });
+      });
   }
 
   const decision = extractDecision(event.type);
@@ -334,12 +437,21 @@ function dispatchSlack(
     decision,
     decidedBy: event.decidedBy,
     comment: event.decisionComment,
-  }).catch((err: unknown) => {
-    console.error(
-      `[Notifications] Slack decision failed for connection ${conn.id}:`,
-      err,
-    );
-  });
+  })
+    .then(() => {
+      logNotificationDelivery({ ...logBase, status: "sent" });
+    })
+    .catch((err: unknown) => {
+      console.error(
+        `[Notifications] Slack decision failed for connection ${conn.id}:`,
+        err,
+      );
+      logNotificationDelivery({
+        ...logBase,
+        status: "failed",
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
+    });
 }
 
 async function dispatchDiscord(
@@ -360,6 +472,13 @@ async function dispatchDiscord(
   // Skip if no valid delivery method
   if (!webhookUrl && !(botToken && channelId)) return;
 
+  const logBase = {
+    orgId: event.orgId,
+    requestId: event.requestId,
+    channel: "discord" as const,
+    metadata: { connectionId: conn.id, connectionName: conn.channel_name },
+  };
+
   if (isCreateEvent) {
     return sendDiscordNotification({
       webhookUrl,
@@ -370,12 +489,21 @@ async function dispatchDiscord(
       description: event.requestDescription,
       priority: event.requestPriority,
       connectionName: event.connectionName,
-    }).catch((err: unknown) => {
-      console.error(
-        `[Notifications] Discord notification failed for connection ${conn.id}:`,
-        err,
-      );
-    });
+    })
+      .then(() => {
+        logNotificationDelivery({ ...logBase, status: "sent" });
+      })
+      .catch((err: unknown) => {
+        console.error(
+          `[Notifications] Discord notification failed for connection ${conn.id}:`,
+          err,
+        );
+        logNotificationDelivery({
+          ...logBase,
+          status: "failed",
+          errorMessage: err instanceof Error ? err.message : String(err),
+        });
+      });
   }
 
   const decision = extractDecision(event.type);
@@ -387,12 +515,21 @@ async function dispatchDiscord(
     decision,
     decidedBy: event.decidedBy,
     comment: event.decisionComment,
-  }).catch((err: unknown) => {
-    console.error(
-      `[Notifications] Discord decision failed for connection ${conn.id}:`,
-      err,
-    );
-  });
+  })
+    .then(() => {
+      logNotificationDelivery({ ...logBase, status: "sent" });
+    })
+    .catch((err: unknown) => {
+      console.error(
+        `[Notifications] Discord decision failed for connection ${conn.id}:`,
+        err,
+      );
+      logNotificationDelivery({
+        ...logBase,
+        status: "failed",
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
+    });
 }
 
 function dispatchTeams(
@@ -403,6 +540,13 @@ function dispatchTeams(
   const webhookUrl = conn.webhook_url;
   if (!webhookUrl) return Promise.resolve();
 
+  const logBase = {
+    orgId: event.orgId,
+    requestId: event.requestId,
+    channel: "teams" as const,
+    metadata: { connectionId: conn.id, connectionName: conn.channel_name },
+  };
+
   if (isCreateEvent) {
     return sendTeamsNotification({
       webhookUrl,
@@ -412,12 +556,21 @@ function dispatchTeams(
       priority: event.requestPriority,
       connectionName: event.connectionName,
       orgId: event.orgId,
-    }).catch((err: unknown) => {
-      console.error(
-        `[Notifications] Teams notification failed for connection ${conn.id}:`,
-        err,
-      );
-    });
+    })
+      .then(() => {
+        logNotificationDelivery({ ...logBase, status: "sent" });
+      })
+      .catch((err: unknown) => {
+        console.error(
+          `[Notifications] Teams notification failed for connection ${conn.id}:`,
+          err,
+        );
+        logNotificationDelivery({
+          ...logBase,
+          status: "failed",
+          errorMessage: err instanceof Error ? err.message : String(err),
+        });
+      });
   }
 
   const decision = extractDecision(event.type);
@@ -427,12 +580,21 @@ function dispatchTeams(
     decision,
     decidedBy: event.decidedBy,
     comment: event.decisionComment,
-  }).catch((err: unknown) => {
-    console.error(
-      `[Notifications] Teams decision failed for connection ${conn.id}:`,
-      err,
-    );
-  });
+  })
+    .then(() => {
+      logNotificationDelivery({ ...logBase, status: "sent" });
+    })
+    .catch((err: unknown) => {
+      console.error(
+        `[Notifications] Teams decision failed for connection ${conn.id}:`,
+        err,
+      );
+      logNotificationDelivery({
+        ...logBase,
+        status: "failed",
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
+    });
 }
 
 function dispatchTelegram(
@@ -444,6 +606,13 @@ function dispatchTelegram(
   // For Telegram, we need either the connection's bot_token or the env var
   if (!chatId) return Promise.resolve();
 
+  const logBase = {
+    orgId: event.orgId,
+    requestId: event.requestId,
+    channel: "telegram" as const,
+    metadata: { connectionId: conn.id, connectionName: conn.channel_name },
+  };
+
   if (isCreateEvent) {
     return sendTelegramNotification({
       chatId,
@@ -453,12 +622,21 @@ function dispatchTelegram(
       description: event.requestDescription,
       priority: event.requestPriority,
       connectionName: event.connectionName,
-    }).catch((err: unknown) => {
-      console.error(
-        `[Notifications] Telegram notification failed for connection ${conn.id}:`,
-        err,
-      );
-    });
+    })
+      .then(() => {
+        logNotificationDelivery({ ...logBase, status: "sent" });
+      })
+      .catch((err: unknown) => {
+        console.error(
+          `[Notifications] Telegram notification failed for connection ${conn.id}:`,
+          err,
+        );
+        logNotificationDelivery({
+          ...logBase,
+          status: "failed",
+          errorMessage: err instanceof Error ? err.message : String(err),
+        });
+      });
   }
 
   const decision = extractDecision(event.type);
@@ -469,12 +647,21 @@ function dispatchTelegram(
     decision,
     decidedBy: event.decidedBy,
     comment: event.decisionComment,
-  }).catch((err: unknown) => {
-    console.error(
-      `[Notifications] Telegram decision failed for connection ${conn.id}:`,
-      err,
-    );
-  });
+  })
+    .then(() => {
+      logNotificationDelivery({ ...logBase, status: "sent" });
+    })
+    .catch((err: unknown) => {
+      console.error(
+        `[Notifications] Telegram decision failed for connection ${conn.id}:`,
+        err,
+      );
+      logNotificationDelivery({
+        ...logBase,
+        status: "failed",
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -532,6 +719,34 @@ function getNotificationBody(event: NotificationEvent): string {
 
 function extractDecision(type: NotificationEventType): string {
   return type.split(".")[1] ?? "updated";
+}
+
+/**
+ * Determine why shouldNotify() returned false for a given user's settings.
+ * Used to populate the suppression_reason field in the delivery log.
+ */
+function getSuppressionReason(
+  settings: NotificationSettings,
+  priority: string,
+): string {
+  const eventPriorityOrder =
+    PRIORITY_ORDER[priority as keyof typeof PRIORITY_ORDER] ?? 0;
+  const minPriorityOrder =
+    PRIORITY_ORDER[settings.minimum_priority as keyof typeof PRIORITY_ORDER] ?? 0;
+
+  if (eventPriorityOrder < minPriorityOrder) {
+    return "priority_filter";
+  }
+
+  if (
+    settings.quiet_hours_enabled &&
+    settings.quiet_hours_start &&
+    settings.quiet_hours_end
+  ) {
+    return "quiet_hours";
+  }
+
+  return "unknown";
 }
 
 /**

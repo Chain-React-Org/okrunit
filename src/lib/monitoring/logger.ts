@@ -1,14 +1,49 @@
 // ---------------------------------------------------------------------------
-// OKrunit -- Structured Logger for Performance Monitoring
+// OKrunit -- Structured Logger with Correlation IDs
 // ---------------------------------------------------------------------------
 // JSON logger that outputs structured logs with timestamps, severity,
-// service context, and request timing. Works with Vercel's log drain
-// for external aggregation.
+// service context, request timing, and per-request correlation IDs.
+// Works with Vercel's log drain for external aggregation.
 //
 // Usage:
-//   import { logger } from "@/lib/monitoring/logger";
+//   import { logger, withCorrelationId, getCorrelationId } from "@/lib/monitoring/logger";
 //   logger.info("Request processed", { service: "API", duration_ms: 45 });
 //   logger.perf("Slow query", { query: "SELECT ...", duration_ms: 230 });
+//
+// Correlation IDs:
+//   withCorrelationId(() => handler(req));  // wraps a request handler
+//   getCorrelationId();                     // returns the current ID or undefined
+// ---------------------------------------------------------------------------
+
+import { AsyncLocalStorage } from "node:async_hooks";
+import { randomBytes } from "crypto";
+
+// ---------------------------------------------------------------------------
+// Correlation ID storage (per-request via AsyncLocalStorage)
+// ---------------------------------------------------------------------------
+
+const correlationStorage = new AsyncLocalStorage<string>();
+
+/**
+ * Get the correlation ID for the current request context.
+ * Returns undefined if called outside of a withCorrelationId() scope.
+ */
+export function getCorrelationId(): string | undefined {
+  return correlationStorage.getStore();
+}
+
+/**
+ * Run a function within a correlation ID context.
+ * If the incoming request provides an X-Correlation-ID header, pass it
+ * as the first argument. Otherwise a new random ID is generated.
+ */
+export function withCorrelationId<T>(fn: () => T, existingId?: string): T {
+  const id = existingId ?? randomBytes(8).toString("hex");
+  return correlationStorage.run(id, fn);
+}
+
+// ---------------------------------------------------------------------------
+// Logger internals
 // ---------------------------------------------------------------------------
 
 type LogLevel = "debug" | "info" | "warn" | "error" | "perf";
@@ -21,6 +56,7 @@ interface LogContext {
   request_url?: string;
   request_method?: string;
   status_code?: number;
+  correlationId?: string;
   [key: string]: unknown;
 }
 
@@ -39,17 +75,20 @@ function shouldLog(level: LogLevel): boolean {
 }
 
 function formatLog(level: LogLevel, message: string, context?: LogContext): string {
-  const entry = {
+  const correlationId = context?.correlationId ?? getCorrelationId();
+
+  const entry: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
     level,
     message,
+    ...(correlationId ? { correlationId } : {}),
     ...context,
   };
 
   // Remove undefined values
   for (const key of Object.keys(entry)) {
-    if ((entry as Record<string, unknown>)[key] === undefined) {
-      delete (entry as Record<string, unknown>)[key];
+    if (entry[key] === undefined) {
+      delete entry[key];
     }
   }
 

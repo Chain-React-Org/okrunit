@@ -1,0 +1,6 @@
+-- Full-text search infrastructure already exists in the initial schema:
+-- - search_vector column (GENERATED ALWAYS AS ... STORED)
+-- - GIN index idx_approval_requests_search
+-- This migration is intentionally empty. The generated column approach
+-- in 001_initial_schema.sql is preferred over the trigger approach
+-- because it requires no separate backfill and stays in sync automatically.
