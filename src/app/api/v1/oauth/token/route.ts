@@ -290,7 +290,7 @@ async function handleRefreshToken(
   if (client_secret) {
     const secretHash = hashApiKey(client_secret);
     if (secretHash !== client.client_secret_hash) {
-      console.log("[OAuth Refresh] FAIL: secret mismatch, prefix:", client_secret.slice(0, 12));
+      console.log("[OAuth Refresh] FAIL: secret mismatch for client:", client_id);
       return oauthError("invalid_client", "Invalid client secret.", 401);
     }
   }
@@ -315,7 +315,7 @@ async function handleRefreshToken(
       .single();
 
     if (!graceToken) {
-      console.log("[OAuth Refresh] FAIL: refresh token not found, token prefix:", refresh_token.slice(0, 8));
+      console.log("[OAuth Refresh] FAIL: refresh token not found for client:", client_id);
       return oauthError("invalid_grant", "Invalid refresh token.");
     }
 

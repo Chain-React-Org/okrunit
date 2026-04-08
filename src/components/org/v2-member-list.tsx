@@ -50,7 +50,13 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import type { UserRole } from "@/lib/types/database";
-import type { MemberActivityStats } from "@/components/team/team-page-tabs";
+
+export interface MemberActivityStats {
+  decisions_30d: number;
+  approved: number;
+  rejected: number;
+  last_active: string | null;
+}
 
 interface TeamMember {
   id: string;

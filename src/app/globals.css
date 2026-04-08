@@ -399,23 +399,6 @@
   transform: translateY(-1px);
 }
 
-/* Staggered card entry animation */
-@keyframes gk-card-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.gk-v2 .card-enter {
-  animation: gk-card-enter 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* ── UI Polish: Global Transitions & Animations ──────────────────────── */
-
-/* Smooth page content fade-in */
-@keyframes gk-page-enter {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 /* Card hover effects - reusable utility class */
 .gk-v2 .card-hover {
   transition: box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),

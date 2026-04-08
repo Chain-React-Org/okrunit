@@ -7,18 +7,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { captureError } from "@/lib/monitoring/capture";
-
-function verifyCronAuth(request: Request): boolean {
-  const xCronSecret = request.headers.get("x-cron-secret");
-  if (xCronSecret && xCronSecret === process.env.CRON_SECRET) return true;
-  const authHeader = request.headers.get("authorization");
-  if (authHeader && authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
-  return false;
-}
-
-export async function GET(request: Request) {
-  return handleRetention(request);
-}
+import { verifyCronAuth } from "@/lib/api/cron-auth";
 
 export async function POST(request: Request) {
   return handleRetention(request);

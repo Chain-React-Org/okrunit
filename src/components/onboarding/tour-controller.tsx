@@ -31,7 +31,14 @@ export function TourController() {
     completeFullTour,
     dismissFullTour,
     setTestRequestId,
+    syncFromServer,
   } = useOnboardingTourStore();
+
+  // Sync tour state from server on mount. This runs on every dashboard page
+  // (not just overview) so the synced flag is set before auto-start fires.
+  useEffect(() => {
+    syncFromServer();
+  }, [syncFromServer]);
 
   const currentPageTour = useMemo(
     () => (activePageId ? PAGE_TOURS.find((p) => p.pageId === activePageId) ?? null : null),

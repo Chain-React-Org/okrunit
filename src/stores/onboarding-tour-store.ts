@@ -25,6 +25,7 @@ interface OnboardingTourState {
   // Test data
   testRequestId: string | null;
   synced: boolean;
+  userId: string | null;
 
   // Full tour actions
   startFullTour: () => void;
@@ -81,6 +82,7 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
       hasSeenPauseHint: false,
       testRequestId: null,
       synced: false,
+      userId: null,
 
       startFullTour: () => {
         set({ fullTourActive: true, fullTourPageIndex: 0, activePageId: null, currentStepInPage: 0, tourCompleted: false, tourDismissed: false, tourPaused: false, pausedPageId: null, pausedStepIndex: 0, pausedWasFullTour: false });
@@ -155,25 +157,31 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
             const data = await res.json();
             const serverPages: string[] = data.touredPages ?? [];
             const localPages = get().touredPages;
-            // Merge: union of server and local pages (server is authoritative,
-            // but local may have pages saved before this fix was deployed).
-            const merged = Array.from(new Set([...serverPages, ...localPages]));
+            const storedUserId = get().userId;
+            const currentUserId: string | null = data.userId ?? null;
+            const isDifferentUser = storedUserId !== null && currentUserId !== null && storedUserId !== currentUserId;
 
             const update: Partial<OnboardingTourState> = {
               tourCompleted: data.tourCompleted,
               tourDismissed: data.tourDismissed,
-              touredPages: merged,
               synced: true,
+              userId: currentUserId,
             };
-            // Fresh user (no toured pages AND neither completed nor dismissed)
-            // Clear stale localStorage state from a previous account.
-            if (!data.tourCompleted && !data.tourDismissed && serverPages.length === 0) {
-              update.touredPages = [];
+
+            if (isDifferentUser) {
+              // Different user on the same browser: clear stale local state,
+              // use only the server data for this account.
+              update.touredPages = serverPages;
               update.fullTourPageIndex = 0;
               update.tourPaused = false;
               update.pausedPageId = null;
               update.pausedStepIndex = 0;
               update.pausedWasFullTour = false;
+            } else {
+              // Same user (or first sync): merge server + local.
+              // Local may have pages saved before a server-save completed,
+              // so keep the union to avoid restarting skipped tours.
+              update.touredPages = Array.from(new Set([...serverPages, ...localPages]));
             }
             set(update);
           }
@@ -194,6 +202,9 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
         pausedStepIndex: state.pausedStepIndex,
         pausedWasFullTour: state.pausedWasFullTour,
         hasSeenPauseHint: state.hasSeenPauseHint,
+        // userId is persisted so we can detect when a different user logs in
+        // on the same browser and clear stale local state.
+        userId: state.userId,
       }),
     },
   ),

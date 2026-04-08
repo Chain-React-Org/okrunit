@@ -22,8 +22,6 @@ const authorizeSchema = z.object({
   state: z.string().optional().default(""),
   code_challenge: z.string().optional(),
   code_challenge_method: z.enum(["S256", "plain"]).optional(),
-  user_id: z.string().uuid(),
-  org_id: z.string().uuid(),
 });
 
 export async function POST(request: Request) {
@@ -87,8 +85,8 @@ export async function POST(request: Request) {
 
     await admin.from("oauth_authorization_codes").insert({
       client_id: body.client_id,
-      user_id: body.user_id,
-      org_id: body.org_id,
+      user_id: auth.user.id,
+      org_id: auth.orgId,
       code_hash: code.hash,
       redirect_uri: body.redirect_uri,
       scopes: body.scopes,
@@ -111,8 +109,8 @@ export async function POST(request: Request) {
       "unknown";
 
     await logAuditEvent({
-      orgId: body.org_id,
-      userId: body.user_id,
+      orgId: auth.orgId,
+      userId: auth.user.id,
       action: "oauth.code_issued",
       resourceType: "oauth_authorization_code",
       details: { client_id: body.client_id },

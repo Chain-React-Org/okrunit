@@ -9,6 +9,8 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ApiError, errorResponse } from "@/lib/api/errors";
+import { logAuditEvent } from "@/lib/api/audit";
+import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import type { UserProfile } from "@/lib/types/database";
 
 const bodySchema = z.object({
@@ -86,6 +88,21 @@ export async function POST(request: Request) {
       .update({ is_default: true })
       .eq("user_id", user.id)
       .eq("org_id", org_id);
+
+    // Audit trail for admin impersonation
+    await logAuditEvent({
+      orgId: org_id,
+      userId: user.id,
+      action: "admin.impersonate",
+      resourceType: "organization",
+      resourceId: org_id,
+      ipAddress: getClientIp(request),
+      details: {
+        admin_user_id: user.id,
+        target_org_id: org_id,
+        target_org_name: targetOrg.name,
+      },
+    });
 
     return NextResponse.json({
       ok: true,

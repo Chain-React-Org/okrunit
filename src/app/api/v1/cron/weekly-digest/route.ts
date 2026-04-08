@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWeeklyDigestEmailHtml } from "@/lib/email/weekly-digest";
+import { verifyCronAuth } from "@/lib/api/cron-auth";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 
@@ -10,21 +11,12 @@ const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
  * Sends weekly digest emails to all org members with email enabled.
  * Should be run weekly (e.g., Monday 9am UTC).
  */
-export async function GET(req: NextRequest) {
-  return handleDigest(req);
-}
-
 export async function POST(req: NextRequest) {
   return handleDigest(req);
 }
 
 async function handleDigest(req: NextRequest) {
-  const cronSecret = req.headers.get("x-cron-secret");
-  const authHeader = req.headers.get("authorization");
-  if (
-    !(cronSecret && cronSecret === process.env.CRON_SECRET) &&
-    !(authHeader && authHeader === `Bearer ${process.env.CRON_SECRET}`)
-  ) {
+  if (!verifyCronAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

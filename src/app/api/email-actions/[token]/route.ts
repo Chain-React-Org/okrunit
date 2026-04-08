@@ -2,10 +2,11 @@
 // OKrunit -- Email Action Route (One-Click Approve/Reject from Email)
 // ---------------------------------------------------------------------------
 //
-// This route handles GET requests from email action links. When a user clicks
-// "Approve" or "Reject" in a notification email, they land here. The route
-// validates the token, applies the decision, and returns an HTML page with
-// the result.
+// This route handles email action links. When a user clicks "Approve" or
+// "Reject" in a notification email, they land on the GET handler which shows
+// a confirmation page. The user then clicks a button which triggers a POST
+// to actually perform the action. This two-step flow prevents email client
+// link previews from accidentally triggering approvals.
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -78,11 +79,149 @@ function htmlPage(
   });
 }
 
+/** Return a confirmation page with a button that POSTs to perform the action. */
+function confirmationPage(
+  token: string,
+  action: "approve" | "reject",
+  requestTitle: string,
+): Response {
+  const actionLabel = action === "approve" ? "Approve" : "Reject";
+  const actionColor = action === "approve" ? "#16a34a" : "#dc2626";
+  const actionBg = action === "approve" ? "#f0fdf4" : "#fef2f2";
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Confirm ${actionLabel} - OKrunit</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f3f4f6;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}
+    .card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);max-width:480px;width:100%;overflow:hidden}
+    .header{background:#1e293b;padding:20px 24px}
+    .header h1{color:#fff;font-size:18px;font-weight:600}
+    .body{padding:32px 24px}
+    .info{padding:16px;border-radius:8px;border-left:4px solid ${actionColor};background:${actionBg};margin-bottom:24px}
+    .info h2{color:#1e293b;font-size:16px;margin-bottom:4px}
+    .info p{color:#4b5563;font-size:14px}
+    .btn{display:inline-block;padding:12px 28px;background:${actionColor};color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer;width:100%}
+    .btn:hover{opacity:0.9}
+    .btn:disabled{opacity:0.5;cursor:not-allowed}
+    .cancel{display:block;text-align:center;margin-top:12px;color:#6b7280;font-size:13px;text-decoration:none}
+    .cancel:hover{color:#374151}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header"><h1>OKrunit</h1></div>
+    <div class="body">
+      <div class="info">
+        <h2>Confirm: ${actionLabel} Request</h2>
+        <p>"${requestTitle}"</p>
+      </div>
+      <form method="POST" id="actionForm">
+        <button type="submit" class="btn" id="submitBtn">${actionLabel} this request</button>
+      </form>
+      <a href="${APP_URL}/dashboard" class="cancel">Cancel and go to Dashboard</a>
+    </div>
+  </div>
+  <script>
+    document.getElementById('actionForm').addEventListener('submit', function() {
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+    });
+  </script>
+</body>
+</html>`;
+
+  return new Response(html, {
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // GET /api/email-actions/[token]
+// Shows a confirmation page. Does NOT perform the action.
 // ---------------------------------------------------------------------------
 
 export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ token: string }> },
+) {
+  const { token } = await params;
+
+  // Peek at the token without consuming it to show the confirmation page.
+  const admin = createAdminClient();
+  const { hashApiKey } = await import("@/lib/api/auth");
+  const tokenHash = hashApiKey(token);
+
+  const { data: row } = await admin
+    .from("email_action_tokens")
+    .select("request_id, action, consumed_at, expires_at")
+    .eq("token", tokenHash)
+    .maybeSingle();
+
+  if (!row) {
+    return htmlPage(
+      "Invalid Link",
+      "This link is no longer valid",
+      "The link may have expired, already been used, or is invalid. Please check your dashboard for the current status of the request.",
+      "error",
+    );
+  }
+
+  if (row.consumed_at) {
+    return htmlPage(
+      "Already Used",
+      "This link has already been used",
+      "This action has already been processed. Please check your dashboard for the current status.",
+      "info",
+    );
+  }
+
+  if (new Date(row.expires_at) < new Date()) {
+    return htmlPage(
+      "Link Expired",
+      "This link has expired",
+      "The action link has passed its expiration time. Please check your dashboard.",
+      "info",
+    );
+  }
+
+  // Fetch the request title for the confirmation page.
+  const { data: approval } = await admin
+    .from("approval_requests")
+    .select("title, status")
+    .eq("id", row.request_id)
+    .single();
+
+  if (!approval || approval.status !== "pending") {
+    const statusLabel = approval?.status
+      ? approval.status.charAt(0).toUpperCase() + approval.status.slice(1)
+      : "Unknown";
+    return htmlPage(
+      "Already Decided",
+      `Request already ${statusLabel.toLowerCase()}`,
+      "This approval request has already been processed. No further action is needed.",
+      "info",
+    );
+  }
+
+  return confirmationPage(
+    token,
+    row.action as "approve" | "reject",
+    approval.title || "Untitled Request",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/email-actions/[token]
+// Actually performs the approve/reject action.
+// ---------------------------------------------------------------------------
+
+export async function POST(
   request: Request,
   { params }: { params: Promise<{ token: string }> },
 ) {

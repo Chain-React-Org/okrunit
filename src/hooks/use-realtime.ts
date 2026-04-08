@@ -140,13 +140,25 @@ export function useRealtime<T extends { [key: string]: any }>(
         },
       );
 
+      let retryCount = 0;
       channel.subscribe((status) => {
         if (status === "SUBSCRIBED") {
+          retryCount = 0;
           console.debug(`[Realtime] subscribed to ${options.table}${options.filter ? ` (${options.filter})` : ""}`);
-        } else if (status === "CHANNEL_ERROR") {
-          console.error(`[Realtime] channel error for ${options.table}`);
-        } else if (status === "TIMED_OUT") {
-          console.warn(`[Realtime] subscription timed out for ${options.table}`);
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          if (retryCount < 3) {
+            retryCount++;
+            const delay = 5000 * retryCount;
+            console.warn(`[Realtime] ${status} for ${options.table}, retry ${retryCount}/3 in ${delay / 1000}s`);
+            setTimeout(() => {
+              const current = channelRegistry.get(key);
+              if (current && current.channel === channel) {
+                channel.subscribe();
+              }
+            }, delay);
+          } else {
+            console.error(`[Realtime] failed to subscribe to ${options.table} after 3 retries`);
+          }
         }
       });
 

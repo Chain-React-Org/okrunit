@@ -4,6 +4,8 @@ import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildAccountDeletionEmailHtml } from "@/lib/email/account-deletion";
+import { hashApiKey } from "@/lib/api/auth";
+import { checkIpRateLimit, getClientIp, AUTH_RATE_LIMIT, rateLimitResponse } from "@/lib/api/ip-rate-limiter";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -14,7 +16,11 @@ const DELETION_GRACE_DAYS = 30;
  * Sends a confirmation email with a unique token link.
  * Does NOT delete the account immediately.
  */
-export async function POST() {
+export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = checkIpRateLimit(`delete-account:${ip}`, AUTH_RATE_LIMIT);
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   try {
     const supabase = await createClient();
     const {
@@ -42,7 +48,7 @@ export async function POST() {
       .from("account_deletion_tokens")
       .insert({
         user_id: user.id,
-        token,
+        token: hashApiKey(token),
         expires_at: expiresAt.toISOString(),
       });
 

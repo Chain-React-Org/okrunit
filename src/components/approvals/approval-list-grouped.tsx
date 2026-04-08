@@ -26,6 +26,10 @@ interface ApprovalListGroupedProps {
   onArchive?: (approvalId: string) => void;
   onUnarchive?: (approvalId: string) => void;
   onConfigureFlow?: (approval: ApprovalRequest) => void;
+  /** Total pending count across all pages (not just current page) */
+  totalPendingCount?: number;
+  /** Total resolved count across all pages (not just current page) */
+  totalResolvedCount?: number;
 }
 
 export function ApprovalListGrouped({
@@ -47,6 +51,8 @@ export function ApprovalListGrouped({
   onArchive,
   onUnarchive,
   onConfigureFlow,
+  totalPendingCount,
+  totalResolvedCount,
 }: ApprovalListGroupedProps) {
   const connectionMap = new Map(connections.map((c) => [c.id, c.name]));
   const teamsLookup = new Map(Object.entries(teamsMap).map(([id, name]) => [id, { id, name }]));
@@ -80,7 +86,7 @@ export function ApprovalListGrouped({
               Needs Your Attention
             </span>
             <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-medium">
-              {needsAttention.length}
+              {totalPendingCount ?? needsAttention.length}
             </span>
           </div>
           <div className="grid gap-3">
@@ -127,7 +133,7 @@ export function ApprovalListGrouped({
               Previously Resolved
             </span>
             <span className="bg-muted px-2 py-0.5 rounded-full text-xs">
-              {resolved.length}
+              {totalResolvedCount ?? resolved.length}
             </span>
           </div>
           <div className="grid gap-3">

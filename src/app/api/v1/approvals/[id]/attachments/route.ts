@@ -20,7 +20,6 @@ const ALLOWED_CONTENT_TYPES = new Set([
   "image/png",
   "image/gif",
   "image/webp",
-  "image/svg+xml",
   // PDFs
   "application/pdf",
   // Text
@@ -30,6 +29,16 @@ const ALLOWED_CONTENT_TYPES = new Set([
   // Documents
   "application/json",
 ]);
+
+// ---- Helpers ----------------------------------------------------------------
+
+function sanitizeFilename(name: string): string {
+  return name
+    .replace(/[/\\]/g, "_")     // Remove path separators
+    .replace(/\.\./g, "_")      // Remove directory traversal
+    .replace(/[^\w.\-]/g, "_")  // Only allow word chars, dots, hyphens
+    .slice(0, 200);             // Limit length
+}
 
 // ---- GET /api/v1/approvals/[id]/attachments --------------------------------
 
@@ -142,7 +151,7 @@ export async function POST(
     }
 
     // 5. Generate a unique storage path
-    const storagePath = `attachments/${auth.orgId}/${id}/${Date.now()}_${file.name}`;
+    const storagePath = `attachments/${auth.orgId}/${id}/${Date.now()}_${sanitizeFilename(file.name)}`;
 
     // 6. Read file into a buffer and upload to Supabase Storage
     const arrayBuffer = await file.arrayBuffer();

@@ -61,19 +61,17 @@ export async function POST(request: Request) {
       throw new ApiError(404, "User is not a member of this organization");
     }
 
-    // Promote the new owner
-    await admin
-      .from("org_memberships")
-      .update({ role: "owner" })
-      .eq("user_id", body.new_owner_id)
-      .eq("org_id", auth.orgId);
+    // Atomically promote new owner and demote current owner
+    const { error: rpcError } = await admin.rpc("transfer_org_ownership", {
+      p_org_id: auth.orgId,
+      p_old_owner_id: auth.user.id,
+      p_new_owner_id: body.new_owner_id,
+    });
 
-    // Demote the current owner to admin
-    await admin
-      .from("org_memberships")
-      .update({ role: "admin" })
-      .eq("user_id", auth.user.id)
-      .eq("org_id", auth.orgId);
+    if (rpcError) {
+      console.error("[Transfer] RPC error:", rpcError);
+      throw new ApiError(500, "Failed to transfer ownership");
+    }
 
     const ipAddress =
       request.headers.get("x-forwarded-for") ??
