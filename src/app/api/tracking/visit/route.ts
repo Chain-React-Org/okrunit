@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkIpRateLimit, getClientIp, API_RATE_LIMIT, rateLimitResponse } from "@/lib/api/ip-rate-limiter";
 
 const visitSchema = z.object({
   visitorId: z.string().min(1),
@@ -16,6 +17,10 @@ const visitSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = checkIpRateLimit(`tracking:${ip}`, API_RATE_LIMIT);
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   try {
     const body = visitSchema.parse(await request.json());
     const admin = createAdminClient();

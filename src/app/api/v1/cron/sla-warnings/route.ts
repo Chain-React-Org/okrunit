@@ -13,18 +13,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { dispatchNotifications } from "@/lib/notifications/orchestrator";
 import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
 import { captureError } from "@/lib/monitoring/capture";
-
-function verifyCronAuth(request: Request): boolean {
-  const xCronSecret = request.headers.get("x-cron-secret");
-  if (xCronSecret && xCronSecret === process.env.CRON_SECRET) return true;
-  const authHeader = request.headers.get("authorization");
-  if (authHeader && authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
-  return false;
-}
-
-export async function GET(request: Request) {
-  return handleSlaWarnings(request);
-}
+import { verifyCronAuth } from "@/lib/api/cron-auth";
 
 export async function POST(request: Request) {
   return handleSlaWarnings(request);

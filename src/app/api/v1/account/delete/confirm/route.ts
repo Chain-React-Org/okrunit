@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { hashApiKey } from "@/lib/api/auth";
 
 const DELETION_GRACE_DAYS = 30;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
   const { data: tokenRecord } = await admin
     .from("account_deletion_tokens")
     .select("*")
-    .eq("token", token)
+    .eq("token", hashApiKey(token))
     .is("consumed_at", null)
     .single();
 

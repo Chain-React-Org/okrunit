@@ -5,6 +5,7 @@
 import { randomBytes } from "crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { hashApiKey } from "@/lib/api/auth";
 import { EMAIL_TOKEN_EXPIRY_HOURS } from "@/lib/constants";
 import type { EmailAction } from "@/lib/types/database";
 
@@ -53,14 +54,14 @@ export async function generateActionTokens(
       request_id: requestId,
       user_id: userId,
       action: "approve" as EmailAction,
-      token: approveToken,
+      token: hashApiKey(approveToken),
       expires_at: expiresAt,
     },
     {
       request_id: requestId,
       user_id: userId,
       action: "reject" as EmailAction,
-      token: rejectToken,
+      token: hashApiKey(rejectToken),
       expires_at: expiresAt,
     },
   ]);
@@ -91,7 +92,7 @@ export async function validateAndConsumeToken(
   const { data: row, error: lookupError } = await admin
     .from("email_action_tokens")
     .select("*")
-    .eq("token", token)
+    .eq("token", hashApiKey(token))
     .maybeSingle();
 
   if (lookupError) {
@@ -113,16 +114,21 @@ export async function validateAndConsumeToken(
     return null;
   }
 
-  // Mark as consumed.
-  const { error: consumeError } = await admin
+  // Mark as consumed atomically. The `.is("consumed_at", null)` guard
+  // prevents a race where two concurrent requests both read the token
+  // before either marks it consumed.
+  const { data: consumed, error: consumeError } = await admin
     .from("email_action_tokens")
     .update({ consumed_at: new Date().toISOString() })
-    .eq("id", row.id);
+    .eq("id", row.id)
+    .is("consumed_at", null)
+    .select("id")
+    .maybeSingle();
 
-  if (consumeError) {
+  if (consumeError || !consumed) {
     console.error("[Tokens] Failed to mark token as consumed:", consumeError);
-    // Even if the update fails, we should not allow the action to proceed
-    // again -- return null to be safe.
+    // Either the update failed or another request already consumed the
+    // token. Return null to be safe.
     return null;
   }
 

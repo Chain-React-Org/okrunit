@@ -2,8 +2,10 @@
 // OKrunit -- In-Memory Rate Limiter (IP / Key based)
 // ---------------------------------------------------------------------------
 // Sliding window counter using an in-memory Map with automatic cleanup.
-// Suitable for single-instance deployments. For multi-instance, replace
-// the store with Redis (e.g., @upstash/ratelimit).
+// On Vercel with Fluid Compute, function instances are reused across
+// concurrent requests, so the in-memory store provides effective rate
+// limiting within each instance. For strict cross-instance enforcement
+// at high scale, replace the store with Redis (e.g., @upstash/ratelimit).
 // ---------------------------------------------------------------------------
 
 interface WindowEntry {

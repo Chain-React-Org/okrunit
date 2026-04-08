@@ -72,7 +72,13 @@ export async function POST(request: Request) {
   }
 
   // Upload the new avatar
-  const ext = file.name.split(".").pop() ?? "png";
+  const extMap: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "image/webp": "webp",
+  };
+  const ext = extMap[file.type] || "png";
   const storagePath = `${user.id}/avatar.${ext}`;
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);

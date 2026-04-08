@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { captureError } from "@/lib/monitoring/capture";
 
 /**
@@ -29,6 +30,13 @@ export class ApiError extends Error {
  * - Everything else is treated as an unexpected 500 Internal Server Error.
  */
 export function errorResponse(error: unknown): NextResponse {
+  if (error instanceof z.ZodError) {
+    return NextResponse.json(
+      { error: "Validation failed", issues: error.issues },
+      { status: 400 },
+    );
+  }
+
   if (error instanceof ApiError) {
     return NextResponse.json(
       {

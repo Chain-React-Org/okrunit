@@ -11,6 +11,7 @@ import { Resend } from "resend";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildConfirmEmailHtml } from "@/lib/email/confirm";
+import { checkIpRateLimit, getClientIp, AUTH_RATE_LIMIT, rateLimitResponse } from "@/lib/api/ip-rate-limiter";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -32,6 +33,10 @@ const signupSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = checkIpRateLimit(`signup:${ip}`, AUTH_RATE_LIMIT);
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   try {
     const body = signupSchema.parse(await request.json());
     const admin = createAdminClient();

@@ -163,6 +163,27 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Periodic refetch: stay fresh even if Supabase Realtime drops
+  useEffect(() => {
+    if (!userId) return;
+
+    const refetch = () => {
+      if (document.visibilityState === "visible") fetchNotifications();
+    };
+
+    const interval = setInterval(refetch, 30000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") refetch();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [userId, fetchNotifications]);
+
   async function handleMarkAllRead() {
     try {
       await fetch("/api/v1/notifications/read", {

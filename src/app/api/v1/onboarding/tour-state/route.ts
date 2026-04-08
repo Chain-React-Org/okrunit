@@ -23,6 +23,7 @@ export async function GET() {
     .single();
 
   return NextResponse.json({
+    userId: user.id,
     currentStep: data?.onboarding_tour_step ?? 0,
     tourCompleted: data?.onboarding_tour_completed ?? false,
     tourDismissed: data?.onboarding_tour_dismissed ?? false,

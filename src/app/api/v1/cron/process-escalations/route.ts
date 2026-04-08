@@ -11,19 +11,8 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { processEscalationsForOrg } from "@/lib/api/escalation";
 import { captureError } from "@/lib/monitoring/capture";
+import { verifyCronAuth } from "@/lib/api/cron-auth";
 import type { EscalationConfig } from "@/lib/types/database";
-
-function verifyCronAuth(request: Request): boolean {
-  const xCronSecret = request.headers.get("x-cron-secret");
-  if (xCronSecret && xCronSecret === process.env.CRON_SECRET) return true;
-  const authHeader = request.headers.get("authorization");
-  if (authHeader && authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
-  return false;
-}
-
-export async function GET(request: Request) {
-  return handleEscalations(request);
-}
 
 export async function POST(request: Request) {
   return handleEscalations(request);

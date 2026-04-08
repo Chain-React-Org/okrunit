@@ -126,7 +126,7 @@ export function ApprovalDashboard({
             .select("id, title, description, status, priority, action_type, source, connection_id, created_by, decided_by, assigned_approvers, assigned_team_id, flow_id, created_at, decided_at, expires_at, archived_at, required_approvals, idempotency_key, callback_url, is_log")
             .is("archived_at", null)
             .order("created_at", { ascending: false })
-            .limit(50),
+            .limit(1000),
           supabase
             .from("connections")
             .select("id, name, is_active, api_key_prefix, last_used_at, created_by, created_at")
@@ -320,10 +320,9 @@ export function ApprovalDashboard({
     }, []),
   });
 
-  // Summary stats
-  const pendingCount = approvals.filter((a) => a.status === "pending").length;
-  const approvedCount = approvals.filter((a) => a.status === "approved").length;
-  const rejectedCount = approvals.filter((a) => a.status === "rejected").length;
+  // Summary stats (across ALL data, not just the current page)
+  const totalPendingCount = approvals.filter((a) => a.status === "pending").length;
+  const totalResolvedCount = approvals.filter((a) => a.status !== "pending").length;
 
   // Sort: pending first, then resolved. Both within page size limit.
   const sortedApprovals = useMemo(() => {
@@ -353,8 +352,8 @@ export function ApprovalDashboard({
       connectionId?: string;
       source?: string;
       showArchived?: boolean;
-    }) => {
-      setIsFetching(true);
+    }, { silent = false }: { silent?: boolean } = {}) => {
+      if (!silent) setIsFetching(true);
       try {
         const supabase = createClient();
         let query = supabase
@@ -362,7 +361,7 @@ export function ApprovalDashboard({
           .select("*")
           .order("status", { ascending: true })
           .order("created_at", { ascending: false })
-          .limit(50);
+          .limit(1000);
 
         if (filters.showArchived) {
           query = query.not("archived_at", "is", null);
@@ -379,7 +378,7 @@ export function ApprovalDashboard({
         if (filters.source) query = query.eq("source", filters.source);
 
         const { data, error } = await query;
-        if (error) { toast.error("Failed to fetch approvals"); return; }
+        if (error) { if (!silent) toast.error("Failed to fetch approvals"); return; }
         setApprovals(data ?? []);
 
         // Batch-fetch comments for all loaded approvals
@@ -399,9 +398,9 @@ export function ApprovalDashboard({
           }
         }
       } catch {
-        toast.error("Failed to fetch approvals");
+        if (!silent) toast.error("Failed to fetch approvals");
       } finally {
-        setIsFetching(false);
+        if (!silent) setIsFetching(false);
       }
     },
     []
@@ -430,6 +429,34 @@ export function ApprovalDashboard({
   const handleRefresh = useCallback(() => {
     fetchApprovals({ status, priority, search, source, showArchived });
   }, [fetchApprovals, status, priority, search, source, showArchived]);
+
+  // Keep current filter values in a ref for polling without re-creating the interval
+  const currentFiltersRef = useRef({ status, priority, search, source, showArchived });
+  currentFiltersRef.current = { status, priority, search, source, showArchived };
+
+  // Polling fallback: refetch every 30s when tab is visible.
+  // Ensures the page stays fresh even if Supabase Realtime drops or fails.
+  useEffect(() => {
+    if (!initialLoadDone) return;
+
+    const poll = () => {
+      if (document.visibilityState === "visible") {
+        fetchApprovals(currentFiltersRef.current, { silent: true });
+      }
+    };
+
+    const interval = setInterval(poll, 30000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") poll();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [initialLoadDone, fetchApprovals]);
 
   // Stat card click-to-filter
   const handleStatClick = useCallback((filterStatus: string | undefined) => {
@@ -810,6 +837,8 @@ export function ApprovalDashboard({
     onArchive: handleSingleArchive,
     onUnarchive: handleSingleUnarchive,
     onConfigureFlow: handleConfigureFlow,
+    totalPendingCount,
+    totalResolvedCount,
   };
 
   // Show skeleton while loading initial data client-side

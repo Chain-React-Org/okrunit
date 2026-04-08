@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar-store";
+import { createClient } from "@/lib/supabase/client";
 import { useRealtime } from "@/hooks/use-realtime";
 import type { ApprovalRequest } from "@/lib/types/database";
 
@@ -139,6 +140,43 @@ export function Sidebar({ pendingCount: initialPendingCount, userRole, isAppAdmi
       }
     }, [processEvent]),
   });
+
+  // Periodic count fetch: reconcile the badge with the actual DB count every 30s.
+  // Catches any drift from missed realtime events and handles realtime failures.
+  useEffect(() => {
+    if (!currentOrgId) return;
+
+    const fetchCount = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const supabase = createClient();
+        const { count } = await supabase
+          .from("approval_requests")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "pending")
+          .is("archived_at", null)
+          .or("is_log.is.null,is_log.eq.false");
+        if (count !== null) setLivePendingCount(count);
+      } catch {
+        // Silently fail
+      }
+    };
+
+    // Fetch immediately to correct any stale server-rendered count
+    fetchCount();
+
+    const interval = setInterval(fetchCount, 30000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") fetchCount();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [currentOrgId]);
 
   const pendingCount = livePendingCount;
 
