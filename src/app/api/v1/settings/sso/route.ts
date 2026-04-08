@@ -229,7 +229,8 @@ export async function POST(request: NextRequest) {
         .single<SSOConfig>();
 
       if (error) {
-        throw new ApiError(500, "Failed to update SSO configuration");
+        console.error("[SSO] Failed to update SSO config:", error);
+        throw new ApiError(500, `Failed to update SSO configuration: ${error.message}`);
       }
       result = data;
     } else {
@@ -252,7 +253,8 @@ export async function POST(request: NextRequest) {
         .single<SSOConfig>();
 
       if (error) {
-        throw new ApiError(500, "Failed to create SSO configuration");
+        console.error("[SSO] Failed to create SSO config:", error);
+        throw new ApiError(500, `Failed to create SSO configuration: ${error.message}`);
       }
       result = data;
     }
