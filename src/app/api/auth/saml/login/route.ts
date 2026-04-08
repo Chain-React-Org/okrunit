@@ -16,39 +16,48 @@ import {
 } from "@/lib/saml/provider";
 
 export async function GET(request: NextRequest) {
-  const email = request.nextUrl.searchParams.get("email");
-  const redirectTo = request.nextUrl.searchParams.get("redirect_to");
+  try {
+    const email = request.nextUrl.searchParams.get("email");
+    const redirectTo = request.nextUrl.searchParams.get("redirect_to");
 
-  if (!email) {
+    if (!email) {
+      return NextResponse.redirect(
+        new URL("/login?error=sso_email_required", request.url),
+      );
+    }
+
+    const config = await findSSOConfigByEmail(email);
+
+    if (!config) {
+      return NextResponse.redirect(
+        new URL("/login?error=sso_not_configured", request.url),
+      );
+    }
+
+    console.log("[SAML Login] Config found for domain, entity_id:", config.entity_id, "sso_url:", config.sso_url);
+
+    const sp = createServiceProvider();
+    const idp = createIdentityProvider(config);
+
+    const loginRequest = sp.createLoginRequest(
+      idp,
+      samlify.Constants.namespace.binding.redirect,
+    );
+
+    // loginRequest has { id, context } where context is the redirect URL
+    let redirectUrl = loginRequest.context;
+
+    // Append RelayState for deep linking if redirect_to is a safe relative path
+    if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+      const separator = redirectUrl.includes("?") ? "&" : "?";
+      redirectUrl = `${redirectUrl}${separator}RelayState=${encodeURIComponent(redirectTo)}`;
+    }
+
+    return NextResponse.redirect(redirectUrl);
+  } catch (err) {
+    console.error("[SAML Login] Error:", err);
     return NextResponse.redirect(
-      new URL("/login?error=sso_email_required", request.url),
+      new URL(`/login?error=sso_failed&detail=${encodeURIComponent(String(err))}`, request.url),
     );
   }
-
-  const config = await findSSOConfigByEmail(email);
-
-  if (!config) {
-    return NextResponse.redirect(
-      new URL("/login?error=sso_not_configured", request.url),
-    );
-  }
-
-  const sp = createServiceProvider();
-  const idp = createIdentityProvider(config);
-
-  const loginRequest = sp.createLoginRequest(
-    idp,
-    samlify.Constants.namespace.binding.redirect,
-  );
-
-  // loginRequest has { id, context } where context is the redirect URL
-  let redirectUrl = loginRequest.context;
-
-  // Append RelayState for deep linking if redirect_to is a safe relative path
-  if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
-    const separator = redirectUrl.includes("?") ? "&" : "?";
-    redirectUrl = `${redirectUrl}${separator}RelayState=${encodeURIComponent(redirectTo)}`;
-  }
-
-  return NextResponse.redirect(redirectUrl);
 }
