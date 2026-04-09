@@ -202,14 +202,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Generate a magic link to sign the user in (creates a Supabase session)
+    // Generate a magic link and verify it server-side to create a session
     const { data: linkData, error: linkError } =
       await admin.auth.admin.generateLink({
         type: "magiclink",
         email,
-        options: {
-          redirectTo: `${APP_URL}${redirectDestination}`,
-        },
       });
 
     if (linkError || !linkData) {
@@ -219,12 +216,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the action_link directly — it already has the correct verify URL
-    // with token, type, and redirect_to parameters.
-    const actionLink = linkData.properties.action_link;
-    console.log("[SAML] Redirecting to action link for session creation");
+    // Extract the token_hash and verify it server-side using the
+    // cookie-aware Supabase client so the session cookie gets set.
+    const tokenHash = linkData.properties.hashed_token;
 
-    return NextResponse.redirect(actionLink);
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "magiclink",
+    });
+
+    if (verifyError) {
+      console.error("[SAML] Failed to verify OTP:", verifyError);
+      return NextResponse.redirect(
+        new URL("/login?error=saml_session_failed", APP_URL),
+      );
+    }
+
+    return NextResponse.redirect(new URL(redirectDestination, APP_URL));
   } catch (err) {
     console.error("[SAML] Callback error:", err);
     return NextResponse.redirect(
