@@ -26,6 +26,7 @@ export async function GET(request: Request) {
     const hasValidBearer = authHeader.startsWith("Bearer ") && authHeader.length > 7;
     const clientId = searchParams.get("client_id");
     const clientSecret = searchParams.get("client_secret");
+    console.log("[Templates] clientId:", clientId ? `${clientId.slice(0, 8)}...` : "null", "clientSecret:", clientSecret ? `${clientSecret.slice(0, 6)}...(${clientSecret.length})` : "null", "hasValidBearer:", hasValidBearer);
 
     if (hasValidBearer) {
       // Standard auth (OAuth token, API key, or session)
