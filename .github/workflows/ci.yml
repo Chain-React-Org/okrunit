@@ -112,6 +112,7 @@ jobs:
           done
           echo "Server failed to start" && exit 1
 
+
       - name: Run Playwright tests
         run: npm run test:e2e
         env:
