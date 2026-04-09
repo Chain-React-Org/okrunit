@@ -15,23 +15,25 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: Request) {
   try {
-    // DEBUG: log auth header for RPC troubleshooting
-    const authHeader = request.headers.get("authorization");
-    console.log("[Templates] Auth header prefix:", JSON.stringify(authHeader?.slice(0, 12)));
-    console.log("[Templates] Full URL:", request.url);
-
-    let auth;
-    try {
-      auth = await authenticateRequest(request);
-    } catch (authErr: unknown) {
-      const msg = authErr instanceof Error ? authErr.message : String(authErr);
-      console.error("[Templates] Auth FAILED:", msg);
-      throw authErr;
-    }
-    console.log("[Templates] Auth success, type:", auth.type, "orgId:", auth.orgId);
-
-    // Parse query params
+    // Make.com RPCs don't pass OAuth tokens in headers. Fall back to
+    // API key in the query string so the template dropdown can populate.
     const { searchParams } = new URL(request.url);
+    const qsKey = searchParams.get("api_key");
+    let authRequest = request;
+    const existingAuth = request.headers.get("authorization") || "";
+    const hasValidBearer = existingAuth.startsWith("Bearer ") && existingAuth.length > 7;
+    if (qsKey && !hasValidBearer) {
+      const headers = new Headers(request.headers);
+      headers.set("authorization", `Bearer ${qsKey}`);
+      authRequest = new Request(request.url, {
+        method: request.method,
+        headers,
+      });
+    }
+
+    const auth = await authenticateRequest(authRequest);
+
+    // Parse query params (reuse searchParams from above)
     const queryInput = {
       page: searchParams.get("page")
         ? Number(searchParams.get("page"))

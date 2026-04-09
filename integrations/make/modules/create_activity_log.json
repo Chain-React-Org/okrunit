@@ -5,6 +5,17 @@
 
   "parameters": [
     {
+      "name": "template_id",
+      "type": "select",
+      "mode": "edit",
+      "label": "Template",
+      "required": false,
+      "options": {
+        "store": "rpc://listTemplates"
+      },
+      "help": "Select a template to pre-fill fields like priority, action type, and assigned approvers. Any fields you fill in below will override the template defaults."
+    },
+    {
       "name": "title",
       "type": "text",
       "label": "Title",
@@ -37,6 +48,7 @@
   "method": "POST",
   "type": "json",
   "body": {
+    "template_id": "{{parameters.template_id}}",
     "title": "{{parameters.title}}",
     "description": "{{parameters.description}}",
     "source_url": "{{parameters.source_url}}",
