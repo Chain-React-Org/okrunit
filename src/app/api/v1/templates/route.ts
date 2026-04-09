@@ -35,6 +35,9 @@ export async function GET(request: Request) {
     // Check for include_inactive flag (default: only active templates)
     const includeInactive = searchParams.get("include_inactive") === "true";
 
+    // Optional target_app filter (used by integration dropdowns)
+    const targetApp = searchParams.get("target_app");
+
     const admin = createAdminClient();
 
     // Build query filtered by org_id
@@ -46,6 +49,11 @@ export async function GET(request: Request) {
 
     if (!includeInactive) {
       query = query.eq("is_active", true);
+    }
+
+    // Filter by target app: return only templates that match the requested app
+    if (targetApp && ["n8n", "zapier", "make"].includes(targetApp)) {
+      query = query.eq("target_app", targetApp);
     }
 
     // Paginate
@@ -68,6 +76,10 @@ export async function GET(request: Request) {
 
     if (!includeInactive) {
       countQuery = countQuery.eq("is_active", true);
+    }
+
+    if (targetApp && ["n8n", "zapier", "make"].includes(targetApp)) {
+      countQuery = countQuery.eq("target_app", targetApp);
     }
 
     const { count } = await countQuery;
@@ -135,6 +147,7 @@ export async function POST(request: Request) {
         metadata_schema: body.metadata_schema ?? {},
         callback_url_pattern: body.callback_url_pattern ?? null,
         is_active: body.is_active ?? true,
+        target_app: body.target_app ?? "any",
         created_by: auth.user.id,
       })
       .select("*")

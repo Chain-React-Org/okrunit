@@ -41,9 +41,17 @@ export interface ApprovalTemplate {
   default_priority: string;
   assigned_approvers: string[];
   callback_url_pattern: string | null;
+  target_app: string;
   created_at: string;
   updated_at: string;
 }
+
+const APP_LABELS: Record<string, string> = {
+  any: "API / Other",
+  n8n: "n8n",
+  zapier: "Zapier",
+  make: "Make",
+};
 
 interface TemplatesPageProps {
   orgId: string;
@@ -152,6 +160,8 @@ export function TemplatesPage({ orgId }: TemplatesPageProps) {
           <h1 className="text-xl font-semibold text-foreground">Approval Templates</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Pre-configured templates to speed up approval request creation.
+            When a template is selected in n8n, Zapier, or Make, its defaults (title, priority, action type, approvers) are applied server-side.
+            Only fields explicitly set in the integration node will override the template values.
           </p>
         </div>
         <Button onClick={handleCreate} className="gap-1.5">
@@ -229,6 +239,11 @@ export function TemplatesPage({ orgId }: TemplatesPageProps) {
 
                   {/* Right side badges & actions */}
                   <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    {template.target_app && (
+                      <span className="rounded bg-blue-100 dark:bg-blue-950/50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-400">
+                        {APP_LABELS[template.target_app] ?? template.target_app}
+                      </span>
+                    )}
                     {template.action_type && (
                       <span className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                         {template.action_type}
