@@ -20,7 +20,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const qsKey = searchParams.get("api_key");
     let authRequest = request;
-    if (qsKey && !request.headers.get("authorization")?.startsWith("Bearer ")) {
+    const existingAuth = request.headers.get("authorization") || "";
+    const hasValidBearer = existingAuth.startsWith("Bearer ") && existingAuth.length > 7;
+    if (qsKey && !hasValidBearer) {
       const headers = new Headers(request.headers);
       headers.set("authorization", `Bearer ${qsKey}`);
       authRequest = new Request(request.url, {
@@ -31,8 +33,7 @@ export async function GET(request: Request) {
 
     const auth = await authenticateRequest(authRequest);
 
-    // Parse query params
-    const { searchParams } = new URL(request.url);
+    // Parse query params (reuse searchParams from above)
     const queryInput = {
       page: searchParams.get("page")
         ? Number(searchParams.get("page"))
