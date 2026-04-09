@@ -19,10 +19,15 @@ export async function GET(request: Request) {
     // API key in the query string so the template dropdown can populate.
     const { searchParams } = new URL(request.url);
     const qsKey = searchParams.get("api_key");
+    console.log("[Templates] api_key present:", !!qsKey, "length:", qsKey?.length, "url:", request.url);
+
     let authRequest = request;
     const existingAuth = request.headers.get("authorization") || "";
-    const hasValidBearer = existingAuth.startsWith("Bearer ") && existingAuth.length > 7;
+    const hasValidBearer = existingAuth.length > 7;
+    console.log("[Templates] auth header:", JSON.stringify(existingAuth.slice(0, 15)), "hasValidBearer:", hasValidBearer);
+
     if (qsKey && !hasValidBearer) {
+      console.log("[Templates] Using api_key from query string");
       const headers = new Headers(request.headers);
       headers.set("authorization", `Bearer ${qsKey}`);
       authRequest = new Request(request.url, {
@@ -32,6 +37,7 @@ export async function GET(request: Request) {
     }
 
     const auth = await authenticateRequest(authRequest);
+    console.log("[Templates] Auth success, type:", auth.type);
 
     // Parse query params (reuse searchParams from above)
     const queryInput = {
