@@ -219,27 +219,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract the token from the generated link and redirect through the
-    // Supabase auth callback to establish the session cookie.
-    const linkUrl = new URL(linkData.properties.action_link);
-    const token = linkUrl.searchParams.get("token");
-    const type = linkUrl.searchParams.get("type");
+    // Use the action_link directly — it already has the correct verify URL
+    // with token, type, and redirect_to parameters.
+    const actionLink = linkData.properties.action_link;
+    console.log("[SAML] Redirecting to action link for session creation");
 
-    if (!token) {
-      console.error("[SAML] Magic link missing token");
-      return NextResponse.redirect(
-        new URL("/login?error=saml_session_failed", APP_URL),
-      );
-    }
-
-    // Redirect to Supabase's verify endpoint which will set the session cookie
-    // and then redirect to /org/overview
-    const verifyUrl = new URL(
-      `/auth/v1/verify?token=${token}&type=${type || "magiclink"}&redirect_to=${encodeURIComponent(`${APP_URL}${redirectDestination}`)}`,
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-    );
-
-    return NextResponse.redirect(verifyUrl.toString());
+    return NextResponse.redirect(actionLink);
   } catch (err) {
     console.error("[SAML] Callback error:", err);
     return NextResponse.redirect(
