@@ -15,7 +15,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: Request) {
   try {
+    // DEBUG: log auth header for RPC troubleshooting
+    const authHeader = request.headers.get("authorization");
+    console.log("[Templates] Auth header present:", !!authHeader, "Type:", authHeader?.slice(0, 10));
+
     const auth = await authenticateRequest(request);
+    console.log("[Templates] Auth success, type:", auth.type, "orgId:", auth.orgId);
 
     // Parse query params
     const { searchParams } = new URL(request.url);
