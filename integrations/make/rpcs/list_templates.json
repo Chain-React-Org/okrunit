@@ -1,0 +1,11 @@
+{
+  "url": "/api/v1/templates?target_app=make",
+  "method": "GET",
+  "response": {
+    "iterate": "{{body.data}}",
+    "output": {
+      "label": "{{item.name}}",
+      "value": "{{item.id}}"
+    }
+  }
+}

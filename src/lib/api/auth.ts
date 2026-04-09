@@ -82,7 +82,7 @@ export async function authenticateRequest(
 ): Promise<AuthResult> {
   const authHeader = request.headers.get("authorization");
 
-  if (authHeader?.startsWith("Bearer ")) {
+  if (authHeader?.toLowerCase().startsWith("bearer ")) {
     const token = authHeader.slice(7);
 
     // --- API Key authentication (ok_ or legacy gk_ prefix) -------------------
