@@ -8,7 +8,6 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
-
 // ---- Validation -----------------------------------------------------------
 
 const overviewQuerySchema = z.object({

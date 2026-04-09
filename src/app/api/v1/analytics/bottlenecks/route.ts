@@ -11,7 +11,6 @@ import {
   getApprovalLoadDistribution,
   suggestRedistribution,
 } from "@/lib/api/bottleneck";
-
 // ---- GET /api/v1/analytics/bottlenecks -----------------------------------
 
 export async function GET(request: Request) {

@@ -9,7 +9,6 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { webhookLogQuerySchema } from "@/lib/api/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
-
 // ---- GET /api/v1/webhooks -------------------------------------------------
 
 export async function GET(request: Request) {

@@ -9,7 +9,6 @@
 // ---------------------------------------------------------------------------
 
 import { NextRequest, NextResponse } from "next/server";
-import * as samlify from "samlify";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 import {
@@ -65,7 +64,7 @@ export async function POST(request: NextRequest) {
         try {
           const result = await sp.parseLoginResponse(
             idp,
-            samlify.Constants.namespace.binding.post,
+            "post",
             { body: { SAMLResponse: samlResponse } },
           );
 
@@ -74,8 +73,8 @@ export async function POST(request: NextRequest) {
             matchedConfig = config;
             break;
           }
-        } catch {
-          // This IdP cert didn't match - try next
+        } catch (err) {
+          console.warn("[SAML] IdP cert validation failed for config", config.entity_id, ":", String(err));
           continue;
         }
       }

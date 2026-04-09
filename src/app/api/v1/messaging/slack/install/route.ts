@@ -13,7 +13,6 @@ import { randomBytes } from "crypto";
 import { authenticateRequest } from "@/lib/api/auth";
 import { errorResponse } from "@/lib/api/errors";
 
-
 const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID!;
 const SLACK_OAUTH_URL = "https://slack.com/oauth/v2/authorize";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

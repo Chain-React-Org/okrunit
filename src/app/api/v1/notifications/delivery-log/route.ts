@@ -11,7 +11,6 @@ import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
-
 // ---- GET /api/v1/notifications/delivery-log -------------------------------
 
 export async function GET(request: Request) {

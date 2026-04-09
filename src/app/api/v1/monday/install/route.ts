@@ -12,7 +12,6 @@ import { randomBytes } from "crypto";
 
 import { authenticateRequest } from "@/lib/api/auth";
 import { errorResponse } from "@/lib/api/errors";
-
 const MONDAY_CLIENT_ID = process.env.MONDAY_CLIENT_ID!;
 const MONDAY_OAUTH_URL = "https://auth.monday.com/oauth2/authorize";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
