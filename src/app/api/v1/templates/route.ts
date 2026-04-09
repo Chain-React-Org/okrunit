@@ -17,9 +17,7 @@ export async function GET(request: Request) {
   try {
     // DEBUG: log auth header for RPC troubleshooting
     const authHeader = request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-    console.log("[Templates] Auth header present:", !!authHeader);
-    console.log("[Templates] Token length:", token?.length, "Starts with:", token?.slice(0, 6), "Ends with:", token?.slice(-4));
+    console.log("[Templates] Auth header prefix:", JSON.stringify(authHeader?.slice(0, 12)));
     console.log("[Templates] Full URL:", request.url);
 
     let auth;
