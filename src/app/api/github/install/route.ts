@@ -15,9 +15,6 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { getInstallationToken } from "@/lib/api/github";
 
-export const dynamic = "force-dynamic";
-
-
 // ---------------------------------------------------------------------------
 // GET /api/github/install?installation_id=123&setup_action=install
 // ---------------------------------------------------------------------------

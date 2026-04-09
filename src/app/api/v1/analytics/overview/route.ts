@@ -8,9 +8,6 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-export const dynamic = "force-dynamic";
-
 // ---- Validation -----------------------------------------------------------
 
 const overviewQuerySchema = z.object({

@@ -13,9 +13,6 @@ import {
   createIdentityProvider,
   findSSOConfigByEmail,
 } from "@/lib/saml/provider";
-
-export const dynamic = "force-dynamic";
-
 export async function GET(request: NextRequest) {
   try {
     const email = request.nextUrl.searchParams.get("email");

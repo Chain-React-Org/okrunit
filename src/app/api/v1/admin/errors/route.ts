@@ -6,9 +6,6 @@ import { NextResponse } from "next/server";
 import { getAppAdminContext } from "@/lib/app-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ErrorIssue } from "@/lib/monitoring/types";
-
-export const dynamic = "force-dynamic";
-
 export async function GET(request: Request) {
   try {
     const profile = await getAppAdminContext();

@@ -21,9 +21,6 @@ import {
   generateCSV,
   generateJSON,
 } from "@/lib/api/export";
-
-export const dynamic = "force-dynamic";
-
 // ---------------------------------------------------------------------------
 // GET /api/v1/export
 // ---------------------------------------------------------------------------

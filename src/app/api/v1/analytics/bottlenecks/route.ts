@@ -11,9 +11,6 @@ import {
   getApprovalLoadDistribution,
   suggestRedistribution,
 } from "@/lib/api/bottleneck";
-
-export const dynamic = "force-dynamic";
-
 // ---- GET /api/v1/analytics/bottlenecks -----------------------------------
 
 export async function GET(request: Request) {
