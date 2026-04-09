@@ -17,11 +17,6 @@ export async function GET(request: Request) {
   try {
     const auth = await authenticateRequest(request);
 
-    // Only dashboard (session) users may manage templates.
-    if (auth.type !== "session") {
-      throw new ApiError(403, "Only dashboard users can manage templates");
-    }
-
     // Parse query params
     const { searchParams } = new URL(request.url);
     const queryInput = {
