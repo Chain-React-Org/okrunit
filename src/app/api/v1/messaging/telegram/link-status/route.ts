@@ -13,6 +13,8 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { errorResponse, ApiError } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     const auth = await authenticateRequest(request);

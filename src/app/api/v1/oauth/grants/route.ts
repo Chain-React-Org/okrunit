@@ -9,6 +9,8 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { getActiveOAuthGrants } from "@/lib/api/oauth-grants";
 
+export const dynamic = "force-dynamic";
+
 // ---- GET /api/v1/oauth/grants -----------------------------------------------
 
 export async function GET(request: Request) {

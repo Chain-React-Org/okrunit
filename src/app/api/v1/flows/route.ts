@@ -8,6 +8,8 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+
 
 // ---- GET /api/v1/flows ----------------------------------------------------
 

@@ -8,6 +8,8 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { getCostOfDelay } from "@/lib/api/analytics";
 
+export const dynamic = "force-dynamic";
+
 // ---- GET /api/v1/analytics/cost-of-delay ---------------------------------
 
 export async function GET(request: Request) {
