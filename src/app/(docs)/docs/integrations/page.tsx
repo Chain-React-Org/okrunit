@@ -377,12 +377,7 @@ export default function IntegrationsPage() {
       <div className="mt-2 space-y-2">
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">1</span>
-          <span>Create a new scenario, click <strong>+</strong>, and search for <strong>&quot;OKrunit&quot;</strong>.</span>
-        </div>
-
-        <div className="flex gap-3 text-zinc-700">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">2</span>
-          <span>Select the <strong>Approval Decision Received</strong> instant trigger under Triggers.</span>
+          <span>Create a new scenario, search for <strong>&quot;OKrunit&quot;</strong>, and select the <strong>Approval Decision Received</strong> instant trigger under Triggers.</span>
         </div>
         <DocsImage
           src="/screenshots/docs/integrations/make-step-7-select-trigger.webp"
@@ -390,8 +385,8 @@ export default function IntegrationsPage() {
           caption="Select 'Approval Decision Received'. This is an instant trigger that fires when a decision is made."
         />
 
-        <div className="flex gap-3 text-zinc-700">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
+        <div id="make-trigger-url" className="flex gap-3 text-zinc-700 scroll-mt-24">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">2</span>
           <span>Click <strong>Create a webhook</strong>, save it, then <strong>copy the trigger URL</strong>. You&apos;ll paste it into Scenario 2&apos;s Callback URL field.</span>
         </div>
         <DocsImage
@@ -401,7 +396,7 @@ export default function IntegrationsPage() {
         />
 
         <div className="flex gap-3 text-zinc-700">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
           <span>Add your follow-up modules after the trigger. These will run when OKrunit sends the approval decision.</span>
         </div>
       </div>
@@ -410,17 +405,7 @@ export default function IntegrationsPage() {
       <div className="mt-2 space-y-2">
         <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">1</span>
-          <span>Create a new scenario and click <strong>+</strong> to add a module.</span>
-        </div>
-        <DocsImage
-          src="/screenshots/docs/integrations/make-step-1-editor.webp"
-          alt="Make scenario editor showing the + button to add a module"
-          caption="Click the + icon in the scenario editor to open the app picker."
-        />
-
-        <div className="flex gap-3 text-zinc-700">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">2</span>
-          <span>Search for <strong>&quot;OKrunit&quot;</strong> in the app search.</span>
+          <span>Create a new scenario and search for <strong>&quot;OKrunit&quot;</strong> in the app search.</span>
         </div>
         <DocsImage
           src="/screenshots/docs/integrations/make-step-2-search.webp"
@@ -429,7 +414,7 @@ export default function IntegrationsPage() {
         />
 
         <div className="flex gap-3 text-zinc-700">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">2</span>
           <span>Select <strong>OKrunit</strong> from the results.</span>
         </div>
         <DocsImage
@@ -439,7 +424,7 @@ export default function IntegrationsPage() {
         />
 
         <div className="flex gap-3 text-zinc-700">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
           <span>Scroll to <strong>Actions</strong> and choose <strong>Request an Approval</strong>.</span>
         </div>
         <DocsImage
@@ -449,7 +434,7 @@ export default function IntegrationsPage() {
         />
 
         <div className="flex gap-3 text-zinc-700">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">5</span>
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
           <span>Click <strong>Add</strong> next to the Connection field and authorize your OKrunit account via OAuth.</span>
         </div>
         <DocsImage
@@ -459,8 +444,8 @@ export default function IntegrationsPage() {
         />
 
         <div className="flex gap-3 text-zinc-700">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">6</span>
-          <span>Fill in the request fields: <strong>What needs approval?</strong>, <strong>Details</strong>, and paste the trigger URL from Scenario 1 into <strong>Callback URL</strong>.</span>
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">5</span>
+          <span>Fill in the request fields: <strong>What needs approval?</strong>, <strong>Details</strong>, and paste the <a href="#make-trigger-url" className="font-medium text-indigo-600 underline underline-offset-2 hover:text-indigo-500">trigger URL from Scenario 1</a> into <strong>Callback URL</strong>.</span>
         </div>
         <DocsImage
           src="/screenshots/docs/integrations/make-step-6-fields-v2.webp"

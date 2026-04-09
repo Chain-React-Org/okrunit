@@ -118,15 +118,15 @@ export function TemplateFormDialog({
           .map((s) => s.trim())
           .filter(Boolean);
 
-        const body = {
+        const body: Record<string, unknown> = {
           name: form.name.trim(),
-          description: form.description.trim() || null,
-          title_pattern: form.title_pattern.trim() || null,
-          action_type: form.action_type.trim() || null,
           default_priority: form.default_priority,
           assigned_approvers: approvers,
-          callback_url_pattern: form.callback_url_pattern.trim() || null,
         };
+        if (form.description.trim()) body.description = form.description.trim();
+        if (form.title_pattern.trim()) body.title_pattern = form.title_pattern.trim();
+        if (form.action_type.trim()) body.action_type = form.action_type.trim();
+        if (form.callback_url_pattern.trim()) body.callback_url_pattern = form.callback_url_pattern.trim();
 
         const url = isEditing
           ? `/api/v1/templates/${template.id}`
@@ -270,7 +270,7 @@ export function TemplateFormDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending} className="bg-green-600 text-white hover:bg-green-700">
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" />

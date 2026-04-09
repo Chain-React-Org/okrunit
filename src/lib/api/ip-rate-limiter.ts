@@ -1,36 +1,107 @@
 // ---------------------------------------------------------------------------
-// OKrunit -- In-Memory Rate Limiter (IP / Key based)
+// OKrunit -- Rate Limiter (IP / Key based)
 // ---------------------------------------------------------------------------
-// Sliding window counter using an in-memory Map with automatic cleanup.
-// On Vercel with Fluid Compute, function instances are reused across
-// concurrent requests, so the in-memory store provides effective rate
-// limiting within each instance. For strict cross-instance enforcement
-// at high scale, replace the store with Redis (e.g., @upstash/ratelimit).
+// Uses Upstash Redis for distributed rate limiting when configured. Falls
+// back to an in-memory Map when Redis is not available (dev/single-instance).
 // ---------------------------------------------------------------------------
+
+import { getRedisClient } from "@/lib/redis";
+
+// ---- In-memory fallback ---------------------------------------------------
 
 interface WindowEntry {
   count: number;
   resetAt: number; // epoch ms
 }
 
-const store = new Map<string, WindowEntry>();
+const memoryStore = new Map<string, WindowEntry>();
 
-// Cleanup stale entries every 60 seconds
 let cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
 function ensureCleanup() {
   if (cleanupTimer) return;
   cleanupTimer = setInterval(() => {
     const now = Date.now();
-    for (const [key, entry] of store) {
-      if (entry.resetAt <= now) store.delete(key);
+    for (const [key, entry] of memoryStore) {
+      if (entry.resetAt <= now) memoryStore.delete(key);
     }
   }, 60_000);
-  // Allow Node to exit even if the timer is running
   if (cleanupTimer && typeof cleanupTimer === "object" && "unref" in cleanupTimer) {
     cleanupTimer.unref();
   }
 }
+
+function checkMemoryRateLimit(
+  key: string,
+  config: RateLimitConfig,
+): RateLimitCheckResult {
+  ensureCleanup();
+
+  const now = Date.now();
+  const entry = memoryStore.get(key);
+
+  if (!entry || entry.resetAt <= now) {
+    const resetAt = now + config.windowSeconds * 1000;
+    memoryStore.set(key, { count: 1, resetAt });
+    return {
+      allowed: true,
+      limit: config.limit,
+      remaining: config.limit - 1,
+      resetAt: new Date(resetAt),
+    };
+  }
+
+  entry.count++;
+  const allowed = entry.count <= config.limit;
+
+  return {
+    allowed,
+    limit: config.limit,
+    remaining: Math.max(0, config.limit - entry.count),
+    resetAt: new Date(entry.resetAt),
+  };
+}
+
+// ---- Redis-backed implementation ------------------------------------------
+
+async function checkRedisRateLimit(
+  key: string,
+  config: RateLimitConfig,
+): Promise<RateLimitCheckResult> {
+  const redis = getRedisClient();
+  if (!redis) return checkMemoryRateLimit(key, config);
+
+  const redisKey = `rl:${key}`;
+  const windowSeconds = config.windowSeconds;
+
+  try {
+    // Atomic: increment the counter and set expiry if new
+    const count = await redis.incr(redisKey);
+
+    if (count === 1) {
+      // First request in this window, set TTL
+      await redis.expire(redisKey, windowSeconds);
+    }
+
+    // Get TTL to calculate resetAt
+    const ttl = await redis.ttl(redisKey);
+    const resetAt = new Date(Date.now() + (ttl > 0 ? ttl * 1000 : windowSeconds * 1000));
+
+    const allowed = count <= config.limit;
+
+    return {
+      allowed,
+      limit: config.limit,
+      remaining: Math.max(0, config.limit - count),
+      resetAt,
+    };
+  } catch (err) {
+    console.warn("[RateLimit] Redis error, falling back to memory:", (err as Error).message);
+    return checkMemoryRateLimit(key, config);
+  }
+}
+
+// ---- Public API -----------------------------------------------------------
 
 export interface RateLimitConfig {
   /** Maximum number of requests per window */
@@ -48,39 +119,29 @@ export interface RateLimitCheckResult {
 
 /**
  * Check rate limit for a given key (IP, user ID, org ID, etc.).
- * Returns whether the request is allowed and standard rate limit metadata.
+ * Synchronous version using in-memory store. Use checkIpRateLimitAsync
+ * for distributed enforcement via Redis.
  */
 export function checkIpRateLimit(
   key: string,
   config: RateLimitConfig,
 ): RateLimitCheckResult {
-  ensureCleanup();
+  return checkMemoryRateLimit(key, config);
+}
 
-  const now = Date.now();
-  const entry = store.get(key);
-
-  // If no entry or window expired, start fresh
-  if (!entry || entry.resetAt <= now) {
-    const resetAt = now + config.windowSeconds * 1000;
-    store.set(key, { count: 1, resetAt });
-    return {
-      allowed: true,
-      limit: config.limit,
-      remaining: config.limit - 1,
-      resetAt: new Date(resetAt),
-    };
+/**
+ * Async rate limit check that uses Redis when available.
+ * Falls back to in-memory if Redis is not configured or errors.
+ */
+export async function checkIpRateLimitAsync(
+  key: string,
+  config: RateLimitConfig,
+): Promise<RateLimitCheckResult> {
+  const redis = getRedisClient();
+  if (redis) {
+    return checkRedisRateLimit(key, config);
   }
-
-  // Window still active
-  entry.count++;
-  const allowed = entry.count <= config.limit;
-
-  return {
-    allowed,
-    limit: config.limit,
-    remaining: Math.max(0, config.limit - entry.count),
-    resetAt: new Date(entry.resetAt),
-  };
+  return checkMemoryRateLimit(key, config);
 }
 
 /**

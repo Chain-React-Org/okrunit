@@ -8,19 +8,24 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
+  Clock,
   FileText,
+  Link2,
   Loader2,
   Pencil,
   Plus,
   Trash2,
+  Type,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PriorityBadge } from "@/components/approvals/priority-badge";
 import { TemplateFormDialog } from "@/components/templates/template-form-dialog";
+import type { ApprovalPriority } from "@/lib/types/database";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,25 +47,6 @@ export interface ApprovalTemplate {
 
 interface TemplatesPageProps {
   orgId: string;
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function priorityBadgeClasses(priority: string): string {
-  switch (priority) {
-    case "critical":
-      return "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400";
-    case "high":
-      return "bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400";
-    case "medium":
-      return "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/50 dark:text-yellow-400";
-    case "low":
-      return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400";
-    default:
-      return "";
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -139,16 +125,18 @@ export function TemplatesPage({ orgId }: TemplatesPageProps) {
           <Skeleton className="h-8 w-[200px]" />
           <Skeleton className="h-9 w-[150px]" />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-xl border p-5 space-y-3">
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-full" />
+            <div key={i} className="rounded-xl border p-4 flex items-center gap-4">
+              <Skeleton className="size-9 rounded-lg shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
               <div className="flex gap-2">
                 <Skeleton className="h-5 w-[60px] rounded-full" />
                 <Skeleton className="h-5 w-[50px] rounded-full" />
               </div>
-              <Skeleton className="h-4 w-1/2" />
             </div>
           ))}
         </div>
@@ -172,7 +160,7 @@ export function TemplatesPage({ orgId }: TemplatesPageProps) {
         </Button>
       </div>
 
-      {/* Template Grid or Empty State */}
+      {/* Template List or Empty State */}
       {templates.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-5 rounded-xl border-0 py-20 text-center shadow-[var(--shadow-card)]">
           <div className="empty-state-icon rounded-2xl p-5">
@@ -184,82 +172,111 @@ export function TemplatesPage({ orgId }: TemplatesPageProps) {
               Create one to speed up your workflows.
             </p>
           </div>
-          <Button onClick={handleCreate} variant="outline" className="gap-1.5">
-            <Plus className="size-4" />
-            Create Template
-          </Button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {templates.map((template) => (
-            <div
-              key={template.id}
-              className="group rounded-xl border border-border/50 bg-[var(--card)] p-5 transition-shadow hover:shadow-md"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-semibold text-foreground leading-tight">
-                  {template.name}
-                </h3>
-                <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="size-7 p-0"
-                    onClick={() => handleEdit(template)}
-                    aria-label={`Edit ${template.name}`}
-                  >
-                    <Pencil className="size-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="size-7 p-0 text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(template.id)}
-                    disabled={deletingId === template.id}
-                    aria-label={`Delete ${template.name}`}
-                  >
-                    {deletingId === template.id ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="size-3.5" />
+        <div className="space-y-3">
+          {templates.map((template) => {
+            const priorityColor = {
+              critical: "border-l-red-400",
+              high: "border-l-orange-400",
+              medium: "border-l-yellow-400",
+              low: "border-l-emerald-400",
+            }[template.default_priority] ?? "border-l-zinc-300";
+
+            return (
+              <Card
+                key={template.id}
+                className={`group/card border-0 border-l-4 card-interactive transition-all ${priorityColor}`}
+              >
+                <div className="flex items-center gap-3 px-4 py-3">
+                  {/* Template icon */}
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-950/50">
+                    <FileText className="size-4 text-violet-600 dark:text-violet-400" />
+                  </div>
+
+                  {/* Main content */}
+                  <div className="min-w-0 flex-1">
+                    {/* Title row */}
+                    <h3 className="text-sm font-medium text-foreground line-clamp-1">
+                      {template.name}
+                    </h3>
+
+                    {/* Metadata row */}
+                    <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
+                      {template.description && (
+                        <span className="line-clamp-1">{template.description}</span>
+                      )}
+                      {template.description && (template.title_pattern || template.action_type || template.callback_url_pattern) && (
+                        <span className="text-muted-foreground/40">|</span>
+                      )}
+                      {template.title_pattern && (
+                        <span className="flex items-center gap-1">
+                          <Type className="size-3 shrink-0" />
+                          {template.title_pattern}
+                        </span>
+                      )}
+                      {template.title_pattern && (template.action_type || template.callback_url_pattern) && (
+                        <span className="text-muted-foreground/40">|</span>
+                      )}
+                      {template.callback_url_pattern && (
+                        <span className="flex items-center gap-1 truncate max-w-[200px]">
+                          <Link2 className="size-3 shrink-0" />
+                          Callback URL
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right side badges & actions */}
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    {template.action_type && (
+                      <span className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                        {template.action_type}
+                      </span>
                     )}
-                  </Button>
+                    <PriorityBadge priority={template.default_priority as ApprovalPriority} />
+                    {template.assigned_approvers.length > 0 && (
+                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Users className="size-3" />
+                        {template.assigned_approvers.length}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground" title={new Date(template.created_at).toLocaleString()}>
+                      <Clock className="size-3" />
+                      {formatDistanceToNow(new Date(template.created_at), { addSuffix: true })}
+                    </span>
+
+                    {/* Edit / Delete (visible on hover) */}
+                    <div className="flex gap-1 opacity-0 transition-opacity group-hover/card:opacity-100">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="size-7 p-0"
+                        onClick={() => handleEdit(template)}
+                        aria-label={`Edit ${template.name}`}
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="size-7 p-0 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(template.id)}
+                        disabled={deletingId === template.id}
+                        aria-label={`Delete ${template.name}`}
+                      >
+                        {deletingId === template.id ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-3.5" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              {template.description && (
-                <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">
-                  {template.description}
-                </p>
-              )}
-
-              <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                {template.action_type && (
-                  <Badge variant="outline" className="text-[11px]">
-                    {template.action_type}
-                  </Badge>
-                )}
-                <Badge
-                  variant="outline"
-                  className={`text-[11px] ${priorityBadgeClasses(template.default_priority)}`}
-                >
-                  {template.default_priority}
-                </Badge>
-              </div>
-
-              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <Users className="size-3" />
-                  {template.assigned_approvers.length} approver{template.assigned_approvers.length !== 1 ? "s" : ""}
-                </span>
-                <span title={new Date(template.created_at).toLocaleString()}>
-                  {formatDistanceToNow(new Date(template.created_at), {
-                    addSuffix: true,
-                  })}
-                </span>
-              </div>
-            </div>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 
