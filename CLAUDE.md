@@ -65,6 +65,17 @@ await page.evaluate(({ x, y, w, h }) => {
 - If Next.js caches an old image, use a new filename (append `-v2`)
 - Full guide: `tools/scripts/screenshots/README.md`
 
+## n8n Community Node - IMPORTANT
+
+The n8n community node source lives at `integrations/n8n/n8n-nodes-okrunit/`. When you make **any** changes to node files, you **MUST** do all of the following:
+
+1. Build: `cd integrations/n8n/n8n-nodes-okrunit && npm run build`
+2. Publish to npm: `npm publish` (requires OTP from user's authenticator app)
+3. Push to GitHub: `git push origin main` (the n8n repo has its own git remote)
+4. Reinstall locally: `rm -rf ~/.n8n/nodes/node_modules/n8n-nodes-okrunit && cd ~/.n8n/nodes && npm install <path-to-local-package>`
+
+Without publishing to npm, users who install or reinstall the node via n8n's UI will get the old version. The n8n UI installer pulls from npm, not GitHub.
+
 ## Writing Style
 
 **Never use em dashes anywhere in the codebase.** Not in user-facing text, comments, commit messages, or documentation. Use periods, commas, or rephrase the sentence instead.

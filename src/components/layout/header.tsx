@@ -76,6 +76,10 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
 
   const handleSignOut = async () => {
     const supabase = createClient();
+    // Reset tour sync flag so the store re-fetches from DB on next login.
+    // Without this, the in-memory synced=true survives SPA navigation and
+    // prevents syncFromServer from running, causing tours to restart.
+    useOnboardingTourStore.getState().resetSync();
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();

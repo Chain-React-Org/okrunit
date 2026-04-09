@@ -44,6 +44,7 @@ interface OnboardingTourState {
 
   // Shared
   setTestRequestId: (id: string | null) => void;
+  resetSync: () => void;
   syncFromServer: () => Promise<void>;
 }
 
@@ -149,6 +150,7 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
       },
 
       setTestRequestId: (id) => set({ testRequestId: id }),
+      resetSync: () => set({ synced: false, tourCompleted: false, tourDismissed: false }),
       syncFromServer: async () => {
         if (get().synced) return;
         try {
