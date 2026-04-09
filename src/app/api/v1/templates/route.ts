@@ -5,7 +5,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { authenticateRequest } from "@/lib/api/auth";
+import { authenticateRequest, hashApiKey } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createTemplateSchema, paginationSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
@@ -15,29 +15,41 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: Request) {
   try {
-    // Make.com RPCs don't pass OAuth tokens in headers. Fall back to
-    // API key in the query string so the template dropdown can populate.
     const { searchParams } = new URL(request.url);
-    const qsKey = searchParams.get("api_key");
-    console.log("[Templates] api_key present:", !!qsKey, "length:", qsKey?.length, "url:", request.url);
 
-    let authRequest = request;
-    const existingAuth = request.headers.get("authorization") || "";
-    const hasValidBearer = existingAuth.length > 7;
-    console.log("[Templates] auth header:", JSON.stringify(existingAuth.slice(0, 15)), "hasValidBearer:", hasValidBearer);
+    // Resolve the org_id via standard auth OR client credentials fallback.
+    // Make.com RPCs don't pass OAuth access tokens in headers, so we also
+    // accept client_id + client_secret as query params for dropdown RPCs.
+    let orgId: string;
 
-    if (qsKey && !hasValidBearer) {
-      console.log("[Templates] Using api_key from query string");
-      const headers = new Headers(request.headers);
-      headers.set("authorization", `Bearer ${qsKey}`);
-      authRequest = new Request(request.url, {
-        method: request.method,
-        headers,
-      });
+    const authHeader = request.headers.get("authorization") || "";
+    const hasValidBearer = authHeader.startsWith("Bearer ") && authHeader.length > 7;
+    const clientId = searchParams.get("client_id");
+    const clientSecret = searchParams.get("client_secret");
+
+    if (hasValidBearer) {
+      // Standard auth (OAuth token, API key, or session)
+      const auth = await authenticateRequest(request);
+      orgId = auth.orgId;
+    } else if (clientId && clientSecret) {
+      // Client credentials fallback for integration RPCs
+      const admin = createAdminClient();
+      const secretHash = hashApiKey(clientSecret);
+      const { data: client } = await admin
+        .from("oauth_clients")
+        .select("org_id, is_active, client_secret_hash")
+        .eq("client_id", clientId)
+        .single();
+
+      if (!client || !client.is_active || client.client_secret_hash !== secretHash) {
+        throw new ApiError(401, "Invalid client credentials");
+      }
+      orgId = client.org_id;
+    } else {
+      // Try standard auth as last resort (handles session cookies)
+      const auth = await authenticateRequest(request);
+      orgId = auth.orgId;
     }
-
-    const auth = await authenticateRequest(authRequest);
-    console.log("[Templates] Auth success, type:", auth.type);
 
     // Parse query params (reuse searchParams from above)
     const queryInput = {
@@ -65,7 +77,7 @@ export async function GET(request: Request) {
     let query = admin
       .from("approval_templates")
       .select("*")
-      .eq("org_id", auth.orgId)
+      .eq("org_id", orgId)
       .order("created_at", { ascending: false });
 
     if (!includeInactive) {
@@ -93,7 +105,7 @@ export async function GET(request: Request) {
     let countQuery = admin
       .from("approval_templates")
       .select("*", { count: "exact", head: true })
-      .eq("org_id", auth.orgId);
+      .eq("org_id", orgId);
 
     if (!includeInactive) {
       countQuery = countQuery.eq("is_active", true);
