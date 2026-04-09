@@ -17,9 +17,19 @@ export async function GET(request: Request) {
   try {
     // DEBUG: log auth header for RPC troubleshooting
     const authHeader = request.headers.get("authorization");
-    console.log("[Templates] Auth header present:", !!authHeader, "Type:", authHeader?.slice(0, 10));
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    console.log("[Templates] Auth header present:", !!authHeader);
+    console.log("[Templates] Token length:", token?.length, "Starts with:", token?.slice(0, 6), "Ends with:", token?.slice(-4));
+    console.log("[Templates] Full URL:", request.url);
 
-    const auth = await authenticateRequest(request);
+    let auth;
+    try {
+      auth = await authenticateRequest(request);
+    } catch (authErr: unknown) {
+      const msg = authErr instanceof Error ? authErr.message : String(authErr);
+      console.error("[Templates] Auth FAILED:", msg);
+      throw authErr;
+    }
     console.log("[Templates] Auth success, type:", auth.type, "orgId:", auth.orgId);
 
     // Parse query params
