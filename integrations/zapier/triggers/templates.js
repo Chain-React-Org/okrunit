@@ -22,7 +22,7 @@ const templates = {
 
     perform: async (z) => {
       const response = await z.request({
-        url: `${OKRUNIT_URL}/api/v1/templates`,
+        url: `${OKRUNIT_URL}/api/v1/templates?target_app=zapier`,
       });
 
       const data = response.json.data || [];

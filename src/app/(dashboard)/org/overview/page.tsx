@@ -218,7 +218,7 @@ export default async function V2OrgOverviewPage() {
                   : null;
 
               const inner = (
-                <div className="group relative flex flex-col gap-2 rounded-xl border border-border/50 bg-[var(--card)] px-4 py-3.5 transition-colors hover:border-border">
+                <div className="group relative flex h-full flex-col gap-2 rounded-xl border border-border/50 bg-[var(--card)] px-4 py-3.5 transition-colors hover:border-border">
                   <div className="flex items-center justify-between">
                     <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${card.bg}`}>
                       <Icon className={`size-4 ${card.color}`} strokeWidth={1.75} />

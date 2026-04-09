@@ -364,6 +364,8 @@ export type WebhookLogQueryInput = z.infer<typeof webhookLogQuerySchema>;
 
 // ---- Approval Templates ---------------------------------------------------
 
+const targetAppEnum = z.enum(["any", "n8n", "zapier", "make"]);
+
 export const createTemplateSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(2000).optional(),
@@ -375,6 +377,7 @@ export const createTemplateSchema = z.object({
   metadata_schema: z.record(z.string(), z.unknown()).optional(),
   callback_url_pattern: z.string().max(2000).optional(),
   is_active: z.boolean().optional(),
+  target_app: targetAppEnum.optional(),
 });
 
 export type CreateTemplateInput = z.infer<typeof createTemplateSchema>;
