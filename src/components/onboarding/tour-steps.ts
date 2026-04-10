@@ -10,6 +10,15 @@ export interface TourStepConfig {
   position: "top" | "bottom" | "left" | "right" | "center";
   highlightMode?: "default" | "full-width" | "no-ring";
   actionLabel?: string;
+  /** Animated demo sequence. When present, the tour plays an interactive
+   *  demo with a fake cursor driving the real UI. */
+  animation?: {
+    commands: import("./tour-animation-engine").AnimationCommand[];
+    /** Automatically advance to next step when animation finishes */
+    autoAdvance?: boolean;
+    /** Default pause between commands in ms (default 300) */
+    pauseBetweenCommands?: number;
+  };
 }
 
 export interface PageTourConfig {
@@ -62,20 +71,30 @@ const requestsSteps: TourStepConfig[] = [
     position: "center",
   },
   {
-    id: "requests-hover-actions",
+    id: "requests-demo",
     targetSelector: "[data-tour='test-request']",
-    title: "Quick Actions on Hover",
+    title: "Reviewing a Request",
     description:
-      "Hover over any pending request to reveal Approve and Reject buttons directly on the card \u2014 no need to open the detail panel for quick decisions.",
-    position: "bottom",
-  },
-  {
-    id: "requests-three-dots",
-    targetSelector: "[data-tour='test-request-more-menu']",
-    title: "More Options",
-    description:
-      "The three-dot menu (visible on hover) lets you archive the request, configure the flow, or open the full detail panel for more context.",
+      "Watch how to review and approve a request...",
     position: "left",
+    highlightMode: "no-ring",
+    animation: {
+      autoAdvance: true,
+      pauseBetweenCommands: 400,
+      commands: [
+        { type: "tooltip-update", text: "Hover over a pending request to reveal quick actions." },
+        { type: "move", to: "[data-tour='test-request']" },
+        { type: "wait", ms: 1200 },
+        { type: "tooltip-update", text: "The Approve and Reject buttons appear on hover. Click one for a quick decision." },
+        { type: "wait", ms: 1500 },
+        { type: "tooltip-update", text: "Or click the card to open the detail panel for full context." },
+        { type: "click", target: "[data-tour='test-request']" },
+        { type: "wait", ms: 800 },
+        { type: "tooltip-update", text: "The detail panel shows all request information. You can also press 'a' to approve or 'r' to reject with keyboard shortcuts." },
+        { type: "wait", ms: 2500 },
+        { type: "dialog-close" },
+      ],
+    },
   },
   {
     id: "requests-filters",
@@ -84,15 +103,6 @@ const requestsSteps: TourStepConfig[] = [
     description:
       "Search by title, filter by status, priority, or source. Use the Export button to download all visible requests as CSV.",
     position: "bottom",
-  },
-  {
-    id: "requests-keyboard",
-    targetSelector: "[data-tour='detail-panel']",
-    title: "Keyboard Shortcuts",
-    description:
-      "With the detail panel open like this, press 'a' to approve or 'r' to reject instantly.",
-    position: "left",
-    highlightMode: "no-ring",
   },
 ];
 
@@ -108,12 +118,38 @@ const routesSteps: TourStepConfig[] = [
     position: "center",
   },
   {
-    id: "routes-config",
+    id: "routes-config-demo",
     targetSelector: "[data-tour='flow-card']",
-    title: "Configure a Route",
+    title: "Configuring a Route",
     description:
-      "Click the gear icon on any route card to configure: who approves (team or specific users), how many approvals are needed, whether to use sequential chains, and the default priority.",
-    position: "bottom",
+      "Watch how to configure a route...",
+    position: "left",
+    highlightMode: "no-ring",
+    animation: {
+      autoAdvance: true,
+      pauseBetweenCommands: 400,
+      commands: [
+        { type: "tooltip-update", text: "Click on a route card to expand its settings." },
+        { type: "click", target: "[data-tour='flow-card'] [data-tour='flow-expand-btn']" },
+        { type: "wait", ms: 800 },
+        { type: "tooltip-update", text: "Here you can configure who approves requests from this source: anyone on the team, specific members, or by role." },
+        { type: "wait", ms: 2500 },
+        { type: "tooltip-update", text: "Set how many approvals are needed and whether they must be sequential (one after another)." },
+        { type: "wait", ms: 2500 },
+        { type: "tooltip-update", text: "These settings apply to all requests from this source, unless a template overrides them." },
+        { type: "wait", ms: 2000 },
+        // Collapse the card
+        { type: "click", target: "[data-tour='flow-card'] [data-tour='flow-expand-btn']" },
+      ],
+    },
+  },
+  {
+    id: "routes-templates",
+    targetSelector: null,
+    title: "Templates Override Routes",
+    description:
+      "Routes set the baseline defaults for all requests from a source. If you create a template and assign approvers or a priority to it, those template settings will override what you configured here for any request that uses that template. Think of routes as the fallback and templates as targeted overrides.",
+    position: "center",
   },
 ];
 
@@ -125,16 +161,37 @@ const rulesSteps: TourStepConfig[] = [
     targetSelector: null,
     title: "Conditional Rules",
     description:
-      "Rules let you automatically handle requests based on conditions. Auto-approve low-risk actions, route critical requests to specific teams, or require multiple approvers. Rules are evaluated in order \u2014 first match wins.",
+      "Rules let you automatically handle requests based on conditions. Auto-approve low-risk actions, route critical requests to specific teams, or require multiple approvers. Rules are evaluated in order, first match wins.",
     position: "center",
   },
   {
-    id: "rules-create",
+    id: "rules-create-demo",
     targetSelector: null,
-    title: "Creating Rules",
+    title: "Creating a Rule",
     description:
-      "Click 'New Rule' to create a rule. Set conditions (priority, action type, source, title pattern) and an action (auto-approve or route to a team/users with a required approval count). OKrunit also suggests rules on the Analytics page based on your approval history.",
-    position: "center",
+      "Watch how to create a rule...",
+    position: "left",
+    animation: {
+      autoAdvance: true,
+      pauseBetweenCommands: 400,
+      commands: [
+        { type: "tooltip-update", text: "Click 'New Rule' to open the rule builder." },
+        { type: "click", target: "[data-tour='create-rule-btn']" },
+        { type: "dialog-await" },
+        { type: "wait", ms: 400 },
+        { type: "tooltip-update", text: "Give your rule a descriptive name so your team knows what it does." },
+        { type: "move", to: "#rule-name" },
+        { type: "type", target: "#rule-name", text: "Auto-approve low-risk deploys" },
+        { type: "wait", ms: 600 },
+        { type: "tooltip-update", text: "Set conditions like priority level. All conditions must match (AND logic). Here we select 'low' priority." },
+        { type: "wait", ms: 2000 },
+        { type: "tooltip-update", text: "Then choose an action: auto-approve matching requests, or route them to specific approvers with a required count." },
+        { type: "wait", ms: 2500 },
+        { type: "tooltip-update", text: "That's the basics! Rules are powerful. Check the Analytics page for rule suggestions based on your approval patterns." },
+        { type: "wait", ms: 2000 },
+        { type: "dialog-close" },
+      ],
+    },
   },
 ];
 
@@ -148,6 +205,37 @@ const connectionsSteps: TourStepConfig[] = [
     description:
       "Connections are how external tools authenticate with OKRunit. Each connection has an API key for direct API access. You can also connect via OAuth from platforms like Zapier and Make.",
     position: "center",
+  },
+  {
+    id: "connections-create-demo",
+    targetSelector: null,
+    title: "Creating a Connection",
+    description:
+      "Watch how to create a connection...",
+    position: "left",
+    animation: {
+      autoAdvance: true,
+      pauseBetweenCommands: 400,
+      commands: [
+        { type: "tooltip-update", text: "Click 'Create Connection' to set up a new API connection." },
+        { type: "click", target: "[data-tour='create-connection-btn']" },
+        { type: "dialog-await" },
+        { type: "wait", ms: 400 },
+        { type: "tooltip-update", text: "Give your connection a name, like the tool or service it represents." },
+        { type: "move", to: "#connection-name" },
+        { type: "type", target: "#connection-name", text: "Production Zapier" },
+        { type: "wait", ms: 600 },
+        { type: "tooltip-update", text: "Add an optional description to help your team identify what this connection is for." },
+        { type: "move", to: "#connection-description" },
+        { type: "type", target: "#connection-description", text: "Zapier workflows for production deploys" },
+        { type: "wait", ms: 600 },
+        { type: "tooltip-update", text: "You can set a rate limit to control how many requests this connection can send per minute." },
+        { type: "wait", ms: 2000 },
+        { type: "tooltip-update", text: "After creating, you'll get an API key. Use it as a Bearer token in your integration. For Zapier/Make, use OAuth instead." },
+        { type: "wait", ms: 2000 },
+        { type: "dialog-close" },
+      ],
+    },
   },
   {
     id: "connections-guides",
@@ -169,6 +257,14 @@ const messagingSteps: TourStepConfig[] = [
     description:
       "Connect Slack, Discord, Microsoft Teams, or Telegram to receive approval notifications with interactive approve/reject buttons. Email and web push are enabled by default.",
     position: "bottom",
+  },
+  {
+    id: "messaging-demo",
+    targetSelector: null,
+    title: "Connecting a Channel",
+    description:
+      "Each platform has a one-click connect button. For Slack and Discord, you authorize via OAuth. For Telegram, you provide your bot token. For email, just enter the address. Once connected, approval notifications are sent automatically with interactive approve/reject buttons.",
+    position: "center",
   },
   {
     id: "messaging-routing",
@@ -443,6 +539,87 @@ const webhookDeliveriesSteps: TourStepConfig[] = [
   },
 ];
 
+// ---- Templates Page -------------------------------------------------------
+
+const templatesSteps: TourStepConfig[] = [
+  {
+    id: "templates-overview",
+    targetSelector: null,
+    title: "Approval Templates",
+    description:
+      "Templates pre-configure approval requests so your team doesn't have to fill in the same fields every time. When a template is selected in n8n, Zapier, or Make, its defaults are applied server-side.",
+    position: "center",
+  },
+  {
+    id: "templates-create-demo",
+    targetSelector: null,
+    title: "Creating a Template",
+    description:
+      "Watch how to create a template step by step...",
+    position: "left",
+    animation: {
+      autoAdvance: true,
+      pauseBetweenCommands: 350,
+      commands: [
+        { type: "tooltip-update", text: "Click 'Create Template' to open the template builder." },
+        { type: "click", target: "[data-tour='create-template-btn']" },
+        { type: "dialog-await" },
+        { type: "wait", ms: 400 },
+
+        // Select target app
+        { type: "tooltip-update", text: "First, choose which platform this template is for. This controls which fields are shown." },
+        { type: "select-open", trigger: "#template-target-app" },
+        { type: "wait", ms: 300 },
+        { type: "select-pick", item: "[role='option']:has(> span:first-child)" },
+        { type: "wait", ms: 500 },
+
+        // Type the name
+        { type: "tooltip-update", text: "Give it a descriptive name. This appears in the template dropdown in your integration." },
+        { type: "move", to: "#template-name" },
+        { type: "type", target: "#template-name", text: "Production Deploy Approval" },
+        { type: "wait", ms: 500 },
+
+        // Type title pattern
+        { type: "tooltip-update", text: "Set a default title. Use {placeholders} for dynamic values like service names." },
+        { type: "move", to: "#template-title-pattern" },
+        { type: "type", target: "#template-title-pattern", text: "Deploy {service} to production" },
+        { type: "wait", ms: 500 },
+
+        // Type description
+        { type: "tooltip-update", text: "Add a description to provide context for reviewers." },
+        { type: "move", to: "#template-description" },
+        { type: "type", target: "#template-description", text: "Requires approval before deploying to production environment" },
+        { type: "wait", ms: 500 },
+
+        // Select priority
+        { type: "tooltip-update", text: "Set a default priority. This is applied automatically to every request using this template." },
+        { type: "select-open", trigger: "#template-priority" },
+        { type: "wait", ms: 300 },
+        { type: "select-pick", item: "[role='option']:nth-child(3)" },
+        { type: "wait", ms: 500 },
+
+        // Show approvers field
+        { type: "tooltip-update", text: "Assign specific approvers. If set, these override the route's default approvers for requests using this template." },
+        { type: "move", to: "#template-approvers" },
+        { type: "wait", ms: 2000 },
+
+        // Wrap up
+        { type: "tooltip-update", text: "That's it! Click 'Create Template' to save. Your team can now select this template when creating approval requests." },
+        { type: "wait", ms: 2000 },
+        { type: "dialog-close" },
+      ],
+    },
+  },
+  {
+    id: "templates-override",
+    targetSelector: null,
+    title: "How Templates Work",
+    description:
+      "When a request uses a template, the template's settings (title, priority, approvers) override both the route defaults and any values left blank in the integration step. Templates are powerful for standardizing approval workflows across your team.",
+    position: "center",
+  },
+];
+
 // ---- All Page Tours -------------------------------------------------------
 
 export const PAGE_TOURS: PageTourConfig[] = [
@@ -451,6 +628,7 @@ export const PAGE_TOURS: PageTourConfig[] = [
   { pageId: "requests", pathname: "/requests", pageName: "Requests", docsPath: "/docs/approvals", steps: requestsSteps },
   { pageId: "routes", pathname: "/requests/routes", pageName: "Routes", docsPath: "/docs/approvals", steps: routesSteps },
   { pageId: "rules", pathname: "/requests/rules", pageName: "Rules", docsPath: "/docs/rules", steps: rulesSteps },
+  { pageId: "templates", pathname: "/requests/templates", pageName: "Templates", docsPath: "/docs/approvals", steps: templatesSteps },
   { pageId: "connections", pathname: "/requests/connections", pageName: "Connections", docsPath: "/docs/integrations", steps: connectionsSteps },
   { pageId: "messaging", pathname: "/requests/messaging", pageName: "Messaging", docsPath: "/docs/notifications", steps: messagingSteps },
   { pageId: "analytics", pathname: "/requests/analytics", pageName: "Analytics", docsPath: "/docs/approvals", steps: analyticsSteps },
@@ -481,7 +659,7 @@ export const FULL_TOUR_ORDER = [
   // Org section
   "overview", "organizations", "teams", "members", "invites", "roles", "org-settings", "billing",
   // Requests section
-  "requests", "routes", "rules", "connections", "messaging", "analytics", "sla", "audit-log",
+  "requests", "routes", "rules", "templates", "connections", "messaging", "analytics", "sla", "audit-log",
   // Playground
   "playground", "webhook-deliveries",
   // Settings

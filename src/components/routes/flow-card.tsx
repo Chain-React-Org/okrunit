@@ -502,6 +502,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
       <CardContent className="space-y-0">
         {/* Header - always visible */}
         <button
+          data-tour="flow-expand-btn"
           onClick={() => setExpanded(!expanded)}
           className="flex w-full items-center gap-3 text-left cursor-pointer"
         >
