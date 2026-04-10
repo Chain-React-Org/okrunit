@@ -3,17 +3,18 @@
   "description": "Log an activity in OKRunit for audit and tracking purposes. This does not create an approval request — the scenario continues immediately.",
   "actionType": "create",
 
-  "parameters": [
+  "expect": [
     {
       "name": "template_id",
       "type": "select",
+      "mappable": false,
       "mode": "edit",
       "label": "Template",
       "required": false,
       "options": {
         "store": "rpc://listTemplates"
       },
-      "help": "Select a template to pre-fill fields like priority, action type, and assigned approvers. Any fields you fill in below will override the template defaults."
+      "help": "Select a template to apply server-side defaults. Any field you fill in below will override the template."
     },
     {
       "name": "title",

@@ -44,6 +44,10 @@ function getRoleHierarchy(minRole: string): string[] {
   }
 }
 
+const createApprovalDraftSchema = createApprovalSchema.extend({
+  title: z.string().min(1).max(500).optional(),
+});
+
 // ---- POST /api/v1/approvals -----------------------------------------------
 
 export async function POST(request: Request) {
@@ -157,7 +161,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const validated = createApprovalSchema.parse(body);
+    const validated = createApprovalDraftSchema.parse(body);
 
     // 5a. Apply template defaults (if template_id is provided)
     if (validated.template_id) {
@@ -171,6 +175,7 @@ export async function POST(request: Request) {
 
       if (template) {
         // Apply template defaults for fields not explicitly provided in the request
+        if (!validated.title && template.title_pattern) validated.title = template.title_pattern;
         if (!validated.action_type && template.action_type) validated.action_type = template.action_type;
         if (!validated.priority && template.default_priority) validated.priority = template.default_priority as "low" | "medium" | "high" | "critical";
         if (!validated.assigned_approvers && template.assigned_approvers?.length) validated.assigned_approvers = template.assigned_approvers;
@@ -192,7 +197,18 @@ export async function POST(request: Request) {
       }
     }
 
-    // 5b. Auto-detect source from OAuth client name when not explicitly provided
+    // 5b. Ensure a title exists after template defaults are applied.
+    if (!validated.title) {
+      if (validated.source === "make") {
+        validated.title = validated.is_log
+          ? "Activity log from Make"
+          : "Approval request from Make";
+      } else {
+        throw new ApiError(400, "Title is required unless provided by the selected template");
+      }
+    }
+
+    // 5c. Auto-detect source from OAuth client name when not explicitly provided
     let autoDetectedSource: string | null = null;
     let oauthClientName: string | null = null;
     if (auth.type === "oauth") {
@@ -214,7 +230,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 5c. Build created_by info
+    // 5d. Build created_by info
     let createdBy: Record<string, unknown> | null = null;
     if (auth.type === "api_key") {
       createdBy = {

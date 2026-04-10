@@ -3,7 +3,7 @@
   "description": "Search for approval requests with filters.",
   "actionType": "search",
 
-  "parameters": [
+  "expect": [
     {
       "name": "status",
       "type": "select",

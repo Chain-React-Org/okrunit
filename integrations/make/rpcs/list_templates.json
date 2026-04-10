@@ -1,6 +1,13 @@
 {
   "url": "/api/v1/templates?target_app=make",
   "method": "GET",
+  "headers": {
+    "Authorization": "Bearer {{connection.accessToken}}"
+  },
+  "qs": {
+    "client_id": "{{common.clientId}}",
+    "client_secret": "{{common.clientSecret}}"
+  },
   "response": {
     "iterate": "{{body.data}}",
     "output": {

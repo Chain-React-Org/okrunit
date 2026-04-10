@@ -4,18 +4,28 @@ const path = require('path');
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 const MODULES_DIR = path.resolve(__dirname, '..', 'modules');
+const RPCS_DIR = path.resolve(__dirname, '..', 'rpcs');
+
+function inputParams(mod) {
+  return mod.expect || mod.parameters || [];
+}
 
 function loadModule(name) {
   const filePath = path.join(MODULES_DIR, `${name}.json`);
   return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 }
 
+function loadRpc(name) {
+  const filePath = path.join(RPCS_DIR, `${name}.json`);
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+}
+
 function findParam(mod, paramName) {
-  return (mod.parameters || []).find((p) => p.name === paramName);
+  return inputParams(mod).find((p) => p.name === paramName);
 }
 
 function paramNames(mod) {
-  return (mod.parameters || []).map((p) => p.name);
+  return inputParams(mod).map((p) => p.name);
 }
 
 function optionValues(param) {
@@ -130,6 +140,7 @@ const addComment = loadModule('add_comment');
 const getApproval = loadModule('get_approval');
 const listApprovals = loadModule('list_approvals');
 const approvalDecisionReceived = loadModule('approval_decision_received');
+const listTemplates = loadRpc('list_templates');
 
 // ═════════════════════════════════════════════════════════════════════════════
 //  new_approval
@@ -308,9 +319,16 @@ describe('request_approval', () => {
     expect(names).toContain('metadata');
   });
 
-  test('title parameter is not required (optional with default)', () => {
+  test('title parameter is optional so templates can supply it when left blank', () => {
     const title = findParam(requestApproval, 'title');
     expect(title.required).toBe(false);
+  });
+
+  test('template select is not mappable so the dropdown is shown by default', () => {
+    const template = findParam(requestApproval, 'template_id');
+    expect(template).toBeDefined();
+    expect(template.type).toBe('select');
+    expect(template.mappable).toBe(false);
   });
 
   test('callback_url parameter type is url', () => {
@@ -321,6 +339,10 @@ describe('request_approval', () => {
 
   test('source is set to "make" in request body', () => {
     expect(requestApproval.body.source).toBe('make');
+  });
+
+  test('request body does not force a default title so templates can provide it', () => {
+    expect(requestApproval.body.title).toBe('{{parameters.title}}');
   });
 
   test('idempotency key format matches spec: make-{title}-{timestamp}', () => {
@@ -641,6 +663,28 @@ describe('cross-module consistency', () => {
     });
   });
 
+  test('non-trigger modules use mappable parameters instead of legacy static parameters', () => {
+    [
+      requestApproval,
+      addComment,
+      getApproval,
+      listApprovals,
+      loadModule('create_activity_log'),
+      loadModule('universal'),
+    ].forEach((m) => {
+      expect(m.expect).toBeDefined();
+      expect(m.parameters).toBeUndefined();
+    });
+  });
+
+  test('template selects stay non-mappable so Make shows dropdowns instead of map mode', () => {
+    [requestApproval, loadModule('create_activity_log')].forEach((m) => {
+      const template = findParam(m, 'template_id');
+      expect(template).toBeDefined();
+      expect(template.mappable).toBe(false);
+    });
+  });
+
   test('all modules have labels and descriptions', () => {
     const modules = [
       newApproval, approvalDecided, requestApproval,
@@ -715,6 +759,41 @@ describe('cross-module consistency', () => {
       const raw = fs.readFileSync(filePath, 'utf-8');
       expect(() => JSON.parse(raw)).not.toThrow();
     });
+
+    const rpcNames = ['check_auth', 'list_templates'];
+    rpcNames.forEach((name) => {
+      const filePath = path.join(RPCS_DIR, `${name}.json`);
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      expect(() => JSON.parse(raw)).not.toThrow();
+    });
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  rpcs/list_templates.json
+// ═════════════════════════════════════════════════════════════════════════════
+
+describe('list_templates rpc', () => {
+  test('loads templates from the Make-scoped templates endpoint', () => {
+    expect(listTemplates.url).toBe('/api/v1/templates?target_app=make');
+    expect(listTemplates.method).toBe('GET');
+  });
+
+  test('includes client credentials fallback for module-context RPC auth', () => {
+    expect(listTemplates.qs).toBeDefined();
+    expect(listTemplates.qs.client_id).toBe('{{common.clientId}}');
+    expect(listTemplates.qs.client_secret).toBe('{{common.clientSecret}}');
+  });
+
+  test('sends an explicit bearer token instead of relying on inherited RPC auth', () => {
+    expect(listTemplates.headers).toBeDefined();
+    expect(listTemplates.headers.Authorization).toBe('Bearer {{connection.accessToken}}');
+  });
+
+  test('maps template name and id for dropdown options', () => {
+    expect(listTemplates.response.iterate).toBe('{{body.data}}');
+    expect(listTemplates.response.output.label).toBe('{{item.name}}');
+    expect(listTemplates.response.output.value).toBe('{{item.id}}');
   });
 });
 

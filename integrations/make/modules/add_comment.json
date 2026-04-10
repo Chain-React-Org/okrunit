@@ -3,7 +3,7 @@
   "description": "Add a comment to an existing approval request.",
   "actionType": "create",
 
-  "parameters": [
+  "expect": [
     {
       "name": "approval_id",
       "type": "text",
