@@ -2,7 +2,7 @@
   "label": "Make an API call",
   "description": "Perform an arbitrary authorized API call to the OKRunit API. This is useful for endpoints not covered by other modules.",
   "actionType": "universal",
-  "parameters": [
+  "expect": [
     {
       "name": "url",
       "type": "text",

@@ -161,10 +161,10 @@ export function TemplatesPage({ orgId }: TemplatesPageProps) {
           <p className="text-sm text-muted-foreground mt-1">
             Pre-configured templates to speed up approval request creation.
             When a template is selected in n8n, Zapier, or Make, its defaults (title, priority, action type, approvers) are applied server-side.
-            Only fields explicitly set in the integration node will override the template values.
+            Leave matching fields blank in the integration step if you want the template values to win.
           </p>
         </div>
-        <Button onClick={handleCreate} className="gap-1.5">
+        <Button data-tour="create-template-btn" onClick={handleCreate} className="gap-1.5">
           <Plus className="size-4" />
           Create Template
         </Button>

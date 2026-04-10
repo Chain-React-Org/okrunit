@@ -24,6 +24,7 @@ interface OnboardingTourState {
 
   // Test data
   testRequestId: string | null;
+  testFlowId: string | null;
   synced: boolean;
   userId: string | null;
 
@@ -44,6 +45,7 @@ interface OnboardingTourState {
 
   // Shared
   setTestRequestId: (id: string | null) => void;
+  setTestFlowId: (id: string | null) => void;
   resetSync: () => void;
   syncFromServer: () => Promise<void>;
 }
@@ -66,6 +68,14 @@ function deleteTestRequest() {
     .catch(() => {});
 }
 
+function deleteTestFlow() {
+  fetch("/api/v1/onboarding?type=flow", { method: "DELETE" })
+    .then(() => {
+      window.dispatchEvent(new CustomEvent("onboarding-test-deleted"));
+    })
+    .catch(() => {});
+}
+
 export const useOnboardingTourStore = create<OnboardingTourState>()(
   persist(
     (set, get) => ({
@@ -82,6 +92,7 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
       pausedWasFullTour: false,
       hasSeenPauseHint: false,
       testRequestId: null,
+      testFlowId: null,
       synced: false,
       userId: null,
 
@@ -90,12 +101,11 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
         saveToServer({ currentStep: 0, tourCompleted: false, tourDismissed: false });
       },
       pauseFullTour: () => {
-        const { activePageId, currentStepInPage, fullTourActive, testRequestId } = get();
-        // Clean up test request if one exists
-        if (testRequestId) {
-          deleteTestRequest();
-        }
-        set({ fullTourActive: false, activePageId: null, testRequestId: null, tourPaused: true, pausedPageId: activePageId, pausedStepIndex: currentStepInPage, pausedWasFullTour: fullTourActive });
+        const { activePageId, currentStepInPage, fullTourActive, testRequestId, testFlowId } = get();
+        // Clean up test data if it exists
+        if (testRequestId) deleteTestRequest();
+        if (testFlowId) deleteTestFlow();
+        set({ fullTourActive: false, activePageId: null, testRequestId: null, testFlowId: null, tourPaused: true, pausedPageId: activePageId, pausedStepIndex: currentStepInPage, pausedWasFullTour: fullTourActive });
       },
       resumeTour: (overridePageId?: string) => {
         const { pausedPageId, pausedStepIndex, pausedWasFullTour } = get();
@@ -112,13 +122,15 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
         set((s) => ({ fullTourPageIndex: s.fullTourPageIndex + 1, currentStepInPage: 0 }));
       },
       completeFullTour: () => {
-        if (get().testRequestId) fetch("/api/v1/onboarding", { method: "DELETE" }).catch(() => {});
-        set({ fullTourActive: false, activePageId: null, tourCompleted: true, testRequestId: null, tourPaused: false, pausedPageId: null });
+        if (get().testRequestId) deleteTestRequest();
+        if (get().testFlowId) deleteTestFlow();
+        set({ fullTourActive: false, activePageId: null, tourCompleted: true, testRequestId: null, testFlowId: null, tourPaused: false, pausedPageId: null });
         saveToServer({ tourCompleted: true, tourDismissed: false });
       },
       dismissFullTour: () => {
-        if (get().testRequestId) fetch("/api/v1/onboarding", { method: "DELETE" }).catch(() => {});
-        set({ fullTourActive: false, activePageId: null, tourDismissed: true, testRequestId: null, tourPaused: false, pausedPageId: null });
+        if (get().testRequestId) deleteTestRequest();
+        if (get().testFlowId) deleteTestFlow();
+        set({ fullTourActive: false, activePageId: null, tourDismissed: true, testRequestId: null, testFlowId: null, tourPaused: false, pausedPageId: null });
         saveToServer({ tourCompleted: false, tourDismissed: true });
       },
 
@@ -126,30 +138,29 @@ export const useOnboardingTourStore = create<OnboardingTourState>()(
       nextStepInPage: () => set((s) => ({ currentStepInPage: s.currentStepInPage + 1 })),
       prevStepInPage: () => set((s) => ({ currentStepInPage: Math.max(0, s.currentStepInPage - 1) })),
       completePageTour: () => {
-        const { activePageId, touredPages, fullTourActive, testRequestId } = get();
-        if (activePageId === "requests" && testRequestId) {
-          deleteTestRequest();
-        }
+        const { activePageId, touredPages, fullTourActive, testRequestId, testFlowId } = get();
+        if (activePageId === "requests" && testRequestId) deleteTestRequest();
+        if (activePageId === "routes" && testFlowId) deleteTestFlow();
         const updated = activePageId && !touredPages.includes(activePageId)
           ? [...touredPages, activePageId]
           : touredPages;
-        set({ touredPages: updated, activePageId: null, currentStepInPage: 0, testRequestId: null });
+        set({ touredPages: updated, activePageId: null, currentStepInPage: 0, testRequestId: null, testFlowId: null });
         if (updated !== touredPages) saveToServer({ touredPages: updated });
         if (fullTourActive) get().advanceFullTour();
       },
       skipPageTour: () => {
-        const { activePageId, touredPages, testRequestId } = get();
-        if (activePageId === "requests" && testRequestId) {
-          deleteTestRequest();
-        }
+        const { activePageId, touredPages, testRequestId, testFlowId } = get();
+        if (activePageId === "requests" && testRequestId) deleteTestRequest();
+        if (activePageId === "routes" && testFlowId) deleteTestFlow();
         const updated = activePageId && !touredPages.includes(activePageId)
           ? [...touredPages, activePageId]
           : touredPages;
-        set({ touredPages: updated, activePageId: null, currentStepInPage: 0, testRequestId: null });
+        set({ touredPages: updated, activePageId: null, currentStepInPage: 0, testRequestId: null, testFlowId: null });
         if (updated !== touredPages) saveToServer({ touredPages: updated });
       },
 
       setTestRequestId: (id) => set({ testRequestId: id }),
+      setTestFlowId: (id) => set({ testFlowId: id }),
       resetSync: () => set({ synced: false, tourCompleted: false, tourDismissed: false }),
       syncFromServer: async () => {
         if (get().synced) return;

@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useOnboardingTourStore } from "@/stores/onboarding-tour-store";
 import { PAGE_TOURS, FULL_TOUR_ORDER, findPageTour } from "@/components/onboarding/tour-steps";
 import { TourTooltip } from "@/components/onboarding/tour-tooltip";
+import { TourCursor } from "@/components/onboarding/tour-cursor";
+import { TourAnimationEngine } from "@/components/onboarding/tour-animation-engine";
 
 export function TourController() {
   const router = useRouter();
@@ -16,6 +18,7 @@ export function TourController() {
     activePageId,
     currentStepInPage,
     testRequestId,
+    testFlowId,
     touredPages,
     tourDismissed,
     tourCompleted,
@@ -31,8 +34,17 @@ export function TourController() {
     completeFullTour,
     dismissFullTour,
     setTestRequestId,
+    setTestFlowId,
     syncFromServer,
   } = useOnboardingTourStore();
+
+  // Animation state
+  const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
+  const [cursorVisible, setCursorVisible] = useState(false);
+  const [cursorClicking, setCursorClicking] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [overrideDescription, setOverrideDescription] = useState<string | undefined>();
+  const engineRef = useRef<TourAnimationEngine | null>(null);
 
   // Sync tour state from server on mount. This runs on every dashboard page
   // (not just overview) so the synced flag is set before auto-start fires.
@@ -80,6 +92,20 @@ export function TourController() {
       .catch(() => {});
   }, [activePageId, testRequestId, setTestRequestId]);
 
+  // Create test flow for routes page
+  useEffect(() => {
+    if (activePageId !== "routes" || testFlowId) return;
+    fetch("/api/v1/onboarding?type=flow", { method: "POST" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.data?.id) {
+          setTestFlowId(data.data.id);
+          router.refresh();
+        }
+      })
+      .catch(() => {});
+  }, [activePageId, testFlowId, setTestFlowId, router]);
+
   // Clear paused state when navigating to a different page
   const prevPathname = useRef(pathname);
   useEffect(() => {
@@ -105,7 +131,58 @@ export function TourController() {
     }
   }, [synced, pathname, fullTourActive, activePageId, tourPaused, tourCompleted, tourDismissed, touredPages, startPageTour]);
 
+  // ---------- Animation Engine Management ----------------------------------
+
   const currentStep = currentPageTour?.steps[currentStepInPage];
+
+  // Start animation engine when a step has an animation config
+  useEffect(() => {
+    if (!currentStep?.animation) {
+      // No animation on this step. Clean up any previous engine.
+      if (engineRef.current) {
+        engineRef.current.abort();
+        engineRef.current = null;
+      }
+      setIsAnimating(false);
+      setCursorVisible(false);
+      setOverrideDescription(undefined);
+      return;
+    }
+
+    // Create and start the engine
+    const engine = new TourAnimationEngine(currentStep.animation, {
+      onCursorMove: (x, y) => {
+        setCursorVisible(true);
+        setCursorPos({ x, y });
+      },
+      onCursorClick: () => setCursorClicking(true),
+      onCursorClickEnd: () => setCursorClicking(false),
+      onTooltipUpdate: (text) => setOverrideDescription(text),
+      onComplete: () => {
+        setIsAnimating(false);
+        setCursorVisible(false);
+        setOverrideDescription(undefined);
+        // Auto-advance to next step if configured
+        if (currentStep.animation?.autoAdvance) {
+          nextStepInPage();
+        }
+      },
+    });
+
+    engineRef.current = engine;
+    setIsAnimating(true);
+
+    // Small delay so the tooltip renders first, then animation starts
+    const t = setTimeout(() => engine.start(), 600);
+    return () => {
+      clearTimeout(t);
+      engine.abort();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep?.id]);
+
+  // ---------- Handlers -----------------------------------------------------
+
   const isFirstStep = currentStepInPage === 0;
   const isLastStep = currentPageTour ? currentStepInPage === currentPageTour.steps.length - 1 : false;
 
@@ -120,16 +197,30 @@ export function TourController() {
   const handleBack = useCallback(() => prevStepInPage(), [prevStepInPage]);
 
   const handleClose = useCallback(() => {
+    // Stop any running animation
+    if (engineRef.current) {
+      engineRef.current.abort();
+      engineRef.current = null;
+    }
+    setIsAnimating(false);
+    setCursorVisible(false);
+
     if (fullTourActive) {
-      // Full tour: pause so user can resume via header button.
       pauseFullTour();
     } else {
-      // Per-page tour: treat as skip so it doesn't repeat.
       skipPageTour();
     }
   }, [fullTourActive, pauseFullTour, skipPageTour]);
 
   const handleSkip = useCallback(() => {
+    // Stop any running animation
+    if (engineRef.current) {
+      engineRef.current.abort();
+      engineRef.current = null;
+    }
+    setIsAnimating(false);
+    setCursorVisible(false);
+
     if (fullTourActive) {
       dismissFullTour();
       setTimeout(() => router.push("/org/overview"), 100);
@@ -138,8 +229,21 @@ export function TourController() {
     }
   }, [fullTourActive, dismissFullTour, skipPageTour, router]);
 
+  const handleSkipAnimation = useCallback(() => {
+    if (engineRef.current) {
+      engineRef.current.abort();
+      engineRef.current = null;
+    }
+    setIsAnimating(false);
+    setCursorVisible(false);
+    setOverrideDescription(undefined);
+    // Advance past the animation step
+    handleNext();
+  }, [handleNext]);
+
+  // ---------- Render -------------------------------------------------------
+
   if (!currentStep || !currentPageTour) {
-    // Show pause hint when tour is paused and user hasn't seen it before
     if (tourPaused && !hasSeenPauseHint) {
       return <PauseHint />;
     }
@@ -151,20 +255,31 @@ export function TourController() {
     : currentStep.actionLabel ?? "Next";
 
   return (
-    <TourTooltip
-      targetSelector={currentStep.targetSelector}
-      title={currentStep.title}
-      description={currentStep.description}
-      position={currentStep.position}
-      highlightMode={currentStep.highlightMode}
-      actionLabel={actionLabel}
-      stepNumber={currentStepInPage + 1}
-      totalSteps={currentPageTour.steps.length}
-      onNext={handleNext}
-      onBack={isFirstStep ? undefined : handleBack}
-      onClose={handleClose}
-      onSkip={handleSkip}
-    />
+    <>
+      <TourTooltip
+        targetSelector={currentStep.targetSelector}
+        title={currentStep.title}
+        description={currentStep.description}
+        position={currentStep.position}
+        highlightMode={currentStep.highlightMode}
+        actionLabel={actionLabel}
+        stepNumber={currentStepInPage + 1}
+        totalSteps={currentPageTour.steps.length}
+        onNext={handleNext}
+        onBack={isFirstStep ? undefined : handleBack}
+        onClose={handleClose}
+        onSkip={handleSkip}
+        isAnimating={isAnimating}
+        overrideDescription={overrideDescription}
+        onSkipAnimation={handleSkipAnimation}
+      />
+      <TourCursor
+        x={cursorPos.x}
+        y={cursorPos.y}
+        visible={cursorVisible}
+        clicking={cursorClicking}
+      />
+    </>
   );
 }
 

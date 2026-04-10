@@ -288,7 +288,7 @@ export function RulesManager({ initialRules, teams, connections }: RulesManagerP
             Conditional routing rules evaluated in order. First match wins.
           </p>
         </div>
-        <Button size="sm" onClick={openCreate} className="gap-1.5 h-8">
+        <Button data-tour="create-rule-btn" size="sm" onClick={openCreate} className="gap-1.5 h-8">
           <Plus className="size-3.5" />
           New Rule
         </Button>
@@ -402,8 +402,9 @@ export function RulesManager({ initialRules, teams, connections }: RulesManagerP
           <div className="space-y-5">
             {/* Name */}
             <div className="space-y-2">
-              <Label>Rule Name</Label>
+              <Label htmlFor="rule-name">Rule Name</Label>
               <Input
+                id="rule-name"
                 placeholder="e.g. Critical deploys need 2 approvers"
                 value={form.name}
                 onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}

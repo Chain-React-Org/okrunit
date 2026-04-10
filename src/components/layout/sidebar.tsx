@@ -65,19 +65,25 @@ export function Sidebar({ pendingCount: initialPendingCount, userRole, isAppAdmi
   // Deduplicate events: track IDs recently processed to avoid double-counting
   // when both the realtime subscription and the DOM event fire for the same record.
   const processedIds = useRef(new Set<string>());
+  // Suppress fetchCount for a short window after optimistic updates to prevent
+  // a stale DB read from overwriting the optimistic value (which would then
+  // cause the real realtime event to be deduped, leaving the count stuck).
+  const suppressFetchUntil = useRef(0);
 
   const processEvent = useCallback((eventKey: string, apply: () => void) => {
     if (processedIds.current.has(eventKey)) return;
     processedIds.current.add(eventKey);
     apply();
+    // Suppress fetchCount for 8s so a stale DB read cannot overwrite the optimistic value
+    suppressFetchUntil.current = Date.now() + 8000;
     // Clear after 5s to avoid unbounded growth
     setTimeout(() => processedIds.current.delete(eventKey), 5000);
   }, []);
 
-  // Sync with server value when it changes (e.g. after navigation)
-  useEffect(() => {
-    setLivePendingCount(initialPendingCount);
-  }, [initialPendingCount]);
+  // The initial server value seeds useState above. After mount, the client
+  // fetchCount (runs immediately) and realtime events are the source of truth.
+  // Syncing initialPendingCount here caused a race: a stale revalidation from
+  // a prior approval could overwrite the already-decremented client count.
 
   // Listen for onboarding test request cleanup (admin deletes may not trigger Realtime)
   useEffect(() => {
@@ -148,6 +154,10 @@ export function Sidebar({ pendingCount: initialPendingCount, userRole, isAppAdmi
 
     const fetchCount = async () => {
       if (document.visibilityState !== "visible") return;
+      // Skip if a recent optimistic update is in flight. A stale DB read
+      // during this window would overwrite the optimistic value and the
+      // subsequent realtime event would be deduped, leaving the count stuck.
+      if (Date.now() < suppressFetchUntil.current) return;
       try {
         const supabase = createClient();
         const { count } = await supabase

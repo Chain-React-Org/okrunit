@@ -3,24 +3,25 @@
   "description": "Create an approval request and pause this scenario until a human approves or rejects. Use the callback URL from a Make webhook to resume your scenario after the decision.",
   "actionType": "create",
 
-  "parameters": [
+  "expect": [
     {
       "name": "template_id",
       "type": "select",
+      "mappable": false,
       "mode": "edit",
       "label": "Template",
       "required": false,
       "options": {
         "store": "rpc://listTemplates"
       },
-      "help": "Select a template to pre-fill fields like priority, action type, and assigned approvers. Any fields you fill in below will override the template defaults."
+      "help": "Select a template to apply server-side defaults. Leave the title or callback URL blank if you want the template to supply them. Any field you fill in below will override the template."
     },
     {
       "name": "title",
       "type": "text",
       "label": "What needs approval?",
       "required": false,
-      "help": "A short description of what you want approved (e.g. 'Send invoice #1234 to client'). If left blank, you can edit the title in your OKRunit dashboard at okrunit.com."
+      "help": "A short description of what you want approved (e.g. 'Send invoice #1234 to client'). Leave blank to use the selected template title. If no template supplies one, OKRunit will use a generic Make title."
     },
     {
       "name": "description",
@@ -56,7 +57,7 @@
   "type": "json",
   "body": {
     "template_id": "{{parameters.template_id}}",
-    "title": "{{ifempty(parameters.title, 'Approval request from Make')}}",
+    "title": "{{parameters.title}}",
     "description": "{{parameters.description}}",
     "callback_url": "{{parameters.callback_url}}",
     "metadata": "{{parameters.metadata}}",

@@ -5,7 +5,7 @@
 // back to an in-memory Map when Redis is not available (dev/single-instance).
 // ---------------------------------------------------------------------------
 
-import { getRedisClient } from "@/lib/redis";
+import { getRedisClient, prefixKey } from "@/lib/redis";
 
 // ---- In-memory fallback ---------------------------------------------------
 
@@ -71,7 +71,7 @@ async function checkRedisRateLimit(
   const redis = getRedisClient();
   if (!redis) return checkMemoryRateLimit(key, config);
 
-  const redisKey = `rl:${key}`;
+  const redisKey = prefixKey(`rl:${key}`);
   const windowSeconds = config.windowSeconds;
 
   try {

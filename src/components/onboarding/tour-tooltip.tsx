@@ -18,6 +18,12 @@ interface TourTooltipProps {
   onBack?: () => void;
   onClose: () => void;
   onSkip: () => void;
+  /** When true, an animated demo is playing. Shows "Skip Demo" instead of Next. */
+  isAnimating?: boolean;
+  /** Dynamic description override during animations */
+  overrideDescription?: string;
+  /** Called when user clicks "Skip Demo" during an animation */
+  onSkipAnimation?: () => void;
 }
 
 export function TourTooltip({
@@ -33,32 +39,39 @@ export function TourTooltip({
   onBack,
   onClose,
   onSkip,
+  isAnimating = false,
+  overrideDescription,
+  onSkipAnimation,
 }: TourTooltipProps) {
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const isFirstStep = useRef(true);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Reset ready state when step changes (targetSelector changes)
-  useEffect(() => {
-    setReady(false);
-  }, [targetSelector]);
-
   // Find and track the target element
   useEffect(() => {
     if (!targetSelector) {
       setTargetRect(null);
-      // For centered tooltips (no target), mark ready after a short delay
-      const t = setTimeout(() => setReady(true), 100);
-      return () => clearTimeout(t);
+      // For centered tooltips (no target), mark ready immediately on
+      // subsequent steps so the tooltip never disappears between steps.
+      if (isFirstStep.current) {
+        const t = setTimeout(() => { setReady(true); isFirstStep.current = false; }, 100);
+        return () => clearTimeout(t);
+      }
+      setReady(true);
+      return;
     }
 
     let timeout: ReturnType<typeof setTimeout>;
     let attempts = 0;
+    // On subsequent steps, keep ready=true so the tooltip stays visible
+    // and smoothly transitions to the new position.
+    const keepVisible = !isFirstStep.current;
 
     function findTarget() {
       const el = document.querySelector(targetSelector as string);
@@ -70,19 +83,33 @@ export function TourTooltip({
           setTimeout(() => {
             setTargetRect(el.getBoundingClientRect());
             setReady(true);
+            isFirstStep.current = false;
           }, 400);
         } else {
-          // Wait for animations to complete before showing
-          setTimeout(() => {
-            // Re-read position after animations settle
+          // On first step, wait for page animations to settle.
+          // On later steps, update position immediately (CSS transitions handle the move).
+          if (keepVisible) {
             setTargetRect(el.getBoundingClientRect());
             setReady(true);
-          }, 300);
+          } else {
+            setTimeout(() => {
+              setTargetRect(el.getBoundingClientRect());
+              setReady(true);
+              isFirstStep.current = false;
+            }, 300);
+          }
         }
         return;
       }
       attempts++;
-      if (attempts < 60) timeout = setTimeout(findTarget, 50);
+      if (attempts < 60) {
+        timeout = setTimeout(findTarget, 50);
+      } else {
+        // Target not found after retries. Show tooltip centered instead of disappearing.
+        setTargetRect(null);
+        setReady(true);
+        isFirstStep.current = false;
+      }
     }
 
     findTarget();
@@ -259,7 +286,7 @@ export function TourTooltip({
           <div className="absolute right-0 bg-black/40 pointer-events-auto" style={{ top: targetRect.top, height: targetRect.height, left: targetRect.right }} onClick={onClose} />
         </div>
       ) : (
-        <div className="fixed inset-0 z-[9998] bg-black/40 animate-in fade-in duration-200" onClick={onClose} />
+        <div className={`fixed inset-0 z-[9998] ${isAnimating ? "bg-black/20" : "bg-black/40"} animate-in fade-in duration-200`} onClick={onClose} />
       )}
 
       {/* Highlight ring around target, clamped so it doesn't go off-screen */}
@@ -288,19 +315,27 @@ export function TourTooltip({
               <X className="size-4" />
             </button>
           </div>
-          <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
+          <p className="text-xs leading-relaxed text-muted-foreground transition-opacity duration-200">{overrideDescription ?? description}</p>
           <div className="flex items-center justify-between mt-4">
             <button onClick={onSkip} className="text-xs text-muted-foreground hover:text-foreground">Skip tour</button>
             <div className="flex items-center gap-2">
-              {onBack && (
-                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onBack}>
-                  Back
+              {isAnimating ? (
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onSkipAnimation}>
+                  Skip Demo
                 </Button>
+              ) : (
+                <>
+                  {onBack && (
+                    <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onBack}>
+                      Back
+                    </Button>
+                  )}
+                  <Button size="sm" className="h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={onNext}>
+                    {actionLabel}
+                    <ArrowRight className="size-3" />
+                  </Button>
+                </>
               )}
-              <Button size="sm" className="h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={onNext}>
-                {actionLabel}
-                <ArrowRight className="size-3" />
-              </Button>
             </div>
           </div>
           {/* Progress bar, integrated inside the card padding */}

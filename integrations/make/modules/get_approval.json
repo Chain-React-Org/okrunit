@@ -2,7 +2,7 @@
   "label": "Search approval",
   "description": "Fetch a single approval request by its ID.",
   "actionType": "search",
-  "parameters": [
+  "expect": [
     {
       "name": "approval_id",
       "type": "text",

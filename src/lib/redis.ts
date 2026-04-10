@@ -10,6 +10,9 @@ import { Redis } from "@upstash/redis";
 
 let client: Redis | null = null;
 
+/** All Redis keys are automatically prefixed with this to avoid collisions when sharing a database. */
+const KEY_PREFIX = "okrunit:";
+
 export function getRedisClient(): Redis | null {
   if (client) return client;
 
@@ -18,8 +21,16 @@ export function getRedisClient(): Redis | null {
 
   if (!url || !token) return null;
 
-  client = new Redis({ url, token });
+  client = new Redis({ url, token, automaticDeserialization: true });
   return client;
+}
+
+/**
+ * Prefix a key with the app namespace. Use this for all Redis operations
+ * to avoid collisions when sharing the database with other apps.
+ */
+export function prefixKey(key: string): string {
+  return `${KEY_PREFIX}${key}`;
 }
 
 /**

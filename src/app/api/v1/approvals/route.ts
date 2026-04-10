@@ -44,6 +44,10 @@ function getRoleHierarchy(minRole: string): string[] {
   }
 }
 
+const createApprovalDraftSchema = createApprovalSchema.extend({
+  title: z.string().min(1).max(500).optional(),
+});
+
 // ---- POST /api/v1/approvals -----------------------------------------------
 
 export async function POST(request: Request) {
@@ -157,9 +161,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const validated = createApprovalSchema.parse(body);
+    const validated = createApprovalDraftSchema.parse(body);
 
     // 5a. Apply template defaults (if template_id is provided)
+    console.log("[Approvals] template_id:", validated.template_id ?? "none", "source:", validated.source ?? "unknown");
     if (validated.template_id) {
       const { data: template } = await admin
         .from("approval_templates")
@@ -169,12 +174,16 @@ export async function POST(request: Request) {
         .eq("is_active", true)
         .single();
 
+      console.log("[Approvals] Template lookup result:", template ? `found (name=${template.name}, priority=${template.default_priority}, approvers=${template.assigned_approvers?.length ?? 0})` : "NOT FOUND");
       if (template) {
         // Apply template defaults for fields not explicitly provided in the request
+        console.log("[Approvals] Before template apply:", JSON.stringify({ title: validated.title, priority: validated.priority, action_type: validated.action_type, assigned_approvers: validated.assigned_approvers, callback_url: validated.callback_url }));
+        if (!validated.title && template.title_pattern) validated.title = template.title_pattern;
         if (!validated.action_type && template.action_type) validated.action_type = template.action_type;
         if (!validated.priority && template.default_priority) validated.priority = template.default_priority as "low" | "medium" | "high" | "critical";
         if (!validated.assigned_approvers && template.assigned_approvers?.length) validated.assigned_approvers = template.assigned_approvers;
         if (!validated.callback_url && template.callback_url_pattern) validated.callback_url = template.callback_url_pattern;
+        console.log("[Approvals] After template apply:", JSON.stringify({ title: validated.title, priority: validated.priority, action_type: validated.action_type, assigned_approvers: validated.assigned_approvers, callback_url: validated.callback_url }));
 
         // Apply title pattern with metadata substitution: "Deploy {service} to {env}"
         if (template.title_pattern && validated.title === template.title_pattern) {
@@ -192,7 +201,18 @@ export async function POST(request: Request) {
       }
     }
 
-    // 5b. Auto-detect source from OAuth client name when not explicitly provided
+    // 5b. Ensure a title exists after template defaults are applied.
+    if (!validated.title) {
+      if (validated.source === "make") {
+        validated.title = validated.is_log
+          ? "Activity log from Make"
+          : "Approval request from Make";
+      } else {
+        throw new ApiError(400, "Title is required unless provided by the selected template");
+      }
+    }
+
+    // 5c. Auto-detect source from OAuth client name when not explicitly provided
     let autoDetectedSource: string | null = null;
     let oauthClientName: string | null = null;
     if (auth.type === "oauth") {
@@ -214,7 +234,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 5c. Build created_by info
+    // 5d. Build created_by info
     let createdBy: Record<string, unknown> | null = null;
     if (auth.type === "api_key") {
       createdBy = {
@@ -440,7 +460,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // 12. Determine approvers: flow defaults → request values → rule routing
+    // 12. Determine approvers: request/template values → flow defaults → rule routing
     let assignedApprovers: string[] | null = validated.assigned_approvers ?? flowAssignedApprovers ?? null;
     let requiredApprovals = assignedApprovers
       ? assignedApprovers.length
@@ -703,7 +723,7 @@ export async function POST(request: Request) {
         type: isAutoApproved ? "approval.approved" : "approval.created",
         orgId: auth.orgId,
         requestId: approval.id,
-        requestTitle: validated.title,
+        requestTitle: validated.title!,
         requestDescription: validated.description,
         requestPriority: effectivePriority,
         connectionId: connectionId ?? undefined,

@@ -223,7 +223,16 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
   // Mark all unread as read when the panel closes
   const handleOpenChange = useCallback((nextOpen: boolean) => {
     if (!nextOpen && unreadCount > 0) {
-      handleMarkAllRead();
+      // Clear badge immediately, then fire API in background
+      setUnreadCount(0);
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, is_read: true, read_at: new Date().toISOString() })),
+      );
+      fetch("/api/v1/notifications/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      }).catch(() => {});
     }
     setOpen(nextOpen);
   }, [unreadCount]); // eslint-disable-line react-hooks/exhaustive-deps
