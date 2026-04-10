@@ -244,6 +244,7 @@ export function TemplateFormDialog({
               value={form.name}
               onChange={(e) => updateField("name", e.target.value)}
               placeholder="e.g., Production Deploy"
+              className="bg-white dark:bg-card"
               required
             />
             <p className="text-xs text-muted-foreground">
@@ -261,6 +262,7 @@ export function TemplateFormDialog({
               value={form.title_pattern}
               onChange={(e) => updateField("title_pattern", e.target.value)}
               placeholder="e.g., Send invoice #1234 to client"
+              className="bg-white dark:bg-card"
             />
             <p className="text-xs text-muted-foreground">
               {(FIELD_LABELS[form.target_app] ?? FIELD_LABELS.any).titleHelp}
@@ -277,6 +279,7 @@ export function TemplateFormDialog({
               value={form.description}
               onChange={(e) => updateField("description", e.target.value)}
               placeholder={(FIELD_LABELS[form.target_app] ?? FIELD_LABELS.any).descriptionPlaceholder}
+              className="bg-white dark:bg-card"
               rows={2}
             />
           </div>
@@ -317,6 +320,7 @@ export function TemplateFormDialog({
                 value={form.action_type}
                 onChange={(e) => updateField("action_type", e.target.value)}
                 placeholder="e.g., deploy, database_change, access_request"
+                className="bg-white dark:bg-card"
               />
             </div>
           )}
@@ -332,6 +336,7 @@ export function TemplateFormDialog({
                 value={form.callback_url_pattern}
                 onChange={(e) => updateField("callback_url_pattern", e.target.value)}
                 placeholder="https://api.example.com/webhooks/approval"
+                className="bg-white dark:bg-card"
               />
               {form.target_app === "make" && (
                 <p className="text-xs text-muted-foreground">
