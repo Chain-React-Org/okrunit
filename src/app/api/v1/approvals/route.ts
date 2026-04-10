@@ -723,7 +723,7 @@ export async function POST(request: Request) {
         type: isAutoApproved ? "approval.approved" : "approval.created",
         orgId: auth.orgId,
         requestId: approval.id,
-        requestTitle: validated.title,
+        requestTitle: validated.title!,
         requestDescription: validated.description,
         requestPriority: effectivePriority,
         connectionId: connectionId ?? undefined,
