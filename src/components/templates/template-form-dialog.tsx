@@ -86,15 +86,15 @@ const FIELD_LABELS: Record<string, { title: string; description: string; titleHe
     descriptionPlaceholder: "Additional context for the reviewer",
   },
   n8n: {
-    title: "Title",
+    title: "Default Title",
     description: "Description",
-    titleHelp: "Default title when left blank in the n8n node.",
+    titleHelp: "Used when the title is left blank in the n8n node.",
     descriptionPlaceholder: "Detailed description providing context for the reviewer",
   },
   any: {
-    title: "Title Pattern",
+    title: "Default Title",
     description: "Description",
-    titleHelp: "Use {variable} placeholders, e.g., \"Deploy {service} to {environment}\"",
+    titleHelp: "Pre-fills the title if not provided in the API request.",
     descriptionPlaceholder: "Internal note about when to use this template",
   },
 };
@@ -265,13 +265,7 @@ export function TemplateFormDialog({
               id="template-title-pattern"
               value={form.title_pattern}
               onChange={(e) => updateField("title_pattern", e.target.value)}
-              placeholder={
-                form.target_app === "zapier" || form.target_app === "make"
-                  ? "e.g., Send invoice #1234 to client"
-                  : form.target_app === "n8n"
-                    ? "e.g., Deploy service to production"
-                    : "e.g., Deploy {service} to {environment}"
-              }
+              placeholder="e.g., Send invoice #1234 to client"
             />
             <p className="text-xs text-muted-foreground">
               {(FIELD_LABELS[form.target_app] ?? FIELD_LABELS.any).titleHelp}
@@ -364,7 +358,7 @@ export function TemplateFormDialog({
                 placeholder="user-id-1, user-id-2"
               />
               <p className="text-xs text-muted-foreground">
-                Comma-separated list of user IDs. Requests using this template are routed to these approvers.
+                Comma-separated list of user IDs. Overrides approvers from the Routes page when this template is selected.
               </p>
             </div>
           )}

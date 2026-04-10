@@ -164,6 +164,7 @@ export async function POST(request: Request) {
     const validated = createApprovalDraftSchema.parse(body);
 
     // 5a. Apply template defaults (if template_id is provided)
+    console.log("[Approvals] template_id:", validated.template_id ?? "none", "source:", validated.source ?? "unknown");
     if (validated.template_id) {
       const { data: template } = await admin
         .from("approval_templates")
@@ -173,13 +174,16 @@ export async function POST(request: Request) {
         .eq("is_active", true)
         .single();
 
+      console.log("[Approvals] Template lookup result:", template ? `found (name=${template.name}, priority=${template.default_priority}, approvers=${template.assigned_approvers?.length ?? 0})` : "NOT FOUND");
       if (template) {
         // Apply template defaults for fields not explicitly provided in the request
+        console.log("[Approvals] Before template apply:", JSON.stringify({ title: validated.title, priority: validated.priority, action_type: validated.action_type, assigned_approvers: validated.assigned_approvers, callback_url: validated.callback_url }));
         if (!validated.title && template.title_pattern) validated.title = template.title_pattern;
         if (!validated.action_type && template.action_type) validated.action_type = template.action_type;
         if (!validated.priority && template.default_priority) validated.priority = template.default_priority as "low" | "medium" | "high" | "critical";
         if (!validated.assigned_approvers && template.assigned_approvers?.length) validated.assigned_approvers = template.assigned_approvers;
         if (!validated.callback_url && template.callback_url_pattern) validated.callback_url = template.callback_url_pattern;
+        console.log("[Approvals] After template apply:", JSON.stringify({ title: validated.title, priority: validated.priority, action_type: validated.action_type, assigned_approvers: validated.assigned_approvers, callback_url: validated.callback_url }));
 
         // Apply title pattern with metadata substitution: "Deploy {service} to {env}"
         if (template.title_pattern && validated.title === template.title_pattern) {
@@ -456,7 +460,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // 12. Determine approvers: flow defaults → request values → rule routing
+    // 12. Determine approvers: request/template values → flow defaults → rule routing
     let assignedApprovers: string[] | null = validated.assigned_approvers ?? flowAssignedApprovers ?? null;
     let requiredApprovals = assignedApprovers
       ? assignedApprovers.length
