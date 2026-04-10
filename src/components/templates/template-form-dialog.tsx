@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { MemberPicker } from "@/components/templates/member-picker";
 import type { ApprovalTemplate } from "@/components/templates/templates-page";
 
 // ---------------------------------------------------------------------------
@@ -47,7 +48,7 @@ interface FormState {
   title_pattern: string;
   action_type: string;
   default_priority: string;
-  assigned_approvers: string;
+  assigned_approvers: string[];
   callback_url_pattern: string;
   target_app: string;
 }
@@ -61,40 +62,39 @@ const TARGET_APPS = [
   { value: "make", label: "Make" },
 ] as const;
 
-// Which optional fields each app supports beyond name + title_pattern.
-// Templates pre-fill fields that the integration UI doesn't expose directly.
-// "any" shows all fields since the raw API accepts everything.
+// Which optional fields each app shows beyond name + title + description + approvers.
+// All apps show assigned_approvers now.
 const APP_FIELDS: Record<string, Set<string>> = {
-  any: new Set(["action_type", "default_priority", "assigned_approvers", "callback_url_pattern"]),
-  n8n: new Set(["assigned_approvers"]),
-  zapier: new Set(["default_priority", "action_type", "assigned_approvers"]),
-  make: new Set(["default_priority", "action_type", "assigned_approvers", "callback_url_pattern"]),
+  any: new Set(["action_type", "default_priority", "callback_url_pattern"]),
+  n8n: new Set(["default_priority"]),
+  zapier: new Set(["default_priority"]),
+  make: new Set(["default_priority", "callback_url_pattern"]),
 };
 
-// Per-platform label overrides for shared fields
-const FIELD_LABELS: Record<string, { title: string; description: string; titleHelp: string; descriptionPlaceholder: string }> = {
+// Per-platform label overrides
+const FIELD_LABELS: Record<string, { title: string; titleHelp: string; description: string; descriptionPlaceholder: string }> = {
   zapier: {
-    title: "What needs approval?",
-    description: "Details",
+    title: "Default Title",
     titleHelp: "Pre-fills the title if the user leaves it blank in their Zap.",
+    description: "Details",
     descriptionPlaceholder: "Additional context for the reviewer",
   },
   make: {
-    title: "What needs approval?",
-    description: "Details",
+    title: "Default Title",
     titleHelp: "Pre-fills the title if the user leaves it blank in their scenario.",
+    description: "Details",
     descriptionPlaceholder: "Additional context for the reviewer",
   },
   n8n: {
     title: "Default Title",
-    description: "Description",
     titleHelp: "Used when the title is left blank in the n8n node.",
+    description: "Description",
     descriptionPlaceholder: "Detailed description providing context for the reviewer",
   },
   any: {
     title: "Default Title",
-    description: "Description",
     titleHelp: "Pre-fills the title if not provided in the API request.",
+    description: "Description",
     descriptionPlaceholder: "Internal note about when to use this template",
   },
 };
@@ -105,7 +105,7 @@ const DEFAULT_FORM: FormState = {
   title_pattern: "",
   action_type: "",
   default_priority: "medium",
-  assigned_approvers: "",
+  assigned_approvers: [],
   callback_url_pattern: "",
   target_app: "any",
 };
@@ -134,7 +134,7 @@ export function TemplateFormDialog({
           title_pattern: template.title_pattern ?? "",
           action_type: template.action_type ?? "",
           default_priority: template.default_priority,
-          assigned_approvers: template.assigned_approvers.join(", "),
+          assigned_approvers: template.assigned_approvers ?? [],
           callback_url_pattern: template.callback_url_pattern ?? "",
           target_app: template.target_app ?? "any",
         });
@@ -161,12 +161,7 @@ export function TemplateFormDialog({
       }
 
       startTransition(async () => {
-        const approvers = form.assigned_approvers
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-
-        const fields = APP_FIELDS[form.target_app] ?? APP_FIELDS.n8n;
+        const fields = APP_FIELDS[form.target_app] ?? APP_FIELDS.any;
 
         const body: Record<string, unknown> = {
           name: form.name.trim(),
@@ -175,7 +170,7 @@ export function TemplateFormDialog({
         if (form.description.trim()) body.description = form.description.trim();
         if (form.title_pattern.trim()) body.title_pattern = form.title_pattern.trim();
         if (fields.has("default_priority")) body.default_priority = form.default_priority;
-        if (fields.has("assigned_approvers")) body.assigned_approvers = approvers;
+        body.assigned_approvers = form.assigned_approvers;
         if (fields.has("action_type") && form.action_type.trim()) body.action_type = form.action_type.trim();
         if (fields.has("callback_url_pattern") && form.callback_url_pattern.trim()) body.callback_url_pattern = form.callback_url_pattern.trim();
 
@@ -256,13 +251,13 @@ export function TemplateFormDialog({
             </p>
           </div>
 
-          {/* Title / "What needs approval?" */}
+          {/* Default Title */}
           <div className="space-y-2">
-            <Label htmlFor="template-title-pattern">
+            <Label htmlFor="template-title">
               {(FIELD_LABELS[form.target_app] ?? FIELD_LABELS.any).title}
             </Label>
             <Input
-              id="template-title-pattern"
+              id="template-title"
               value={form.title_pattern}
               onChange={(e) => updateField("title_pattern", e.target.value)}
               placeholder="e.g., Send invoice #1234 to client"
@@ -272,7 +267,7 @@ export function TemplateFormDialog({
             </p>
           </div>
 
-          {/* Description / "Details" */}
+          {/* Description / Details */}
           <div className="space-y-2">
             <Label htmlFor="template-description">
               {(FIELD_LABELS[form.target_app] ?? FIELD_LABELS.any).description}
@@ -286,7 +281,7 @@ export function TemplateFormDialog({
             />
           </div>
 
-          {/* Default Priority (zapier, make, any) -- not n8n since it has its own */}
+          {/* Default Priority */}
           {(APP_FIELDS[form.target_app] ?? APP_FIELDS.any).has("default_priority") && (
             <div className="space-y-2">
               <Label htmlFor="template-priority">Default Priority</Label>
@@ -305,13 +300,15 @@ export function TemplateFormDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Automatically applied to every request. Not visible in the {form.target_app === "zapier" ? "Zap" : form.target_app === "make" ? "scenario" : "integration"} setup.
-              </p>
+              {(form.target_app === "zapier" || form.target_app === "make") && (
+                <p className="text-xs text-muted-foreground">
+                  Automatically applied to every request. Not visible in the {form.target_app === "zapier" ? "Zap" : "scenario"} setup.
+                </p>
+              )}
             </div>
           )}
 
-          {/* Action Type (zapier, make, any) -- not n8n since it has its own */}
+          {/* Action Type (API/Other only) */}
           {(APP_FIELDS[form.target_app] ?? APP_FIELDS.any).has("action_type") && (
             <div className="space-y-2">
               <Label htmlFor="template-action-type">Action Type</Label>
@@ -321,13 +318,10 @@ export function TemplateFormDialog({
                 onChange={(e) => updateField("action_type", e.target.value)}
                 placeholder="e.g., deploy, database_change, access_request"
               />
-              <p className="text-xs text-muted-foreground">
-                Automatically applied to every request. Not visible in the {form.target_app === "zapier" ? "Zap" : form.target_app === "make" ? "scenario" : "integration"} setup.
-              </p>
             </div>
           )}
 
-          {/* Callback URL (make, any) */}
+          {/* Callback URL (Make, API/Other) */}
           {(APP_FIELDS[form.target_app] ?? APP_FIELDS.any).has("callback_url_pattern") && (
             <div className="space-y-2">
               <Label htmlFor="template-callback">
@@ -348,20 +342,16 @@ export function TemplateFormDialog({
           )}
 
           {/* Assigned Approvers (all apps) */}
-          {(APP_FIELDS[form.target_app] ?? APP_FIELDS.any).has("assigned_approvers") && (
-            <div className="space-y-2">
-              <Label htmlFor="template-approvers">Assigned Approvers</Label>
-              <Input
-                id="template-approvers"
-                value={form.assigned_approvers}
-                onChange={(e) => updateField("assigned_approvers", e.target.value)}
-                placeholder="user-id-1, user-id-2"
-              />
-              <p className="text-xs text-muted-foreground">
-                Comma-separated list of user IDs. Overrides approvers from the Routes page when this template is selected.
-              </p>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label>Assigned Approvers</Label>
+            <MemberPicker
+              selectedIds={form.assigned_approvers}
+              onChange={(ids) => updateField("assigned_approvers", ids)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Overrides approvers from the Routes page when this template is selected.
+            </p>
+          </div>
 
           <DialogFooter>
             <Button
