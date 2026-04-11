@@ -122,6 +122,8 @@ export const paginationSchema = z.object({
   search: z.string().max(500).optional(),
   created_after: z.string().datetime().optional(),
   created_before: z.string().datetime().optional(),
+  decided_after: z.string().datetime().optional(),
+  decided_before: z.string().datetime().optional(),
 });
 
 export type PaginationInput = z.infer<typeof paginationSchema>;

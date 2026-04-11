@@ -354,7 +354,7 @@ export function ConnectionForm({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="bg-green-600 text-white hover:bg-green-700">
               {loading
                 ? isEdit
                   ? "Saving..."

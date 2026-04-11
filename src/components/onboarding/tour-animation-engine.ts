@@ -64,7 +64,15 @@ export class TourAnimationEngine {
     for (const t of this.timers) clearTimeout(t);
     this.timers = [];
     // Close any open dialogs
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    const closeBtn = document.querySelector("[data-slot='dialog-close']") as HTMLElement | null;
+    if (closeBtn) {
+      closeBtn.click();
+    } else {
+      const dialogContent = document.querySelector("[data-slot='dialog-content']") as HTMLElement | null;
+      if (dialogContent) {
+        dialogContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+      }
+    }
   }
 
   get isRunning() {
@@ -358,8 +366,16 @@ export class TourAnimationEngine {
 
   private execDialogClose(): Promise<void> {
     return new Promise((resolve) => {
-      // Press Escape to close any open Radix dialog
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      // Try clicking the Radix close button first (most reliable)
+      const closeBtn = document.querySelector("[data-slot='dialog-close']") as HTMLElement | null;
+      if (closeBtn) {
+        closeBtn.click();
+      } else {
+        // Fallback: press Escape on the dialog content (Radix listens there)
+        const dialogContent = document.querySelector("[data-slot='dialog-content']") as HTMLElement | null;
+        const target = dialogContent ?? document.body;
+        target.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+      }
       const t = setTimeout(resolve, 400);
       this.timers.push(t);
     });

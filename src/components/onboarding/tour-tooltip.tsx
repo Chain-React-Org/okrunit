@@ -183,7 +183,15 @@ export function TourTooltip({
 
   let tooltipStyle: React.CSSProperties;
   let actualTooltipWidth = defaultTooltipWidth;
-  if (isCentered) {
+  if (isAnimating) {
+    // During animations, position tooltip to the left of the centered dialog.
+    // The dialog is max-w-lg (512px) centered, so its left edge is at ~50%-256px.
+    // Place tooltip in the left gap, vertically centered.
+    const dialogLeft = (window.innerWidth - 512) / 2;
+    const availableLeft = dialogLeft - gap;
+    actualTooltipWidth = Math.min(defaultTooltipWidth, Math.max(200, availableLeft - pad));
+    tooltipStyle = { position: "fixed", top: "50%", left: pad, transform: "translateY(-50%)" };
+  } else if (isCentered) {
     tooltipStyle = { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
   } else if (highlightMode === "full-width" && targetRect) {
     // Position tooltip centered horizontally in the dimmed area above the content
@@ -286,7 +294,7 @@ export function TourTooltip({
           <div className="absolute right-0 bg-black/40 pointer-events-auto" style={{ top: targetRect.top, height: targetRect.height, left: targetRect.right }} onClick={onClose} />
         </div>
       ) : (
-        <div className={`fixed inset-0 z-[9998] ${isAnimating ? "bg-black/20" : "bg-black/40"} animate-in fade-in duration-200`} onClick={onClose} />
+        <div className={`fixed inset-0 z-[9998] ${isAnimating ? "bg-black/10 pointer-events-none" : "bg-black/40"} animate-in fade-in duration-200`} onClick={isAnimating ? undefined : onClose} />
       )}
 
       {/* Highlight ring around target, clamped so it doesn't go off-screen */}
@@ -320,8 +328,9 @@ export function TourTooltip({
             <button onClick={onSkip} className="text-xs text-muted-foreground hover:text-foreground">Skip tour</button>
             <div className="flex items-center gap-2">
               {isAnimating ? (
-                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onSkipAnimation}>
+                <Button size="sm" className="h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={onSkipAnimation}>
                   Skip Demo
+                  <ArrowRight className="size-3" />
                 </Button>
               ) : (
                 <>
