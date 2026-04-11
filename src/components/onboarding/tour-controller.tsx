@@ -135,6 +135,21 @@ export function TourController() {
 
   const currentStep = currentPageTour?.steps[currentStepInPage];
 
+  // Inject/remove a style tag that raises Radix portals above the tour overlay
+  // so dialogs and selects opened by the animation engine are visible.
+  useEffect(() => {
+    if (!isAnimating) return;
+    const style = document.createElement("style");
+    style.id = "tour-animation-z-boost";
+    style.textContent = `
+      [data-slot="dialog-overlay"] { z-index: 9999 !important; }
+      [data-slot="dialog-content"] { z-index: 10000 !important; }
+      [data-radix-popper-content-wrapper] { z-index: 10000 !important; }
+    `;
+    document.head.appendChild(style);
+    return () => { style.remove(); };
+  }, [isAnimating]);
+
   // Start animation engine when a step has an animation config
   useEffect(() => {
     if (!currentStep?.animation) {

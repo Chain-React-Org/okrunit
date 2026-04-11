@@ -1005,6 +1005,8 @@ export async function GET(request: Request) {
       search: searchParams.get("search") ?? undefined,
       created_after: searchParams.get("created_after") ?? undefined,
       created_before: searchParams.get("created_before") ?? undefined,
+      decided_after: searchParams.get("decided_after") ?? undefined,
+      decided_before: searchParams.get("decided_before") ?? undefined,
     };
 
     const params = paginationSchema.parse(queryInput);
@@ -1045,6 +1047,14 @@ export async function GET(request: Request) {
 
     if (params.created_before) {
       query = query.lte("created_at", params.created_before);
+    }
+
+    if (params.decided_after) {
+      query = query.gte("decided_at", params.decided_after);
+    }
+
+    if (params.decided_before) {
+      query = query.lte("decided_at", params.decided_before);
     }
 
     // 4b. Exclude approvals from a specific source_id (used by n8n triggers to skip self-created approvals)
@@ -1104,6 +1114,14 @@ export async function GET(request: Request) {
 
     if (params.created_before) {
       countQuery = countQuery.lte("created_at", params.created_before);
+    }
+
+    if (params.decided_after) {
+      countQuery = countQuery.gte("decided_at", params.decided_after);
+    }
+
+    if (params.decided_before) {
+      countQuery = countQuery.lte("decided_at", params.decided_before);
     }
 
     const { count } = await countQuery;

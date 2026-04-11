@@ -608,7 +608,7 @@ export function RulesManager({ initialRules, teams, connections }: RulesManagerP
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving || !form.name.trim()}>
+            <Button onClick={handleSave} disabled={saving || !form.name.trim()} className="bg-green-600 text-white hover:bg-green-700">
               {saving ? "Saving..." : editingRule ? "Save Changes" : "Create Rule"}
             </Button>
           </DialogFooter>
