@@ -1068,7 +1068,10 @@ export async function GET(request: Request) {
         .eq("source_id", excludeSourceId);
       const excludeFlowIds = (flows ?? []).map((f: { id: string }) => f.id);
       if (excludeFlowIds.length > 0) {
-        query = query.not("flow_id", "in", `(${excludeFlowIds.join(",")})`);
+        // Use an OR filter: include rows where flow_id is not in the exclude list
+        // OR flow_id is null. Without this, SQL's NULL NOT IN (...) returns NULL
+        // (falsy), which silently drops all rows with flow_id = null (e.g. Make.com).
+        query = query.or(`flow_id.not.in.(${excludeFlowIds.join(",")}),flow_id.is.null`);
       }
     }
 
