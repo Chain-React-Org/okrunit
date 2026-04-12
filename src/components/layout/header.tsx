@@ -216,8 +216,7 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
 
 function HelpDropdown() {
   const pathname = usePathname();
-  const { fullTourActive, activePageId, tourPaused, touredPages, resumeTour } =
-    useOnboardingTourStore();
+  const { activePageId, touredPages, startPageTour } = useOnboardingTourStore();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -236,25 +235,13 @@ function HelpDropdown() {
 
   const currentPageTour = mounted ? findPageTour(pathname) : undefined;
   const docsPath = currentPageTour?.docsPath ?? "/docs";
-  const isTourActive = fullTourActive || !!activePageId;
+  const isTourActive = !!activePageId;
   const hasTouredThisPage = currentPageTour ? touredPages.includes(currentPageTour.pageId) : false;
-
-  const tourLabel = tourPaused
-    ? "Resume Tour"
-    : currentPageTour
-      ? hasTouredThisPage ? "Restart Tour" : "Start Tour"
-      : "Start Tour";
 
   const handleTour = () => {
     setOpen(false);
-    if (tourPaused) {
-      // Resume from where user left off
-      resumeTour(currentPageTour?.pageId);
-    } else if (currentPageTour) {
-      resumeTour(currentPageTour.pageId);
-    } else {
-      // No tour for this page. Start the full tour
-      useOnboardingTourStore.getState().startFullTour();
+    if (currentPageTour) {
+      startPageTour(currentPageTour.pageId);
     }
   };
 
@@ -283,13 +270,13 @@ function HelpDropdown() {
             <BookOpen className="size-4 text-muted-foreground" />
             Documentation
           </a>
-          {!isTourActive && (
+          {!isTourActive && currentPageTour && (
             <button
               onClick={handleTour}
               className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
             >
               <Sparkles className="size-4 text-emerald-600" />
-              {tourLabel}
+              {hasTouredThisPage ? "Restart tour" : "Tour this page"}
             </button>
           )}
         </div>

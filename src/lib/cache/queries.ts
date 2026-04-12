@@ -735,7 +735,7 @@ export async function getCachedRulesData(orgId: string) {
 
   const admin = createAdminClient();
 
-  const [{ data: rules }, { data: teams }, { data: connections }] =
+  const [{ data: rules }, { data: teams }, { data: connections }, { data: members }, { data: requestMeta }] =
     await Promise.all([
       admin
         .from("approval_rules")
@@ -744,12 +744,23 @@ export async function getCachedRulesData(orgId: string) {
         .order("priority"),
       admin.from("teams").select("id, name").eq("org_id", orgId),
       admin.from("connections").select("id, name").eq("org_id", orgId),
+      admin.from("user_profiles").select("id, full_name, email").eq("org_id", orgId).order("full_name"),
+      admin.from("approval_requests").select("action_type, source, title").eq("org_id", orgId).limit(500),
     ]);
+
+  // Extract distinct values for rule form dropdowns
+  const actionTypes = [...new Set((requestMeta ?? []).map((r) => r.action_type).filter(Boolean))].sort() as string[];
+  const sources = [...new Set((requestMeta ?? []).map((r) => r.source).filter(Boolean))].sort() as string[];
+  const titles = [...new Set((requestMeta ?? []).map((r) => r.title).filter(Boolean))].sort() as string[];
 
   return {
     rules: rules ?? [],
     teams: teams ?? [],
     connections: connections ?? [],
+    members: members ?? [],
+    actionTypes,
+    sources,
+    titles,
   };
 }
 

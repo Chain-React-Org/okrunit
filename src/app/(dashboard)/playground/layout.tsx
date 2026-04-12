@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
 import { PlaygroundNav } from "@/components/playground/playground-nav";
+import { TourHint } from "@/components/onboarding/tour-hint";
 
 export default async function PlaygroundLayout({
   children,
@@ -28,6 +29,7 @@ export default async function PlaygroundLayout({
       {/* Main content */}
       <main className="flex-1 min-w-0 overflow-y-auto">
         <div className="px-6 lg:px-8 py-6">
+          <TourHint />
           {children}
         </div>
       </main>

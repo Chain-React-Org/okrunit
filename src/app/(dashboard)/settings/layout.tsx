@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
 import { SettingsNav } from "@/components/settings/settings-nav";
+import { TourHint } from "@/components/onboarding/tour-hint";
 
 export default async function SettingsLayout({
   children,
@@ -24,6 +25,7 @@ export default async function SettingsLayout({
 
       <main className="min-w-0 flex-1 overflow-y-auto">
         <div className="px-6 lg:px-8 py-6">
+          <TourHint />
           {children}
         </div>
       </main>

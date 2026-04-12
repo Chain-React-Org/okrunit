@@ -20,7 +20,7 @@ export default async function RulesPage() {
     redirect("/requests");
   }
 
-  const [{ rules, teams, connections }, { currentPlan }] = await Promise.all([
+  const [{ rules, teams, connections, members, actionTypes, sources, titles }, { currentPlan }] = await Promise.all([
     getCachedRulesData(membership.org_id),
     getCachedOrgLayoutData(membership.org_id),
   ]);
@@ -42,6 +42,10 @@ export default async function RulesPage() {
         initialRules={rules as ApprovalRule[]}
         teams={teams as { id: string; name: string }[]}
         connections={connections as { id: string; name: string }[]}
+        members={members as { id: string; full_name: string | null; email: string }[]}
+        existingActionTypes={actionTypes}
+        existingSources={sources}
+        existingTitles={titles}
       />
     </div>
   );
