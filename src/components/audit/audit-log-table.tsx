@@ -54,6 +54,32 @@ function actionBadgeVariant(
 }
 
 // ---------------------------------------------------------------------------
+// Detail formatting helpers
+// ---------------------------------------------------------------------------
+
+/** Convert snake_case keys to readable labels (e.g. "request_id" -> "Request ID") */
+function formatDetailKey(key: string): string {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\bid\b/gi, "ID")
+    .replace(/\bip\b/gi, "IP")
+    .replace(/\burl\b/gi, "URL")
+    .replace(/\bsso\b/gi, "SSO")
+    .replace(/\bat\b/gi, "at")
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
+/** Format a detail value for display */
+function formatDetailValue(value: unknown): string {
+  if (value === null || value === undefined) return "-";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.map(formatDetailValue).join(", ");
+  return JSON.stringify(value);
+}
+
+// ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
@@ -63,6 +89,7 @@ interface AuditLogTableProps {
   pageSize?: number;
   userNames?: Record<string, string>;
   connectionNames?: Record<string, string>;
+  requestTitles?: Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -75,6 +102,7 @@ export function AuditLogTable({
   pageSize = 50,
   userNames = {},
   connectionNames = {},
+  requestTitles = {},
 }: AuditLogTableProps) {
   const [entries, setEntries] = useState<AuditLogEntry[]>(initialEntries);
   const [hasMore, setHasMore] = useState(initialEntries.length >= pageSize);
@@ -295,8 +323,8 @@ export function AuditLogTable({
               {filteredEntries.map((entry) => {
                 const isExpanded = expandedRows.has(entry.id);
                 const hasDetails =
-                  entry.details !== null &&
-                  Object.keys(entry.details).length > 0;
+                  (entry.details != null && Object.keys(entry.details).length > 0) ||
+                  (entry.changes != null && entry.changes.length > 0);
                 const actor = entry.user_id
                   ? userNames[entry.user_id] ?? `User: ${entry.user_id.slice(0, 8)}...`
                   : entry.connection_id
@@ -352,10 +380,13 @@ export function AuditLogTable({
 
                       {/* Resource ID */}
                       <TableCell
-                        className="text-muted-foreground max-w-[160px] truncate font-mono text-xs"
+                        className="text-muted-foreground max-w-[200px] truncate text-xs"
                         title={entry.resource_id}
                       >
-                        {entry.resource_id}
+                        {entry.resource_type === "approval_request" && requestTitles[entry.resource_id]
+                          ? requestTitles[entry.resource_id]
+                          : <span className="font-mono">{entry.resource_id}</span>
+                        }
                       </TableCell>
 
                       {/* User / Connection */}
@@ -378,13 +409,62 @@ export function AuditLogTable({
                     {isExpanded && hasDetails && (
                       <TableRow key={`details-${entry.id}`}>
                         <TableCell colSpan={7} className="bg-muted/30 p-0">
-                          <div className="px-6 py-4">
-                            <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wider">
-                              Details
-                            </p>
-                            <pre className="bg-muted overflow-x-auto rounded-lg p-4 text-xs">
-                              {JSON.stringify(entry.details, null, 2)}
-                            </pre>
+                          <div className="px-6 py-4 space-y-4">
+                            {/* Details key-value pairs */}
+                            {entry.details != null && Object.keys(entry.details).length > 0 && (
+                              <div>
+                                <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wider">
+                                  Details
+                                </p>
+                                <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
+                                  {Object.entries(entry.details).map(([key, value]) => {
+                                    // Enrich known ID references with resolved names
+                                    let displayValue = formatDetailValue(value);
+                                    if (key === "request_id" && typeof value === "string" && requestTitles[value]) {
+                                      displayValue = requestTitles[value];
+                                    } else if (key === "delegated_from" && typeof value === "string" && userNames[value]) {
+                                      displayValue = userNames[value];
+                                    }
+
+                                    return (
+                                      <Fragment key={key}>
+                                        <span className="text-muted-foreground font-medium whitespace-nowrap">
+                                          {formatDetailKey(key)}
+                                        </span>
+                                        <span className="text-foreground break-all">
+                                          {displayValue}
+                                        </span>
+                                      </Fragment>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Changes (before/after) */}
+                            {entry.changes != null && entry.changes.length > 0 && (
+                              <div>
+                                <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wider">
+                                  Changes
+                                </p>
+                                <div className="space-y-1.5">
+                                  {entry.changes.map((change, idx) => (
+                                    <div key={idx} className="flex items-baseline gap-2 text-xs">
+                                      <span className="text-muted-foreground font-medium whitespace-nowrap">
+                                        {formatDetailKey(change.field)}
+                                      </span>
+                                      <span className="text-red-600 dark:text-red-400 line-through">
+                                        {formatDetailValue(change.from)}
+                                      </span>
+                                      <span className="text-muted-foreground">→</span>
+                                      <span className="text-emerald-600 dark:text-emerald-400">
+                                        {formatDetailValue(change.to)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

@@ -317,6 +317,7 @@ export interface AuditLogEntry {
   resource_type: string;
   resource_id: string;
   details: Record<string, unknown> | null;
+  changes: Array<{ field: string; from: unknown; to: unknown }> | null;
   ip_address: string | null;
   created_at: string;
 }
