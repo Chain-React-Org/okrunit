@@ -19,6 +19,7 @@ import {
   Plug,
   Unplug,
   UserCog,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -292,6 +293,10 @@ export function V2MemberList({
             <Download className="size-3.5" />
             Export CSV
           </Button>
+          <Button size="sm" onClick={() => router.push("/org/invites")} className="gap-1.5 h-9">
+            <UserPlus className="size-3.5" />
+            Invite Member
+          </Button>
         </div>
       </div>
 
@@ -308,6 +313,15 @@ export function V2MemberList({
           <p className="text-sm text-muted-foreground">
             {search || roleFilter !== "all" ? "No members match your filters" : "No members found"}
           </p>
+          {!search && roleFilter === "all" && (
+            <>
+              <p className="text-xs text-muted-foreground/60 mt-1">Invite someone to get your team started</p>
+              <Button size="sm" className="mt-4 gap-1.5" onClick={() => router.push("/org/invites")}>
+                <UserPlus className="size-3.5" />
+                Invite Member
+              </Button>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-2">

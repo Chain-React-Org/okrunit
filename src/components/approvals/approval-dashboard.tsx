@@ -359,7 +359,6 @@ export function ApprovalDashboard({
         let query = supabase
           .from("approval_requests")
           .select("*")
-          .order("status", { ascending: true })
           .order("created_at", { ascending: false })
           .limit(1000);
 
