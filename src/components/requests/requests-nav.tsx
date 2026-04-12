@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
+  Bell,
   ClipboardList,
   FileText,
   Key,
@@ -75,6 +76,7 @@ export function RequestsNav({ isAdmin, pendingCount, mobile }: RequestsNavProps)
         { id: "analytics", label: "Analytics", href: "/requests/analytics", icon: BarChart3 },
         { id: "sla", label: "SLA Compliance", href: "/requests/sla", icon: LineChart, adminOnly: true },
         { id: "audit-log", label: "Audit Log", href: "/requests/audit-log", icon: ScrollText },
+        { id: "notifications", label: "Notifications", href: "/requests/notifications", icon: Bell },
       ],
     },
   ];
