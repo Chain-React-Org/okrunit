@@ -5,11 +5,12 @@
 // Displays a filterable, paginated table of notification delivery events.
 // ---------------------------------------------------------------------------
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { Fragment, useCallback, useEffect, useState, useTransition } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Bell,
-  FileText,
+  ChevronDown,
+  ChevronRight,
   Globe,
   Loader2,
   Mail,
@@ -78,6 +79,25 @@ function statusBadgeClasses(status: DeliveryStatus): string {
   }
 }
 
+/** Convert snake_case keys to readable labels */
+function formatKey(key: string): string {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\bid\b/gi, "ID")
+    .replace(/\bip\b/gi, "IP")
+    .replace(/\burl\b/gi, "URL")
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
+function formatValue(value: unknown): string {
+  if (value === null || value === undefined) return "-";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.map(formatValue).join(", ");
+  return JSON.stringify(value);
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -92,6 +112,8 @@ interface DeliveryLogEntry {
   status: DeliveryStatus;
   error_message: string | null;
   suppression_reason: string | null;
+  external_id: string | null;
+  metadata: Record<string, unknown>;
 }
 
 interface NotificationDeliveryLogProps {
@@ -109,18 +131,28 @@ export function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps)
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRow = useCallback((id: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   const fetchEntries = useCallback(
-    async (page: number) => {
+    async (pg: number) => {
       const params = new URLSearchParams({
-        page: String(page),
+        page: String(pg),
         per_page: String(PAGE_SIZE),
       });
       if (channelFilter !== ALL_VALUE) params.set("channel", channelFilter);
       if (statusFilter !== ALL_VALUE) params.set("status", statusFilter);
 
       const res = await fetch(`/api/v1/notifications/delivery-log?${params.toString()}`);
-      if (!res.ok) return { entries: [], hasMore: false };
+      if (!res.ok) return { entries: [] as DeliveryLogEntry[], hasMore: false };
       const json = await res.json() as {
         entries: DeliveryLogEntry[];
         pagination: { page: number; total_pages: number };
@@ -142,6 +174,7 @@ export function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps)
       setEntries(result.entries);
       setHasMore(result.hasMore);
       setPage(1);
+      setExpandedRows(new Set());
     };
     setEntries(null);
     load();
@@ -266,6 +299,7 @@ export function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps)
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8" />
                 <TableHead>Time</TableHead>
                 <TableHead>Request</TableHead>
                 <TableHead>Recipient</TableHead>
@@ -279,51 +313,121 @@ export function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps)
                 const channelMeta = CHANNELS[entry.channel];
                 const ChannelIcon = channelMeta?.icon ?? Globe;
                 const channelLabel = channelMeta?.label ?? entry.channel;
+                const isExpanded = expandedRows.has(entry.id);
 
-                let details = "";
+                let summaryDetail = "";
                 if (entry.status === "failed" && entry.error_message) {
-                  details = entry.error_message;
+                  summaryDetail = entry.error_message;
                 } else if (entry.status === "suppressed" && entry.suppression_reason) {
-                  details = entry.suppression_reason;
+                  summaryDetail = entry.suppression_reason;
                 }
 
+                const hasExpandableDetails =
+                  (entry.metadata && Object.keys(entry.metadata).length > 0) ||
+                  entry.external_id ||
+                  entry.error_message ||
+                  entry.suppression_reason;
+
                 return (
-                  <TableRow key={entry.id}>
-                    <TableCell
-                      className="text-muted-foreground text-xs"
-                      title={new Date(entry.created_at).toLocaleString()}
-                    >
-                      {formatDistanceToNow(new Date(entry.created_at), {
-                        addSuffix: true,
-                      })}
-                    </TableCell>
-                    <TableCell
-                      className="max-w-[200px] truncate text-sm"
-                      title={entry.request_title}
-                    >
-                      {entry.request_title}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground max-w-[160px] truncate text-xs">
-                      {entry.recipient}
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-1.5 text-sm">
-                        <ChannelIcon className="size-3.5 text-muted-foreground" />
-                        {channelLabel}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={statusBadgeClasses(entry.status)}
+                  <Fragment key={entry.id}>
+                    <TableRow>
+                      <TableCell>
+                        {hasExpandableDetails ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleRow(entry.id)}
+                            className="text-muted-foreground hover:text-foreground rounded p-0.5 transition-colors"
+                            aria-label={isExpanded ? "Collapse details" : "Expand details"}
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="size-4" />
+                            ) : (
+                              <ChevronRight className="size-4" />
+                            )}
+                          </button>
+                        ) : null}
+                      </TableCell>
+                      <TableCell
+                        className="text-muted-foreground text-xs"
+                        title={new Date(entry.created_at).toLocaleString()}
                       >
-                        {entry.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground max-w-[240px] truncate text-xs">
-                      {details || "-"}
-                    </TableCell>
-                  </TableRow>
+                        {formatDistanceToNow(new Date(entry.created_at), {
+                          addSuffix: true,
+                        })}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[200px] truncate text-sm"
+                        title={entry.request_title}
+                      >
+                        {entry.request_title}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-[160px] truncate text-xs">
+                        {entry.recipient}
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1.5 text-sm">
+                          <ChannelIcon className="size-3.5 text-muted-foreground" />
+                          {channelLabel}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={statusBadgeClasses(entry.status)}
+                        >
+                          {entry.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-[240px] truncate text-xs">
+                        {summaryDetail || "-"}
+                      </TableCell>
+                    </TableRow>
+
+                    {/* Expanded details row */}
+                    {isExpanded && hasExpandableDetails && (
+                      <TableRow key={`details-${entry.id}`}>
+                        <TableCell colSpan={7} className="bg-muted/30 p-0">
+                          <div className="px-6 py-4 space-y-3">
+                            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+                              Delivery Details
+                            </p>
+                            <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
+                              {entry.request_id && (
+                                <>
+                                  <span className="text-muted-foreground font-medium">Request ID</span>
+                                  <span className="text-foreground font-mono">{entry.request_id}</span>
+                                </>
+                              )}
+                              {entry.external_id && (
+                                <>
+                                  <span className="text-muted-foreground font-medium">External ID</span>
+                                  <span className="text-foreground font-mono">{entry.external_id}</span>
+                                </>
+                              )}
+                              {entry.error_message && (
+                                <>
+                                  <span className="text-muted-foreground font-medium">Error</span>
+                                  <span className="text-red-600 dark:text-red-400">{entry.error_message}</span>
+                                </>
+                              )}
+                              {entry.suppression_reason && (
+                                <>
+                                  <span className="text-muted-foreground font-medium">Suppression Reason</span>
+                                  <span className="text-yellow-600 dark:text-yellow-400">{entry.suppression_reason}</span>
+                                </>
+                              )}
+                              {entry.metadata && Object.entries(entry.metadata).map(([key, value]) => (
+                                <Fragment key={key}>
+                                  <span className="text-muted-foreground font-medium">{formatKey(key)}</span>
+                                  <span className="text-foreground break-all">{formatValue(value)}</span>
+                                </Fragment>
+                              ))}
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
                 );
               })}
             </TableBody>

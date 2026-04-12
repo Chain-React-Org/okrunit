@@ -16,6 +16,7 @@ export function AuditLogClient({ orgId }: AuditLogClientProps) {
   const [entries, setEntries] = useState<AuditLogEntry[] | null>(null);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const [connectionNames, setConnectionNames] = useState<Record<string, string>>({});
+  const [requestTitles, setRequestTitles] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -56,6 +57,30 @@ export function AuditLogClient({ orgId }: AuditLogClientProps) {
         }
         setConnectionNames(map);
       }
+
+      // Resolve request titles referenced in details
+      const detailRequestIds = new Set<string>();
+      for (const e of auditEntries) {
+        if (e.details?.request_id && typeof e.details.request_id === "string") {
+          detailRequestIds.add(e.details.request_id);
+        }
+        // resource_id for approval_request resource types
+        if (e.resource_type === "approval_request" && e.resource_id) {
+          detailRequestIds.add(e.resource_id);
+        }
+      }
+      const requestIdList = [...detailRequestIds];
+      if (requestIdList.length > 0) {
+        const { data: requests } = await supabase
+          .from("approval_requests")
+          .select("id, title")
+          .in("id", requestIdList);
+        const map: Record<string, string> = {};
+        for (const r of requests ?? []) {
+          map[r.id] = r.title;
+        }
+        setRequestTitles(map);
+      }
     };
     load();
   }, [orgId]);
@@ -83,5 +108,14 @@ export function AuditLogClient({ orgId }: AuditLogClientProps) {
     );
   }
 
-  return <AuditLogTable initialEntries={entries} orgId={orgId} pageSize={PAGE_SIZE} userNames={userNames} connectionNames={connectionNames} />;
+  return (
+    <AuditLogTable
+      initialEntries={entries}
+      orgId={orgId}
+      pageSize={PAGE_SIZE}
+      userNames={userNames}
+      connectionNames={connectionNames}
+      requestTitles={requestTitles}
+    />
+  );
 }

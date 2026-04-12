@@ -142,6 +142,8 @@ export async function POST(
       ipAddress: getClientIp(request),
       details: {
         request_id: id,
+        body: validated.body,
+        source: commentSource,
       },
     });
 

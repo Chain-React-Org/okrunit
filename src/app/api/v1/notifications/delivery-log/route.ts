@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       query = query.eq("request_id", requestId);
     }
 
-    const { data: entries, error, count } = await query;
+    const { data: rawEntries, error, count } = await query;
 
     if (error) {
       console.error("[DeliveryLog] Failed to fetch:", error);
@@ -65,8 +65,67 @@ export async function GET(request: Request) {
       );
     }
 
+    const rows = rawEntries ?? [];
+
+    // 4. Resolve request titles and recipient names in batch
+    const requestIds = [...new Set(rows.map((r: Record<string, unknown>) => r.request_id).filter(Boolean))] as string[];
+    const userIds = [...new Set(rows.map((r: Record<string, unknown>) => r.recipient_user_id).filter(Boolean))] as string[];
+
+    const [requestMap, userMap] = await Promise.all([
+      requestIds.length > 0
+        ? admin
+            .from("approval_requests")
+            .select("id, title")
+            .in("id", requestIds)
+            .then(({ data }) => {
+              const map: Record<string, string> = {};
+              for (const r of data ?? []) map[r.id] = r.title;
+              return map;
+            })
+        : Promise.resolve({} as Record<string, string>),
+      userIds.length > 0
+        ? admin
+            .from("user_profiles")
+            .select("id, email, full_name")
+            .in("id", userIds)
+            .then(({ data }) => {
+              const map: Record<string, string> = {};
+              for (const u of data ?? []) map[u.id] = u.full_name || u.email;
+              return map;
+            })
+        : Promise.resolve({} as Record<string, string>),
+    ]);
+
+    // 5. Build response entries
+    const entries = rows.map((row: Record<string, unknown>) => {
+      const metadata = (row.metadata ?? {}) as Record<string, unknown>;
+      const recipientUserId = row.recipient_user_id as string | null;
+
+      // Build recipient display: profile name/email, or "to" from metadata
+      let recipient = "-";
+      if (recipientUserId && userMap[recipientUserId]) {
+        recipient = userMap[recipientUserId];
+      } else if (typeof metadata.to === "string") {
+        recipient = metadata.to;
+      }
+
+      return {
+        id: row.id,
+        created_at: row.created_at,
+        request_id: row.request_id,
+        request_title: row.request_id ? (requestMap[row.request_id as string] ?? "-") : "-",
+        recipient,
+        channel: row.channel,
+        status: row.status,
+        error_message: row.error_message ?? null,
+        suppression_reason: row.suppression_reason ?? null,
+        external_id: row.external_id ?? null,
+        metadata,
+      };
+    });
+
     return NextResponse.json({
-      entries: entries ?? [],
+      entries,
       pagination: {
         page,
         per_page: perPage,

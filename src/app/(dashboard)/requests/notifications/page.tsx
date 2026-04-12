@@ -11,9 +11,5 @@ export default async function NotificationDeliveryPage() {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
 
-  return (
-    <div>
-      <NotificationDeliveryLog orgId={ctx.membership.org_id} />
-    </div>
-  );
+  return <NotificationDeliveryLog orgId={ctx.membership.org_id} />;
 }
