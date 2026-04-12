@@ -123,7 +123,13 @@ function matchesConditions(
     if (!input.riskLevel || !levels.includes(input.riskLevel)) return false;
   }
 
-  // Check title_pattern (regex).
+  // Check titles (exact match against a list of known titles).
+  if (conditions.titles) {
+    const titles = conditions.titles as string[];
+    if (!titles.includes(input.title)) return false;
+  }
+
+  // Check title_pattern (regex) -- legacy, kept for backwards compatibility.
   if (conditions.title_pattern) {
     const pattern = new RegExp(conditions.title_pattern as string, "i");
     if (!pattern.test(input.title)) return false;

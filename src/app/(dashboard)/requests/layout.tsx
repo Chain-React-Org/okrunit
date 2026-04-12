@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
 import { RequestsNav } from "@/components/requests/requests-nav";
+import { TourHint } from "@/components/onboarding/tour-hint";
 
 export default async function RequestsLayout({
   children,
@@ -28,6 +29,7 @@ export default async function RequestsLayout({
       {/* Main content - sole scroll container */}
       <div className="relative flex-1 min-w-0 overflow-y-auto">
         <div className="px-6 lg:px-8 py-6">
+          <TourHint />
           {children}
         </div>
       </div>

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
 import { getCachedOrgLayoutData } from "@/lib/cache/queries";
 import { V2OrgNav } from "@/components/org/v2-org-nav";
+import { TourHint } from "@/components/onboarding/tour-hint";
 
 export default async function OrgLayout({
   children,
@@ -33,6 +34,7 @@ export default async function OrgLayout({
       {/* Main content - fills remaining space */}
       <main className="flex-1 min-w-0">
         <div className="px-6 lg:px-8 py-6">
+          <TourHint />
           {children}
         </div>
       </main>

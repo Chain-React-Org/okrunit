@@ -487,18 +487,22 @@ export function ApprovalDashboard({
   // Tour step 5: auto-open detail panel for the test request
   const tourActivePageId = useOnboardingTourStore((s) => s.activePageId);
   const tourStepIndex = useOnboardingTourStore((s) => s.currentStepInPage);
-  const isTourOnDetailStep = tourActivePageId === "requests" && tourStepIndex === 4;
+
+  // Tour step that auto-opens the detail panel (later in the tour flow)
+  const isTourOnAutoOpenStep = tourActivePageId === "requests" && tourStepIndex === 4;
   useEffect(() => {
-    if (isTourOnDetailStep) {
+    if (isTourOnAutoOpenStep) {
       const testRequest = approvals.find((a) => a.source === "onboarding");
       if (testRequest && !detailOpen) {
         setSelectedApproval(testRequest);
         setDetailOpen(true);
       }
     }
-  }, [isTourOnDetailStep, approvals, detailOpen]);
+  }, [isTourOnAutoOpenStep, approvals, detailOpen]);
 
-  // Close detail panel when tour leaves step 5 (user clicked X, Skip, or Done)
+  // Close detail panel when tour leaves the detail panel step (step 2 = after animation click)
+  // or the auto-open step (step 4)
+  const isTourOnDetailStep = tourActivePageId === "requests" && (tourStepIndex === 2 || tourStepIndex === 4);
   const prevTourOnDetailStep = useRef(false);
   useEffect(() => {
     if (prevTourOnDetailStep.current && !isTourOnDetailStep && detailOpen) {

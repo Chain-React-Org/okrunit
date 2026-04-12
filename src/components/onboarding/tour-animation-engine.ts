@@ -130,10 +130,28 @@ export class TourAnimationEngine {
 
   // ---------- Command Implementations --------------------------------------
 
-  private execMove(selector: string): Promise<void> {
+  /** Wait for an element to appear in the DOM, retrying every 200ms for up to 3s. */
+  private waitForElement(selector: string, timeoutMs = 3000): Promise<Element | null> {
     return new Promise((resolve) => {
       const el = document.querySelector(selector);
-      if (!el) {
+      if (el) { resolve(el); return; }
+
+      let elapsed = 0;
+      const interval = 200;
+      const timer = setInterval(() => {
+        if (this.aborted) { clearInterval(timer); resolve(null); return; }
+        elapsed += interval;
+        const found = document.querySelector(selector);
+        if (found) { clearInterval(timer); resolve(found); return; }
+        if (elapsed >= timeoutMs) { clearInterval(timer); resolve(null); }
+      }, interval);
+    });
+  }
+
+  private execMove(selector: string): Promise<void> {
+    return new Promise(async (resolve) => {
+      const el = await this.waitForElement(selector);
+      if (!el || this.aborted) {
         resolve();
         return;
       }
@@ -148,9 +166,9 @@ export class TourAnimationEngine {
   }
 
   private execClick(selector: string): Promise<void> {
-    return new Promise((resolve) => {
-      const el = document.querySelector(selector) as HTMLElement | null;
-      if (!el) {
+    return new Promise(async (resolve) => {
+      const el = await this.waitForElement(selector) as HTMLElement | null;
+      if (!el || this.aborted) {
         resolve();
         return;
       }

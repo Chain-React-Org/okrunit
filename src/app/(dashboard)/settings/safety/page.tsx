@@ -23,7 +23,7 @@ export default async function SafetySettingsPage() {
       />
 
       <SafetySettings
-        autoApprovalsPaused={org.auto_approvals_paused ?? false}
+        autoApprovalsPaused={membership.auto_approvals_paused ?? false}
         emergencyStopActive={org.emergency_stop_active}
         emergencyStopActivatedAt={org.emergency_stop_activated_at}
         emergencyStopActivatedBy={org.emergency_stop_activated_by}

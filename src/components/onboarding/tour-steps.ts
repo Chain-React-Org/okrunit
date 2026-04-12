@@ -90,11 +90,16 @@ const requestsSteps: TourStepConfig[] = [
         { type: "tooltip-update", text: "Or click the card to open the detail panel for full context." },
         { type: "click", target: "[data-tour='test-request']" },
         { type: "wait", ms: 800 },
-        { type: "tooltip-update", text: "The detail panel shows all request information. You can also press 'a' to approve or 'r' to reject with keyboard shortcuts." },
-        { type: "wait", ms: 2500 },
-        { type: "dialog-close" },
       ],
     },
+  },
+  {
+    id: "requests-detail-panel",
+    targetSelector: null,
+    title: "Request Details",
+    description:
+      "The detail panel shows all request information: title, priority, metadata, comments, and the full approval history. You can also press 'a' to approve or 'r' to reject with keyboard shortcuts.",
+    position: "center",
   },
   {
     id: "requests-filters",
@@ -130,6 +135,9 @@ const routesSteps: TourStepConfig[] = [
       pauseBetweenCommands: 400,
       commands: [
         { type: "tooltip-update", text: "Click on a route card to expand its settings." },
+        { type: "wait", ms: 1000 },
+        { type: "move", to: "[data-tour='flow-card']" },
+        { type: "wait", ms: 500 },
         { type: "click", target: "[data-tour='flow-card'] [data-tour='flow-expand-btn']" },
         { type: "wait", ms: 800 },
         { type: "tooltip-update", text: "Here you can configure who approves requests from this source: anyone on the team, specific members, or by role." },
@@ -158,22 +166,24 @@ const routesSteps: TourStepConfig[] = [
 const rulesSteps: TourStepConfig[] = [
   {
     id: "rules-overview",
-    targetSelector: null,
+    targetSelector: "[data-tour='create-rule-btn']",
     title: "Conditional Rules",
     description:
       "Rules let you automatically handle requests based on conditions. Auto-approve low-risk actions, route critical requests to specific teams, or require multiple approvers. Rules are evaluated in order, first match wins.",
-    position: "center",
+    position: "left",
+    highlightMode: "no-ring",
   },
   {
     id: "rules-create-demo",
-    targetSelector: null,
+    targetSelector: "[data-tour='create-rule-btn']",
     title: "Creating a Rule",
     description:
       "Watch how to create a rule...",
-    position: "left",
+    position: "right",
+    highlightMode: "no-ring",
     animation: {
       autoAdvance: true,
-      pauseBetweenCommands: 400,
+      pauseBetweenCommands: 300,
       commands: [
         { type: "tooltip-update", text: "Click 'New Rule' to open the rule builder." },
         { type: "move", to: "[data-tour='create-rule-btn']" },
@@ -181,18 +191,41 @@ const rulesSteps: TourStepConfig[] = [
         { type: "click", target: "[data-tour='create-rule-btn']" },
         { type: "dialog-await" },
         { type: "wait", ms: 400 },
-        { type: "tooltip-update", text: "Give your rule a descriptive name so your team knows what it does." },
+
+        // Rule Name
+        { type: "tooltip-update", text: "Rule Name: Give your rule a short, descriptive name so your team knows what it does at a glance." },
         { type: "move", to: "#rule-name" },
         { type: "type", target: "#rule-name", text: "Auto-approve low-risk deploys" },
         { type: "wait", ms: 600 },
-        { type: "tooltip-update", text: "Set conditions like priority level. All conditions must match (AND logic). Here we select 'low' priority." },
-        { type: "wait", ms: 2000 },
-        { type: "tooltip-update", text: "Then choose an action: auto-approve matching requests, or route them to specific approvers with a required count." },
-        { type: "wait", ms: 2500 },
-        { type: "tooltip-update", text: "That's the basics! Click 'Create Rule' to save." },
-        { type: "move", to: "[data-slot='dialog-content'] button:last-of-type" },
-        { type: "wait", ms: 800 },
-        { type: "tooltip-update", text: "Rules are powerful. Check the Analytics page for rule suggestions based on your approval patterns." },
+
+        // Description
+        { type: "tooltip-update", text: "Description: Optional notes explaining when this rule should trigger and why." },
+        { type: "move", to: "[data-tour='rule-dialog'] textarea" },
+        { type: "wait", ms: 1000 },
+
+        // Conditions section
+        { type: "tooltip-update", text: "Conditions: All conditions use AND logic. A request must match every condition you set. Leave empty to match anything." },
+        { type: "scroll", target: "[data-tour='rule-conditions']", block: "center" },
+        { type: "move", to: "[data-tour='rule-conditions']" },
+        { type: "wait", ms: 1200 },
+
+        // Priority - click 'low'
+        { type: "tooltip-update", text: "Priority Levels: Select which priorities to match. Let's select 'low' for this demo." },
+        { type: "move", to: "[data-tour='rule-dialog'] button:has-text('low')" },
+        { type: "wait", ms: 1200 },
+
+        // Action section
+        { type: "tooltip-update", text: "Action: Choose what happens when a request matches. Auto-approve skips human review. Route sends to specific approvers." },
+        { type: "scroll", target: "[data-tour='rule-action-section']", block: "center" },
+        { type: "move", to: "[data-tour='rule-action-section']" },
+        { type: "wait", ms: 1200 },
+
+        // Save
+        { type: "tooltip-update", text: "Once you're happy, click 'Create Rule' to save. Rules are evaluated in priority order, first match wins." },
+        { type: "scroll", target: "[data-tour='rule-dialog'] footer", block: "end" },
+        { type: "move", to: "[data-tour='rule-dialog'] button:last-of-type" },
+        { type: "wait", ms: 1500 },
+        { type: "tooltip-update", text: "That's it! Every field has a help icon you can hover for details. Check Analytics for rule suggestions." },
         { type: "wait", ms: 2000 },
         { type: "dialog-close" },
       ],
@@ -346,6 +379,35 @@ const auditLogSteps: TourStepConfig[] = [
     description:
       "Export audit logs as CSV for compliance reporting. The log is immutable \u2014 entries cannot be edited or deleted, ensuring a complete audit trail.",
     position: "center",
+  },
+];
+
+// ---- Notification Delivery Page -------------------------------------------
+
+const notificationDeliverySteps: TourStepConfig[] = [
+  {
+    id: "ndl-overview",
+    targetSelector: null,
+    title: "Notification Delivery Log",
+    description:
+      "This page shows every notification sent by OKRunit, including emails, Slack messages, Discord, Teams, Telegram, SMS, web push, and webhooks. Use it to debug 'I didn't get notified' issues or audit delivery history.",
+    position: "center",
+  },
+  {
+    id: "ndl-filters-demo",
+    targetSelector: "[data-tour='ndl-filters']",
+    title: "Filtering Deliveries",
+    description:
+      "Filter by channel (email, Slack, Discord, etc.) and status (sent, failed, or suppressed). Suppressed means the notification was skipped due to quiet hours, priority filters, or the user opting out of that channel.",
+    position: "bottom",
+  },
+  {
+    id: "ndl-table-demo",
+    targetSelector: "[data-tour='notification-delivery-log']",
+    title: "Delivery Details",
+    description:
+      "Each row shows the time, request title, recipient, channel, and status. Click the expand arrow on any row to see full details including the external message ID, error messages for failed deliveries, suppression reasons, and metadata like the recipient email or phone number.",
+    position: "top",
   },
 ];
 
@@ -545,7 +607,7 @@ const webhookDeliveriesSteps: TourStepConfig[] = [
     description:
       "Click any row to expand it and see the full request and response: headers, body, status code, and duration. Failed deliveries show the error message and can be retried with the Retry button.",
     position: "bottom",
-    highlightMode: "no-ring",
+    highlightMode: "full-width",
   },
 ];
 
@@ -649,6 +711,7 @@ export const PAGE_TOURS: PageTourConfig[] = [
   { pageId: "analytics", pathname: "/requests/analytics", pageName: "Analytics", docsPath: "/docs/approvals", steps: analyticsSteps },
   { pageId: "sla", pathname: "/requests/sla", pageName: "SLA", docsPath: "/docs/sla", steps: slaSteps },
   { pageId: "audit-log", pathname: "/requests/audit-log", pageName: "Audit Log", docsPath: "/docs/approvals", steps: auditLogSteps },
+  { pageId: "notification-delivery", pathname: "/requests/notifications", pageName: "Notifications", docsPath: "/docs/notifications", steps: notificationDeliverySteps },
 
   // Organization
   { pageId: "organizations", pathname: "/org/organizations", pageName: "Organizations", docsPath: "/docs/onboarding", steps: organizationsSteps },
@@ -669,15 +732,15 @@ export const PAGE_TOURS: PageTourConfig[] = [
 ];
 
 // Full tour order (for the sequential "Start Tour" flow)
-// Follows sidebar order: Org pages → Requests pages → Playground → Settings
+// Follows sidebar order exactly: Org → Requests → Playground → Settings
 export const FULL_TOUR_ORDER = [
-  // Org section
-  "overview", "organizations", "teams", "members", "invites", "roles", "org-settings", "billing",
-  // Requests section
-  "requests", "routes", "rules", "templates", "connections", "messaging", "analytics", "sla", "audit-log",
-  // Playground
+  // Org sidebar (top to bottom)
+  "overview", "organizations", "teams", "members", "roles", "invites", "billing", "org-settings",
+  // Requests sidebar (top to bottom): Approvals → Configuration → Insights
+  "requests", "connections", "routes", "rules", "messaging", "templates", "analytics", "sla", "audit-log", "notification-delivery",
+  // Playground sidebar
   "playground", "webhook-deliveries",
-  // Settings
+  // Settings sidebar
   "account", "notifications",
 ];
 

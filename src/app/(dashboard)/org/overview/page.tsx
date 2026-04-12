@@ -5,7 +5,6 @@ import { getOrgContext } from "@/lib/org-context";
 import { getCachedOverviewData } from "@/lib/cache/queries";
 import { JoinedToast } from "@/components/org/joined-toast";
 
-import { OnboardingTutorial } from "@/components/onboarding/onboarding-tutorial";
 import { RecentActivity } from "@/components/overview/recent-activity";
 import {
   AlertTriangle,
@@ -192,7 +191,6 @@ export default async function V2OrgOverviewPage() {
       )}
 
       {/* Onboarding tutorial - shown until dismissed */}
-      <OnboardingTutorial />
 
       {/* Org header - only on overview */}
       <div data-tour="overview-main" className="space-y-8">

@@ -226,9 +226,9 @@ export function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps)
   }
 
   return (
-    <div className="space-y-4 pt-4">
+    <div className="space-y-4 pt-4" data-tour="notification-delivery-log">
       {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center" data-tour="ndl-filters">
         <Select value={channelFilter} onValueChange={setChannelFilter}>
           <SelectTrigger className="w-full sm:w-[200px] bg-white dark:bg-card text-foreground">
             <SelectValue placeholder="All channels" />

@@ -275,6 +275,7 @@ export function CalendarSettings({ orgId, userId }: CalendarSettingsProps) {
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 variant="outline"
+                className="bg-white dark:bg-card"
                 onClick={() => handleConnect("google")}
                 disabled={isConnecting !== null}
               >
@@ -285,6 +286,7 @@ export function CalendarSettings({ orgId, userId }: CalendarSettingsProps) {
               </Button>
               <Button
                 variant="outline"
+                className="bg-white dark:bg-card"
                 onClick={() => handleConnect("microsoft")}
                 disabled={isConnecting !== null}
               >
