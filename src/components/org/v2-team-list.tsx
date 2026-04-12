@@ -170,8 +170,9 @@ export function V2TeamList({
                   </Button>
                 </span>
               </TooltipTrigger>
-              <TooltipContent>
-                You have reached the limit for the number of teams in your organization. Upgrade to create more.
+              <TooltipContent side="bottom">
+                <p>{planLimits.name} plan is limited to {planLimits.maxTeams} team{planLimits.maxTeams !== 1 ? "s" : ""}.</p>
+                <p className="text-xs text-muted-foreground">Upgrade to create more.</p>
               </TooltipContent>
             </Tooltip>
           ) : (

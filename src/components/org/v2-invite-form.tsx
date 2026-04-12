@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Users, Send, Clock, X, Shield, ShieldCheck, User, ChevronDown, Check, Plus, Loader2 } from "lucide-react";
+import { Mail, Users, Send, Clock, X, Shield, ShieldCheck, User, ChevronDown, Check, Plus, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -786,8 +786,9 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
             <p className="text-sm text-muted-foreground">
               No pending invitations
             </p>
-            <p className="text-xs text-muted-foreground/60 mt-1">
-              Send an invite to get started
+            <p className="text-xs text-muted-foreground/60 mt-1 flex items-center gap-1">
+              <ArrowLeft className="size-3 hidden lg:inline-block" />
+              Use the form to send an invite
             </p>
           </div>
         ) : (

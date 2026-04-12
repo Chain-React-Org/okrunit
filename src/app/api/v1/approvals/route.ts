@@ -179,6 +179,7 @@ export async function POST(request: Request) {
         // Apply template defaults for fields not explicitly provided in the request
         console.log("[Approvals] Before template apply:", JSON.stringify({ title: validated.title, priority: validated.priority, action_type: validated.action_type, assigned_approvers: validated.assigned_approvers, callback_url: validated.callback_url }));
         if (!validated.title && template.title_pattern) validated.title = template.title_pattern;
+        if (!validated.description && template.description) validated.description = template.description;
         if (!validated.action_type && template.action_type) validated.action_type = template.action_type;
         if (!validated.priority && template.default_priority) validated.priority = template.default_priority as "low" | "medium" | "high" | "critical";
         if (!validated.assigned_approvers && template.assigned_approvers?.length) validated.assigned_approvers = template.assigned_approvers;

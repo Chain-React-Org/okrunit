@@ -106,19 +106,29 @@ export function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps)
   const [entries, setEntries] = useState<DeliveryLogEntry[] | null>(null);
   const [channelFilter, setChannelFilter] = useState<string>(ALL_VALUE);
   const [statusFilter, setStatusFilter] = useState<string>(ALL_VALUE);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const fetchEntries = useCallback(
-    async (cursor?: string) => {
-      const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
+    async (page: number) => {
+      const params = new URLSearchParams({
+        page: String(page),
+        per_page: String(PAGE_SIZE),
+      });
       if (channelFilter !== ALL_VALUE) params.set("channel", channelFilter);
       if (statusFilter !== ALL_VALUE) params.set("status", statusFilter);
-      if (cursor) params.set("cursor", cursor);
 
       const res = await fetch(`/api/v1/notifications/delivery-log?${params.toString()}`);
-      if (!res.ok) return { data: [], has_more: false };
-      return res.json() as Promise<{ data: DeliveryLogEntry[]; has_more: boolean }>;
+      if (!res.ok) return { entries: [], hasMore: false };
+      const json = await res.json() as {
+        entries: DeliveryLogEntry[];
+        pagination: { page: number; total_pages: number };
+      };
+      return {
+        entries: json.entries,
+        hasMore: json.pagination.page < json.pagination.total_pages,
+      };
     },
     [channelFilter, statusFilter],
   );
@@ -127,10 +137,11 @@ export function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps)
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const result = await fetchEntries();
+      const result = await fetchEntries(1);
       if (cancelled) return;
-      setEntries(result.data);
-      setHasMore(result.has_more);
+      setEntries(result.entries);
+      setHasMore(result.hasMore);
+      setPage(1);
     };
     setEntries(null);
     load();
@@ -141,13 +152,14 @@ export function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps)
 
   const loadMore = useCallback(() => {
     if (!entries || entries.length === 0) return;
-    const lastEntry = entries[entries.length - 1];
+    const nextPage = page + 1;
     startTransition(async () => {
-      const result = await fetchEntries(lastEntry.id);
-      setEntries((prev) => [...(prev ?? []), ...result.data]);
-      setHasMore(result.has_more);
+      const result = await fetchEntries(nextPage);
+      setEntries((prev) => [...(prev ?? []), ...result.entries]);
+      setHasMore(result.hasMore);
+      setPage(nextPage);
     });
-  }, [entries, fetchEntries]);
+  }, [entries, page, fetchEntries]);
 
   const hasActiveFilters = channelFilter !== ALL_VALUE || statusFilter !== ALL_VALUE;
 
