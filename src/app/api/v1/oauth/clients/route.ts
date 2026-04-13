@@ -8,6 +8,7 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
+import { canUseFeature } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateClientCredentials, validateScopes } from "@/lib/api/oauth";
 import { OAUTH_SCOPES } from "@/lib/constants";
@@ -69,6 +70,11 @@ export async function POST(request: Request) {
 
     if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
       throw new ApiError(403, "Insufficient permissions");
+    }
+
+    const featureCheck = await canUseFeature(auth.orgId, "api_access");
+    if (!featureCheck.allowed) {
+      throw new ApiError(403, featureCheck.reason ?? "OAuth clients require a Pro plan or higher", "PLAN_LIMIT_EXCEEDED");
     }
 
     let body: z.infer<typeof createClientSchema>;

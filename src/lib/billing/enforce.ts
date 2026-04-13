@@ -182,6 +182,37 @@ export async function canCreateOrganization(userId: string): Promise<Enforcement
   return { allowed: true, limit: limits.maxOrganizations, current: currentCount, plan: bestPlan };
 }
 
+/** Check if the org can create a new team */
+export async function canCreateTeam(orgId: string): Promise<EnforcementResult> {
+  const plan = await getOrgPlan(orgId);
+  const limits = getPlanLimits(plan);
+
+  if (isUnlimited(limits.maxTeams)) {
+    return { allowed: true, plan };
+  }
+
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("teams")
+    .select("*", { count: "exact", head: true })
+    .eq("org_id", orgId);
+
+  const current = count ?? 0;
+
+  if (current >= limits.maxTeams) {
+    return {
+      allowed: false,
+      reason: `Team limit reached (${limits.maxTeams}). Upgrade for more teams.`,
+      limit: limits.maxTeams,
+      current,
+      plan,
+      upgradeRequired: true,
+    };
+  }
+
+  return { allowed: true, limit: limits.maxTeams, current, plan };
+}
+
 /** Check if a specific feature is available on the org's plan */
 export async function canUseFeature(orgId: string, feature: string): Promise<EnforcementResult> {
   const plan = await getOrgPlan(orgId);
