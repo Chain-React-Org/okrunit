@@ -456,14 +456,19 @@ export async function POST(request: Request) {
     authenticated = true;
   }
 
-  // If neither auth mode is configured, allow through (development mode)
-  if (!authenticated && (signingSecret || TEAMS_CLIENT_ID)) {
-    // At least one auth mode is configured but neither succeeded
-    // Only fail if there was actually an auth header that didn't verify
-    if (authHeader) {
+  // Require authentication when any auth mode is configured
+  if (!authenticated) {
+    if (signingSecret || TEAMS_CLIENT_ID) {
       return NextResponse.json(
         { error: "Authentication failed" },
         { status: 401 },
+      );
+    }
+    // Neither auth mode configured: reject in production, allow in dev
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { error: "Teams authentication not configured" },
+        { status: 500 },
       );
     }
   }
@@ -661,14 +666,14 @@ async function handleActionSubmit(
   const newStatus = decision === "approve" ? "approved" : "rejected";
   const decidedAt = new Date().toISOString();
 
-  const { data: userProfile } = await admin
-    .from("user_profiles")
-    .select("id")
+  const { data: orgMember } = await admin
+    .from("org_memberships")
+    .select("user_id")
     .eq("org_id", approval.org_id)
     .limit(1)
     .maybeSingle();
 
-  const decidedBy = userProfile?.id ?? null;
+  const decidedBy = orgMember?.user_id ?? null;
 
   const updatePayload: Record<string, unknown> = {
     status: newStatus,

@@ -125,10 +125,11 @@ export async function POST(request: Request) {
       ? `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/webhook`
       : request.url;
 
-  if (
-    twilioSignature &&
-    !validateTwilioSignature(authToken, requestUrl, params, twilioSignature)
-  ) {
+  if (!twilioSignature) {
+    console.warn("[Twilio Webhook] Missing Twilio signature header");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!validateTwilioSignature(authToken, requestUrl, params, twilioSignature)) {
     console.warn("[Twilio Webhook] Invalid Twilio signature");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

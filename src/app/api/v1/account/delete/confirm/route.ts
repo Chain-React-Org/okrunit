@@ -42,11 +42,20 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Mark token as consumed
-  await admin
+  // Mark token as consumed (atomic: only update if still unconsumed)
+  const { data: consumed } = await admin
     .from("account_deletion_tokens")
     .update({ consumed_at: new Date().toISOString() })
-    .eq("id", tokenRecord.id);
+    .eq("id", tokenRecord.id)
+    .is("consumed_at", null)
+    .select("id")
+    .maybeSingle();
+
+  if (!consumed) {
+    return NextResponse.redirect(
+      `${APP_URL}/settings?error=invalid_token`
+    );
+  }
 
   // Schedule deletion (soft delete)
   const deletionDate = new Date();

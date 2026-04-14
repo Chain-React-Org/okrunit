@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { verifyMondayAuth } from "@/lib/api/monday-auth";
 
 interface MondayActionPayload {
   payload: {
@@ -29,6 +30,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ challenge: raw.challenge });
     }
 
+    // Verify monday.com signing secret
+    if (!verifyMondayAuth(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { inputFields } = raw.payload ?? {};
 
     if (!inputFields?.approval_id) {
@@ -40,12 +46,26 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient();
 
+    // Scope to the org's monday.com connection to prevent cross-org access
+    const { data: connection } = await admin
+      .from("messaging_connections")
+      .select("org_id")
+      .eq("platform", "monday")
+      .eq("is_active", true)
+      .limit(1)
+      .single();
+
+    if (!connection) {
+      return NextResponse.json({ error: "No active monday.com connection" }, { status: 404 });
+    }
+
     const { data: approval, error: fetchError } = await admin
       .from("approval_requests")
       .select(
         "id, title, description, status, priority, source, callback_url, source_url, metadata, requested_by_name, decided_by, decided_by_name, decided_at, decision_comment, created_at, updated_at",
       )
       .eq("id", inputFields.approval_id)
+      .eq("org_id", connection.org_id)
       .single();
 
     if (fetchError || !approval) {

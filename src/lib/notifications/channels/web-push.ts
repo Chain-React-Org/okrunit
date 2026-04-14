@@ -92,20 +92,20 @@ export async function sendWebPushToOrg(
 
   const admin = createAdminClient();
 
-  // 1. Get all user IDs in this org
-  const { data: profiles, error: profileError } = await admin
-    .from("user_profiles")
-    .select("id")
+  // 1. Get all user IDs in this org via org_memberships
+  const { data: memberships, error: memberError } = await admin
+    .from("org_memberships")
+    .select("user_id")
     .eq("org_id", orgId);
 
-  if (profileError || !profiles || profiles.length === 0) {
-    if (profileError) {
-      console.error("[WebPush] Failed to fetch org profiles:", orgId, profileError);
+  if (memberError || !memberships || memberships.length === 0) {
+    if (memberError) {
+      console.error("[WebPush] Failed to fetch org members:", orgId, memberError);
     }
     return;
   }
 
-  const userIds = profiles.map((p) => p.id);
+  const userIds = memberships.map((m) => m.user_id);
 
   // 2. Get all push subscriptions for those users
   const { data: subscriptions, error: subError } = await admin

@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveAndCheckUrl } from "@/lib/api/ssrf";
 
 export interface WebhookChannel {
   id: string;
@@ -87,6 +88,13 @@ export async function sendWebhookNotification(
   const body = channel.payload_template
     ? mergePayloadTemplate(channel.payload_template, payload)
     : payload;
+
+  // Defense-in-depth SSRF check at delivery time
+  const isPrivate = await resolveAndCheckUrl(channel.url);
+  if (isPrivate) {
+    console.warn("[Webhook] Blocked delivery to private URL:", channel.id);
+    return;
+  }
 
   const response = await fetch(channel.url, {
     method: channel.http_method || "POST",

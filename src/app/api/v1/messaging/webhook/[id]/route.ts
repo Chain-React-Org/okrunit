@@ -13,6 +13,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { errorResponse, ApiError } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
+import { resolveAndCheckUrl } from "@/lib/api/ssrf";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 
 // ---------------------------------------------------------------------------
@@ -89,6 +90,14 @@ export async function PATCH(
 
     if (Object.keys(parsed).length === 0) {
       throw new ApiError(400, "Nothing to update");
+    }
+
+    // SSRF check on URL updates
+    if (parsed.url) {
+      const isPrivate = await resolveAndCheckUrl(parsed.url);
+      if (isPrivate) {
+        throw new ApiError(400, "Invalid webhook URL: targets a private or reserved network");
+      }
     }
 
     const admin = createAdminClient();

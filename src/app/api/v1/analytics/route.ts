@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
+import { canUseFeature } from "@/lib/billing/enforce";
 import { analyticsQuerySchema } from "@/lib/api/validation";
 import {
   getApprovalSummary,
@@ -73,6 +74,11 @@ export async function GET(request: Request) {
     }
 
     const orgId = auth.orgId;
+
+    const featureCheck = await canUseFeature(orgId, "analytics");
+    if (!featureCheck.allowed) {
+      throw new ApiError(403, featureCheck.reason ?? "Upgrade required for analytics");
+    }
 
     // 2. Parse and validate query params
     const { searchParams } = new URL(request.url);

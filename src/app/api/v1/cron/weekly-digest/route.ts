@@ -8,11 +8,11 @@ import { verifyCronAuth } from "@/lib/api/cron-auth";
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 
 /**
- * POST /api/v1/cron/weekly-digest
+ * GET /api/v1/cron/weekly-digest
  * Sends weekly digest emails to all org members with email enabled.
  * Should be run weekly (e.g., Monday 9am UTC).
  */
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   return handleDigest(req);
 }
 

@@ -177,14 +177,17 @@ async function applyDecision(request: Request, params: {
   const newStatus = decision === "approve" ? "approved" : "rejected";
   const decidedAt = new Date().toISOString();
 
-  const { data: userProfile } = await admin
-    .from("user_profiles")
-    .select("id")
+  const { data: orgMember } = await admin
+    .from("org_memberships")
+    .select("user_id")
     .eq("org_id", approval.org_id)
     .limit(1)
     .maybeSingle();
 
-  const decidedBy = userProfile?.id ?? null;
+  const decidedBy = orgMember?.user_id ?? null;
+
+  // Build attribution tag for audit trail
+  const telegramAttribution = `[Decided via Telegram by ${displayName}]`;
 
   const updatePayload: Record<string, unknown> = {
     status: newStatus,
@@ -192,7 +195,11 @@ async function applyDecision(request: Request, params: {
     decided_at: decidedAt,
     decision_source: "telegram",
   };
-  if (comment) updatePayload.decision_comment = comment;
+  if (comment) {
+    updatePayload.decision_comment = `${comment}\n\n${telegramAttribution}`;
+  } else {
+    updatePayload.decision_comment = telegramAttribution;
+  }
 
   const { data: updated, error: updateError } = await admin
     .from("approval_requests")
@@ -425,10 +432,9 @@ export async function POST(request: Request) {
 
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
   const secretHeader = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
-  // Only verify if both sides have a secret configured. Telegram sends the
-  // header only when secret_token was passed to setWebhook.
-  if (webhookSecret && secretHeader) {
-    if (!verifyTelegramSecret(webhookSecret, secretHeader)) {
+  // If a webhook secret is configured, always require it
+  if (webhookSecret) {
+    if (!secretHeader || !verifyTelegramSecret(webhookSecret, secretHeader)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }

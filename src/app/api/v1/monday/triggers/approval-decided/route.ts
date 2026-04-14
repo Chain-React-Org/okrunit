@@ -9,6 +9,7 @@
 
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyMondayAuth } from "@/lib/api/monday-auth";
 
 interface MondayTriggerPayload {
   payload: {
@@ -27,6 +28,11 @@ export async function POST(request: Request) {
 
     if (raw.challenge) {
       return NextResponse.json({ challenge: raw.challenge });
+    }
+
+    // Verify monday.com signing secret
+    if (!verifyMondayAuth(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { inputFields } = raw.payload ?? {};

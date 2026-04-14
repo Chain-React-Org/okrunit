@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveAndCheckUrl } from "@/lib/api/ssrf";
 import type { ApprovalCondition } from "@/lib/types/database";
 
 // ---------------------------------------------------------------------------
@@ -42,6 +43,12 @@ async function evaluateWebhookCondition(
   );
 
   try {
+    // Defense-in-depth SSRF check at evaluation time
+    const isPrivate = await resolveAndCheckUrl(condition.webhook_url);
+    if (isPrivate) {
+      return { status: "failed" as const, checkResult: { error: "Webhook URL targets a private network" } };
+    }
+
     const response = await fetch(condition.webhook_url, {
       method: "GET",
       headers: {

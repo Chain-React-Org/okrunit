@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
+import { canUseFeature } from "@/lib/billing/enforce";
 import { getSlaMetrics } from "@/lib/api/sla";
 
 // ---- Validation -----------------------------------------------------------
@@ -31,6 +32,13 @@ export async function GET(request: Request) {
       );
     }
 
+    const orgId = auth.orgId;
+
+    const featureCheck = await canUseFeature(orgId, "analytics");
+    if (!featureCheck.allowed) {
+      throw new ApiError(403, featureCheck.reason ?? "Upgrade required for analytics");
+    }
+
     // 2. Parse date range from query params
     const { searchParams } = new URL(request.url);
     const fromParam = searchParams.get("from");
@@ -49,7 +57,7 @@ export async function GET(request: Request) {
     }
 
     // 3. Get SLA metrics
-    const metrics = await getSlaMetrics(auth.orgId, { from, to });
+    const metrics = await getSlaMetrics(orgId, { from, to });
 
     return NextResponse.json({
       ...metrics,

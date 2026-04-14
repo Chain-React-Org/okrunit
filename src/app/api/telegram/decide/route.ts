@@ -220,14 +220,14 @@ export async function POST(request: Request) {
   const decidedAt = new Date().toISOString();
   const displayName = telegramDisplayName(user);
 
-  const { data: userProfile } = await admin
-    .from("user_profiles")
-    .select("id")
+  const { data: orgMember } = await admin
+    .from("org_memberships")
+    .select("user_id")
     .eq("org_id", approval.org_id)
     .limit(1)
     .maybeSingle();
 
-  const decidedBy = userProfile?.id ?? null;
+  const decidedBy = orgMember?.user_id ?? null;
 
   const updatePayload: Record<string, unknown> = {
     status: newStatus,

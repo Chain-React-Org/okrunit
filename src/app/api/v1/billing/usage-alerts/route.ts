@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPlanLimits, isUnlimited } from "@/lib/billing/plans";
 import { buildUsageAlertEmailHtml } from "@/lib/email/usage-alert";
+import { verifyCronAuth } from "@/lib/api/cron-auth";
 import type { BillingPlan } from "@/lib/types/database";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
@@ -14,8 +15,7 @@ const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
  * Requires CRON_SECRET header for authentication.
  */
 export async function POST(req: NextRequest) {
-  const cronSecret = req.headers.get("x-cron-secret");
-  if (!cronSecret || cronSecret !== process.env.CRON_SECRET) {
+  if (!verifyCronAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

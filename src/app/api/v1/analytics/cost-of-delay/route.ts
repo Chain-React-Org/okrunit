@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
+import { canUseFeature } from "@/lib/billing/enforce";
 import { getCostOfDelay } from "@/lib/api/analytics";
 // ---- GET /api/v1/analytics/cost-of-delay ---------------------------------
 
@@ -23,6 +24,11 @@ export async function GET(request: Request) {
     }
 
     const orgId = auth.orgId;
+
+    const featureCheck = await canUseFeature(orgId, "analytics");
+    if (!featureCheck.allowed) {
+      throw new ApiError(403, featureCheck.reason ?? "Upgrade required for analytics");
+    }
 
     // 2. Fetch pending approvals with age and estimated impact
     const items = await getCostOfDelay(orgId);

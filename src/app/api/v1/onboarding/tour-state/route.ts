@@ -41,10 +41,14 @@ export async function PATCH(request: Request) {
   const admin = createAdminClient();
 
   const update: Record<string, unknown> = {};
-  if (body.currentStep !== undefined) update.onboarding_tour_step = body.currentStep;
-  if (body.tourCompleted !== undefined) update.onboarding_tour_completed = body.tourCompleted;
-  if (body.tourDismissed !== undefined) update.onboarding_tour_dismissed = body.tourDismissed;
-  if (body.touredPages !== undefined) update.onboarding_toured_pages = body.touredPages;
+  if (typeof body.currentStep === "number" && body.currentStep >= 0 && body.currentStep <= 100) {
+    update.onboarding_tour_step = body.currentStep;
+  }
+  if (typeof body.tourCompleted === "boolean") update.onboarding_tour_completed = body.tourCompleted;
+  if (typeof body.tourDismissed === "boolean") update.onboarding_tour_dismissed = body.tourDismissed;
+  if (Array.isArray(body.touredPages) && body.touredPages.length <= 50 && body.touredPages.every((p: unknown) => typeof p === "string")) {
+    update.onboarding_toured_pages = body.touredPages;
+  }
 
   if (Object.keys(update).length > 0) {
     await admin

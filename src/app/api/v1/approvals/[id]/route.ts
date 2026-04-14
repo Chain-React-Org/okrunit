@@ -219,7 +219,7 @@ export async function GET(
     // 3b2. Lazy SLA breach check
     if (checkSlaBreach(approval)) {
       // Mark as breached (fire-and-forget)
-      admin
+      void admin
         .from("approval_requests")
         .update({
           sla_breached: true,
@@ -227,7 +227,7 @@ export async function GET(
         })
         .eq("id", approval.id)
         .eq("sla_breached", false)
-        ;
+        .then(({ error }) => { if (error) console.error("[Approvals] SLA breach update failed:", error); });
 
       // Notify about the breach (fire-and-forget)
       dispatchNotifications({

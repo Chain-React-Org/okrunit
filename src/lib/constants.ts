@@ -23,7 +23,7 @@ export const CALLBACK_TIMEOUT_MS = 10_000;
 export const CALLBACK_RETRY_DELAYS = [1_000, 2_000, 4_000] as const;
 
 /** Hours before an email-action token expires. */
-export const EMAIL_TOKEN_EXPIRY_HOURS = 72;
+export const EMAIL_TOKEN_EXPIRY_HOURS = 24;
 
 /** Days before an organization invite expires. */
 export const INVITE_EXPIRY_DAYS = 7;

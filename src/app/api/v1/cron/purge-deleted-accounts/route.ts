@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyCronAuth } from "@/lib/api/cron-auth";
 
 /**
- * POST /api/v1/cron/purge-deleted-accounts
+ * GET /api/v1/cron/purge-deleted-accounts
  * Permanently deletes accounts whose deletion_scheduled_at has passed.
  * Should be run daily via a cron job.
  */
-export async function POST(req: NextRequest) {
-  const cronSecret = req.headers.get("x-cron-secret");
-  if (!cronSecret || cronSecret !== process.env.CRON_SECRET) {
+export async function GET(req: NextRequest) {
+  if (!verifyCronAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       }
 
       purged++;
-      console.log(`[Purge] Deleted account ${user.id} (${user.email})`);
+      console.log(`[Purge] Deleted account ${user.id}`);
     } catch (err) {
       errors.push(`${user.id}: ${err instanceof Error ? err.message : "unknown error"}`);
     }

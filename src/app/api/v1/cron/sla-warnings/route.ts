@@ -15,7 +15,7 @@ import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
 import { captureError } from "@/lib/monitoring/capture";
 import { verifyCronAuth } from "@/lib/api/cron-auth";
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   return handleSlaWarnings(request);
 }
 

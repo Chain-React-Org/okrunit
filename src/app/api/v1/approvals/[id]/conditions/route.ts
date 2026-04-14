@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createConditionSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveAndCheckUrl } from "@/lib/api/ssrf";
 
 // ---- GET /api/v1/approvals/[id]/conditions --------------------------------
 
@@ -110,7 +111,15 @@ export async function POST(
       );
     }
 
-    // 6. Insert condition
+    // 6. SSRF check on webhook URL
+    if (validated.webhook_url) {
+      const isPrivate = await resolveAndCheckUrl(validated.webhook_url);
+      if (isPrivate) {
+        throw new ApiError(400, "Invalid webhook URL: targets a private or reserved network");
+      }
+    }
+
+    // 7. Insert condition
     const { data: condition, error: insertError } = await admin
       .from("approval_conditions")
       .insert({

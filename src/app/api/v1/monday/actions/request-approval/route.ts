@@ -15,6 +15,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { verifyMondayAuth } from "@/lib/api/monday-auth";
 
 
 interface MondayActionPayload {
@@ -44,6 +45,11 @@ export async function POST(request: Request) {
     // Handle monday.com webhook challenge (verification handshake)
     if (body.challenge) {
       return NextResponse.json({ challenge: body.challenge });
+    }
+
+    // Verify monday.com signing secret
+    if (!verifyMondayAuth(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { inputFields, webhookUrl } = body.payload ?? {};

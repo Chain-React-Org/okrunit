@@ -14,6 +14,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { canUseFeature } from "@/lib/billing/enforce";
+import { resolveAndCheckUrl } from "@/lib/api/ssrf";
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -89,6 +90,12 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const parsed = createSchema.parse(body);
+
+    // Validate URL against SSRF (prevent targeting internal networks)
+    const isPrivate = await resolveAndCheckUrl(parsed.url);
+    if (isPrivate) {
+      throw new ApiError(400, "Invalid webhook URL: targets a private or reserved network");
+    }
 
     const admin = createAdminClient();
 

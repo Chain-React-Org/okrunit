@@ -91,10 +91,7 @@ export function verifyPkceChallenge(
     return hash === challenge;
   }
 
-  if (method === "plain") {
-    return verifier === challenge;
-  }
-
+  // "plain" method rejected for security - S256 required
   return false;
 }
 
