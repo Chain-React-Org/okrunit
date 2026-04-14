@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DocsImage } from "@/components/docs/docs-image";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
@@ -26,6 +27,12 @@ export default function OnboardingPage() {
         <li><strong>Invite team members</strong>: Add colleagues by email (optional, can do later)</li>
         <li><strong>Connect messaging</strong>: Link Slack, Discord, or Teams for notifications (optional)</li>
       </ol>
+
+      <DocsImage
+        src="/screenshots/docs/setup-wizard.webp"
+        alt="Setup wizard showing organization name, team invite, and messaging connection steps"
+        caption="The setup wizard guides you through creating your workspace in three steps."
+      />
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Step 2: Interactive Tutorial</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">

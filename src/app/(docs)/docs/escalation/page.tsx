@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DocsImage } from "@/components/docs/docs-image";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
@@ -39,6 +40,13 @@ export default function EscalationPage() {
       <p className="mt-4 text-zinc-600 leading-relaxed">
         Navigate to <strong>Organization → Settings</strong> and scroll to the <strong>Escalation Rules</strong> section.
       </p>
+
+      <DocsImage
+        src="/screenshots/docs/org-settings.webp"
+        alt="Organization settings page showing escalation rules configuration with delay and target options"
+        caption="Configure escalation levels in Organization Settings."
+      />
+
       <ol className="mt-4 list-decimal pl-6 space-y-2 text-zinc-600">
         <li>Toggle <strong>Enable escalation</strong> on</li>
         <li>Click <strong>Add escalation level</strong></li>

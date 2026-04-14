@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DocsImage } from "@/components/docs/docs-image";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
@@ -15,6 +16,12 @@ export default function BulkOperationsPage() {
       <p className="mt-4 text-lg text-zinc-600 leading-relaxed">
         Select multiple requests and approve, reject, or archive them all at once.
       </p>
+
+      <DocsImage
+        src="/screenshots/docs/requests-list.webp"
+        alt="Requests page showing checkboxes for selecting multiple requests with batch action bar"
+        caption="Select multiple requests to perform batch approve, reject, or archive actions."
+      />
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Selecting Requests</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DocsImage } from "@/components/docs/docs-image";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
@@ -30,6 +31,12 @@ export default function ApprovalsPage() {
         Requests can also include metadata (key-value pairs), an action type (like &quot;deploy&quot; or &quot;delete&quot;),
         and a callback URL where OKrunit will POST the decision once it&apos;s made.
       </p>
+
+      <DocsImage
+        src="/screenshots/docs/requests-list.webp"
+        alt="Approval requests list showing pending and resolved requests with status badges and filtering"
+        caption="All approval requests appear on the Requests page, grouped by status."
+      />
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Viewing Requests</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">

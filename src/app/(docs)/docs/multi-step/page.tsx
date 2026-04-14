@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DocsImage } from "@/components/docs/docs-image";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
@@ -52,6 +53,12 @@ export default function MultiStepPage() {
         <li>Set the <strong>required approvals</strong> count</li>
         <li>Assign approvers or a team</li>
       </ol>
+
+      <DocsImage
+        src="/screenshots/docs/routes-list.webp"
+        alt="Routes page showing approval flow cards with sequential chain and required approvals settings"
+        caption="Configure multi-step approval chains from the Routes page."
+      />
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Configuring via API</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-
+import { DocsImage } from "@/components/docs/docs-image";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
@@ -16,6 +16,12 @@ export default function CustomRolesPage() {
       <p className="mt-4 text-lg text-zinc-600 leading-relaxed">
         Create named roles that give your team structure beyond the built-in Member, Approver, Admin, and Owner roles.
       </p>
+
+      <DocsImage
+        src="/screenshots/docs/custom-roles.webp"
+        alt="Custom roles page showing named roles with permission levels and color badges"
+        caption="Create and manage custom roles from the Organization Roles page."
+      />
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Built-in Permission Levels</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">

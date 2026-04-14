@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-
+import { DocsImage } from "@/components/docs/docs-image";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
@@ -77,6 +77,12 @@ export default function NotificationsPage() {
         <li>Mark all as read</li>
         <li>Click any notification to navigate to the related resource</li>
       </ul>
+
+      <DocsImage
+        src="/screenshots/docs/notification-history.webp"
+        alt="Notification history page showing filtered notifications with category tabs and read/unread status"
+        caption="Browse and filter your full notification history."
+      />
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Real-Time Updates</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">

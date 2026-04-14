@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4">
-      <Image src="/logo.png" alt="OKrunit" width={48} height={48} />
+      <Image src="/logo.png" alt="OKrunit" width={120} height={120} />
       <div className="text-center">
         <h1 className="text-4xl font-bold tracking-tight">
           404 - Page Not Found

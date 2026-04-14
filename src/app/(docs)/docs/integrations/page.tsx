@@ -48,12 +48,6 @@ const CATEGORIES: Category[] = [
           "Community node for n8n that provides trigger and action nodes for approval workflows within your self-hosted or cloud n8n instance.",
         status: "available",
       },
-      {
-        name: "monday.com",
-        description:
-          "Native monday.com app with triggers and actions for adding human approval gates to your monday.com automations and workflows.",
-        status: "available",
-      },
     ],
   },
   {
@@ -205,7 +199,7 @@ export default function IntegrationsPage() {
         Integrations
       </h1>
       <p className="mt-4 text-lg text-zinc-600 leading-relaxed">
-        OKrunit connects to 19 platforms across automation, AI agents,
+        OKrunit connects to 18 platforms across automation, AI agents,
         infrastructure, and workflow engines. The easiest way to connect is to
         select the OKrunit node directly inside your automation platform. No
         code required.
@@ -223,7 +217,7 @@ export default function IntegrationsPage() {
           <li className="flex gap-2">
             <span className="font-bold">1.</span>
             <span>
-              Open your automation platform (Zapier, Make, n8n, monday.com,
+              Open your automation platform (Zapier, Make, n8n,
               GitHub Actions, Temporal, etc.)
             </span>
           </li>
@@ -329,9 +323,9 @@ export default function IntegrationsPage() {
           <span>Map your trigger data to the approval fields: <strong>What needs approval?</strong>, <strong>Details</strong>, and optional <strong>Metadata</strong>.</span>
         </div>
         <DocsImage
-          src="/screenshots/docs/integrations/zapier-step-6-fields.webp"
-          alt="Zapier field configuration showing title, details, and metadata fields"
-          caption="Fill in the approval request fields. Use the + button to insert data from previous steps."
+          src="/screenshots/docs/integrations/zapier-step-6-fields-v2.webp"
+          alt="Zapier field configuration showing Template dropdown, title, details, and metadata fields"
+          caption="Optionally select a Template, then fill in the approval request fields. Use the + button to insert data from previous steps."
         />
 
         <div className="flex gap-3 text-zinc-700">
@@ -448,42 +442,96 @@ export default function IntegrationsPage() {
           <span>Fill in the request fields: <strong>What needs approval?</strong>, <strong>Details</strong>, and paste the <a href="#make-trigger-url" className="font-medium text-indigo-600 underline underline-offset-2 hover:text-indigo-500">trigger URL from Scenario 1</a> into <strong>Callback URL</strong>.</span>
         </div>
         <DocsImage
-          src="/screenshots/docs/integrations/make-step-6-fields-v2.webp"
-          alt="Make module fields showing title, details, and callback URL"
-          caption="Configure all the fields. Paste the trigger URL from Scenario 1 into Callback URL."
+          src="/screenshots/docs/integrations/make-step-6-fields-v3.webp"
+          alt="Make module fields showing Template dropdown, title, details, callback URL, and scenario URL"
+          caption="Optionally select a Template, then fill in the fields. Paste the trigger URL from Scenario 1 into Callback URL."
         />
       </div>
 
       {/* n8n */}
       <h3 id="n8n" className="mt-8 scroll-mt-24 text-xl font-semibold text-zinc-900">n8n</h3>
       <p className="mt-2 text-zinc-700">
-        OKrunit provides a community node for n8n. Use n8n&apos;s built-in{" "}
-        <strong>Wait</strong> node to pause the workflow until the approval
-        decision comes back. There is <strong>no timeout</strong> on self-hosted
-        n8n.
+        OKrunit provides a community node for n8n. The node automatically waits
+        for the approval decision before continuing, so you do not need a
+        separate Wait node.
       </p>
-      <ol className="mt-4 space-y-3 text-zinc-700">
-        <li className="flex gap-3">
+
+      <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+        <p className="text-sm font-medium text-zinc-900">Install the community node</p>
+        <p className="mt-1 text-sm text-zinc-700 leading-relaxed">
+          Go to <strong>Settings &rarr; Community nodes &rarr; Install</strong> and
+          enter <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">n8n-nodes-okrunit</code>.
+          After installing, the OKrunit node will be available in the node picker.
+        </p>
+      </div>
+
+      <p className="mt-4 text-sm font-medium text-zinc-900">Setting up the approval workflow</p>
+      <div className="mt-2 space-y-2">
+        <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">1</span>
-          <span>In your n8n workflow, click <strong>+</strong> and search for <strong>&quot;OKrunit&quot;</strong>.</span>
-        </li>
-        <li className="flex gap-3">
+          <span>Start your workflow with any <strong>trigger</strong>. You can use the OKrunit <strong>Approval Request</strong> trigger, a <strong>Schedule Trigger</strong>, <strong>Webhook</strong>, or any other trigger that fits your use case.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/n8n-step-1-trigger-v2.webp"
+          alt="n8n workflow canvas with a Schedule Trigger node"
+          caption="Start your workflow with any trigger node."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">2</span>
-          <span>Add the <strong>OKrunit</strong> action node to create the approval request.</span>
-        </li>
-        <li className="flex gap-3">
+          <span>Click <strong>+</strong> to add a new node and search for <strong>&quot;OKrunit&quot;</strong>.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/n8n-step-2-search.webp"
+          alt="n8n node picker with OKrunit typed in the search bar"
+          caption="Type 'OKrunit' in the search bar to find the community node."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
-          <span>Create credentials by entering your OKrunit API key (from the Connections page in the dashboard).</span>
-        </li>
-        <li className="flex gap-3">
+          <span>Select <strong>OKrunit</strong> from the results.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/n8n-step-3-select.webp"
+          alt="n8n search results with OKrunit highlighted"
+          caption="Click OKrunit to see its available actions."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
-          <span>After the OKrunit node, add a <strong>Wait</strong> node configured to resume on webhook. Pass the Wait node&apos;s resume URL as the <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">callback_url</code> in the OKrunit node.</span>
-        </li>
-        <li className="flex gap-3">
+          <span>Choose <strong>Create an approval request</strong> from the Approval Actions list.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/n8n-step-4-action.webp"
+          alt="OKrunit node details showing triggers and actions with Create an approval request highlighted"
+          caption="Select 'Create an approval request' to add the approval step to your workflow."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">5</span>
-          <span>Add your follow-up nodes after the Wait node. These run once the approval decision is received.</span>
-        </li>
-      </ol>
+          <span>Configure the node. The only required fields are <strong>Title</strong> and <strong>Description</strong>. If you select a <strong>Template</strong>, you can leave Title and Description blank and the template defaults will be used instead.</span>
+        </div>
+        <DocsImage
+          src="/screenshots/docs/integrations/n8n-step-5-fields-v2.webp"
+          alt="OKrunit node configuration panel showing Credential, Template, Title, Description, Priority, and Wait for Decision fields with annotations"
+          caption="Fill in Title and Description (or select a Template to use its defaults). The node auto-waits for the decision."
+        />
+
+        <div className="flex gap-3 text-zinc-700">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">6</span>
+          <span>Add your follow-up nodes after OKrunit. The <strong>Wait for Decision</strong> toggle (on by default) means the node automatically pauses the workflow until someone approves or rejects. Your next nodes receive the decision result.</span>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <p className="text-sm font-medium text-amber-900">Using templates</p>
+        <p className="mt-1 text-sm text-amber-800 leading-relaxed">
+          If you select a template in the <strong>Template Name or ID</strong> field,
+          the Title and Description fields become optional. The template&apos;s
+          defaults will be used for any fields you leave blank. This is useful
+          when you want consistent approval request formatting across workflows.
+        </p>
+      </div>
 
       {/* GitHub Actions */}
       <h3 id="github-actions" className="mt-8 scroll-mt-24 text-xl font-semibold text-zinc-900">
@@ -509,39 +557,6 @@ export default function IntegrationsPage() {
         can increase it with{" "}
         <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">timeout-minutes</code> in
         your workflow YAML.
-      </p>
-
-      {/* monday.com */}
-      <h3 id="monday" className="mt-8 scroll-mt-24 text-xl font-semibold text-zinc-900">
-        monday.com
-      </h3>
-      <p className="mt-2 text-zinc-700">
-        OKrunit integrates with monday.com via integration recipes:
-      </p>
-      <ol className="mt-4 space-y-3 text-zinc-700">
-        <li className="flex gap-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">1</span>
-          <span>Open your monday.com board and click <strong>Integrate</strong> in the top menu.</span>
-        </li>
-        <li className="flex gap-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">2</span>
-          <span>Search for <strong>&quot;OKrunit&quot;</strong> in the integration center.</span>
-        </li>
-        <li className="flex gap-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">3</span>
-          <span>Choose a recipe: <strong>When status changes, request approval</strong> or <strong>When item created, request approval</strong>.</span>
-        </li>
-        <li className="flex gap-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">4</span>
-          <span>Authorize your OKrunit account when prompted.</span>
-        </li>
-        <li className="flex gap-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700">5</span>
-          <span>Add a second recipe: <strong>When OKrunit approval decided, update status</strong>. This listens for the decision webhook and updates your board automatically.</span>
-        </li>
-      </ol>
-      <p className="mt-3 text-sm text-zinc-500">
-        monday.com uses a two-recipe pattern: one to send the request, one to handle the decision. This allows the approval to take as long as needed.
       </p>
 
       {/* Temporal */}
@@ -760,17 +775,17 @@ def deploy_with_approval():
 
         {/* n8n */}
         <div className="rounded-lg border border-zinc-200 p-5">
-          <h4 className="font-semibold text-zinc-900">n8n: Waits indefinitely</h4>
+          <h4 className="font-semibold text-zinc-900">n8n: Waits automatically</h4>
           <p className="mt-2 text-sm text-zinc-700 leading-relaxed">
-            n8n&apos;s <strong>Wait</strong> node can pause a workflow until a
-            webhook callback is received. Add the OKrunit node to create the
-            request, followed by a Wait node configured to resume on webhook. When
-            OKrunit sends the decision to the resume URL, the workflow continues.
-            Self-hosted n8n has <strong>no timeout</strong> on Wait nodes. n8n Cloud
-            may have execution time limits depending on your plan.
+            The OKrunit node has a built-in <strong>Wait for Decision</strong> toggle
+            (on by default) that pauses the workflow until someone approves or
+            rejects. No separate Wait node is needed. The decision result is passed
+            to downstream nodes automatically. On self-hosted n8n, there is{" "}
+            <strong>no timeout</strong>. n8n Cloud may have execution time limits
+            depending on your plan.
           </p>
           <p className="mt-2 text-xs text-zinc-500">
-            Pattern: Single workflow with Wait node (webhook resume)
+            Pattern: Single node with built-in wait (polling)
           </p>
         </div>
 
@@ -788,23 +803,6 @@ def deploy_with_approval():
           </p>
           <p className="mt-2 text-xs text-zinc-500">
             Pattern: Polling loop with configurable timeout
-          </p>
-        </div>
-
-        {/* monday.com */}
-        <div className="rounded-lg border border-zinc-200 p-5">
-          <h4 className="font-semibold text-zinc-900">monday.com: Two-recipe pattern (no timeout)</h4>
-          <p className="mt-2 text-sm text-zinc-700 leading-relaxed">
-            monday.com&apos;s integration recipes don&apos;t support long-running
-            pauses, so OKrunit uses a two-recipe approach: <strong>Recipe 1</strong> triggers
-            on a board event (status change, item created) and sends the approval
-            request to OKrunit. <strong>Recipe 2</strong> listens for OKrunit&apos;s
-            decision webhook and updates the board item status accordingly. Since
-            each recipe runs independently, there is <strong>no timeout</strong> on
-            the approval decision.
-          </p>
-          <p className="mt-2 text-xs text-zinc-500">
-            Pattern: Two recipes, event trigger + webhook listener
           </p>
         </div>
 
@@ -848,18 +846,13 @@ def deploy_with_approval():
             </tr>
             <tr className="border-b border-zinc-100">
               <td className="py-2.5 pr-4 font-medium">n8n</td>
-              <td className="py-2.5 pr-4">Wait node with webhook</td>
+              <td className="py-2.5 pr-4">Built-in auto-wait</td>
               <td className="py-2.5">None (self-hosted)</td>
             </tr>
             <tr className="border-b border-zinc-100">
               <td className="py-2.5 pr-4 font-medium">GitHub Actions</td>
               <td className="py-2.5 pr-4">Polling loop</td>
               <td className="py-2.5">6 hours (configurable)</td>
-            </tr>
-            <tr className="border-b border-zinc-100">
-              <td className="py-2.5 pr-4 font-medium">monday.com</td>
-              <td className="py-2.5 pr-4">Two recipes</td>
-              <td className="py-2.5">None</td>
             </tr>
             <tr>
               <td className="py-2.5 pr-4 font-medium">Workflow engines</td>
@@ -875,7 +868,7 @@ def deploy_with_approval():
         All integrations
       </h2>
       <p className="mt-2 text-zinc-600">
-        Below is the full list of 19 supported platforms, grouped by category.
+        Below is the full list of 18 supported platforms, grouped by category.
       </p>
 
       {CATEGORIES.map((category) => (
