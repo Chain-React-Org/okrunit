@@ -3,15 +3,17 @@
 import { useEffect, useState } from "react";
 import { StripeProvider } from "./stripe-provider";
 import { CheckoutForm } from "./checkout-form";
+import { UpgradeConfirmForm } from "./upgrade-confirm-form";
 import { toast } from "sonner";
 import type { BillingPlan } from "@/lib/types/database";
 
 interface CheckoutPageProps {
   planId: "pro" | "business";
   billingCycle: "monthly" | "yearly";
+  isUpgrade?: boolean;
 }
 
-export function CheckoutPage({ planId, billingCycle }: CheckoutPageProps) {
+function NewSubscriptionCheckout({ planId, billingCycle }: { planId: BillingPlan; billingCycle: "monthly" | "yearly" }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,7 +71,15 @@ export function CheckoutPage({ planId, billingCycle }: CheckoutPageProps) {
 
   return (
     <StripeProvider clientSecret={clientSecret}>
-      <CheckoutForm planId={planId as BillingPlan} billingCycle={billingCycle} />
+      <CheckoutForm planId={planId} billingCycle={billingCycle} />
     </StripeProvider>
   );
+}
+
+export function CheckoutPage({ planId, billingCycle, isUpgrade }: CheckoutPageProps) {
+  if (isUpgrade) {
+    return <UpgradeConfirmForm planId={planId as BillingPlan} billingCycle={billingCycle} />;
+  }
+
+  return <NewSubscriptionCheckout planId={planId as BillingPlan} billingCycle={billingCycle} />;
 }

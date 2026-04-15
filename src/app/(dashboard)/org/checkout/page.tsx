@@ -10,7 +10,7 @@ export const metadata = {
 export default async function OrgCheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string; cycle?: string }>;
+  searchParams: Promise<{ plan?: string; cycle?: string; upgrade?: string }>;
 }) {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
@@ -21,6 +21,7 @@ export default async function OrgCheckoutPage({
   const params = await searchParams;
   const planId = params.plan;
   const cycle = params.cycle ?? "yearly";
+  const isUpgrade = params.upgrade === "true";
 
   if (!planId || !["pro", "business"].includes(planId)) {
     redirect("/org/subscription");
@@ -34,6 +35,7 @@ export default async function OrgCheckoutPage({
     <CheckoutPage
       planId={planId as "pro" | "business"}
       billingCycle={cycle as "monthly" | "yearly"}
+      isUpgrade={isUpgrade}
     />
   );
 }

@@ -238,30 +238,12 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
   const limits = PLAN_LIMITS[currentPlan];
   const hasPaidSub = subscription?.stripe_subscription_id && subscription.status === "active" && subscriptionPlan !== "free";
 
-  const handleCheckout = async (planId: string) => {
+  const handleCheckout = (planId: string) => {
     if (!isAdmin) { toast.error("Only admins can manage billing"); return; }
-    setLoading(planId);
-    try {
-      if (hasPaidSub) {
-        // Existing subscriber: use change-plan with optional cycle change
-        const res = await fetch("/api/v1/billing/change-plan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan_id: planId, billing_cycle: billingCycle }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          toast.success(`Upgraded to ${PLAN_LIMITS[planId as BillingPlan]?.name ?? planId}. You'll be charged the prorated difference.`);
-          window.location.reload();
-        } else {
-          toast.error(data.error ?? "Failed to upgrade");
-        }
-      } else {
-        // New subscriber: redirect to custom checkout page
-        window.location.href = `/org/checkout?plan=${planId}&cycle=${billingCycle}`;
-      }
-    } catch { toast.error("Failed to start checkout"); }
-    finally { setLoading(null); }
+    // Always redirect to checkout page so the user can review and confirm
+    const params = new URLSearchParams({ plan: planId, cycle: billingCycle });
+    if (hasPaidSub) params.set("upgrade", "true");
+    window.location.href = `/org/checkout?${params.toString()}`;
   };
 
   const handleCancel = async () => {
@@ -459,6 +441,26 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
         <div>
           <h3 className="mb-4 text-lg font-semibold">Payment Method</h3>
           <PaymentMethodSection isAdmin={isAdmin} />
+          {isAdmin && (
+            <div className="mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/v1/billing/portal", { method: "POST" });
+                    const data = await res.json();
+                    if (data.url) window.open(data.url, "_blank");
+                    else toast.error(data.error ?? "Failed to open billing portal");
+                  } catch { toast.error("Failed to open billing portal"); }
+                }}
+              >
+                <ExternalLink className="size-3.5" />
+                Manage billing
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
