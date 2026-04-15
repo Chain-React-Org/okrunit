@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrgContext } from "@/lib/org-context";
 import { getStripeOrThrow } from "@/lib/billing/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isFirstTimeSubscriber, getNewCustomerCoupon } from "@/lib/billing/trial";
 import { z } from "zod";
 
 const SubscribeSchema = z.object({
@@ -73,6 +74,10 @@ export async function POST(req: NextRequest) {
       .eq("org_id", org.id);
   }
 
+  // Check if this org qualifies for the new customer discount (40% off first 3 months)
+  const firstTime = await isFirstTimeSubscriber(org.id);
+  const couponId = firstTime ? await getNewCustomerCoupon(stripe) : undefined;
+
   let stripeSub;
   try {
     stripeSub = await stripe.subscriptions.create({
@@ -81,6 +86,7 @@ export async function POST(req: NextRequest) {
       payment_behavior: "default_incomplete",
       payment_settings: { save_default_payment_method: "on_subscription" },
       metadata: { org_id: org.id, plan_id },
+      ...(couponId ? { coupon: couponId } : {}),
       expand: ["latest_invoice.payment_intent"],
     });
   } catch (err) {
@@ -110,6 +116,12 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
+
+  // Mark as having had a paid subscription (non-trial path)
+  await admin
+    .from("subscriptions")
+    .update({ has_had_paid_subscription: true })
+    .eq("org_id", org.id);
 
   return NextResponse.json({
     subscriptionId: stripeSub.id,

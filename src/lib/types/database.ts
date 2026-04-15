@@ -953,6 +953,7 @@ export interface Subscription {
   trial_end: string | null;
   cancelled_at: string | null;
   pending_plan_id: BillingPlan | null;
+  has_had_paid_subscription: boolean;
   created_at: string;
   updated_at: string;
 }
