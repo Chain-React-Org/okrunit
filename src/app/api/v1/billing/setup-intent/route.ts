@@ -3,6 +3,10 @@ import { getOrgContext } from "@/lib/org-context";
 import { getStripeOrThrow } from "@/lib/billing/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+/**
+ * Creates a SetupIntent for updating the payment method on an existing subscription.
+ * Returns the client secret for Stripe Elements to collect card details.
+ */
 export async function POST() {
   const ctx = await getOrgContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -12,9 +16,7 @@ export async function POST() {
     return NextResponse.json({ error: "Only admins can manage billing" }, { status: 403 });
   }
 
-  const stripe = getStripeOrThrow();
   const admin = createAdminClient();
-
   const { data: subscription } = await admin
     .from("subscriptions")
     .select("stripe_customer_id")
@@ -22,15 +24,15 @@ export async function POST() {
     .single();
 
   if (!subscription?.stripe_customer_id) {
-    return NextResponse.json({ error: "No billing account found. Subscribe to a plan first." }, { status: 400 });
+    return NextResponse.json({ error: "No billing account found" }, { status: 400 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-  const session = await stripe.billingPortal.sessions.create({
+  const stripe = getStripeOrThrow();
+  const setupIntent = await stripe.setupIntents.create({
     customer: subscription.stripe_customer_id,
-    return_url: `${appUrl}/org/subscription`,
+    payment_method_types: ["card"],
+    metadata: { org_id: org.id },
   });
 
-  return NextResponse.json({ url: session.url });
+  return NextResponse.json({ clientSecret: setupIntent.client_secret });
 }

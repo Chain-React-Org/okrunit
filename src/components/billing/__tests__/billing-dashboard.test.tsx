@@ -18,6 +18,20 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/billing",
 }));
 
+// Mock Stripe React components
+vi.mock("@stripe/react-stripe-js", () => ({
+  PaymentElement: () => null,
+  useStripe: () => null,
+  useElements: () => null,
+  Elements: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Mock fetch for payment methods API and other billing calls
+vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+  json: () => Promise.resolve({ paymentMethods: [], defaultPaymentMethodId: null }),
+  ok: true,
+}));
+
 function makePlans(): Plan[] {
   const base = { description: null, stripe_price_id_monthly: null, stripe_price_id_yearly: null, is_active: true, created_at: "", updated_at: "" };
   return [
@@ -64,7 +78,10 @@ const defaultProps = {
 describe("BillingDashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn();
+    global.fetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ paymentMethods: [], defaultPaymentMethodId: null }),
+      ok: true,
+    });
   });
 
   describe("subscription section", () => {
@@ -138,28 +155,28 @@ describe("BillingDashboard", () => {
 
     it("shows buy buttons for higher plans and contact for enterprise", () => {
       render(<BillingDashboard {...defaultProps} />);
-      // On free plan, should see yearly buy buttons for Pro and Business by default.
-      const buyButtons = screen.getAllByRole("button", { name: /Buy yearly plan/ });
+      // On free plan with monthly billing_cycle, should see monthly buy buttons for Pro and Business.
+      const buyButtons = screen.getAllByRole("button", { name: /Buy monthly plan/ });
       expect(buyButtons.length).toBeGreaterThanOrEqual(2);
       // Enterprise shows "Talk to sales"
       expect(screen.getByText(/Talk to sales/)).toBeTruthy();
     });
 
-    it("toggles billing cycle between yearly and monthly", async () => {
+    it("toggles billing cycle between monthly and yearly", async () => {
       const user = userEvent.setup();
       render(<BillingDashboard {...defaultProps} />);
 
-      // Yearly is the default recovered behavior.
-      expect(screen.getAllByRole("button", { name: /Buy yearly plan/ }).length).toBeGreaterThanOrEqual(2);
-      expect(screen.getByText("$16")).toBeTruthy();
+      // Monthly is the default (from subscription.billing_cycle).
+      expect(screen.getAllByRole("button", { name: /Buy monthly plan/ }).length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText("$20")).toBeTruthy();
 
-      // Click the toggle to switch to monthly.
+      // Click the toggle to switch to yearly.
       const toggle = screen.getByText(/Yearly/);
       const toggleButton = toggle.closest("div")?.querySelector("button");
       if (toggleButton) await user.click(toggleButton);
 
-      expect(screen.getAllByRole("button", { name: /Buy monthly plan/ }).length).toBeGreaterThanOrEqual(2);
-      expect(screen.getByText("$20")).toBeTruthy();
+      expect(screen.getAllByRole("button", { name: /Buy yearly plan/ }).length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText("$16")).toBeTruthy();
     });
   });
 
@@ -195,7 +212,7 @@ describe("BillingDashboard", () => {
   });
 
   describe("admin permissions", () => {
-    it("does not show manage billing button for non-admins even with stripe customer", () => {
+    it("does not show update card button for non-admins even with stripe customer", () => {
       render(
         <BillingDashboard
           {...defaultProps}
@@ -203,10 +220,10 @@ describe("BillingDashboard", () => {
           isAdmin={false}
         />,
       );
-      expect(screen.queryByText("Manage billing")).toBeNull();
+      expect(screen.queryByText("Update card")).toBeNull();
     });
 
-    it("shows manage billing button for admins with stripe customer", () => {
+    it("shows payment method section for admins with stripe customer", () => {
       render(
         <BillingDashboard
           {...defaultProps}
@@ -214,7 +231,7 @@ describe("BillingDashboard", () => {
           isAdmin={true}
         />,
       );
-      expect(screen.getByText("Manage billing")).toBeTruthy();
+      expect(screen.getByText("Payment Method")).toBeTruthy();
     });
   });
 });

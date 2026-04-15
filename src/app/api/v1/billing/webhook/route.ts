@@ -53,9 +53,10 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      await admin
+      const { error: subError } = await admin
         .from("subscriptions")
-        .update({
+        .upsert({
+          org_id: orgId,
           plan_id: planId,
           status: "active",
           billing_cycle: billingCycle,
@@ -64,9 +65,13 @@ export async function POST(req: NextRequest) {
           current_period_start: periodStart,
           current_period_end: periodEnd,
           cancelled_at: null,
+          pending_plan_id: null,
           updated_at: new Date().toISOString(),
-        })
-        .eq("org_id", orgId);
+        }, { onConflict: "org_id" });
+
+      if (subError) {
+        console.error("[Billing Webhook] Failed to upsert subscription:", subError);
+      }
 
       await admin
         .from("organizations")
@@ -105,6 +110,59 @@ export async function POST(req: NextRequest) {
       if (typeof canceledAt === "number") updateData.cancelled_at = new Date(canceledAt * 1000).toISOString();
       else updateData.cancelled_at = null;
 
+      // Check if this is a billing period renewal (period_start changed).
+      // If there's a pending downgrade, apply it now.
+      const { data: existingSub } = await admin
+        .from("subscriptions")
+        .select("current_period_start, pending_plan_id")
+        .eq("org_id", orgId)
+        .single();
+
+      const newPeriodStart = typeof periodStart === "number"
+        ? new Date(periodStart * 1000).toISOString()
+        : null;
+
+      const periodRenewed = existingSub
+        && newPeriodStart
+        && existingSub.current_period_start
+        && newPeriodStart !== existingSub.current_period_start;
+
+      // If subscription just became active (e.g. from incomplete via custom checkout),
+      // ensure plan_id and billing_cycle are set from metadata.
+      if (status === "active" && sub.metadata?.plan_id) {
+        const items = sub.items?.data;
+        const interval = items?.[0]?.price?.recurring?.interval;
+
+        updateData.plan_id = sub.metadata.plan_id;
+        updateData.stripe_subscription_id = sub.id;
+        updateData.billing_cycle = interval === "year" ? "yearly" : "monthly";
+
+        // Update org plan_id
+        await admin
+          .from("organizations")
+          .update({ plan_id: sub.metadata.plan_id })
+          .eq("id", orgId);
+      }
+
+      if (periodRenewed && existingSub.pending_plan_id) {
+        // Apply the deferred downgrade
+        updateData.plan_id = existingSub.pending_plan_id;
+        updateData.pending_plan_id = null;
+
+        await admin
+          .from("organizations")
+          .update({ plan_id: existingSub.pending_plan_id })
+          .eq("id", orgId);
+
+        // Clear the pending_plan_id from Stripe metadata too
+        const pendingPlanId = sub.metadata?.pending_plan_id;
+        if (pendingPlanId) {
+          await stripe.subscriptions.update(sub.id, {
+            metadata: { ...sub.metadata, plan_id: existingSub.pending_plan_id, pending_plan_id: "" },
+          });
+        }
+      }
+
       await admin
         .from("subscriptions")
         .update(updateData)
@@ -127,6 +185,7 @@ export async function POST(req: NextRequest) {
           status: "cancelled",
           stripe_subscription_id: null,
           cancelled_at: new Date().toISOString(),
+          pending_plan_id: null,
           updated_at: new Date().toISOString(),
         })
         .eq("org_id", orgId);
