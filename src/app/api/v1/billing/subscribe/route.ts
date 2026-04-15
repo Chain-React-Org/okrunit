@@ -73,14 +73,20 @@ export async function POST(req: NextRequest) {
       .eq("org_id", org.id);
   }
 
-  const stripeSub = await stripe.subscriptions.create({
-    customer: customerId,
-    items: [{ price: priceId }],
-    payment_behavior: "default_incomplete",
-    payment_settings: { save_default_payment_method: "on_subscription" },
-    metadata: { org_id: org.id, plan_id },
-    expand: ["latest_invoice.payment_intent"],
-  });
+  let stripeSub;
+  try {
+    stripeSub = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+      payment_behavior: "default_incomplete",
+      payment_settings: { save_default_payment_method: "on_subscription" },
+      metadata: { org_id: org.id, plan_id },
+      expand: ["latest_invoice.payment_intent"],
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Stripe subscription creation failed";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 
   const invoice = stripeSub.latest_invoice;
   const paymentIntent =
@@ -94,7 +100,15 @@ export async function POST(req: NextRequest) {
       : null;
 
   if (!clientSecret) {
-    return NextResponse.json({ error: "Failed to create payment intent" }, { status: 500 });
+    // This can happen if the subscription was auto-confirmed (e.g. customer has a card on file).
+    // Clean up the incomplete subscription to avoid duplicates.
+    if (stripeSub.id) {
+      try { await stripe.subscriptions.cancel(stripeSub.id); } catch { /* best effort */ }
+    }
+    return NextResponse.json(
+      { error: "Could not initialize checkout. If you already have a subscription, use the upgrade option on the subscription page." },
+      { status: 400 },
+    );
   }
 
   return NextResponse.json({
