@@ -94,3 +94,53 @@ export async function PUT(req: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
+
+const DeleteSchema = z.object({
+  payment_method_id: z.string(),
+});
+
+export async function DELETE(req: NextRequest) {
+  const ctx = await getOrgContext();
+  if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { org, membership } = ctx;
+  if (membership.role !== "owner" && membership.role !== "admin") {
+    return NextResponse.json({ error: "Only admins can manage billing" }, { status: 403 });
+  }
+
+  const body = await req.json();
+  const parsed = DeleteSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
+  const { data: subscription } = await admin
+    .from("subscriptions")
+    .select("stripe_subscription_id, stripe_customer_id")
+    .eq("org_id", org.id)
+    .single();
+
+  if (!subscription?.stripe_customer_id) {
+    return NextResponse.json({ error: "No billing account found" }, { status: 400 });
+  }
+
+  const stripe = getStripeOrThrow();
+
+  // Prevent removing the default payment method on an active subscription
+  if (subscription.stripe_subscription_id) {
+    const stripeSub = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
+    const defaultPm = stripeSub.default_payment_method;
+    const defaultPmId = typeof defaultPm === "string" ? defaultPm : defaultPm?.id;
+    if (defaultPmId === parsed.data.payment_method_id) {
+      return NextResponse.json(
+        { error: "Cannot remove the default payment method. Set a different default first." },
+        { status: 400 },
+      );
+    }
+  }
+
+  await stripe.paymentMethods.detach(parsed.data.payment_method_id);
+
+  return NextResponse.json({ success: true });
+}

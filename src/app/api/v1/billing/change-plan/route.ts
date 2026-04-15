@@ -77,11 +77,12 @@ export async function POST(req: NextRequest) {
   }
 
   if (isUpgrade) {
-    // Upgrade: prorate immediately. Stripe credits remaining time on old plan
-    // and charges the difference for the new plan.
+    // Upgrade: prorate and charge the difference immediately.
+    // Using "always_invoice" creates a separate invoice for the proration
+    // and pays it right away, so the next renewal is a clean full-price charge.
     await stripe.subscriptions.update(subscription.stripe_subscription_id, {
       items: [{ id: currentItem.id, price: newPriceId }],
-      proration_behavior: "create_prorations",
+      proration_behavior: "always_invoice",
       metadata: { ...stripeSub.metadata, plan_id },
     });
 

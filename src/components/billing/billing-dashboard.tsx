@@ -137,19 +137,35 @@ function UpdateCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
     if (!stripe || !elements) return;
 
     setProcessing(true);
-    const { error } = await stripe.confirmSetup({
+    const result = await stripe.confirmSetup({
       elements,
       confirmParams: { return_url: window.location.href },
       redirect: "if_required",
     });
 
-    if (error) {
-      toast.error(error.message ?? "Failed to update card");
+    if (result.error) {
+      toast.error(result.error.message ?? "Failed to update card");
       setProcessing(false);
-    } else {
-      toast.success("Payment method updated");
-      onSuccess();
+      return;
     }
+
+    // Set the new payment method as default on the subscription
+    const pmId = result.setupIntent?.payment_method;
+    if (pmId && typeof pmId === "string") {
+      const res = await fetch("/api/v1/billing/payment-methods", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payment_method_id: pmId }),
+      });
+      if (!res.ok) {
+        toast.error("Card saved but failed to set as default. Please try again.");
+        setProcessing(false);
+        return;
+      }
+    }
+
+    toast.success("Payment method updated");
+    onSuccess();
   };
 
   return (
@@ -232,19 +248,32 @@ function PaymentMethodSection({ isAdmin }: { isAdmin: boolean }) {
           )}
         </div>
         {isAdmin && (
-          <Button variant="outline" size="sm" onClick={handleStartUpdate} className="text-xs gap-1.5">
-            {defaultMethod ? (
-              <>
-                <RefreshCw className="size-3.5" />
-                Update card
-              </>
-            ) : (
-              <>
-                <Plus className="size-3.5" />
-                Add card
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleStartUpdate} className="text-xs gap-1.5">
+              {defaultMethod ? (
+                <>
+                  <RefreshCw className="size-3.5" />
+                  Update card
+                </>
+              ) : (
+                <>
+                  <Plus className="size-3.5" />
+                  Add card
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5"
+              asChild
+            >
+              <a href="/org/billing">
+                <CreditCard className="size-3.5" />
+                Manage billing
+              </a>
+            </Button>
+          </div>
         )}
       </div>
 
@@ -449,26 +478,6 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
         <div>
           <h3 className="mb-4 text-lg font-semibold">Payment Method</h3>
           <PaymentMethodSection isAdmin={isAdmin} />
-          {isAdmin && (
-            <div className="mt-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={async () => {
-                  try {
-                    const res = await fetch("/api/v1/billing/portal", { method: "POST" });
-                    const data = await res.json();
-                    if (data.url) window.open(data.url, "_blank");
-                    else toast.error(data.error ?? "Failed to open billing portal");
-                  } catch { toast.error("Failed to open billing portal"); }
-                }}
-              >
-                <ExternalLink className="size-3.5" />
-                Manage billing
-              </Button>
-            </div>
-          )}
         </div>
       )}
 
