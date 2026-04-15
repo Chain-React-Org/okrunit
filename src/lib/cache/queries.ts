@@ -754,6 +754,7 @@ export async function getCachedRulesData(orgId: string) {
     ? await admin.from("user_profiles").select("id, full_name, email").in("id", memberUserIds).order("full_name")
     : { data: [] };
 
+
   // Extract distinct values for rule form dropdowns
   const actionTypes = [...new Set((requestMeta ?? []).map((r) => r.action_type).filter(Boolean))].sort() as string[];
   const sources = [...new Set((requestMeta ?? []).map((r) => r.source).filter(Boolean))].sort() as string[];
