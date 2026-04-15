@@ -26,7 +26,6 @@ const INTEGRATION_LINKS = [
     name: "Make",
     logo: "/logos/platforms/make.png",
     docsPath: "/docs/integrations#make",
-    // Temporary invite link while awaiting Make marketplace approval
     externalUrl: "https://www.make.com/en/hq/app-invitation/ea2fef64351d3d7c380e3ce8f64e1c69",
   },
   {

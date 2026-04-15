@@ -355,20 +355,23 @@ export default function IntegrationsPage() {
         of 5 minutes, approvals use a <strong>two-scenario pattern</strong>:
       </p>
 
-      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <p className="text-sm font-medium text-blue-900">Early access via invite link</p>
-        <p className="mt-1 text-sm text-blue-800 leading-relaxed">
-          The OKrunit app is currently awaiting approval on the Make marketplace.
-          In the meantime, you can install it right now using our{" "}
+      <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+        <p className="text-sm font-medium text-zinc-900">Install the OKrunit app</p>
+        <p className="mt-1 text-sm text-zinc-700 leading-relaxed">
+          To get started, install the OKrunit app in your Make account using{" "}
           <a
             href="https://www.make.com/en/hq/app-invitation/ea2fef64351d3d7c380e3ce8f64e1c69"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-blue-700 underline underline-offset-2 hover:text-blue-600"
+            className="font-medium text-indigo-600 underline underline-offset-2 hover:text-indigo-500"
           >
-            invite link
+            this install link
           </a>
-          . Once approved, the app will be available directly in the Make app search.
+          . You can also find it from the{" "}
+          <Link href="/org/connections" className="font-medium text-indigo-600 underline underline-offset-2 hover:text-indigo-500">
+            Connections page
+          </Link>
+          {" "}in your dashboard.
         </p>
       </div>
       <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
@@ -473,13 +476,12 @@ export default function IntegrationsPage() {
         separate Wait node.
       </p>
 
-      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <p className="text-sm font-medium text-blue-900">Self-hosted instances only (for now)</p>
-        <p className="mt-1 text-sm text-blue-800 leading-relaxed">
-          The OKrunit community node is currently awaiting approval from n8n.
-          While the review is in progress, you can install it on <strong>self-hosted n8n instances</strong> using
-          the npm package. n8n Cloud users will be able to install it directly
-          from the community nodes list once approved.
+      <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+        <p className="text-sm font-medium text-zinc-900">Self-hosted n8n required</p>
+        <p className="mt-1 text-sm text-zinc-700 leading-relaxed">
+          The OKrunit community node is available for <strong>self-hosted n8n instances</strong>.
+          Install it via the community nodes settings using the npm package name below.
+          Support for n8n Cloud is coming soon.
         </p>
       </div>
 
