@@ -48,7 +48,7 @@ export async function POST() {
       orgId: membership.org_id,
       category: "welcome",
       title: "Welcome to OKrunit!",
-      body: "You're all set. Create a connection to start sending approval requests, or explore the dashboard.",
+      body: "You're on a 14-day free trial of Pro with full access to all Pro features. Create a connection to start sending approval requests, or explore the dashboard.",
       resourceType: "org",
       resourceId: membership.org_id,
     });

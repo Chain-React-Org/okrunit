@@ -12,7 +12,8 @@ interface EnforcementResult {
   upgradeRequired?: boolean;
 }
 
-/** Get the org's current plan (plan_override takes precedence if set) */
+/** Get the org's current plan (plan_override takes precedence if set).
+ *  Trialing subscriptions count as active. Expired trials auto-downgrade. */
 export async function getOrgPlan(orgId: string): Promise<BillingPlan> {
   const admin = createAdminClient();
 
@@ -29,11 +30,37 @@ export async function getOrgPlan(orgId: string): Promise<BillingPlan> {
 
   const { data } = await admin
     .from("subscriptions")
-    .select("plan_id, status")
+    .select("plan_id, status, trial_end")
     .eq("org_id", orgId)
     .single();
 
-  if (!data || data.status !== "active") return "free";
+  if (!data) return "free";
+
+  // Handle trialing subscriptions
+  if (data.status === "trialing") {
+    // Check if trial has expired
+    if (data.trial_end && new Date(data.trial_end) < new Date()) {
+      // Auto-downgrade expired trial to free
+      await admin
+        .from("subscriptions")
+        .update({
+          plan_id: "free",
+          status: "expired",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("org_id", orgId);
+
+      await admin
+        .from("organizations")
+        .update({ plan_id: "free" })
+        .eq("id", orgId);
+
+      return "free";
+    }
+    return data.plan_id as BillingPlan;
+  }
+
+  if (data.status !== "active") return "free";
   return data.plan_id as BillingPlan;
 }
 

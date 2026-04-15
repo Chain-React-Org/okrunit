@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrgContext } from "@/lib/org-context";
 import { getStripeOrThrow } from "@/lib/billing/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isFirstTimeSubscriber, getNewCustomerCoupon } from "@/lib/billing/trial";
 import { z } from "zod";
 
 const CheckoutSchema = z.object({
@@ -74,6 +75,10 @@ export async function POST(req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
+  // Check if this org qualifies for new customer trial + discount
+  const firstTime = await isFirstTimeSubscriber(org.id);
+  const couponId = firstTime ? await getNewCustomerCoupon(stripe) : undefined;
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
@@ -84,6 +89,7 @@ export async function POST(req: NextRequest) {
     subscription_data: {
       metadata: { org_id: org.id, plan_id },
     },
+    ...(couponId ? { discounts: [{ coupon: couponId }] } : {}),
   });
 
   return NextResponse.json({ url: session.url });

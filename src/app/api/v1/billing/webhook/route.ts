@@ -36,6 +36,9 @@ export async function POST(req: NextRequest) {
       let periodEnd: string | null = null;
       let billingCycle: "monthly" | "yearly" = "monthly";
 
+      let subStatus: "active" | "trialing" = "active";
+      let trialEnd: string | null = null;
+
       if (stripeSubId) {
         const stripeSub = await stripe.subscriptions.retrieve(stripeSubId) as unknown as Record<string, unknown>;
         const pStart = stripeSub.current_period_start;
@@ -51,6 +54,10 @@ export async function POST(req: NextRequest) {
         if (items?.data?.[0]?.price?.recurring?.interval === "year") {
           billingCycle = "yearly";
         }
+        // Check if subscription is in trial
+        if (stripeSub.status === "trialing") subStatus = "trialing";
+        const rawTrialEnd = stripeSub.trial_end;
+        if (typeof rawTrialEnd === "number") trialEnd = new Date(rawTrialEnd * 1000).toISOString();
       }
 
       const { error: subError } = await admin
@@ -58,14 +65,16 @@ export async function POST(req: NextRequest) {
         .upsert({
           org_id: orgId,
           plan_id: planId,
-          status: "active",
+          status: subStatus,
           billing_cycle: billingCycle,
           stripe_customer_id: typeof session.customer === "string" ? session.customer : session.customer?.id,
           stripe_subscription_id: stripeSubId,
           current_period_start: periodStart,
           current_period_end: periodEnd,
+          trial_end: trialEnd,
           cancelled_at: null,
           pending_plan_id: null,
+          has_had_paid_subscription: true,
           updated_at: new Date().toISOString(),
         }, { onConflict: "org_id" });
 
@@ -98,6 +107,12 @@ export async function POST(req: NextRequest) {
         status,
         updated_at: new Date().toISOString(),
       };
+
+      // Track trial_end from Stripe
+      const rawTrialEnd = (sub as unknown as Record<string, unknown>).trial_end;
+      if (typeof rawTrialEnd === "number") {
+        updateData.trial_end = new Date(rawTrialEnd * 1000).toISOString();
+      }
 
       // Access period dates safely (Stripe SDK types vary by version)
       const raw = sub as unknown as Record<string, unknown>;

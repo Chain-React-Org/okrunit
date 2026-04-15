@@ -319,7 +319,11 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
   const subscriptionPlan = (subscription?.plan_id ?? "free") as BillingPlan;
   const currentPlan = (planOverride ?? subscriptionPlan) as BillingPlan;
   const limits = PLAN_LIMITS[currentPlan];
-  const hasPaidSub = subscription?.stripe_subscription_id && subscription.status === "active" && subscriptionPlan !== "free";
+  const hasPaidSub = subscription?.stripe_subscription_id && (subscription.status === "active" || subscription.status === "trialing") && subscriptionPlan !== "free";
+  const isTrialing = subscription?.status === "trialing";
+  const trialDaysLeft = isTrialing && subscription?.trial_end
+    ? Math.max(0, Math.ceil((new Date(subscription.trial_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
 
   const handleCheckout = (planId: string) => {
     if (!isAdmin) { toast.error("Only admins can manage billing"); return; }
@@ -378,6 +382,29 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
 
   return (
     <div className="space-y-10">
+      {/* ── Trial Banner ── */}
+      {isTrialing && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 px-5 py-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold">
+                You&apos;re on a free trial of {limits.name}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {trialDaysLeft > 0
+                  ? `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} remaining. Add a payment method to keep your plan after the trial ends.`
+                  : "Your trial ends today. Add a payment method to keep your plan."}
+              </p>
+            </div>
+            {isAdmin && (
+              <Button size="sm" className="mt-2 sm:mt-0" onClick={() => window.location.href = "/org/billing"}>
+                Add payment method
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Subscription Details ── */}
       <div>
         <h3 className="mb-4 text-lg font-semibold">Subscription</h3>
@@ -389,6 +416,11 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
               <Badge variant={currentPlan === "free" ? "secondary" : "default"} className="text-xs">
                 {limits.name}
               </Badge>
+              {isTrialing && (
+                <Badge variant="outline" className="text-xs border-primary text-primary">
+                  Trial
+                </Badge>
+              )}
               {planOverride && (
                 <Badge variant="outline" className="text-xs border-amber-500 text-amber-600 dark:text-amber-400">
                   Admin override
@@ -404,22 +436,24 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
               <span className="text-sm">
                 {currentPlan === "free"
                   ? "$0.00"
-                  : subscription?.billing_cycle === "yearly"
-                    ? `$${limits.priceYearly}.00 / year`
-                    : `$${limits.priceMonthly}.00 / month`}
+                  : isTrialing
+                    ? "$0.00 (free trial)"
+                    : subscription?.billing_cycle === "yearly"
+                      ? `$${limits.priceYearly}.00 / year`
+                      : `$${limits.priceMonthly}.00 / month`}
               </span>
             </div>
           </div>
 
-          {/* Row: Next billing / Renewal */}
-          {currentPlan !== "free" && subscription?.current_period_end && (
+          {/* Row: Next billing / Renewal / Trial end */}
+          {currentPlan !== "free" && (subscription?.current_period_end || subscription?.trial_end) && (
             <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">
-                  {subscription.cancelled_at ? "Expires" : "Renews"}
+                  {isTrialing ? "Trial ends" : subscription?.cancelled_at ? "Expires" : "Renews"}
                 </span>
                 <span className="text-sm">
-                  {new Date(subscription.current_period_end).toLocaleDateString("en-US", {
+                  {new Date(isTrialing && subscription?.trial_end ? subscription.trial_end : subscription?.current_period_end ?? "").toLocaleDateString("en-US", {
                     month: "long",
                     day: "numeric",
                     year: "numeric",
