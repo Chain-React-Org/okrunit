@@ -52,6 +52,7 @@ const PAGES = [
   { name: "Custom Roles", href: "/org/roles", icon: Shield, section: "Navigate", keywords: "permissions access control" },
   { name: "Organizations", href: "/org/organizations", icon: Building2, section: "Navigate", keywords: "org switch workspace" },
   { name: "Subscription", href: "/org/subscription", icon: CreditCard, section: "Navigate", keywords: "billing plan pricing upgrade payment" },
+  { name: "Manage Billing", href: "/org/billing", icon: CreditCard, section: "Navigate", keywords: "payment methods cards invoices receipts" },
   // Settings
   { name: "Org Settings", href: "/org/settings", icon: Settings, section: "Settings", keywords: "organization name logo configure" },
   { name: "Account Settings", href: "/settings/account", icon: Settings, section: "Settings", keywords: "profile email password name avatar" },
