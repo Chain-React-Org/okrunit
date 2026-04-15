@@ -8,6 +8,7 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
+import { canCreateTeam } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
@@ -100,6 +101,12 @@ export async function POST(request: Request) {
     // Must be owner or admin.
     if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
       throw new ApiError(403, "Insufficient permissions");
+    }
+
+    // Check team limit
+    const teamCheck = await canCreateTeam(auth.orgId);
+    if (!teamCheck.allowed) {
+      throw new ApiError(403, teamCheck.reason ?? "Team limit reached", "PLAN_LIMIT_EXCEEDED");
     }
 
     // Validate request body.

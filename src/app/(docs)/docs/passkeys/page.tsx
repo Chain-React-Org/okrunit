@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DocsImage } from "@/components/docs/docs-image";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
@@ -40,6 +41,12 @@ export default function PasskeysPage() {
         <li>Follow your browser&apos;s prompt: tap your security key, use fingerprint, or confirm with Face ID</li>
         <li>The passkey appears in your registered list</li>
       </ol>
+
+      <DocsImage
+        src="/screenshots/docs/account-settings.webp"
+        alt="Account settings page showing the Passkeys section with registered security keys and Add Passkey button"
+        caption="Manage your passkeys and security keys in Account Settings."
+      />
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">Managing Passkeys</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">

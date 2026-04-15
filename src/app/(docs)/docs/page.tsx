@@ -95,13 +95,13 @@ export default function GettingStartedPage() {
           </h3>
           <p className="mt-2 text-sm text-emerald-800">
             The easiest way to get started. Inside Zapier, Make.com, n8n,
-            monday.com, or any supported platform, search for the{" "}
+            or any supported platform, search for the{" "}
             <strong>OKrunit</strong> node/module. Select it, connect your OKrunit
             account, and you&apos;re done. No code needed.
           </p>
           <p className="mt-3 text-sm text-emerald-800">
             <Link href="/docs/integrations" className="underline font-medium">
-              See all 19 integrations &rarr;
+              See all 18 integrations &rarr;
             </Link>
           </p>
         </div>

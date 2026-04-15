@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DocsImage } from "@/components/docs/docs-image";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
@@ -51,6 +52,12 @@ export default function SlaPage() {
       <p className="mt-4 text-zinc-600 leading-relaxed">
         Navigate to <strong>Requests → Insights → SLA Compliance</strong> to view your compliance metrics for the last 30 days.
       </p>
+      <DocsImage
+        src="/screenshots/docs/sla-compliance.webp"
+        alt="SLA compliance dashboard showing compliance percentage, breach count, and per-priority breakdown with progress bars"
+        caption="Track SLA compliance across all priority levels on the SLA dashboard."
+      />
+
       <p className="mt-3 text-zinc-600 leading-relaxed">The dashboard shows:</p>
       <ul className="mt-3 list-disc pl-6 space-y-2 text-zinc-600">
         <li><strong>Compliance %</strong>: Percentage of requests decided before their SLA deadline. Higher is better.</li>

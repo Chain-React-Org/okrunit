@@ -14,7 +14,7 @@ import { captureError } from "@/lib/monitoring/capture";
 import { verifyCronAuth } from "@/lib/api/cron-auth";
 import type { EscalationConfig } from "@/lib/types/database";
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   return handleEscalations(request);
 }
 

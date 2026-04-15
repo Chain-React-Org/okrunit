@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrgContext } from "@/lib/org-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getRequestSteps } from "@/lib/approvals/steps-engine";
+import { canUseFeature } from "@/lib/billing/enforce";
 import { z } from "zod";
 
 const StepSchema = z.object({
@@ -43,6 +44,11 @@ export async function POST(
 
   if (membership.role !== "owner" && membership.role !== "admin") {
     return NextResponse.json({ error: "Only admins can configure approval steps" }, { status: 403 });
+  }
+
+  const featureCheck = await canUseFeature(membership.org_id, "multi_step_approvals");
+  if (!featureCheck.allowed) {
+    return NextResponse.json({ error: featureCheck.reason ?? "Multi-step approvals require a Business plan or higher" }, { status: 403 });
   }
 
   const admin = createAdminClient();

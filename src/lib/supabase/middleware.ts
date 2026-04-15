@@ -7,6 +7,11 @@ const PUBLIC_PATHS = new Set([
   "/contact",
   "/privacy",
   "/security",
+  "/terms",
+  "/pricing",
+  "/blog",
+  "/status",
+  "/tesslate",
   "/sitemap.xml",
   "/robots.txt",
 ]);
@@ -52,7 +57,9 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/api") ||
     pathname.startsWith("/approve") ||
     pathname.startsWith("/reject") ||
-    pathname.startsWith("/docs");
+    pathname.startsWith("/docs") ||
+    pathname.startsWith("/telegram") ||
+    pathname.startsWith("/email-actions");
 
   if (isPublicPath) {
     supabaseResponse.headers.set("x-pathname", pathname);

@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateAndConsumeToken } from "@/lib/notifications/tokens";
 import { logAuditEvent } from "@/lib/api/audit";
-import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { getClientIp, checkIpRateLimit, rateLimitResponse, AUTH_RATE_LIMIT } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 
 // ---------------------------------------------------------------------------
@@ -22,6 +22,10 @@ import { deliverCallback } from "@/lib/api/callbacks";
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rl = checkIpRateLimit(`token-action:${ip}`, AUTH_RATE_LIMIT);
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   let body: { token?: string; action?: string; comment?: string };
 
   try {

@@ -21,7 +21,7 @@ const authorizeSchema = z.object({
   scopes: z.array(z.string()).min(1),
   state: z.string().optional().default(""),
   code_challenge: z.string().optional(),
-  code_challenge_method: z.enum(["S256", "plain"]).optional(),
+  code_challenge_method: z.literal("S256").optional(),
 });
 
 export async function POST(request: Request) {

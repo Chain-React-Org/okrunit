@@ -26,6 +26,8 @@ const INTEGRATION_LINKS = [
     name: "Make",
     logo: "/logos/platforms/make.png",
     docsPath: "/docs/integrations#make",
+    // Temporary invite link while awaiting Make marketplace approval
+    externalUrl: "https://www.make.com/en/hq/app-invitation/ea2fef64351d3d7c380e3ce8f64e1c69",
   },
   {
     name: "n8n",
@@ -103,23 +105,46 @@ export default async function ConnectionsPage() {
           Setup Guides
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {INTEGRATION_LINKS.map((integration) => (
-            <Link
-              key={integration.name}
-              href={integration.docsPath}
-              className="group flex items-center gap-3 rounded-xl border border-border/50 bg-[var(--card)] px-4 py-3 transition-colors hover:border-border"
-            >
-              <Image
-                src={integration.logo}
-                alt={integration.name}
-                width={24}
-                height={24}
-                className="size-6 rounded shrink-0"
-              />
-              <span className="text-sm font-medium flex-1 truncate">{integration.name}</span>
-              <ExternalLink className="size-3.5 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" />
-            </Link>
-          ))}
+          {INTEGRATION_LINKS.map((integration) => {
+            const linkClass = "group flex items-center gap-3 rounded-xl border border-border/50 bg-[var(--card)] px-4 py-3 transition-colors hover:border-border";
+            const content = (
+              <>
+                <Image
+                  src={integration.logo}
+                  alt={integration.name}
+                  width={24}
+                  height={24}
+                  className="size-6 rounded shrink-0"
+                />
+                <span className="text-sm font-medium flex-1 truncate">{integration.name}</span>
+                <ExternalLink className="size-3.5 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" />
+              </>
+            );
+
+            if (integration.externalUrl) {
+              return (
+                <a
+                  key={integration.name}
+                  href={integration.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={linkClass}
+                >
+                  {content}
+                </a>
+              );
+            }
+
+            return (
+              <Link
+                key={integration.name}
+                href={integration.docsPath}
+                className={linkClass}
+              >
+                {content}
+              </Link>
+            );
+          })}
         </div>
       </div>
 

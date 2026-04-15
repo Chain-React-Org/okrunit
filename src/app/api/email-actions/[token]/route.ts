@@ -12,7 +12,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateAndConsumeToken } from "@/lib/notifications/tokens";
 import { logAuditEvent } from "@/lib/api/audit";
-import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { getClientIp, checkIpRateLimit, rateLimitResponse, AUTH_RATE_LIMIT } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 
 // ---------------------------------------------------------------------------
@@ -118,7 +118,7 @@ function confirmationPage(
     <div class="body">
       <div class="info">
         <h2>Confirm: ${actionLabel} Request</h2>
-        <p>"${requestTitle}"</p>
+        <p>"${requestTitle.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")}"</p>
       </div>
       <form method="POST" id="actionForm">
         <button type="submit" class="btn" id="submitBtn">${actionLabel} this request</button>
@@ -126,18 +126,23 @@ function confirmationPage(
       <a href="${APP_URL}/dashboard" class="cancel">Cancel and go to Dashboard</a>
     </div>
   </div>
-  <script>
-    document.getElementById('actionForm').addEventListener('submit', function() {
-      var btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.textContent = 'Processing...';
-    });
-  </script>
+  <noscript></noscript>
 </body>
 </html>`;
 
-  return new Response(html, {
-    headers: { "Content-Type": "text/html; charset=utf-8" },
+  // Generate a nonce-based CSP for this standalone HTML page so the
+  // inline button-disable script can run without 'unsafe-inline'.
+  const nonce = crypto.randomUUID().replace(/-/g, "");
+  const htmlWithScript = html.replace(
+    "<noscript></noscript>",
+    `<script nonce="${nonce}">document.getElementById('actionForm').addEventListener('submit',function(){var b=document.getElementById('submitBtn');b.disabled=true;b.textContent='Processing...'});</script>`,
+  );
+
+  return new Response(htmlWithScript, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Security-Policy": `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'`,
+    },
   });
 }
 
@@ -150,6 +155,10 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ token: string }> },
 ) {
+  const ip = getClientIp(request);
+  const rl = checkIpRateLimit(`email-action:${ip}`, AUTH_RATE_LIMIT);
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   const { token } = await params;
 
   // Peek at the token without consuming it to show the confirmation page.
@@ -225,6 +234,10 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ token: string }> },
 ) {
+  const ip = getClientIp(request);
+  const rl = checkIpRateLimit(`email-action:${ip}`, AUTH_RATE_LIMIT);
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   const { token } = await params;
 
   // 1. Validate and consume the token (single-use).
@@ -369,7 +382,7 @@ export async function POST(
   return htmlPage(
     `Request ${actionLabel}`,
     `Request ${actionLabel}`,
-    `You have successfully ${actionLabel.toLowerCase()} the request "${approval.title}".`,
+    `You have successfully ${actionLabel.toLowerCase()} the request "${(approval.title ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")}".`,
     "success",
   );
 }

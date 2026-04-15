@@ -6,10 +6,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ApiError, errorResponse } from "@/lib/api/errors";
-import type { UserProfile } from "@/lib/types/database";
+import { getAppAdminContext } from "@/lib/app-admin";
 
 const bodySchema = z.object({
   org_id: z.string().uuid("Invalid org ID"),
@@ -18,27 +17,12 @@ const bodySchema = z.object({
 
 export async function PATCH(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      throw new ApiError(401, "Authentication required", "AUTH_REQUIRED");
+    const profile = await getAppAdminContext();
+    if (!profile) {
+      throw new ApiError(403, "App admin access required", "APP_ADMIN_REQUIRED");
     }
 
     const admin = createAdminClient();
-
-    // Verify app admin status
-    const { data: profile } = await admin
-      .from("user_profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single<UserProfile>();
-
-    if (!profile?.is_app_admin) {
-      throw new ApiError(403, "App admin access required", "APP_ADMIN_REQUIRED");
-    }
 
     let body: z.infer<typeof bodySchema>;
     try {

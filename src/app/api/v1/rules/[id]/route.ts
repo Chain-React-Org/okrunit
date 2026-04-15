@@ -9,6 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createRuleSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
+import { canUseFeature } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
@@ -44,6 +45,11 @@ export async function PATCH(
     // Must be owner or admin.
     if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
       throw new ApiError(403, "Insufficient permissions");
+    }
+
+    const featureCheck = await canUseFeature(auth.orgId, "rules_engine");
+    if (!featureCheck.allowed) {
+      throw new ApiError(403, featureCheck.reason ?? "Rules engine requires a Pro plan or higher", "PLAN_LIMIT_EXCEEDED");
     }
 
     // Validate request body.
@@ -125,6 +131,11 @@ export async function DELETE(
     // Must be owner or admin.
     if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
       throw new ApiError(403, "Insufficient permissions");
+    }
+
+    const featureCheck = await canUseFeature(auth.orgId, "rules_engine");
+    if (!featureCheck.allowed) {
+      throw new ApiError(403, featureCheck.reason ?? "Rules engine requires a Pro plan or higher", "PLAN_LIMIT_EXCEEDED");
     }
 
     const admin = createAdminClient();

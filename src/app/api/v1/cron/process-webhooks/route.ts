@@ -11,6 +11,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyCronAuth } from "@/lib/api/cron-auth";
+import { resolveAndCheckUrl } from "@/lib/api/ssrf";
 import {
   attemptWebhookDelivery,
   WEBHOOK_RETRY_DELAYS_MS,
@@ -23,7 +24,7 @@ const AUTO_PAUSE_THRESHOLD = 10;
 /** Maximum rows to process per cron invocation. */
 const BATCH_SIZE = 50;
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   if (!verifyCronAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -59,6 +60,12 @@ export async function POST(request: Request) {
   await Promise.allSettled(
     rows.map(async (row) => {
       try {
+        // SSRF check before retry delivery
+        const isPrivate = await resolveAndCheckUrl(row.callback_url);
+        if (isPrivate) {
+          throw new Error("Callback URL targets a private network");
+        }
+
         const result = await attemptWebhookDelivery(
           row.callback_url,
           row.payload as Record<string, unknown>,

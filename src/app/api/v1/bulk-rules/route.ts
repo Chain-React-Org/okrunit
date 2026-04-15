@@ -9,6 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createBulkRuleSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
+import { canUseFeature } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // ---- Helpers --------------------------------------------------------------
@@ -62,6 +63,11 @@ export async function POST(request: Request) {
 
     if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
       throw new ApiError(403, "Insufficient permissions");
+    }
+
+    const featureCheck = await canUseFeature(auth.orgId, "rules_engine");
+    if (!featureCheck.allowed) {
+      throw new ApiError(403, featureCheck.reason ?? "Bulk rules require a Pro plan or higher", "PLAN_LIMIT_EXCEEDED");
     }
 
     let body: z.infer<typeof createBulkRuleSchema>;

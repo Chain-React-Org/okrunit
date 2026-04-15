@@ -23,11 +23,11 @@ export async function GET() {
     const duration = Date.now() - start;
 
     if (error) {
+      console.error("[Health] Database check failed:", error.message);
       return NextResponse.json(
         {
           status: "unhealthy",
           database: "unreachable",
-          error: error.message,
           duration_ms: duration,
         },
         { status: 503 },

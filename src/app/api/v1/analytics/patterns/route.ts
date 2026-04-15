@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
+import { canUseFeature } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 interface PatternSuggestion {
@@ -34,8 +35,14 @@ export async function GET(request: Request) {
       throw new ApiError(403, "Insufficient permissions");
     }
 
-    const admin = createAdminClient();
     const orgId = auth.orgId;
+
+    const featureCheck = await canUseFeature(orgId, "analytics");
+    if (!featureCheck.allowed) {
+      throw new ApiError(403, featureCheck.reason ?? "Upgrade required for analytics");
+    }
+
+    const admin = createAdminClient();
 
     // Fetch recent decided approvals (last 90 days)
     const ninetyDaysAgo = new Date();

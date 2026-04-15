@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DocsImage } from "@/components/docs/docs-image";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
@@ -20,6 +21,12 @@ export default function RulesPage() {
         Rules let you automatically handle incoming approval requests based on conditions. Auto-approve low-risk actions,
         route critical requests to specific teams, or require multiple approvers for sensitive operations.
       </p>
+
+      <DocsImage
+        src="/screenshots/docs/rules-list.webp"
+        alt="Rules page showing configured routing rules with conditions and actions"
+        caption="Manage all your routing rules from the Rules page."
+      />
 
       <h2 className="mt-12 text-2xl font-semibold text-zinc-900">How Rules Work</h2>
       <p className="mt-4 text-zinc-600 leading-relaxed">

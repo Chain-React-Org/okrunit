@@ -30,7 +30,10 @@ export async function GET(request: Request) {
     if (status) query = query.eq("status", status);
     if (severity) query = query.eq("severity", severity);
     if (service) query = query.eq("service", service);
-    if (search) query = query.ilike("title", `%${search}%`);
+    if (search) {
+      const escaped = search.replace(/[%_\\]/g, "\\$&");
+      query = query.ilike("title", `%${escaped}%`);
+    }
 
     // Sort
     switch (sort) {

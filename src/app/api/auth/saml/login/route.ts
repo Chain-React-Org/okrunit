@@ -32,7 +32,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log("[SAML Login] Config found for domain, entity_id:", config.entity_id, "sso_url:", config.sso_url);
 
     const sp = createServiceProvider();
     const idp = createIdentityProvider(config);
@@ -52,7 +51,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error("[SAML Login] Error:", err);
     return NextResponse.redirect(
-      new URL(`/login?error=sso_failed&detail=${encodeURIComponent(String(err))}`, request.url),
+      new URL("/login?error=sso_failed", request.url),
     );
   }
 }

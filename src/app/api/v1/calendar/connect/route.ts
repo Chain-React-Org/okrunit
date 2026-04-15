@@ -7,7 +7,7 @@
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { randomBytes } from "crypto";
+import { randomBytes, createHmac } from "crypto";
 
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
@@ -86,13 +86,16 @@ export async function POST(request: Request) {
 
     // Encode user context into the OAuth state parameter so the callback
     // can associate the token with the correct user and org.
-    const statePayload = JSON.stringify({
+    const stateData = JSON.stringify({
       userId: auth.user.id,
       orgId: auth.orgId,
       provider,
       nonce: randomBytes(16).toString("hex"),
     });
-    const state = Buffer.from(statePayload).toString("base64url");
+    // Sign the state to prevent forgery
+    const hmacKey = process.env.CALLBACK_HMAC_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "calendar-state";
+    const sig = createHmac("sha256", hmacKey).update(stateData).digest("hex").slice(0, 16);
+    const state = Buffer.from(JSON.stringify({ d: stateData, s: sig })).toString("base64url");
 
     const redirectUrl =
       provider === "google"

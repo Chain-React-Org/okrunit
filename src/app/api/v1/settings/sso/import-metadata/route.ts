@@ -13,6 +13,7 @@ import { z } from "zod";
 
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
+import { resolveAndCheckUrl } from "@/lib/api/ssrf";
 
 const importSchema = z
   .object({
@@ -78,6 +79,15 @@ export async function POST(request: NextRequest) {
     if (parsed.data.metadata_xml) {
       xml = parsed.data.metadata_xml;
     } else {
+      // SSRF check: prevent fetching from internal networks
+      const isPrivate = await resolveAndCheckUrl(parsed.data.metadata_url!);
+      if (isPrivate) {
+        return NextResponse.json(
+          { error: "Metadata URL targets a private or reserved network" },
+          { status: 400 },
+        );
+      }
+
       const metadataRes = await fetch(parsed.data.metadata_url!, {
         headers: { Accept: "application/xml, text/xml" },
         signal: AbortSignal.timeout(10000),

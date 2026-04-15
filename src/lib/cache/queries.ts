@@ -677,10 +677,10 @@ export async function getCachedAnalyticsData(orgId: string, days: number = 30) {
     { data: decisionData },
     { data: responseTimeData },
   ] = await Promise.all([
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending"),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved"),
-    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "rejected"),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).gte("created_at", periodStart),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending").gte("created_at", periodStart),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved").gte("created_at", periodStart),
+    admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "rejected").gte("created_at", periodStart),
     admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).gte("created_at", prevPeriodStart).lte("created_at", periodStart),
     admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending").gte("created_at", prevPeriodStart).lte("created_at", periodStart),
     admin.from("approval_requests").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "approved").gte("created_at", prevPeriodStart).lte("created_at", periodStart),
@@ -735,7 +735,7 @@ export async function getCachedRulesData(orgId: string) {
 
   const admin = createAdminClient();
 
-  const [{ data: rules }, { data: teams }, { data: connections }, { data: members }, { data: requestMeta }] =
+  const [{ data: rules }, { data: teams }, { data: connections }, { data: memberRows }, { data: requestMeta }] =
     await Promise.all([
       admin
         .from("approval_rules")
@@ -744,9 +744,16 @@ export async function getCachedRulesData(orgId: string) {
         .order("priority"),
       admin.from("teams").select("id, name").eq("org_id", orgId),
       admin.from("connections").select("id, name").eq("org_id", orgId),
-      admin.from("user_profiles").select("id, full_name, email").eq("org_id", orgId).order("full_name"),
+      admin.from("org_memberships").select("user_id").eq("org_id", orgId),
       admin.from("approval_requests").select("action_type, source, title").eq("org_id", orgId).limit(500),
     ]);
+
+  // Fetch profiles for org members
+  const memberUserIds = (memberRows ?? []).map((m) => m.user_id);
+  const { data: members } = memberUserIds.length > 0
+    ? await admin.from("user_profiles").select("id, full_name, email").in("id", memberUserIds).order("full_name")
+    : { data: [] };
+
 
   // Extract distinct values for rule form dropdowns
   const actionTypes = [...new Set((requestMeta ?? []).map((r) => r.action_type).filter(Boolean))].sort() as string[];

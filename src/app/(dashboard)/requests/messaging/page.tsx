@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCachedOrgLayoutData } from "@/lib/cache/queries";
 import { MessagingConnectionsPage } from "@/components/messaging/messaging-connections-page";
 import { WebhookChannels } from "@/components/messaging/webhook-channels";
+import { TierLimitBanner } from "@/components/ui/tier-limit-banner";
+import { PLAN_LIMITS, hasFeature } from "@/lib/billing/plans";
 import type { ApprovalFlow, MessagingConnection } from "@/lib/types/database";
 import type { WebhookChannel } from "@/components/messaging/webhook-channels";
 
@@ -21,6 +24,8 @@ export default async function MessagingPage() {
     redirect("/requests");
 
   const admin = createAdminClient();
+  const { currentPlan } = await getCachedOrgLayoutData(membership.org_id);
+  const showBanner = !hasFeature(currentPlan, "slack_notifications");
 
   const [{ data: connections }, { data: flows }, { data: webhookChannels }] =
     await Promise.all([
@@ -48,6 +53,13 @@ export default async function MessagingPage() {
 
   return (
     <div className="space-y-10">
+      {showBanner && (
+        <TierLimitBanner
+          dismissKey="messaging-limit"
+          planName={PLAN_LIMITS[currentPlan].name}
+          message="does not include Slack, Discord, or Teams notifications. Email notifications are included on all plans."
+        />
+      )}
       <MessagingConnectionsPage
         connections={connections ?? []}
         flows={flows ?? []}

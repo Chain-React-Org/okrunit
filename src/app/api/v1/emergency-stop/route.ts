@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getClientIp, checkIpRateLimit, rateLimitResponse, WRITE_RATE_LIMIT } from "@/lib/api/ip-rate-limiter";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -20,6 +21,10 @@ const emergencyStopSchema = z.object({
 // ---- POST /api/v1/emergency-stop ------------------------------------------
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = checkIpRateLimit(`emergency-stop:${ip}`, WRITE_RATE_LIMIT);
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   try {
     // 1. Authenticate -- session auth only
     const auth = await authenticateRequest(request);

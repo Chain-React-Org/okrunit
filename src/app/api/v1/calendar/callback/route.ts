@@ -6,6 +6,7 @@
 // ---------------------------------------------------------------------------
 
 import { NextRequest, NextResponse } from "next/server";
+import { createHmac } from "crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { captureError } from "@/lib/monitoring/capture";
@@ -145,7 +146,22 @@ export async function GET(request: NextRequest) {
   let state: OAuthState;
   try {
     const decoded = Buffer.from(stateParam, "base64url").toString("utf-8");
-    state = JSON.parse(decoded);
+    const envelope = JSON.parse(decoded);
+
+    // Verify HMAC signature to prevent state forgery
+    if (envelope.d && envelope.s) {
+      const hmacKey = process.env.CALLBACK_HMAC_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "calendar-state";
+      const expectedSig = createHmac("sha256", hmacKey).update(envelope.d).digest("hex").slice(0, 16);
+      if (envelope.s !== expectedSig) {
+        return NextResponse.redirect(
+          `${settingsUrl}?calendar_error=invalid_state`,
+        );
+      }
+      state = JSON.parse(envelope.d);
+    } else {
+      // Legacy unsigned state format
+      state = envelope;
+    }
   } catch {
     return NextResponse.redirect(
       `${settingsUrl}?calendar_error=invalid_state`,

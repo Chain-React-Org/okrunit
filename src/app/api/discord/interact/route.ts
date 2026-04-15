@@ -295,14 +295,17 @@ async function applyDecision(request: Request, params: {
   const newStatus = decision === "approve" ? "approved" : "rejected";
   const decidedAt = new Date().toISOString();
 
-  const { data: userProfile } = await admin
-    .from("user_profiles")
-    .select("id")
+  const { data: orgMember } = await admin
+    .from("org_memberships")
+    .select("user_id")
     .eq("org_id", approval.org_id)
     .limit(1)
     .maybeSingle();
 
-  const decidedBy = userProfile?.id ?? null;
+  const decidedBy = orgMember?.user_id ?? null;
+
+  // Build attribution tag for audit trail
+  const discordAttribution = `[Decided via Discord by ${discordUsername}]`;
 
   const updatePayload: Record<string, unknown> = {
     status: newStatus,
@@ -312,7 +315,9 @@ async function applyDecision(request: Request, params: {
   };
 
   if (comment) {
-    updatePayload.decision_comment = comment;
+    updatePayload.decision_comment = `${comment}\n\n${discordAttribution}`;
+  } else {
+    updatePayload.decision_comment = discordAttribution;
   }
 
   const { data: updated, error: updateError } = await admin

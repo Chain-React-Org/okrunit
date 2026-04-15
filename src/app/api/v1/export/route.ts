@@ -15,7 +15,8 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { exportQuerySchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 
-import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { getClientIp, checkIpRateLimit, rateLimitResponse, ANALYTICS_RATE_LIMIT } from "@/lib/api/ip-rate-limiter";
+import { canUseFeature } from "@/lib/billing/enforce";
 import {
   fetchExportData,
   generateCSV,
@@ -26,6 +27,10 @@ import {
 // ---------------------------------------------------------------------------
 
 export async function GET(request: Request) {
+  const ip = getClientIp(request);
+  const rl = checkIpRateLimit(`export:${ip}`, ANALYTICS_RATE_LIMIT);
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   try {
     // 1. Authenticate -- session auth only (dashboard users)
     const auth = await authenticateRequest(request);
@@ -36,6 +41,11 @@ export async function GET(request: Request) {
         "Session authentication required for exports. Use the dashboard.",
         "SESSION_REQUIRED",
       );
+    }
+
+    const featureCheck = await canUseFeature(auth.orgId, "analytics_export");
+    if (!featureCheck.allowed) {
+      throw new ApiError(403, featureCheck.reason ?? "Upgrade required for data export");
     }
 
     // 2. Parse and validate query parameters

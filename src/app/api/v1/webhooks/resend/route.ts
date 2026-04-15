@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { captureError } from "@/lib/monitoring/capture";
+import { Webhook } from "svix";
 
 interface ResendEvent {
   type: string;
@@ -30,7 +31,37 @@ interface ResendEvent {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as ResendEvent;
+    // Verify Resend webhook signature
+    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+    const rawBody = await request.text();
+
+    if (!webhookSecret) {
+      console.error("[Resend Webhook] RESEND_WEBHOOK_SECRET is not configured");
+      return new NextResponse(null, { status: 500 });
+    }
+
+    {
+      const svixId = request.headers.get("svix-id");
+      const svixTimestamp = request.headers.get("svix-timestamp");
+      const svixSignature = request.headers.get("svix-signature");
+
+      if (!svixId || !svixTimestamp || !svixSignature) {
+        return new NextResponse(null, { status: 401 });
+      }
+
+      try {
+        const wh = new Webhook(webhookSecret);
+        wh.verify(rawBody, {
+          "svix-id": svixId,
+          "svix-timestamp": svixTimestamp,
+          "svix-signature": svixSignature,
+        });
+      } catch {
+        return new NextResponse(null, { status: 401 });
+      }
+    }
+
+    const body = JSON.parse(rawBody) as ResendEvent;
 
     // Resend sends: email.sent, email.delivered, email.bounced,
     // email.complained, email.delivery_delayed

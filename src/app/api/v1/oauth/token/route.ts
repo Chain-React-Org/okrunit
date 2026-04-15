@@ -12,7 +12,7 @@ import { NextResponse } from "next/server";
 
 import { hashApiKey } from "@/lib/api/auth";
 import { logAuditEvent } from "@/lib/api/audit";
-import { checkIpRateLimit, getClientIp, AUTH_RATE_LIMIT, rateLimitResponse } from "@/lib/api/ip-rate-limiter";
+import { checkIpRateLimitAsync, getClientIp, AUTH_RATE_LIMIT, rateLimitResponse } from "@/lib/api/ip-rate-limiter";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   generateOAuthToken,
@@ -43,7 +43,7 @@ function oauthError(
 export async function POST(request: Request) {
   // Rate limit: 10 requests per minute per IP
   const ip = getClientIp(request);
-  const rl = checkIpRateLimit(`oauth-token:${ip}`, AUTH_RATE_LIMIT);
+  const rl = await checkIpRateLimitAsync(`oauth-token:${ip}`, AUTH_RATE_LIMIT);
   if (!rl.allowed) return rateLimitResponse(rl);
 
   try {
@@ -159,7 +159,7 @@ async function handleAuthorizationCode(
       !verifyPkceChallenge(
         code_verifier,
         authCode.code_challenge,
-        authCode.code_challenge_method || "plain",
+        authCode.code_challenge_method || "S256",
       )
     ) {
       return oauthError("invalid_grant", "PKCE verification failed.");
@@ -283,14 +283,14 @@ async function handleRefreshToken(
     .single();
 
   if (!client || !client.is_active) {
-    console.log("[OAuth Refresh] FAIL: client not found or inactive, client_id:", client_id);
+    console.warn("[OAuth Refresh] Client not found or inactive");
     return oauthError("invalid_client", "Unknown or inactive client.", 401);
   }
 
   if (client_secret) {
     const secretHash = hashApiKey(client_secret);
     if (secretHash !== client.client_secret_hash) {
-      console.log("[OAuth Refresh] FAIL: secret mismatch for client:", client_id);
+      console.warn("[OAuth Refresh] Secret mismatch");
       return oauthError("invalid_client", "Invalid client secret.", 401);
     }
   }
@@ -315,7 +315,7 @@ async function handleRefreshToken(
       .single();
 
     if (!graceToken) {
-      console.log("[OAuth Refresh] FAIL: refresh token not found for client:", client_id);
+      console.warn("[OAuth Refresh] Refresh token not found");
       return oauthError("invalid_grant", "Invalid refresh token.");
     }
 

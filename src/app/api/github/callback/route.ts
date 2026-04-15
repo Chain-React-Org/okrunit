@@ -47,14 +47,18 @@ export async function POST(request: Request) {
 
     if (hmacSecret) {
       const signature = request.headers.get("x-okrunit-signature");
-      if (signature) {
-        const expected = `sha256=${createHmac("sha256", hmacSecret).update(rawBody).digest("hex")}`;
-        if (signature !== expected) {
-          return NextResponse.json(
-            { error: "Invalid callback signature" },
-            { status: 401 },
-          );
-        }
+      if (!signature) {
+        return NextResponse.json(
+          { error: "Missing callback signature" },
+          { status: 401 },
+        );
+      }
+      const expected = `sha256=${createHmac("sha256", hmacSecret).update(rawBody).digest("hex")}`;
+      if (signature !== expected) {
+        return NextResponse.json(
+          { error: "Invalid callback signature" },
+          { status: 401 },
+        );
       }
     }
 

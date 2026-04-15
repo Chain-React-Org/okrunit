@@ -164,7 +164,6 @@ export async function POST(request: Request) {
     const validated = createApprovalDraftSchema.parse(body);
 
     // 5a. Apply template defaults (if template_id is provided)
-    console.log("[Approvals] template_id:", validated.template_id ?? "none", "source:", validated.source ?? "unknown");
     if (validated.template_id) {
       const { data: template } = await admin
         .from("approval_templates")
@@ -174,17 +173,14 @@ export async function POST(request: Request) {
         .eq("is_active", true)
         .single();
 
-      console.log("[Approvals] Template lookup result:", template ? `found (name=${template.name}, priority=${template.default_priority}, approvers=${template.assigned_approvers?.length ?? 0})` : "NOT FOUND");
       if (template) {
         // Apply template defaults for fields not explicitly provided in the request
-        console.log("[Approvals] Before template apply:", JSON.stringify({ title: validated.title, priority: validated.priority, action_type: validated.action_type, assigned_approvers: validated.assigned_approvers, callback_url: validated.callback_url }));
         if (!validated.title && template.title_pattern) validated.title = template.title_pattern;
         if (!validated.description && template.description) validated.description = template.description;
         if (!validated.action_type && template.action_type) validated.action_type = template.action_type;
         if (!validated.priority && template.default_priority) validated.priority = template.default_priority as "low" | "medium" | "high" | "critical";
         if (!validated.assigned_approvers && template.assigned_approvers?.length) validated.assigned_approvers = template.assigned_approvers;
         if (!validated.callback_url && template.callback_url_pattern) validated.callback_url = template.callback_url_pattern;
-        console.log("[Approvals] After template apply:", JSON.stringify({ title: validated.title, priority: validated.priority, action_type: validated.action_type, assigned_approvers: validated.assigned_approvers, callback_url: validated.callback_url }));
 
         // Apply title pattern with metadata substitution: "Deploy {service} to {env}"
         if (template.title_pattern && validated.title === template.title_pattern) {
@@ -339,11 +335,11 @@ export async function POST(request: Request) {
           flowUpdate.apply_for_next = existingFlow.apply_for_next - 1;
         }
 
-        admin
+        void admin
           .from("approval_flows")
           .update(flowUpdate)
           .eq("id", existingFlow.id)
-          ;
+          .then(({ error }) => { if (error) console.error("[Approvals] Flow update failed:", error); });
       } else {
         // Auto-create a new unconfigured flow
         const { data: newFlow } = await admin
@@ -859,10 +855,10 @@ export async function POST(request: Request) {
       ? auth.connection.created_by
       : auth.type === "oauth" ? auth.userId : null;
     if (watchOwnerId) {
-      admin
+      void admin
         .from("request_watchers")
         .upsert({ request_id: approval.id, user_id: watchOwnerId }, { onConflict: "request_id,user_id" })
-        ;
+        .then(({ error }) => { if (error) console.error("[Approvals] Watcher upsert failed:", error); });
     }
 
     // 15b. Bottleneck detection (fire-and-forget)
@@ -1128,6 +1124,19 @@ export async function GET(request: Request) {
       countQuery = countQuery.lte("decided_at", params.decided_before);
     }
 
+    // Apply exclude_source_id to count query too (must match data query)
+    if (excludeSourceId) {
+      const { data: countFlows } = await admin
+        .from("approval_flows")
+        .select("id")
+        .eq("org_id", auth.orgId)
+        .eq("source_id", excludeSourceId);
+      const excludeCountFlowIds = (countFlows ?? []).map((f: { id: string }) => f.id);
+      if (excludeCountFlowIds.length > 0) {
+        countQuery = countQuery.or(`flow_id.not.in.(${excludeCountFlowIds.join(",")}),flow_id.is.null`);
+      }
+    }
+
     const { count } = await countQuery;
 
     // 7. Lazy expiration + auto-action deadline check
@@ -1162,11 +1171,11 @@ export async function GET(request: Request) {
     });
 
     if (expiredIds.length > 0) {
-      admin
+      void admin
         .from("approval_requests")
         .update({ status: "expired" })
         .in("id", expiredIds)
-        ;
+        .then(({ error }) => { if (error) console.error("[Approvals] Expire update failed:", error); });
     }
 
     // Fire-and-forget: lazy SLA breach check for pending approvals
@@ -1180,7 +1189,7 @@ export async function GET(request: Request) {
     }
 
     if (slaBreachIds.length > 0) {
-      admin
+      void admin
         .from("approval_requests")
         .update({
           sla_breached: true,
@@ -1188,7 +1197,7 @@ export async function GET(request: Request) {
         })
         .in("id", slaBreachIds)
         .eq("sla_breached", false)
-        ;
+        .then(({ error }) => { if (error) console.error("[Approvals] SLA breach update failed:", error); });
 
       // Dispatch SLA breach notifications for each breached approval
       after(async () => {
@@ -1220,7 +1229,7 @@ export async function GET(request: Request) {
     // Fire-and-forget: apply auto-actions for approvals past their deadline
     for (const { id: autoId, action: autoAct } of autoActionIds) {
       const newStatus = autoAct === "approve" ? "approved" : "rejected";
-      admin
+      void admin
         .from("approval_requests")
         .update({
           status: newStatus,
@@ -1230,7 +1239,7 @@ export async function GET(request: Request) {
         })
         .eq("id", autoId)
         .eq("status", "pending") // guard against races
-        ;
+        .then(({ error }) => { if (error) console.error("[Approvals] Auto-action update failed:", error); });
 
       // Audit the auto-action
       logAuditEvent({
@@ -1304,7 +1313,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      console.log("[Approvals GET] auth error:", error.statusCode, error.message, error.code);
+      console.warn("[Approvals GET] auth error:", error.statusCode, error.code);
     }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
