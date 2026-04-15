@@ -155,28 +155,28 @@ describe("BillingDashboard", () => {
 
     it("shows buy buttons for higher plans and contact for enterprise", () => {
       render(<BillingDashboard {...defaultProps} />);
-      // On free plan with monthly billing_cycle, should see monthly buy buttons for Pro and Business.
-      const buyButtons = screen.getAllByRole("button", { name: /Buy monthly plan/ });
+      // On free plan (no stripe_subscription_id), billing cycle defaults to yearly.
+      const buyButtons = screen.getAllByRole("button", { name: /Buy yearly plan/ });
       expect(buyButtons.length).toBeGreaterThanOrEqual(2);
       // Enterprise shows "Talk to sales"
       expect(screen.getByText(/Talk to sales/)).toBeTruthy();
     });
 
-    it("toggles billing cycle between monthly and yearly", async () => {
+    it("toggles billing cycle between yearly and monthly", async () => {
       const user = userEvent.setup();
       render(<BillingDashboard {...defaultProps} />);
 
-      // Monthly is the default (from subscription.billing_cycle).
-      expect(screen.getAllByRole("button", { name: /Buy monthly plan/ }).length).toBeGreaterThanOrEqual(2);
-      expect(screen.getByText("$20")).toBeTruthy();
+      // Yearly is the default for free plan (no stripe_subscription_id).
+      expect(screen.getAllByRole("button", { name: /Buy yearly plan/ }).length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText("$16")).toBeTruthy();
 
-      // Click the toggle to switch to yearly.
-      const toggle = screen.getByText(/Yearly/);
+      // Click the toggle to switch to monthly.
+      const toggle = screen.getByText(/Monthly/);
       const toggleButton = toggle.closest("div")?.querySelector("button");
       if (toggleButton) await user.click(toggleButton);
 
-      expect(screen.getAllByRole("button", { name: /Buy yearly plan/ }).length).toBeGreaterThanOrEqual(2);
-      expect(screen.getByText("$16")).toBeTruthy();
+      expect(screen.getAllByRole("button", { name: /Buy monthly plan/ }).length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText("$20")).toBeTruthy();
     });
   });
 
