@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, CreditCard, AlertTriangle, RefreshCw, ExternalLink, Shield, Plus } from "lucide-react";
+import { Check, CreditCard, AlertTriangle, RefreshCw, ExternalLink, Shield, Plus, Infinity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PLAN_LIMITS, isUnlimited, PLAN_ORDER } from "@/lib/billing/plans";
 import type { Plan, Subscription, Invoice, BillingPlan } from "@/lib/types/database";
@@ -55,6 +55,60 @@ const FEATURE_LABELS: Record<string, string> = {
 
 function featureLabel(key: string): string {
   return FEATURE_LABELS[key] ?? key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+}
+
+/* ------------------------------------------------------------------ */
+/*  Usage Row                                                          */
+/* ------------------------------------------------------------------ */
+
+function UsageRow({ label, used, limit, suffix }: { label: string; used: number; limit: number; suffix?: string }) {
+  const unlimited = isUnlimited(limit);
+  const pct = unlimited ? 0 : Math.round((used / limit) * 100);
+
+  return (
+    <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+      <div className="flex flex-col gap-2 flex-1 sm:flex-row sm:items-center sm:gap-3">
+        <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">{label}</span>
+        <div className="flex items-center gap-3 flex-1 max-w-md">
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1">
+              {unlimited ? (
+                <span className="text-sm flex items-center gap-1.5">
+                  <span className="font-medium">{used.toLocaleString()}</span>
+                  <span className="text-muted-foreground">used</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    <Infinity className="size-3" />
+                    Unlimited
+                  </span>
+                  {suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
+                </span>
+              ) : (
+                <span className="text-sm">
+                  <span className="font-medium">{used.toLocaleString()}</span>
+                  <span className="text-muted-foreground"> of {limit.toLocaleString()}</span>
+                  {suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
+                  <span className={cn("ml-2 text-xs", pct >= 80 ? "text-amber-600 font-medium" : "text-muted-foreground")}>
+                    {pct}%
+                  </span>
+                </span>
+              )}
+            </div>
+            {!unlimited && (
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    pct >= 90 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-primary",
+                  )}
+                  style={{ width: `${Math.min(100, pct)}%` }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -238,30 +292,12 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
   const limits = PLAN_LIMITS[currentPlan];
   const hasPaidSub = subscription?.stripe_subscription_id && subscription.status === "active" && subscriptionPlan !== "free";
 
-  const handleCheckout = async (planId: string) => {
+  const handleCheckout = (planId: string) => {
     if (!isAdmin) { toast.error("Only admins can manage billing"); return; }
-    setLoading(planId);
-    try {
-      if (hasPaidSub) {
-        // Existing subscriber: use change-plan with optional cycle change
-        const res = await fetch("/api/v1/billing/change-plan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan_id: planId, billing_cycle: billingCycle }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          toast.success(`Upgraded to ${PLAN_LIMITS[planId as BillingPlan]?.name ?? planId}. You'll be charged the prorated difference.`);
-          window.location.reload();
-        } else {
-          toast.error(data.error ?? "Failed to upgrade");
-        }
-      } else {
-        // New subscriber: redirect to custom checkout page
-        window.location.href = `/org/checkout?plan=${planId}&cycle=${billingCycle}`;
-      }
-    } catch { toast.error("Failed to start checkout"); }
-    finally { setLoading(null); }
+    // Always redirect to checkout page so the user can review and confirm
+    const params = new URLSearchParams({ plan: planId, cycle: billingCycle });
+    if (hasPaidSub) params.set("upgrade", "true");
+    window.location.href = `/org/checkout?${params.toString()}`;
   };
 
   const handleCancel = async () => {
@@ -309,10 +345,7 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
     finally { setLoading(null); }
   };
 
-  const requestsPct = isUnlimited(limits.maxRequests) ? 0 : Math.round((usage.requests / limits.maxRequests) * 100);
-  const requestsLabel = isUnlimited(limits.maxRequests)
-    ? `${usage.requests} / Unlimited`
-    : `${usage.requests} / ${limits.maxRequests} used (${requestsPct}%)`;
+  const requestsSuffix = isUnlimited(limits.maxRequests) ? "" : " this month";
 
   return (
     <div className="space-y-10">
@@ -398,59 +431,16 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
           )}
 
           {/* Row: Usage - Requests */}
-          <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
-            <div className="flex flex-col gap-2 flex-1 sm:flex-row sm:items-center sm:gap-3">
-              <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Requests</span>
-              <div className="flex items-center gap-3 flex-1 max-w-md">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm">{requestsLabel}</span>
-                  </div>
-                  {!isUnlimited(limits.maxRequests) && (
-                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          requestsPct >= 80 ? "bg-amber-500" : "bg-primary",
-                        )}
-                        style={{ width: `${Math.min(100, requestsPct)}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <UsageRow label="Requests" used={usage.requests} limit={limits.maxRequests} suffix={requestsSuffix} />
 
           {/* Row: Connections */}
-          <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Connections</span>
-              <span className="text-sm">
-                {usage.connections} / {isUnlimited(limits.maxConnections) ? "Unlimited" : limits.maxConnections}
-              </span>
-            </div>
-          </div>
+          <UsageRow label="Connections" used={usage.connections} limit={limits.maxConnections} />
 
           {/* Row: Teams */}
-          <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Teams</span>
-              <span className="text-sm">
-                {usage.teams} / {isUnlimited(limits.maxTeams) ? "Unlimited" : limits.maxTeams}
-              </span>
-            </div>
-          </div>
+          <UsageRow label="Teams" used={usage.teams} limit={limits.maxTeams} />
 
           {/* Row: Team Members */}
-          <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Members</span>
-              <span className="text-sm">
-                {usage.teamMembers} / {isUnlimited(limits.maxTeamMembers) ? "Unlimited" : limits.maxTeamMembers}
-              </span>
-            </div>
-          </div>
+          <UsageRow label="Members" used={usage.teamMembers} limit={limits.maxTeamMembers} />
         </div>
       </div>
 
@@ -459,6 +449,26 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
         <div>
           <h3 className="mb-4 text-lg font-semibold">Payment Method</h3>
           <PaymentMethodSection isAdmin={isAdmin} />
+          {isAdmin && (
+            <div className="mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/v1/billing/portal", { method: "POST" });
+                    const data = await res.json();
+                    if (data.url) window.open(data.url, "_blank");
+                    else toast.error(data.error ?? "Failed to open billing portal");
+                  } catch { toast.error("Failed to open billing portal"); }
+                }}
+              >
+                <ExternalLink className="size-3.5" />
+                Manage billing
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

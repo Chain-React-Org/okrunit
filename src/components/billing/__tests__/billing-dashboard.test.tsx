@@ -63,6 +63,7 @@ function makeSubscription(plan: BillingPlan = "free"): Subscription {
 const defaultUsage = {
   requests: 42,
   connections: 1,
+  teams: 1,
   teamMembers: 2,
 };
 
@@ -107,22 +108,23 @@ describe("BillingDashboard", () => {
   describe("usage rows", () => {
     it("displays request usage with progress", () => {
       render(<BillingDashboard {...defaultProps} />);
-      // The "Requests" label in the subscription table
       expect(screen.getByText("Requests")).toBeTruthy();
-      expect(screen.getByText(/42 \/ 100 used/)).toBeTruthy();
+      expect(screen.getByText("42")).toBeTruthy();
+      expect(screen.getByText(/of 100/)).toBeTruthy();
+      expect(screen.getByText("42%")).toBeTruthy();
     });
 
     it("displays connection usage", () => {
       render(<BillingDashboard {...defaultProps} />);
-      // "Connections" appears in subscription table and comparison. Use getAllByText.
       expect(screen.getAllByText("Connections").length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText(/1 \/ 2$/m)).toBeTruthy();
+      expect(screen.getByText(/of 2/)).toBeTruthy();
     });
 
     it("displays team member usage", () => {
       render(<BillingDashboard {...defaultProps} />);
       expect(screen.getByText("Members")).toBeTruthy();
-      expect(screen.getByText(/2 \/ 3$/m)).toBeTruthy();
+      // teamMembers = 2, limit = 3
+      expect(screen.getByText(/of 3/)).toBeTruthy();
     });
 
     it("shows unlimited label for unlimited plan requests", () => {
@@ -132,7 +134,8 @@ describe("BillingDashboard", () => {
           subscription={makeSubscription("pro")}
         />,
       );
-      expect(screen.getByText(/42 \/ Unlimited/)).toBeTruthy();
+      expect(screen.getByText("42")).toBeTruthy();
+      expect(screen.getAllByText("Unlimited").length).toBeGreaterThanOrEqual(1);
     });
   });
 
