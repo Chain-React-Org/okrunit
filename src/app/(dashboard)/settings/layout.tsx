@@ -24,7 +24,7 @@ export default async function SettingsLayout({
       </div>
 
       <main className="min-w-0 flex-1 overflow-y-auto">
-        <div className="px-6 lg:px-8 py-6">
+        <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
           <TourHint />
           {children}
         </div>

@@ -121,8 +121,18 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    /* Smooth scrolling for anchor links */
+    scroll-behavior: smooth;
+    /* Prevent pull-to-refresh on mobile when in standalone mode */
+    overscroll-behavior-y: contain;
+  }
   body {
     @apply bg-background text-foreground;
+    /* Safe area padding for notched devices (iPhone etc.) */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    /* Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
   }
   button,
   [role="button"],
@@ -713,4 +723,24 @@
 }
 .lp-dash-animated {
   animation: lp-dash-flow 2s linear infinite;
+}
+
+/* ── Mobile App Enhancements ────────────────────────────────────────── */
+
+/* Prevent tap highlight on iOS/Android for a native feel */
+@media (pointer: coarse) {
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Standalone PWA: adjust for status bar when installed to home screen */
+@media all and (display-mode: standalone) {
+  body {
+    /* Extra top padding already handled by safe-area-inset env() on body */
+  }
+  /* Hide any "install app" prompts when already installed */
+  .pwa-install-prompt {
+    display: none !important;
+  }
 }

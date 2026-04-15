@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useOnboardingTourStore } from "@/stores/onboarding-tour-store";
 import { TOUR_STEPS, findPageTour } from "@/components/onboarding/tour-steps";
-import { AlertTriangle, Menu, HelpCircle, LogOut, Settings, Check, ChevronsUpDown, Building2, Search, BookOpen, Sparkles, ArrowUpRight } from "lucide-react";
+import { AlertTriangle, Menu, HelpCircle, LogOut, Settings, Check, ChevronsUpDown, Building2, Search, BookOpen, Sparkles, ArrowUpRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
@@ -21,6 +21,7 @@ import { useSidebarStore } from "@/stores/sidebar-store";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useOrgName } from "@/components/org/org-name-context";
+import { useInstallPromptStore } from "@/stores/install-prompt-store";
 
 interface OrgItem {
   id: string;
@@ -49,6 +50,7 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
   const router = useRouter();
   const { setMobileOpen } = useSidebarStore();
   const { getOrgName } = useOrgName();
+  const { deferredPrompt, isInstalled, setDeferredPrompt } = useInstallPromptStore();
   const [isMac, setIsMac] = useState(false);
 
   // Apply optimistic name overrides
@@ -153,9 +155,20 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
             </Button>
           )}
 
-          {/* Search / Cmd+K hint */}
-          <button
+          {/* Search - icon only on mobile, full bar on sm+ */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
             data-tour="search-bar"
+            onClick={() => {
+              document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+            }}
+            className="sm:hidden text-muted-foreground hover:text-foreground"
+          >
+            <Search className="size-5" />
+          </Button>
+          <button
+            data-tour="search-bar-desktop"
             onClick={() => {
               document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
             }}
@@ -201,6 +214,22 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
                     Settings
                   </Link>
                 </DropdownMenuItem>
+                {deferredPrompt && !isInstalled && (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={async () => {
+                      await deferredPrompt.prompt();
+                      const choice = await deferredPrompt.userChoice;
+                      if (choice.outcome === "accepted") {
+                        setDeferredPrompt(null);
+                      }
+                    }}
+                  >
+                    <Download className="mr-2 size-4" />
+                    Install App
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
                   <LogOut className="mr-2 size-4" />
                   Sign out

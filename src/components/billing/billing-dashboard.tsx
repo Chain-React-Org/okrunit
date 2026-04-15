@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, ExternalLink, CreditCard, AlertTriangle } from "lucide-react";
+import { Check, CreditCard, AlertTriangle, RefreshCw, ExternalLink, Shield, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PLAN_LIMITS, isUnlimited, PLAN_ORDER } from "@/lib/billing/plans";
 import type { Plan, Subscription, Invoice, BillingPlan } from "@/lib/types/database";
@@ -19,6 +19,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { StripeProvider } from "./stripe-provider";
+import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
 /** Human-readable labels for feature keys */
 const FEATURE_LABELS: Record<string, string> = {
@@ -55,6 +57,158 @@ function featureLabel(key: string): string {
   return FEATURE_LABELS[key] ?? key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 }
 
+/* ------------------------------------------------------------------ */
+/*  Payment method types                                               */
+/* ------------------------------------------------------------------ */
+
+interface PaymentMethod {
+  id: string;
+  brand: string;
+  last4: string;
+  expMonth: number;
+  expYear: number;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Update Card Form (embedded Stripe Elements)                        */
+/* ------------------------------------------------------------------ */
+
+function UpdateCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [processing, setProcessing] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+
+    setProcessing(true);
+    const { error } = await stripe.confirmSetup({
+      elements,
+      confirmParams: { return_url: window.location.href },
+      redirect: "if_required",
+    });
+
+    if (error) {
+      toast.error(error.message ?? "Failed to update card");
+      setProcessing(false);
+    } else {
+      toast.success("Payment method updated");
+      onSuccess();
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <PaymentElement options={{ layout: "tabs" }} />
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={!stripe || processing}>
+          {processing ? "Saving..." : "Save card"}
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={processing}>
+          Cancel
+        </Button>
+      </div>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Shield className="size-3" />
+        Secured by Stripe
+      </div>
+    </form>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Payment Method Section                                             */
+/* ------------------------------------------------------------------ */
+
+function PaymentMethodSection({ isAdmin }: { isAdmin: boolean }) {
+  const [methods, setMethods] = useState<PaymentMethod[]>([]);
+  const [defaultId, setDefaultId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
+  const [setupSecret, setSetupSecret] = useState<string | null>(null);
+
+  const fetchMethods = useCallback(async () => {
+    const res = await fetch("/api/v1/billing/payment-methods");
+    const data = await res.json();
+    setMethods(data.paymentMethods ?? []);
+    setDefaultId(data.defaultPaymentMethodId ?? null);
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => { fetchMethods(); }, [fetchMethods]);
+
+  const handleStartUpdate = async () => {
+    const res = await fetch("/api/v1/billing/setup-intent", { method: "POST" });
+    const data = await res.json();
+    if (data.clientSecret) {
+      setSetupSecret(data.clientSecret);
+      setShowUpdateForm(true);
+    } else {
+      toast.error(data.error ?? "Failed to start card update");
+    }
+  };
+
+  const handleUpdateSuccess = () => {
+    setShowUpdateForm(false);
+    setSetupSecret(null);
+    fetchMethods();
+  };
+
+  if (!loaded) return null;
+
+  const defaultMethod = methods.find((m) => m.id === defaultId) ?? methods[0];
+
+  return (
+    <div className="divide-y rounded-lg border bg-white dark:bg-card">
+      <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Payment</span>
+          {defaultMethod ? (
+            <div className="flex items-center gap-2">
+              <CreditCard className="size-4 text-muted-foreground" />
+              <span className="text-sm capitalize">{defaultMethod.brand}</span>
+              <span className="text-sm text-muted-foreground">ending in {defaultMethod.last4}</span>
+              <span className="text-xs text-muted-foreground">
+                {String(defaultMethod.expMonth).padStart(2, "0")}/{defaultMethod.expYear}
+              </span>
+            </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">No payment method on file</span>
+          )}
+        </div>
+        {isAdmin && (
+          <Button variant="outline" size="sm" onClick={handleStartUpdate} className="text-xs gap-1.5">
+            {defaultMethod ? (
+              <>
+                <RefreshCw className="size-3.5" />
+                Update card
+              </>
+            ) : (
+              <>
+                <Plus className="size-3.5" />
+                Add card
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+
+      {showUpdateForm && setupSecret && (
+        <div className="px-4 py-4 sm:px-5">
+          <StripeProvider clientSecret={setupSecret}>
+            <UpdateCardForm onSuccess={handleUpdateSuccess} onCancel={() => { setShowUpdateForm(false); setSetupSecret(null); }} />
+          </StripeProvider>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main Billing Dashboard                                             */
+/* ------------------------------------------------------------------ */
+
 interface BillingDashboardProps {
   plans: Plan[];
   subscription: Subscription | null;
@@ -72,38 +226,41 @@ interface BillingDashboardProps {
 
 export function BillingDashboard({ plans, subscription, planOverride, usage, invoices, isAdmin, orgId }: BillingDashboardProps) {
   const [loading, setLoading] = useState<string | null>(null);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
+    subscription?.stripe_subscription_id
+      ? (subscription.billing_cycle as "monthly" | "yearly") ?? "yearly"
+      : "yearly"
+  );
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDowngrade, setConfirmDowngrade] = useState<string | null>(null);
   const subscriptionPlan = (subscription?.plan_id ?? "free") as BillingPlan;
   const currentPlan = (planOverride ?? subscriptionPlan) as BillingPlan;
   const limits = PLAN_LIMITS[currentPlan];
+  const hasPaidSub = subscription?.stripe_subscription_id && subscription.status === "active" && subscriptionPlan !== "free";
 
   const handleCheckout = async (planId: string) => {
     if (!isAdmin) { toast.error("Only admins can manage billing"); return; }
     setLoading(planId);
     try {
-      const res = await fetch("/api/v1/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_id: planId, billing_cycle: billingCycle }),
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else toast.error(data.error ?? "Failed to start checkout");
+      if (hasPaidSub) {
+        // Existing subscriber: use change-plan with optional cycle change
+        const res = await fetch("/api/v1/billing/change-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan_id: planId, billing_cycle: billingCycle }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast.success(`Upgraded to ${PLAN_LIMITS[planId as BillingPlan]?.name ?? planId}. You'll be charged the prorated difference.`);
+          window.location.reload();
+        } else {
+          toast.error(data.error ?? "Failed to upgrade");
+        }
+      } else {
+        // New subscriber: redirect to custom checkout page
+        window.location.href = `/org/checkout?plan=${planId}&cycle=${billingCycle}`;
+      }
     } catch { toast.error("Failed to start checkout"); }
-    finally { setLoading(null); }
-  };
-
-  const handlePortal = async () => {
-    if (!isAdmin) { toast.error("Only admins can manage billing"); return; }
-    setLoading("portal");
-    try {
-      const res = await fetch("/api/v1/billing/portal", { method: "POST" });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else toast.error(data.error ?? "Failed to open billing portal");
-    } catch { toast.error("Failed to open billing portal"); }
     finally { setLoading(null); }
   };
 
@@ -119,6 +276,17 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
     finally { setLoading(null); }
   };
 
+  const handleReactivate = async () => {
+    setLoading("reactivate");
+    try {
+      const res = await fetch("/api/v1/billing/reactivate", { method: "POST" });
+      const data = await res.json();
+      if (data.success) { toast.success("Subscription reactivated!"); window.location.reload(); }
+      else toast.error(data.error ?? "Failed to reactivate");
+    } catch { toast.error("Failed to reactivate"); }
+    finally { setLoading(null); }
+  };
+
   const handleDowngrade = async (planId: string) => {
     setConfirmDowngrade(null);
     setLoading(`downgrade-${planId}`);
@@ -126,11 +294,17 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
       const res = await fetch("/api/v1/billing/change-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_id: planId }),
+        body: JSON.stringify({ plan_id: planId, billing_cycle: billingCycle }),
       });
       const data = await res.json();
-      if (data.success) { toast.success(`Downgraded to ${PLAN_LIMITS[planId as BillingPlan]?.name ?? planId}`); window.location.reload(); }
-      else toast.error(data.error ?? "Failed to downgrade");
+      if (data.success) {
+        toast.success(
+          data.action === "downgrade_scheduled"
+            ? `Downgrade to ${PLAN_LIMITS[planId as BillingPlan]?.name ?? planId} scheduled. You'll keep your current features until the end of your billing period.`
+            : `Downgraded to ${PLAN_LIMITS[planId as BillingPlan]?.name ?? planId}`,
+        );
+        window.location.reload();
+      } else toast.error(data.error ?? "Failed to downgrade");
     } catch { toast.error("Failed to downgrade"); }
     finally { setLoading(null); }
   };
@@ -142,7 +316,7 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
 
   return (
     <div className="space-y-10">
-      {/* ── My Plan Section (like Make.com) ── */}
+      {/* ── Subscription Details ── */}
       <div>
         <h3 className="mb-4 text-lg font-semibold">Subscription</h3>
         <div className="divide-y rounded-lg border bg-white dark:bg-card">
@@ -159,7 +333,6 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
                 </Badge>
               )}
             </div>
-{/* Compare plans button removed. Plan cards are visible below. */}
           </div>
 
           {/* Row: Billing */}
@@ -174,12 +347,6 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
                     : `$${limits.priceMonthly}.00 / month`}
               </span>
             </div>
-            {isAdmin && currentPlan !== "free" && subscription?.stripe_customer_id && (
-              <Button variant="outline" size="sm" onClick={handlePortal} disabled={loading === "portal"} className="text-xs gap-1.5">
-                <CreditCard className="size-3.5" />
-                {loading === "portal" ? "Opening..." : "Manage billing"}
-              </Button>
-            )}
           </div>
 
           {/* Row: Next billing / Renewal */}
@@ -200,10 +367,37 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
                   <Badge variant="secondary" className="text-xs">Cancelled</Badge>
                 )}
               </div>
+              {isAdmin && subscription.cancelled_at && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReactivate}
+                  disabled={loading === "reactivate"}
+                  className="text-xs gap-1.5"
+                >
+                  <RefreshCw className="size-3.5" />
+                  {loading === "reactivate" ? "Reactivating..." : "Reactivate"}
+                </Button>
+              )}
             </div>
           )}
 
-          {/* Row: Usage */}
+          {/* Row: Pending downgrade */}
+          {subscription?.pending_plan_id && (
+            <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Scheduled</span>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="size-3.5 text-amber-500" />
+                  <span className="text-sm">
+                    Downgrade to {PLAN_LIMITS[subscription.pending_plan_id as BillingPlan]?.name ?? subscription.pending_plan_id} at end of billing period
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Row: Usage - Requests */}
           <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
             <div className="flex flex-col gap-2 flex-1 sm:flex-row sm:items-center sm:gap-3">
               <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Requests</span>
@@ -260,7 +454,15 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
         </div>
       </div>
 
-      {/* ── Compare Plans (like Make.com) ── */}
+      {/* ── Payment Method ── */}
+      {hasPaidSub && (
+        <div>
+          <h3 className="mb-4 text-lg font-semibold">Payment Method</h3>
+          <PaymentMethodSection isAdmin={isAdmin} />
+        </div>
+      )}
+
+      {/* ── Compare Plans ── */}
       <div id="plans">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-lg font-semibold">Compare Plans</h3>
@@ -310,7 +512,7 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
                   </div>
                 )}
                 <CardContent className="pt-6">
-                  {/* Price area - fixed height */}
+                  {/* Price area */}
                   <div className="mb-5 h-[100px]">
                     <h4 className={cn("text-base font-bold", !isEnterprise && "text-black dark:text-foreground")}>{plan.name}</h4>
                     <p className="mt-1">
@@ -340,7 +542,6 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
 
                   {/* CTA button */}
                   <div className="mb-5">
-                    {/* Upgrade */}
                     {isAdmin && isUpgrade && !isEnterprise && (
                       <Button
                         className="w-full"
@@ -350,7 +551,6 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
                         {loading === planId ? "Loading..." : `Buy ${billingCycle} plan`}
                       </Button>
                     )}
-                    {/* Enterprise upsell */}
                     {isEnterprise && isUpgrade && (
                       <a
                         href="mailto:support@okrunit.com"
@@ -359,13 +559,11 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
                         Talk to sales
                       </a>
                     )}
-                    {/* Current plan */}
                     {isCurrent && (
                       <p className={cn("text-center text-xs", isEnterprise ? "text-white/60" : "text-muted-foreground")}>
                         Your current plan
                       </p>
                     )}
-                    {/* Downgrade to a lower paid plan */}
                     {isAdmin && !isCurrent && !isUpgrade && !isEnterprise && planId !== "free" && currentPlan !== "free" && (
                       <Button
                         className="w-full"
@@ -376,7 +574,6 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
                         {loading === `downgrade-${planId}` ? "Loading..." : "Downgrade"}
                       </Button>
                     )}
-                    {/* Cancel subscription (downgrade to free) */}
                     {isAdmin && !isCurrent && planId === "free" && currentPlan !== "free" && !subscription?.cancelled_at && (
                       <Button
                         className="w-full"
@@ -387,13 +584,11 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
                         {loading === "cancel" ? "Loading..." : "Cancel Subscription"}
                       </Button>
                     )}
-                    {/* Already cancelling */}
                     {!isCurrent && planId === "free" && currentPlan !== "free" && subscription?.cancelled_at && (
                       <p className="text-center text-xs text-muted-foreground">
                         Cancellation pending
                       </p>
                     )}
-                    {/* Non-admin or free user looking at lower plans - show nothing */}
                     {((!isAdmin && !isCurrent && !isUpgrade) || (currentPlan === "free" && planId === "free")) && !isCurrent && (
                       <p className="text-center text-xs text-muted-foreground">&nbsp;</p>
                     )}
@@ -430,7 +625,6 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
                         {isUnlimited(plan.historyDays) ? "Unlimited" : `${plan.historyDays}-day`} history
                       </li>
                       {plan.features.filter(f => {
-                        // Show features unique to this tier
                         const prevPlan = planIdx > 0 ? PLAN_LIMITS[PLAN_ORDER[planIdx - 1]] : null;
                         return !prevPlan || !prevPlan.features.includes(f);
                       }).slice(0, 4).map((f) => (
@@ -448,7 +642,7 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
         </div>
       </div>
 
-      {/* ── Comparison Table (like Make.com) ── */}
+      {/* ── Comparison Table ── */}
       <div>
         <h3 className="mb-5 text-lg font-semibold">Comparison table</h3>
         <div className="overflow-x-auto rounded-lg border bg-white dark:bg-card">
@@ -613,15 +807,15 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
           <AlertDialogHeader>
             <AlertDialogTitle>Downgrade to {confirmDowngrade ? PLAN_LIMITS[confirmDowngrade as BillingPlan]?.name : ""}</AlertDialogTitle>
             <AlertDialogDescription>
-              Your plan limits will update immediately. Your billing will adjust at the next renewal
+              You&apos;ll keep your current plan and features until your billing period ends
               {subscription?.current_period_end && (
                 <> on <strong>{new Date(subscription.current_period_end).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</strong></>
-              )}.
+              )}. After that, your plan will switch and the lower price will apply.
               {confirmDowngrade && (() => {
                 const target = PLAN_LIMITS[confirmDowngrade as BillingPlan];
                 return (
                   <span className="mt-3 block text-xs">
-                    New limits: {isUnlimited(target.maxConnections) ? "Unlimited" : target.maxConnections} connections, {isUnlimited(target.maxTeams) ? "Unlimited" : target.maxTeams} teams, {isUnlimited(target.maxTeamMembers) ? "Unlimited" : target.maxTeamMembers} members, {isUnlimited(target.historyDays) ? "Unlimited" : `${target.historyDays}-day`} history
+                    New limits after switch: {isUnlimited(target.maxConnections) ? "Unlimited" : target.maxConnections} connections, {isUnlimited(target.maxTeams) ? "Unlimited" : target.maxTeams} teams, {isUnlimited(target.maxTeamMembers) ? "Unlimited" : target.maxTeamMembers} members, {isUnlimited(target.historyDays) ? "Unlimited" : `${target.historyDays}-day`} history
                   </span>
                 );
               })()}

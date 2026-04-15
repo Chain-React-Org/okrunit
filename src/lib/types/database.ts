@@ -124,8 +124,10 @@ export interface Organization {
   require_reauth_for_critical: boolean;
   session_timeout_minutes: number;
   four_eyes_config: FourEyesConfig;
+  action_types: string[];
   auto_approvals_paused: boolean;
   sso_domain: string | null;
+  plan_id: BillingPlan;
   plan_override: BillingPlan | null;
   created_at: string;
   updated_at: string;
@@ -138,8 +140,16 @@ export interface UserProfile {
   avatar_url: string | null;
   phone_number: string | null;
   is_app_admin: boolean;
+  deleted_at: string | null;
   deletion_scheduled_at: string | null;
+  totp_secret_encrypted: string | null;
+  totp_enabled: boolean;
+  totp_verified_at: string | null;
   setup_completed_at: string | null;
+  onboarding_tour_step: number;
+  onboarding_tour_completed: boolean;
+  onboarding_tour_dismissed: boolean;
+  onboarding_toured_pages: string[];
   created_at: string;
   updated_at: string;
 }
@@ -191,6 +201,9 @@ export interface Connection {
   created_by: string;
   created_at: string;
   updated_at: string;
+  api_key_encrypted: string | null;
+  consecutive_webhook_failures: number;
+  webhook_paused_at: string | null;
 }
 
 export interface ApprovalRequest {
@@ -448,6 +461,7 @@ export interface TeamMembership {
   id: string;
   team_id: string;
   user_id: string;
+  position_id: string | null;
   created_at: string;
 }
 
@@ -523,6 +537,7 @@ export interface OAuthClient {
   redirect_uris: string[];
   scopes: string[];
   is_active: boolean;
+  logo_url: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -937,6 +952,7 @@ export interface Subscription {
   current_period_end: string | null;
   trial_end: string | null;
   cancelled_at: string | null;
+  pending_plan_id: BillingPlan | null;
   created_at: string;
   updated_at: string;
 }

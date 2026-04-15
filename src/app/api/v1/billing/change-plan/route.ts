@@ -8,6 +8,7 @@ import { z } from "zod";
 
 const ChangePlanSchema = z.object({
   plan_id: z.enum(["pro", "business"]),
+  billing_cycle: z.enum(["monthly", "yearly"]).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -25,12 +26,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const { plan_id } = parsed.data;
+  const { plan_id, billing_cycle: requestedCycle } = parsed.data;
   const admin = createAdminClient();
 
   const { data: subscription } = await admin
     .from("subscriptions")
-    .select("stripe_subscription_id, status, plan_id")
+    .select("stripe_subscription_id, status, plan_id, billing_cycle")
     .eq("org_id", org.id)
     .single();
 
@@ -38,16 +39,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No active subscription" }, { status: 400 });
   }
 
-  // Only allow downgrades through this endpoint
+  if (subscription.plan_id === plan_id) {
+    return NextResponse.json({ error: "Already on this plan" }, { status: 400 });
+  }
+
   const currentIdx = PLAN_ORDER.indexOf(subscription.plan_id as typeof PLAN_ORDER[number]);
   const targetIdx = PLAN_ORDER.indexOf(plan_id);
-  if (targetIdx >= currentIdx) {
-    return NextResponse.json({ error: "Use checkout for upgrades" }, { status: 400 });
-  }
+  const isUpgrade = targetIdx > currentIdx;
 
   const stripe = getStripeOrThrow();
 
-  // Look up the new price ID from the plans table
   const { data: targetPlan } = await admin
     .from("plans")
     .select("stripe_price_id_monthly, stripe_price_id_yearly")
@@ -58,40 +59,71 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Plan not found" }, { status: 404 });
   }
 
-  // Retrieve current subscription to determine billing interval
+  // Retrieve current subscription to determine billing interval and item
   const stripeSub = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
   const currentItem = stripeSub.items.data[0];
   if (!currentItem) {
     return NextResponse.json({ error: "Subscription has no items" }, { status: 500 });
   }
 
-  const isYearly = currentItem.price.recurring?.interval === "year";
+  const currentIsYearly = currentItem.price.recurring?.interval === "year";
+  // Use requested cycle if provided, otherwise keep the current cycle
+  const isYearly = requestedCycle ? requestedCycle === "yearly" : currentIsYearly;
   const newPriceId = isYearly ? targetPlan.stripe_price_id_yearly : targetPlan.stripe_price_id_monthly;
+  const newBillingCycle = isYearly ? "yearly" : "monthly";
 
   if (!newPriceId) {
     return NextResponse.json({ error: "Stripe price not configured for target plan" }, { status: 400 });
   }
 
-  // Schedule the downgrade at the end of the current billing period
-  // by using proration_behavior: none and billing_cycle_anchor: unchanged
-  await stripe.subscriptions.update(subscription.stripe_subscription_id, {
-    items: [{ id: currentItem.id, price: newPriceId }],
-    proration_behavior: "none",
-    metadata: { ...stripeSub.metadata, plan_id },
-  });
+  if (isUpgrade) {
+    // Upgrade: prorate immediately. Stripe credits remaining time on old plan
+    // and charges the difference for the new plan.
+    await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+      items: [{ id: currentItem.id, price: newPriceId }],
+      proration_behavior: "create_prorations",
+      metadata: { ...stripeSub.metadata, plan_id },
+    });
 
-  // Update the plan_id in our database immediately so limits reflect the downgrade
-  await admin
-    .from("subscriptions")
-    .update({ plan_id, updated_at: new Date().toISOString() })
-    .eq("org_id", org.id);
+    // Update our database immediately so user gets new features right away
+    await admin
+      .from("subscriptions")
+      .update({
+        plan_id,
+        billing_cycle: newBillingCycle,
+        pending_plan_id: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("org_id", org.id);
 
-  await admin
-    .from("organizations")
-    .update({ plan_id })
-    .eq("id", org.id);
+    await admin
+      .from("organizations")
+      .update({ plan_id })
+      .eq("id", org.id);
 
-  revalidateTags(CacheTags.subscription(org.id));
+    revalidateTags(CacheTags.subscription(org.id));
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, action: "upgraded" });
+  } else {
+    // Downgrade: no proration, user keeps current features until period ends.
+    // Update the Stripe price so the lower amount is charged at next renewal.
+    await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+      items: [{ id: currentItem.id, price: newPriceId }],
+      proration_behavior: "none",
+      metadata: { ...stripeSub.metadata, pending_plan_id: plan_id },
+    });
+
+    // Store the pending downgrade. Don't change plan_id yet.
+    await admin
+      .from("subscriptions")
+      .update({
+        pending_plan_id: plan_id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("org_id", org.id);
+
+    revalidateTags(CacheTags.subscription(org.id));
+
+    return NextResponse.json({ success: true, action: "downgrade_scheduled" });
+  }
 }
