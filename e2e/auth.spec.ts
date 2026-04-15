@@ -19,9 +19,10 @@ test.describe('Auth pages', () => {
   test('signup page renders the signup form', async ({ page }) => {
     await page.goto('/signup');
 
-    // Should have email and password fields
+    // Should have email, password, and confirm password fields
     await expect(page.locator('input[type="email"]')).toBeVisible();
-    await expect(page.locator('input[type="password"]')).toBeVisible();
+    await expect(page.locator('input#password')).toBeVisible();
+    await expect(page.locator('input#confirm-password')).toBeVisible();
 
     // Should have a submit button
     await expect(page.locator('button[type="submit"]')).toBeVisible();

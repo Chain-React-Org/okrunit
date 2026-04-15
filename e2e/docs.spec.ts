@@ -30,8 +30,8 @@ test.describe('Docs pages', () => {
 
     await expect(page.locator('h1')).toContainText('Integrations');
 
-    // The page says "19 platforms"
-    await expect(page.locator('text=19 platforms').first()).toBeVisible();
+    // The page says "18 platforms"
+    await expect(page.locator('text=18 platforms').first()).toBeVisible();
 
     // Verify key integration categories are listed
     await expect(page.locator('text=Automation Platforms').first()).toBeVisible();
@@ -58,17 +58,17 @@ test.describe('Docs pages', () => {
     // Navigate to API Reference
     await sidebar.locator('a', { hasText: 'API Reference' }).click();
     await expect(page).toHaveURL(/\/docs\/api/);
-    await expect(page.locator('h1')).toContainText('API Reference');
+    await expect(page.locator('main h1')).toContainText('API Reference');
 
     // Navigate to Integrations
     await page.locator('aside nav').locator('a', { hasText: 'Integrations' }).click();
     await expect(page).toHaveURL(/\/docs\/integrations/);
-    await expect(page.locator('h1')).toContainText('Integrations');
+    await expect(page.locator('main h1')).toContainText('Integrations');
 
-    // Navigate back to Getting Started
-    await page.locator('aside nav').locator('a', { hasText: 'Getting Started' }).click();
+    // Navigate back to Overview (Getting Started)
+    await page.locator('aside nav').locator('a', { hasText: 'Overview' }).click();
     await expect(page).toHaveURL(/\/docs$/);
-    await expect(page.locator('h1')).toContainText('Getting Started');
+    await expect(page.locator('main h1')).toContainText('Getting Started');
   });
 
   test('docs layout has proper sidebar navigation', async ({ page }) => {
@@ -79,7 +79,7 @@ test.describe('Docs pages', () => {
     const sidebar = page.locator('aside nav');
     await expect(sidebar).toBeVisible();
 
-    await expect(sidebar.locator('a', { hasText: 'Getting Started' })).toBeVisible();
+    await expect(sidebar.locator('a', { hasText: 'Overview' })).toBeVisible();
     await expect(sidebar.locator('a', { hasText: 'API Reference' })).toBeVisible();
     await expect(sidebar.locator('a', { hasText: 'Integrations' })).toBeVisible();
     await expect(sidebar.locator('a', { hasText: 'Webhooks & Callbacks' })).toBeVisible();
