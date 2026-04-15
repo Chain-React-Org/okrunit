@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, CreditCard, AlertTriangle, RefreshCw, ExternalLink, Shield, Plus } from "lucide-react";
+import { Check, CreditCard, AlertTriangle, RefreshCw, ExternalLink, Shield, Plus, Infinity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PLAN_LIMITS, isUnlimited, PLAN_ORDER } from "@/lib/billing/plans";
 import type { Plan, Subscription, Invoice, BillingPlan } from "@/lib/types/database";
@@ -55,6 +55,60 @@ const FEATURE_LABELS: Record<string, string> = {
 
 function featureLabel(key: string): string {
   return FEATURE_LABELS[key] ?? key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+}
+
+/* ------------------------------------------------------------------ */
+/*  Usage Row                                                          */
+/* ------------------------------------------------------------------ */
+
+function UsageRow({ label, used, limit, suffix }: { label: string; used: number; limit: number; suffix?: string }) {
+  const unlimited = isUnlimited(limit);
+  const pct = unlimited ? 0 : Math.round((used / limit) * 100);
+
+  return (
+    <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+      <div className="flex flex-col gap-2 flex-1 sm:flex-row sm:items-center sm:gap-3">
+        <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">{label}</span>
+        <div className="flex items-center gap-3 flex-1 max-w-md">
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1">
+              {unlimited ? (
+                <span className="text-sm flex items-center gap-1.5">
+                  <span className="font-medium">{used.toLocaleString()}</span>
+                  <span className="text-muted-foreground">used</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    <Infinity className="size-3" />
+                    Unlimited
+                  </span>
+                  {suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
+                </span>
+              ) : (
+                <span className="text-sm">
+                  <span className="font-medium">{used.toLocaleString()}</span>
+                  <span className="text-muted-foreground"> of {limit.toLocaleString()}</span>
+                  {suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
+                  <span className={cn("ml-2 text-xs", pct >= 80 ? "text-amber-600 font-medium" : "text-muted-foreground")}>
+                    {pct}%
+                  </span>
+                </span>
+              )}
+            </div>
+            {!unlimited && (
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    pct >= 90 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-primary",
+                  )}
+                  style={{ width: `${Math.min(100, pct)}%` }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -291,10 +345,7 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
     finally { setLoading(null); }
   };
 
-  const requestsPct = isUnlimited(limits.maxRequests) ? 0 : Math.round((usage.requests / limits.maxRequests) * 100);
-  const requestsLabel = isUnlimited(limits.maxRequests)
-    ? `${usage.requests} / Unlimited`
-    : `${usage.requests} / ${limits.maxRequests} used (${requestsPct}%)`;
+  const requestsSuffix = isUnlimited(limits.maxRequests) ? "" : " this month";
 
   return (
     <div className="space-y-10">
@@ -380,59 +431,16 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
           )}
 
           {/* Row: Usage - Requests */}
-          <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
-            <div className="flex flex-col gap-2 flex-1 sm:flex-row sm:items-center sm:gap-3">
-              <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Requests</span>
-              <div className="flex items-center gap-3 flex-1 max-w-md">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm">{requestsLabel}</span>
-                  </div>
-                  {!isUnlimited(limits.maxRequests) && (
-                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          requestsPct >= 80 ? "bg-amber-500" : "bg-primary",
-                        )}
-                        style={{ width: `${Math.min(100, requestsPct)}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <UsageRow label="Requests" used={usage.requests} limit={limits.maxRequests} suffix={requestsSuffix} />
 
           {/* Row: Connections */}
-          <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Connections</span>
-              <span className="text-sm">
-                {usage.connections} / {isUnlimited(limits.maxConnections) ? "Unlimited" : limits.maxConnections}
-              </span>
-            </div>
-          </div>
+          <UsageRow label="Connections" used={usage.connections} limit={limits.maxConnections} />
 
           {/* Row: Teams */}
-          <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Teams</span>
-              <span className="text-sm">
-                {usage.teams} / {isUnlimited(limits.maxTeams) ? "Unlimited" : limits.maxTeams}
-              </span>
-            </div>
-          </div>
+          <UsageRow label="Teams" used={usage.teams} limit={limits.maxTeams} />
 
           {/* Row: Team Members */}
-          <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <span className="text-sm font-medium text-muted-foreground w-20 sm:w-24">Members</span>
-              <span className="text-sm">
-                {usage.teamMembers} / {isUnlimited(limits.maxTeamMembers) ? "Unlimited" : limits.maxTeamMembers}
-              </span>
-            </div>
-          </div>
+          <UsageRow label="Members" used={usage.teamMembers} limit={limits.maxTeamMembers} />
         </div>
       </div>
 
