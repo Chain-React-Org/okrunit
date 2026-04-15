@@ -68,3 +68,7 @@ tools/scripts/deploy/screenshots/
 tools/scripts/deploy/node_modules/
 .claude/settings.json
 .env*.local
+
+# capacitor native projects (generated, not committed)
+/ios/
+/android/

@@ -85,6 +85,22 @@ export async function POST(request: Request) {
       throw new ApiError(500, "Failed to create organization membership");
     }
 
+    // Create a free subscription for the new org
+    const { error: subError } = await admin
+      .from("subscriptions")
+      .insert({
+        org_id: org.id,
+        plan_id: "free",
+        status: "active",
+        current_period_start: new Date().toISOString(),
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+
+    if (subError) {
+      console.error("[Org] Failed to create subscription:", subError);
+      // Non-fatal. Billing can be fixed later.
+    }
+
     // Create a default team
     const { error: teamError } = await admin
       .from("teams")

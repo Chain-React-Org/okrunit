@@ -227,7 +227,9 @@ interface BillingDashboardProps {
 export function BillingDashboard({ plans, subscription, planOverride, usage, invoices, isAdmin, orgId }: BillingDashboardProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
-    (subscription?.billing_cycle as "monthly" | "yearly") ?? "yearly"
+    subscription?.stripe_subscription_id
+      ? (subscription.billing_cycle as "monthly" | "yearly") ?? "yearly"
+      : "yearly"
   );
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDowngrade, setConfirmDowngrade] = useState<string | null>(null);

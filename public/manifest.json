@@ -7,6 +7,8 @@
   "background_color": "#ffffff",
   "theme_color": "#2e7d32",
   "orientation": "any",
+  "scope": "/",
+  "categories": ["productivity", "business"],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -19,6 +21,20 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Requests",
+      "short_name": "Requests",
+      "url": "/requests",
+      "description": "View pending approval requests"
+    },
+    {
+      "name": "Connections",
+      "short_name": "Connections",
+      "url": "/requests/connections",
+      "description": "Manage API connections"
     }
   ]
 }

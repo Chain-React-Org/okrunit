@@ -15,6 +15,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: "/docs", label: "Overview" },
       { href: "/docs/onboarding", label: "Onboarding Guide" },
+      { href: "/docs/mobile-app", label: "Mobile App" },
     ],
   },
   {

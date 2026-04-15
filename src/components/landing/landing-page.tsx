@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowRight,
-  BarChart3,
   CheckCircle2,
   ChevronRight,
   Circle,
@@ -15,9 +14,10 @@ import {
   Home,
   KeyRound,
   Menu,
-  MessageSquare,
   Plus,
-  Route,
+  Search,
+  Bell,
+  HelpCircle,
   Settings,
   UserCheck,
   UserPlus,
@@ -101,7 +101,6 @@ const marqueeIntegrations = [
 
 type ProductSource = keyof typeof sourceAssets;
 type RequestStatus = "pending" | "approved" | "rejected";
-type MetricTone = "amber" | "emerald" | "blue";
 
 interface RequestItem {
   title: string;
@@ -111,14 +110,6 @@ interface RequestItem {
   age: string;
   actionType: string;
   owner: string;
-}
-
-interface MetricItem {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: LucideIcon;
-  tone: MetricTone;
 }
 
 interface QuickActionItem {
@@ -140,29 +131,6 @@ interface AuditEntry {
 
 const sourceOrder: ProductSource[] = ["zapier", "make", "n8n", "github", "windmill"];
 
-const heroMetrics: MetricItem[] = [
-  {
-    title: "Pending Requests",
-    value: "12",
-    subtitle: "Awaiting decision",
-    icon: Clock3,
-    tone: "amber",
-  },
-  {
-    title: "Approved Today",
-    value: "184",
-    subtitle: "92% approval rate",
-    icon: CheckCircle2,
-    tone: "emerald",
-  },
-  {
-    title: "Active Connections",
-    value: "8",
-    subtitle: "Zapier, Make, n8n, GitHub",
-    icon: KeyRound,
-    tone: "blue",
-  },
-];
 
 const queueAttention: RequestItem[] = [
   {
@@ -221,6 +189,33 @@ const queueResolved: RequestItem[] = [
     age: "22m ago",
     actionType: "account.archive",
     owner: "Operations",
+  },
+  {
+    title: "Sync CRM contacts to warehouse",
+    source: "make",
+    priority: "low",
+    status: "approved",
+    age: "31m ago",
+    actionType: "sync.crm",
+    owner: "Revenue",
+  },
+  {
+    title: "Revoke API key for staging env",
+    source: "github",
+    priority: "high",
+    status: "approved",
+    age: "38m ago",
+    actionType: "key.revoke",
+    owner: "Security",
+  },
+  {
+    title: "Promote canary build to stable",
+    source: "windmill",
+    priority: "medium",
+    status: "approved",
+    age: "45m ago",
+    actionType: "deploy.promote",
+    owner: "Platform",
   },
 ];
 
@@ -560,146 +555,7 @@ function StatusPill({ status }: { status: RequestStatus }) {
   );
 }
 
-function MetricCard({
-  metric,
-  className,
-}: {
-  metric: MetricItem;
-  className?: string;
-}) {
-  const Icon = metric.icon;
-  const tone = {
-    amber: {
-      wrap: "border-amber-200 bg-amber-50",
-      icon: "text-amber-600",
-      dot: "bg-amber-500",
-    },
-    emerald: {
-      wrap: "border-emerald-200 bg-emerald-50",
-      icon: "text-emerald-600",
-      dot: "bg-emerald-500",
-    },
-    blue: {
-      wrap: "border-sky-200 bg-sky-50",
-      icon: "text-sky-600",
-      dot: "bg-sky-500",
-    },
-  }[metric.tone];
 
-  return (
-    <Card
-      className={cn(
-        "w-full gap-0 rounded-xl border-slate-200/80 bg-white py-0 shadow-[var(--shadow-card)]",
-        className,
-      )}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {metric.title}
-            </p>
-            <p className="text-3xl font-semibold leading-none tracking-tight text-foreground">
-              {metric.value}
-            </p>
-          </div>
-          <div
-            className={cn(
-              "flex size-10 items-center justify-center rounded-xl border",
-              tone.wrap,
-            )}
-          >
-            <Icon className={cn("size-5", tone.icon)} />
-          </div>
-        </div>
-        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-          <span className={cn("size-1.5 rounded-full", tone.dot)} />
-          <span>{metric.subtitle}</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface SidebarNavItem {
-  label: string;
-  icon: LucideIcon;
-  active: boolean;
-  badge?: string;
-}
-
-function SidebarNavButton({ item }: { item: SidebarNavItem }) {
-  const Icon = item.icon;
-
-  return (
-    <div
-      className={cn(
-        "group flex w-full cursor-pointer flex-col items-center gap-1.5 py-3 transition-colors",
-        item.active ? "text-white" : "text-white/80",
-      )}
-    >
-      <div
-        className={cn(
-          "relative flex size-9 items-center justify-center rounded-lg transition-colors",
-          item.active ? "bg-white/20" : "group-hover:bg-white/15",
-        )}
-      >
-        <Icon className="size-[22px] shrink-0" />
-        {item.badge && (
-          <span className="absolute -right-1.5 -top-1.5 flex size-[18px] items-center justify-center rounded-full bg-white text-[9px] font-bold text-[var(--sidebar-gradient-to)]">
-            {item.badge}
-          </span>
-        )}
-      </div>
-      <span
-        className={cn(
-          "text-[11px] leading-tight",
-          item.active ? "font-semibold text-white" : "font-medium",
-        )}
-      >
-        {item.label}
-      </span>
-    </div>
-  );
-}
-
-function SidebarContext() {
-  const topItem: SidebarNavItem = { label: "Org", icon: Home, active: false };
-  const navItems: SidebarNavItem[] = [
-    { label: "Requests", icon: ClipboardList, active: true, badge: "12" },
-    { label: "Connections", icon: KeyRound, active: false },
-    { label: "Routes", icon: Route, active: false },
-    { label: "Messaging", icon: MessageSquare, active: false },
-    { label: "Analytics", icon: BarChart3, active: false },
-    { label: "Settings", icon: Settings, active: false },
-  ];
-
-  return (
-    <div className="sidebar-icon-bar flex w-20 shrink-0 flex-col items-center text-white">
-      {/* Logo */}
-      <div className="flex items-center justify-center py-3">
-        <Image
-          src="/logo-icon.png"
-          alt="OKrunit"
-          width={56}
-          height={56}
-          className="size-14 object-contain drop-shadow-md"
-        />
-      </div>
-
-      {/* First nav item */}
-      <SidebarNavButton item={topItem} />
-
-      {/* Divider */}
-      <div className="mx-auto my-2 h-px w-7 bg-white/25" />
-
-      {/* Remaining nav items */}
-      {navItems.map((item) => (
-        <SidebarNavButton key={item.label} item={item} />
-      ))}
-    </div>
-  );
-}
 
 function RequestRow({
   item,
@@ -712,15 +568,22 @@ function RequestRow({
   subdued?: boolean;
   showChevron?: boolean;
 }) {
+  const borderColor = {
+    pending: "border-l-amber-400",
+    approved: "border-l-emerald-400",
+    rejected: "border-l-red-400",
+  }[item.status];
+
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-[22px] border border-slate-200/80 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:gap-3 sm:px-4 sm:py-4",
+        "flex items-center gap-2 border-0 border-l-4 bg-white px-3 py-3 shadow-[var(--shadow-card)] sm:gap-3 sm:px-4 sm:py-3",
+        borderColor,
         compact && "px-3 py-2.5 sm:px-3.5 sm:py-3",
         subdued && "opacity-80",
       )}
     >
-      <SourcePill source={item.source} showLabel={false} size="sm" />
+      <LandingSourceAvatar source={item.source} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           {item.status === "pending" && (
@@ -729,21 +592,19 @@ function RequestRow({
               <span className="relative inline-flex size-2 rounded-full bg-amber-500" />
             </span>
           )}
-          <p className="truncate text-[13px] font-semibold text-slate-900 sm:text-sm">{item.title}</p>
+          <p className="line-clamp-1 text-[13px] font-medium text-slate-900 sm:text-sm">{item.title}</p>
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 sm:gap-2 sm:text-xs">
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-muted-foreground sm:gap-x-2 sm:text-[11px]">
           <span>{sourceAssets[item.source].label}</span>
-          <span className="hidden text-slate-300 sm:inline">·</span>
-          <span className="hidden rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-600 sm:inline">
+          <span className="hidden text-slate-300 sm:inline">|</span>
+          <span className="hidden rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 sm:inline">
             {item.actionType}
           </span>
-          <span className="text-slate-300">·</span>
+          <span className="text-slate-300">|</span>
           <span>{item.age}</span>
-          <span className="hidden text-slate-300 sm:inline">·</span>
-          <span className="hidden sm:inline">{item.owner}</span>
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1 sm:gap-1.5">
         <div className="hidden sm:block">
           <PriorityBadge priority={item.priority} />
         </div>
@@ -1083,9 +944,101 @@ function DetailSheetPreview() {
   );
 }
 
+function ConnectionsVisual() {
+  const integrations = [
+    { name: "Zapier", src: "/logos/platforms/zapier.png" },
+    { name: "Make", src: "/logos/platforms/make.png" },
+    { name: "n8n", src: "/logos/platforms/n8n.png" },
+    { name: "GitHub Actions", src: "/logos/platforms/github.png" },
+    { name: "monday.com", src: "/logos/platforms/monday.png" },
+    { name: "Temporal", src: "/logos/platforms/temporal.png" },
+    { name: "Prefect", src: "/logos/platforms/prefect.png" },
+    { name: "Dagster", src: "/logos/platforms/dagster.png" },
+    { name: "Windmill", src: "/logos/platforms/windmill.png" },
+    { name: "Pipedream", src: "/logos/platforms/pipedream.png" },
+  ];
+
+  const connectedApps = [
+    { name: "Zapier", platform: "zapier", connected: "2 days ago" },
+    { name: "Make", platform: "make", connected: "5 days ago" },
+  ];
+
+  const apiKeys = [
+    { name: "Production API Key", key: "okr_prod_****7f3a", created: "Mar 28", lastUsed: "2 hours ago" },
+    { name: "Staging API Key", key: "okr_stg_****b2e1", created: "Apr 1", lastUsed: "1 day ago" },
+    { name: "CI/CD Pipeline", key: "okr_ci_****9d4c", created: "Apr 5", lastUsed: "3 hours ago" },
+  ];
+
+  return (
+    <div className="gk-v2 force-light overflow-hidden rounded-xl bg-white shadow-2xl shadow-black/20">
+      <div className="p-4 space-y-5">
+        {/* Setup Guides */}
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400 mb-2">Setup Guides</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+            {integrations.map((item) => (
+              <div key={item.name} className="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 text-xs font-medium text-slate-700">
+                <Image src={item.src} alt={item.name} width={20} height={20} className="size-5 rounded shrink-0" />
+                <span className="truncate">{item.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Connected Apps */}
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400 mb-2">Connected Apps</p>
+          <div className="space-y-2">
+            {connectedApps.map((app) => {
+              const config = SOURCE_LANDING_CONFIG[app.platform as ProductSource];
+              const Icon = config.icon;
+              return (
+                <div key={app.name} className="flex items-center gap-3 rounded-lg border border-slate-200/60 bg-white px-3 py-2.5">
+                  <span className={cn("flex size-8 items-center justify-center rounded-lg", config.bgColor)}>
+                    <Icon className={cn("size-4", config.color)} />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900">{app.name}</p>
+                    <p className="text-[11px] text-slate-400">Connected {app.connected} via OAuth</p>
+                  </div>
+                  <Badge className="rounded-full bg-emerald-50 text-emerald-700 text-[10px] px-2 py-0.5">Active</Badge>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* API Key Connections */}
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400 mb-2">API Key Connections</p>
+          <div className="space-y-2">
+            {apiKeys.map((key) => (
+              <div key={key.name} className="flex items-center gap-3 rounded-lg border border-slate-200/60 bg-white px-3 py-2.5">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-slate-100">
+                  <KeyRound className="size-4 text-slate-500" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-900">{key.name}</p>
+                  <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-slate-400">
+                    <span className="font-mono">{key.key}</span>
+                    <span className="hidden text-slate-300 sm:inline">|</span>
+                    <span>Created {key.created}</span>
+                    <span className="hidden text-slate-300 sm:inline">|</span>
+                    <span>Last used {key.lastUsed}</span>
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** The approval feature section visual. Mimics the real app layout: request list + slide-out detail sheet */
 function ApprovalFlowVisual() {
-  const allItems = [...queueAttention, ...queueResolved.slice(0, 1)];
+  const allItems = [...queueAttention, ...queueResolved];
 
   return (
     <>
@@ -1407,23 +1360,37 @@ function MobileAuditVisual() {
 function HeroTopBar() {
   return (
     <div className="flex h-[52px] items-center justify-between border-b border-slate-200 bg-white px-4">
+      <div className="flex items-center gap-2" />
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-slate-900">OKrunit</span>
-        <ChevronRight className="size-3.5 text-slate-400" />
-        <span className="text-sm text-slate-500">Requests</span>
-      </div>
-      <div className="flex items-center gap-3">
+        {/* Search bar */}
+        <div className="hidden sm:flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-400 shadow-sm">
+          <Search className="size-3.5" />
+          <span>Search...</span>
+          <kbd className="ml-3 flex items-center gap-0.5 rounded border border-slate-200 bg-slate-50 px-1 py-0.5 text-[10px] font-medium text-slate-400">
+            <span className="text-[12px] leading-none">&#x2318;</span>K
+          </kbd>
+        </div>
+        {/* Help */}
+        <div className="flex size-8 items-center justify-center rounded-lg text-slate-400">
+          <HelpCircle className="size-4" />
+        </div>
+        {/* Notification bell */}
         <div className="relative">
-          <div className="flex size-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100">
-            <ClipboardList className="size-4" />
+          <div className="flex size-8 items-center justify-center rounded-lg text-slate-400">
+            <Bell className="size-4" />
           </div>
-          <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white">
             3
           </span>
         </div>
-        <div className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
-          OK
-        </div>
+        {/* User avatar */}
+        <Image
+          src="/logo-icon.png"
+          alt="User"
+          width={32}
+          height={32}
+          className="size-8 rounded-full object-contain"
+        />
       </div>
     </div>
   );
@@ -1534,6 +1501,21 @@ function ScaledMockup({
 }
 
 function HeroMockupContent() {
+  const insightCards = [
+    { label: "Avg Decision Time", value: "14m", icon: Clock3, color: "text-blue-500", bg: "bg-blue-500/10", trend: "-8%" },
+    { label: "SLA Compliance", value: "97%", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10", trend: "+3%" },
+    { label: "Pending Requests", value: "12", icon: Clock3, color: "text-amber-500", bg: "bg-amber-500/10", trend: null },
+    { label: "Approval Rate (7d)", value: "92%", icon: CheckCircle2, color: "text-violet-500", bg: "bg-violet-500/10", trend: "+2%" },
+  ];
+
+  const statCards = [
+    { label: "Pending", value: "12", icon: Clock3, color: "text-amber-500", bg: "bg-amber-500/10" },
+    { label: "Approved", value: "184", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+    { label: "Approval Rate", value: "92%", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+    { label: "Connections", value: "8", icon: KeyRound, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { label: "Members", value: "6", icon: Users, color: "text-violet-500", bg: "bg-violet-500/10" },
+  ];
+
   return (
     <div className="gk-v2 force-light overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-2xl shadow-black/10">
       {/* Browser chrome */}
@@ -1542,31 +1524,74 @@ function HeroMockupContent() {
         <span className="size-2.5 rounded-full bg-[#FEBC2E]" />
         <span className="size-2.5 rounded-full bg-[#28C840]" />
         <span className="ml-3 flex-1 rounded-md border border-slate-200 bg-white/80 px-3 py-0.5 text-center text-[11px] text-slate-400">
-          okrunit.com/requests
+          okrunit.com/org/overview
         </span>
       </div>
 
-      {/* App shell. No sidebar to keep it compact */}
+      {/* App shell */}
       <div className="flex min-w-0 flex-1 flex-col">
         <HeroTopBar />
-        <div className="bg-slate-50/50 p-3 sm:p-4">
-          {/* Stat cards */}
-          <div className="mb-3 grid grid-cols-3 gap-1.5 sm:mb-4 sm:gap-2">
-            {heroMetrics.map((metric) => (
-              <MetricCard key={metric.title} metric={metric} className="max-w-none" />
-            ))}
+        <div className="p-3 sm:p-4 space-y-4">
+          {/* Org header */}
+          <div>
+            <p className="text-[10px] font-medium text-primary">Organization</p>
+            <p className="text-sm font-semibold text-slate-900">My Organization</p>
           </div>
 
-          {/* Needs attention */}
+          {/* 7-Day Insights */}
+          <div className="space-y-1.5">
+            <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400">7-Day Insights</p>
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {insightCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <div key={card.label} className="flex flex-col gap-1.5 rounded-lg border border-slate-200/60 bg-white px-2.5 py-2">
+                    <div className="flex items-center justify-between">
+                      <div className={cn("flex size-6 items-center justify-center rounded-md", card.bg)}>
+                        <Icon className={cn("size-3", card.color)} />
+                      </div>
+                      {card.trend && (
+                        <span className={cn(
+                          "rounded-full px-1.5 py-0.5 text-[8px] font-medium",
+                          card.trend.startsWith("-") ? "bg-emerald-50 text-emerald-600" : "bg-emerald-50 text-emerald-600",
+                        )}>
+                          {card.trend}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-base font-bold leading-none text-slate-900">{card.value}</p>
+                      <p className="mt-0.5 text-[9px] text-slate-400">{card.label}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-5">
+            {statCards.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div key={stat.label} className="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-2.5 py-2">
+                  <div className={cn("flex size-7 shrink-0 items-center justify-center rounded-md", stat.bg)}>
+                    <Icon className={cn("size-3.5", stat.color)} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold leading-none text-slate-900">{stat.value}</p>
+                    <p className="mt-0.5 text-[9px] text-slate-400">{stat.label}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Recent Activity */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-slate-900">Needs Your Attention</span>
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                  {queueAttention.length}
-                </span>
-              </div>
-              <span className="text-xs text-slate-500">View all →</span>
+              <p className="text-xs font-semibold text-slate-900">Recent Activity</p>
+              <span className="text-[10px] text-slate-400">View all</span>
             </div>
             <div className="space-y-1.5">
               {queueAttention.slice(0, 3).map((item) => (
@@ -1580,15 +1605,338 @@ function HeroMockupContent() {
   );
 }
 
+/**
+ * Animated hero demo: simulates a Zapier zap firing, an approval request
+ * appearing in OKrunit, and a user approving it. Loops every 12 seconds.
+ *
+ * Timeline (12s loop):
+ *  0-2s   Zapier zap fires (pulse animation on "Run" button, data flows)
+ *  2-4s   Request appears in OKrunit queue with slide-in animation
+ *  4-7s   User clicks request, detail panel slides in
+ *  7-9s   User clicks "Approve"
+ *  9-11s  Status changes to Approved, confetti/checkmark
+ * 11-12s  Pause, then loop
+ */
+/**
+ * Animated hero demo timeline (16s loop):
+ *  0: Zapier notification toast slides in
+ *  1: New request slides into queue (from Zapier, pending)
+ *  2: Cursor appears, moves to card, hovers (inline buttons appear)
+ *  3: Cursor clicks card, detail panel slides open
+ *  4: Cursor moves to Approve button in detail panel
+ *  5: Cursor clicks Approve, status changes
+ *  6: Pause before loop
+ */
 function HeroProductSystem() {
+  const CYCLE = 16000;
+  const [phase, setPhase] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const tick = () => {
+      const t = Date.now() % CYCLE;
+      if (t < 2000) setPhase(0);          // Notification toast
+      else if (t < 3500) setPhase(1);      // Request slides in
+      else if (t < 4500) setPhase(1.5);    // Cursor traveling to card
+      else if (t < 5500) setPhase(2);      // Cursor on card, hover buttons appear
+      else if (t < 5700) setPhase(2.5);    // Click card (mouse down)
+      else if (t < 5900) setPhase(2.6);    // Click card (mouse up)
+      else if (t < 8000) setPhase(3);      // Detail panel opens
+      else if (t < 9000) setPhase(3.5);    // Cursor traveling to Approve
+      else if (t < 10000) setPhase(4);     // Cursor on Approve (highlight)
+      else if (t < 10200) setPhase(4.5);   // Click Approve (mouse down)
+      else if (t < 10400) setPhase(4.6);   // Click Approve (mouse up)
+      else if (t < 13000) setPhase(5);     // Approved
+      else setPhase(6);                    // Pause
+    };
+    tick();
+    const id = setInterval(tick, 80);
+    return () => clearInterval(id);
+  }, []);
+
+  // Cursor positions as percentages from top-left of the container
+  const cardPos = { x: 35, y: 62 };
+  const approvePos = { x: 66, y: 76 };
+  const hiddenPos = { x: 30, y: 70 };
+
+  const pos =
+    phase >= 1.5 && phase <= 2.6 ? cardPos :
+    phase >= 3.5 && phase <= 5 ? approvePos :
+    hiddenPos;
+
+  const cursorVisible = phase >= 1.5 && phase <= 5;
+  // Mouse-down animation: scale down briefly
+  const mouseDown = phase === 2.5 || phase === 4.5;
+
   return (
-    <ScaledMockup
-      internalWidth={640}
-      maxViewportHeightOffset={320}
-      className="mx-auto w-full max-w-[640px] overflow-hidden"
+    <div ref={containerRef} className="relative mx-auto w-full max-w-[720px]">
+      <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-2xl shadow-black/10">
+        {/* Browser chrome */}
+        <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-3 py-1.5">
+          <span className="size-2.5 rounded-full bg-[#FF5F57]" />
+          <span className="size-2.5 rounded-full bg-[#FEBC2E]" />
+          <span className="size-2.5 rounded-full bg-[#28C840]" />
+          <span className="ml-3 flex-1 rounded-md border border-slate-200 bg-white/80 px-3 py-0.5 text-center text-[11px] text-slate-400">
+            okrunit.com/requests
+          </span>
+        </div>
+
+        {/* Top bar */}
+        <HeroTopBar />
+
+        {/* Main content area */}
+        <div className="flex min-h-[340px]">
+          {/* Request list */}
+          <div className={cn("flex-1 p-3 space-y-2 transition-all duration-500", phase >= 3 && "border-r border-slate-100")}>
+            {/* Live indicator */}
+            <div className="flex items-center justify-end gap-1.5 mb-1">
+              <span className="relative flex size-1.5"><span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" /></span>
+              <span className="text-[10px] font-medium text-emerald-600">Live</span>
+            </div>
+
+            {/* Existing resolved requests */}
+            <HeroDemoCard
+              title="Rotate webhook signing secret"
+              source="windmill"
+              status="approved"
+              time="14m ago"
+              dimmed
+            />
+            <HeroDemoCard
+              title="Archive 1,200 inactive accounts"
+              source="make"
+              status="approved"
+              time="22m ago"
+              dimmed
+            />
+
+            {/* New request slides in from Zapier */}
+            <div
+              className="transition-all duration-700 ease-out"
+              style={{
+                opacity: phase >= 1 ? 1 : 0,
+                transform: phase >= 1 ? "translateY(0)" : "translateY(-12px)",
+                maxHeight: phase >= 1 ? 80 : 0,
+                overflow: "hidden",
+              }}
+            >
+              <HeroDemoCard
+                title="Deploy v3.2 to production"
+                source="zapier"
+                status={phase >= 5 ? "approved" : "pending"}
+                time="just now"
+                highlight={phase >= 1 && phase < 5}
+                hovered={phase >= 2 && phase <= 2.6}
+                active={phase >= 2.5 && phase < 5}
+              />
+            </div>
+          </div>
+
+          {/* Detail panel */}
+          <div
+            className="w-[260px] shrink-0 transition-all duration-500 ease-out overflow-hidden"
+            style={{
+              opacity: phase >= 3 ? 1 : 0,
+              transform: phase >= 3 ? "translateX(0)" : "translateX(16px)",
+              width: phase >= 3 ? 260 : 0,
+            }}
+          >
+            <div className="p-3 space-y-3 w-[260px]">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Deploy v3.2 to production</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Critical deployment requiring admin approval</p>
+              </div>
+
+              {/* Metadata */}
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="rounded-md bg-slate-50 px-2 py-1.5">
+                  <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Status</p>
+                  <div className="mt-0.5">
+                    <StatusPill status={phase >= 5 ? "approved" : "pending"} />
+                  </div>
+                </div>
+                <div className="rounded-md bg-slate-50 px-2 py-1.5">
+                  <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Priority</p>
+                  <div className="mt-0.5">
+                    <PriorityBadge priority="critical" />
+                  </div>
+                </div>
+                <div className="rounded-md bg-slate-50 px-2 py-1.5">
+                  <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Source</p>
+                  <div className="mt-0.5 flex items-center gap-1">
+                    <LandingSourceAvatar source="zapier" size="sm" />
+                    <span className="text-[10px]">Zapier</span>
+                  </div>
+                </div>
+                <div className="rounded-md bg-slate-50 px-2 py-1.5">
+                  <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Action</p>
+                  <p className="mt-0.5 font-mono text-[10px] text-slate-600">deploy.prod</p>
+                </div>
+              </div>
+
+              {/* Approval chain */}
+              <div className="rounded-md bg-slate-50 p-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-slate-700">Approval Chain</span>
+                  <span className="text-[9px] text-slate-400">{phase >= 5 ? "100%" : "0%"}</span>
+                </div>
+                <div className="mt-1 h-1 rounded-full bg-white overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-700"
+                    style={{ width: phase >= 5 ? "100%" : "0%" }}
+                  />
+                </div>
+              </div>
+
+              {/* Approve / Reject buttons */}
+              {phase < 5 ? (
+                <div className="grid grid-cols-2 gap-1.5">
+                  <Button
+                    variant="success"
+                    size="sm"
+                    className={cn(
+                      "h-7 text-[11px] transition-all duration-150",
+                      phase === 4 && "ring-2 ring-emerald-400/50 brightness-110 scale-[1.02]",
+                    )}
+                  >
+                    <CheckCircle2 className="size-3" />
+                    Approve
+                  </Button>
+                  <Button variant="destructive" size="sm" className="h-7 text-[11px]">
+                    <XCircle className="size-3" />
+                    Reject
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-1.5 rounded-md bg-emerald-50 py-2">
+                  <CheckCircle2 className="size-4 text-emerald-600" />
+                  <span className="text-sm font-semibold text-emerald-700">Approved</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Zapier notification toast */}
+        <div
+          className="border-t border-slate-100 transition-all duration-500 overflow-hidden"
+          style={{
+            maxHeight: phase === 0 ? 36 : 0,
+            opacity: phase === 0 ? 1 : 0,
+          }}
+        >
+          <div className="flex items-center gap-2 bg-orange-50 px-3 py-2">
+            <Image src="/logos/platforms/zapier.png" alt="Zapier" width={16} height={16} className="size-4" />
+            <span className="text-[11px] text-orange-700">
+              Incoming request from <strong>Zapier</strong>: &quot;Deploy v3.2 to production&quot;
+            </span>
+            <span className="relative flex size-2 ml-auto">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-orange-400 opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-orange-500" />
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* macOS-style cursor */}
+      <div
+        className="pointer-events-none absolute z-50"
+        style={{
+          opacity: cursorVisible ? 1 : 0,
+          left: `${pos.x}%`,
+          top: `${pos.y}%`,
+          transition: "left 700ms cubic-bezier(0.4, 0, 0.2, 1), top 700ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms",
+        }}
+      >
+        {/* Cursor SVG with click animation */}
+        <svg
+          width="18"
+          height="22"
+          viewBox="0 0 17 23"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
+          style={{
+            transition: "transform 100ms ease-out",
+            transform: mouseDown ? "scale(0.75) rotate(-8deg)" : "scale(1) rotate(0deg)",
+            transformOrigin: "2px 2px",
+          }}
+        >
+          <path d="M1 1L1 19.054L5.26364 14.7904L8.89091 22.1268L11.4545 20.8449L7.82727 13.5085H13.5455L1 1Z" fill="white" stroke="black" strokeWidth="1.2" strokeLinejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function HeroDemoCard({
+  title,
+  source,
+  status,
+  time,
+  dimmed = false,
+  highlight = false,
+  hovered = false,
+  active = false,
+}: {
+  title: string;
+  source: ProductSource;
+  status: RequestStatus;
+  time: string;
+  dimmed?: boolean;
+  highlight?: boolean;
+  hovered?: boolean;
+  active?: boolean;
+}) {
+  const borderColor = {
+    pending: "border-l-amber-400",
+    approved: "border-l-emerald-400",
+    rejected: "border-l-red-400",
+  }[status];
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 border-0 border-l-4 bg-white px-2.5 py-2 shadow-[var(--shadow-card)] transition-all duration-500",
+        borderColor,
+        dimmed && "opacity-60",
+        highlight && "ring-2 ring-emerald-400/40",
+        hovered && "ring-2 ring-primary/10 bg-slate-50/80",
+        active && "ring-2 ring-primary/20 bg-slate-50/50",
+      )}
     >
-      <HeroMockupContent />
-    </ScaledMockup>
+      <LandingSourceAvatar source={source} size="sm" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          {status === "pending" && (
+            <span className="relative flex size-1.5 shrink-0">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-amber-400 opacity-75" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-amber-500" />
+            </span>
+          )}
+          <p className="line-clamp-1 text-[11px] font-medium text-slate-900">{title}</p>
+        </div>
+        <p className="text-[9px] text-slate-400 mt-0.5">{time}</p>
+      </div>
+      {/* Inline approve/reject on hover */}
+      <div
+        className="flex items-center gap-1 transition-all duration-300 overflow-hidden"
+        style={{
+          opacity: hovered && status === "pending" ? 1 : 0,
+          maxWidth: hovered && status === "pending" ? 140 : 0,
+        }}
+      >
+        <Button variant="success" size="sm" className="h-5 gap-0.5 px-1.5 text-[9px] shrink-0">
+          <CheckCircle2 className="size-2.5" />
+          Approve
+        </Button>
+        <Button variant="destructive" size="sm" className="h-5 gap-0.5 px-1.5 text-[9px] shrink-0">
+          <XCircle className="size-2.5" />
+          Reject
+        </Button>
+      </div>
+      <StatusPill status={status} />
+    </div>
   );
 }
 
@@ -1655,11 +2003,11 @@ function ScrollFeatures({ steps }: { steps: FeatureStep[] }) {
         className="relative hidden lg:block"
         style={{ height: `${steps.length * 150}vh` }}
       >
-        <div className="sticky top-0 h-screen overflow-hidden">
+        <div className="sticky top-[69px] overflow-hidden" style={{ height: "calc(100vh - 69px)" }}>
           {steps.map((step, i) => (
             <div
               key={step.id}
-              className="absolute inset-0 flex flex-col items-center justify-center px-8 py-8 transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+              className="absolute inset-0 flex flex-col items-center justify-center px-8 py-6 transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
               style={{
                 opacity: activeIndex === i ? 1 : 0,
                 transform: activeIndex === i
@@ -1671,7 +2019,7 @@ function ScrollFeatures({ steps }: { steps: FeatureStep[] }) {
               }}
             >
               {/* Step indicator dots */}
-              <div className="mb-4 flex shrink-0 items-center justify-center gap-2">
+              <div className="mb-2 flex shrink-0 items-center justify-center gap-2">
                 {steps.map((_, j) => (
                   <div
                     key={j}
@@ -1686,18 +2034,18 @@ function ScrollFeatures({ steps }: { steps: FeatureStep[] }) {
               </div>
 
               {/* Text content, centered and compact */}
-              <div className="mx-auto mb-4 max-w-2xl shrink-0 text-center">
+              <div className="mx-auto mb-3 max-w-2xl shrink-0 text-center">
                 <SectionEyebrow>{step.eyebrow}</SectionEyebrow>
-                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.18)] md:text-3xl xl:text-[2.25rem]">
+                <h2 className="mt-2 text-xl font-semibold tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.18)] md:text-2xl xl:text-[1.75rem]">
                   {step.title}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-emerald-50/92 drop-shadow-[0_1px_8px_rgba(0,0,0,0.12)] sm:text-base sm:leading-7">
+                <p className="mt-1.5 text-sm leading-6 text-emerald-50/92 drop-shadow-[0_1px_8px_rgba(0,0,0,0.12)] sm:text-[15px] sm:leading-7">
                   {step.description}
                 </p>
               </div>
 
-              {/* Visual, constrained to max 55vh so it never pushes content off screen */}
-              <div className="w-full max-w-4xl shrink-0" style={{ maxHeight: "55vh" }}>
+              {/* Visual, fills remaining space */}
+              <div className="w-full max-w-6xl flex-1 min-h-0">
                 <FitToHeight>{step.visual}</FitToHeight>
               </div>
             </div>
@@ -1878,21 +2226,11 @@ export function LandingPage({ user }: LandingPageProps) {
                 visual: <ApprovalFlowVisual />,
               },
               {
-                id: "queue",
-                eyebrow: "Queue System",
-                title: "Pending requests surface first. Resolved history stays accessible below.",
-                description: "The queue separates what needs attention right now from what’s already been decided. Source markers, action types, timestamps, and status badges let operators scan without opening every row.",
-                visual: (
-                  <div className="gk-v2 force-light relative overflow-hidden rounded-xl bg-white p-1 shadow-2xl shadow-black/20">
-                    <QueuePanel
-                      attentionItems={queueAttention}
-                      resolvedItems={queueResolved}
-                      title="Approval Queue"
-                      description="Grouped rows, visible status chips, and enough metadata to make the next decision without guessing."
-                    />
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 rounded-b-xl bg-gradient-to-t from-white to-transparent" />
-                  </div>
-                ),
+                id: "connections",
+                eyebrow: "Connections",
+                title: "Connect your tools in minutes. API keys and OAuth, all in one place.",
+                description: "Each integration has a setup guide. Connect via OAuth for platforms like Zapier and Make, or use API keys for custom integrations. Manage everything from a single page.",
+                visual: <ConnectionsVisual />,
               },
               {
                 id: "routing",

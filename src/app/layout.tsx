@@ -1,9 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, DM_Sans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { ClientErrorReporter } from "@/components/client-error-reporter";
 import { UTMTracker } from "@/components/tracking/utm-tracker";
+import { InstallPromptListener } from "@/components/pwa/install-prompt-listener";
+import { InstallBanner } from "@/components/pwa/install-banner";
+import { NativeBridge } from "@/components/pwa/native-bridge";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -71,12 +74,21 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "OKrunit",
   },
   other: {
     "mobile-web-app-capable": "yes",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#2e7d32",
 };
 
 export default function RootLayout({
@@ -99,6 +111,9 @@ export default function RootLayout({
           <Toaster />
           <ClientErrorReporter />
           <UTMTracker />
+          <InstallPromptListener />
+          <InstallBanner />
+          <NativeBridge />
         </ThemeProvider>
       </body>
     </html>
