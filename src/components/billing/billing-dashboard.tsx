@@ -478,6 +478,26 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
         <div>
           <h3 className="mb-4 text-lg font-semibold">Payment Method</h3>
           <PaymentMethodSection isAdmin={isAdmin} />
+          {isAdmin && (
+            <div className="mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/v1/billing/portal", { method: "POST" });
+                    const data = await res.json();
+                    if (data.url) window.open(data.url, "_blank");
+                    else toast.error(data.error ?? "Failed to open billing portal");
+                  } catch { toast.error("Failed to open billing portal"); }
+                }}
+              >
+                <ExternalLink className="size-3.5" />
+                Manage billing
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
