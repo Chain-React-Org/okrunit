@@ -354,6 +354,23 @@ export default function IntegrationsPage() {
         approval requests. Because Make&apos;s HTTP modules have a maximum timeout
         of 5 minutes, approvals use a <strong>two-scenario pattern</strong>:
       </p>
+
+      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <p className="text-sm font-medium text-blue-900">Early access via invite link</p>
+        <p className="mt-1 text-sm text-blue-800 leading-relaxed">
+          The OKrunit app is currently awaiting approval on the Make marketplace.
+          In the meantime, you can install it right now using our{" "}
+          <a
+            href="https://www.make.com/en/hq/app-invitation/ea2fef64351d3d7c380e3ce8f64e1c69"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-blue-700 underline underline-offset-2 hover:text-blue-600"
+          >
+            invite link
+          </a>
+          . Once approved, the app will be available directly in the Make app search.
+        </p>
+      </div>
       <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
         <p className="text-sm font-medium text-amber-900">Two-scenario pattern</p>
         <p className="mt-1 text-sm text-amber-800 leading-relaxed">
@@ -455,6 +472,16 @@ export default function IntegrationsPage() {
         for the approval decision before continuing, so you do not need a
         separate Wait node.
       </p>
+
+      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <p className="text-sm font-medium text-blue-900">Self-hosted instances only (for now)</p>
+        <p className="mt-1 text-sm text-blue-800 leading-relaxed">
+          The OKrunit community node is currently awaiting approval from n8n.
+          While the review is in progress, you can install it on <strong>self-hosted n8n instances</strong> using
+          the npm package. n8n Cloud users will be able to install it directly
+          from the community nodes list once approved.
+        </p>
+      </div>
 
       <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
         <p className="text-sm font-medium text-zinc-900">Install the community node</p>
