@@ -98,25 +98,28 @@ export async function POST(req: NextRequest) {
       metadata: { org_id: org.id, plan_id },
       ...(couponId ? { discounts: [{ coupon: couponId }] } : {}),
       ...(trialEndTimestamp ? { trial_end: trialEndTimestamp } : {}),
-      expand: ["latest_invoice.payment_intent", "pending_setup_intent"],
+      expand: ["latest_invoice.payment_intent"],
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Stripe subscription creation failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  // When there's a trial, Stripe creates a SetupIntent (to save card) instead of a PaymentIntent.
-  // When there's no trial, Stripe creates a PaymentIntent (to charge immediately).
+  // When there's a trial, Stripe doesn't charge yet. We create a SetupIntent
+  // manually to collect the card for future charges.
+  // When there's no trial, Stripe creates a PaymentIntent to charge immediately.
   let clientSecret: string | null = null;
   let mode: "setup" | "payment" = "payment";
 
   if (stripeSub.status === "trialing") {
-    // Extract SetupIntent client secret
-    const setupIntent = stripeSub.pending_setup_intent;
-    if (typeof setupIntent === "object" && setupIntent !== null && "client_secret" in setupIntent) {
-      clientSecret = (setupIntent as { client_secret: string }).client_secret;
-      mode = "setup";
-    }
+    // Create a SetupIntent to save the card for when the trial ends
+    const setupIntent = await stripe.setupIntents.create({
+      customer: customerId,
+      metadata: { org_id: org.id, subscription_id: stripeSub.id },
+      usage: "off_session",
+    });
+    clientSecret = setupIntent.client_secret;
+    mode = "setup";
   } else {
     // Extract PaymentIntent client secret
     const invoice = stripeSub.latest_invoice;
