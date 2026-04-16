@@ -6,6 +6,8 @@
 // We store the installation linked to the user's current org.
 // ---------------------------------------------------------------------------
 
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
