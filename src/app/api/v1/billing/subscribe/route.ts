@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
       .eq("org_id", org.id);
   }
 
-  // Check if this org qualifies for the new customer discount (40% off first 3 months)
-  const firstTime = await isFirstTimeSubscriber(org.id);
+  // 40% new customer discount only applies to monthly billing (annual already has a discount)
+  const firstTime = billing_cycle === "monthly" && await isFirstTimeSubscriber(org.id);
   const couponId = firstTime ? await getNewCustomerCoupon(stripe) : undefined;
 
   // If the org is currently on a DB trial with time remaining, carry

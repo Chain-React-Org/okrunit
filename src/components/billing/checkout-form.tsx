@@ -126,21 +126,31 @@ export function CheckoutForm({ planId, billingCycle, mode = "payment" }: Checkou
                     <span>Total due today</span>
                     <span>{isTrialSetup ? "$0.00" : `$${displayTotal}.00`}</span>
                   </div>
-                  {isTrialSetup ? (
+                  {isTrialSetup && billingCycle === "monthly" ? (
                     <div className="mt-2 space-y-1.5">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">After trial (first 3 months)</span>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-muted-foreground line-through text-xs">${displayTotal}.00</span>
-                          <span className="font-medium text-green-700">${Math.round(displayTotal * 0.6)}.00</span>
+                          <span className="text-muted-foreground line-through text-xs">${displayTotal}.00/mo</span>
+                          <span className="font-medium text-green-700">${Math.round(displayTotal * 0.6)}.00/mo</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">After that</span>
-                        <span className="font-medium">${displayTotal}.00/{billingCycle === "yearly" ? "yr" : "mo"}</span>
+                        <span className="font-medium">${displayTotal}.00/mo</span>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         40% off your first 3 months. Cancel anytime.
+                      </p>
+                    </div>
+                  ) : isTrialSetup ? (
+                    <div className="mt-2 space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">After trial</span>
+                        <span className="font-medium">${displayTotal}.00/yr</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Renews annually. Cancel anytime.
                       </p>
                     </div>
                   ) : (

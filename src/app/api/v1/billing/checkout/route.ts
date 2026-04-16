@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  // Check if this org qualifies for new customer discount
-  const firstTime = await isFirstTimeSubscriber(org.id);
+  // 40% new customer discount only applies to monthly billing (annual already has a discount)
+  const firstTime = billing_cycle === "monthly" && await isFirstTimeSubscriber(org.id);
   const couponId = firstTime ? await getNewCustomerCoupon(stripe) : undefined;
 
   // If org is on a DB trial with time remaining, carry trial to Stripe
