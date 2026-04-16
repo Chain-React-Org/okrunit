@@ -1045,3 +1045,18 @@ export interface StepVote {
   source: string;
   created_at: string;
 }
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  content: string;
+  category: string;
+  published: boolean;
+  published_at: string | null;
+  read_time: string;
+  author_id: string | null;
+  created_at: string;
+  updated_at: string;
+}

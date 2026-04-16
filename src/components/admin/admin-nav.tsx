@@ -14,6 +14,7 @@ import {
   KeyRound,
   ShieldAlert,
   Mail,
+  FileText,
 } from "lucide-react";
 
 interface NavItem {
@@ -34,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "plan-overrides", label: "Plan Overrides", href: "/admin/plan-overrides", icon: CreditCard },
   { id: "errors", label: "Error Monitor", href: "/admin/errors", icon: Bug },
   { id: "traffic", label: "Traffic", href: "/admin/traffic", icon: Globe },
+  { id: "blog", label: "Blog", href: "/admin/blog", icon: FileText },
 ];
 
 interface AdminNavProps {

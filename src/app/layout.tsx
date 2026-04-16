@@ -56,21 +56,12 @@ export const metadata: Metadata = {
     url: "https://okrunit.com",
     siteName: "OKrunit",
     type: "website",
-    images: [
-      {
-        url: "https://okrunit.com/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "OKrunit dashboard showing approval requests, analytics, and recent activity",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "OKrunit - Human Approval for Every Automation",
     description:
       "Add human approval to any automation workflow. One API call pauses execution until a human approves.",
-    images: ["https://okrunit.com/og-image.png"],
   },
   robots: {
     index: true,
