@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
       payment_behavior: "default_incomplete",
       payment_settings: { save_default_payment_method: "on_subscription" },
       metadata: { org_id: org.id, plan_id },
-      ...(couponId ? { coupon: couponId } : {}),
+      ...(couponId ? { discounts: [{ coupon: couponId }] } : {}),
       ...(trialEndTimestamp ? { trial_end: trialEndTimestamp } : {}),
       expand: ["latest_invoice.payment_intent", "pending_setup_intent"],
     });
