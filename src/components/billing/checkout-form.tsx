@@ -14,9 +14,11 @@ import type { BillingPlan } from "@/lib/types/database";
 interface CheckoutFormProps {
   planId: BillingPlan;
   billingCycle: "monthly" | "yearly";
+  /** "setup" saves card for later (trial), "payment" charges immediately */
+  mode?: "setup" | "payment";
 }
 
-export function CheckoutForm({ planId, billingCycle }: CheckoutFormProps) {
+export function CheckoutForm({ planId, billingCycle, mode = "payment" }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
@@ -25,6 +27,7 @@ export function CheckoutForm({ planId, billingCycle }: CheckoutFormProps) {
   const price = billingCycle === "yearly" ? plan.priceYearly : plan.priceMonthly * 12;
   const monthlyPrice = billingCycle === "yearly" ? Math.round(plan.priceYearly / 12) : plan.priceMonthly;
   const displayTotal = billingCycle === "yearly" ? plan.priceYearly : plan.priceMonthly;
+  const isTrialSetup = mode === "setup";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,17 +35,30 @@ export function CheckoutForm({ planId, billingCycle }: CheckoutFormProps) {
 
     setProcessing(true);
     const appUrl = window.location.origin;
+    const returnUrl = `${appUrl}/org/subscription?success=true`;
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${appUrl}/org/subscription?success=true`,
-      },
-    });
+    if (isTrialSetup) {
+      // Save card for later charge (trial). No payment now.
+      const { error } = await stripe.confirmSetup({
+        elements,
+        confirmParams: { return_url: returnUrl },
+      });
 
-    if (error) {
-      toast.error(error.message ?? "Payment failed. Please try again.");
-      setProcessing(false);
+      if (error) {
+        toast.error(error.message ?? "Failed to save payment method. Please try again.");
+        setProcessing(false);
+      }
+    } else {
+      // Charge immediately
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: { return_url: returnUrl },
+      });
+
+      if (error) {
+        toast.error(error.message ?? "Payment failed. Please try again.");
+        setProcessing(false);
+      }
     }
     // If successful, the page redirects to return_url
   };
@@ -91,10 +107,12 @@ export function CheckoutForm({ planId, billingCycle }: CheckoutFormProps) {
                 <div className="border-t pt-3">
                   <div className="flex items-center justify-between font-semibold">
                     <span>Total due today</span>
-                    <span>${displayTotal}.00</span>
+                    <span>{isTrialSetup ? "$0.00" : `$${displayTotal}.00`}</span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {billingCycle === "yearly" ? "Renews annually" : "Renews monthly"}. Cancel anytime.
+                    {isTrialSetup
+                      ? "Your card will be charged when your trial ends. 40% off your first 3 months."
+                      : `${billingCycle === "yearly" ? "Renews annually" : "Renews monthly"}. Cancel anytime.`}
                   </p>
                 </div>
               </div>
@@ -132,7 +150,9 @@ export function CheckoutForm({ planId, billingCycle }: CheckoutFormProps) {
             <CardContent className="pt-6">
               <h2 className="text-lg font-semibold">Payment details</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Enter your card information to subscribe.
+                {isTrialSetup
+                  ? "Add your card to continue after your trial. You won't be charged until your trial ends."
+                  : "Enter your card information to subscribe."}
               </p>
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-6">
@@ -148,7 +168,11 @@ export function CheckoutForm({ planId, billingCycle }: CheckoutFormProps) {
                   size="lg"
                   disabled={!stripe || processing}
                 >
-                  {processing ? "Processing..." : `Subscribe for $${displayTotal}.00/${billingCycle === "yearly" ? "yr" : "mo"}`}
+                  {processing
+                    ? "Processing..."
+                    : isTrialSetup
+                      ? "Save card and continue trial"
+                      : `Subscribe for $${displayTotal}.00/${billingCycle === "yearly" ? "yr" : "mo"}`}
                 </Button>
 
                 <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">

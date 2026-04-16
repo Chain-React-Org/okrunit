@@ -394,8 +394,15 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
               </p>
             </div>
             {isAdmin && (
-              <Button size="sm" className="mt-2 sm:mt-0" onClick={() => window.location.href = "/org/billing"}>
-                Add payment method
+              <Button
+                size="sm"
+                className="mt-2 sm:mt-0"
+                onClick={() => {
+                  const params = new URLSearchParams({ plan: subscriptionPlan, cycle: billingCycle });
+                  window.location.href = `/org/checkout?${params.toString()}`;
+                }}
+              >
+                Subscribe now
               </Button>
             )}
           </div>
