@@ -13,6 +13,9 @@ export default async function CalendarSettingsPage() {
   if (!ctx) redirect("/login");
   const { profile, org } = ctx;
 
+  // Calendar settings are coming soon for non-app-admins
+  if (!profile.is_app_admin) redirect("/settings/account");
+
   return (
     <>
       <PageHeader
