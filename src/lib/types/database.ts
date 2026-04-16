@@ -150,6 +150,7 @@ export interface UserProfile {
   onboarding_tour_completed: boolean;
   onboarding_tour_dismissed: boolean;
   onboarding_toured_pages: string[];
+  setup_wizard_step: number;
   created_at: string;
   updated_at: string;
 }
