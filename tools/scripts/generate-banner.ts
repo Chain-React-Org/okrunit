@@ -1,4 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500">
+import sharp from "sharp";
+import path from "path";
+
+const WIDTH = 1500;
+const HEIGHT = 500;
+
+// Build SVG that matches app theme: green header gradient, clean white areas, dark text
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">
   <defs>
     <linearGradient id="headerGrad" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#1b5e20"/>
@@ -18,19 +25,19 @@
   </defs>
 
   <!-- White background -->
-  <rect width="1500" height="500" fill="#f5f7f5"/>
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="#f5f7f5"/>
 
   <!-- Green header bar (matches app) -->
-  <rect width="1500" height="72" fill="url(#headerGrad)"/>
+  <rect width="${WIDTH}" height="72" fill="url(#headerGrad)"/>
 
   <!-- Header text -->
   <text x="90" y="44" fill="white" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20" font-weight="600" letter-spacing="-0.3">okrunit</text>
 
   <!-- Header nav items (subtle, like the real app) -->
-  <text x="1100" y="44" fill="rgba(255,255,255,0.7)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="500">Overview</text>
-  <text x="1190" y="44" fill="rgba(255,255,255,0.7)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="500">Requests</text>
-  <text x="1280" y="44" fill="rgba(255,255,255,0.7)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="500">Playground</text>
-  <text x="1380" y="44" fill="rgba(255,255,255,0.7)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="500">Settings</text>
+  <text x="${WIDTH - 400}" y="44" fill="rgba(255,255,255,0.7)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="500">Overview</text>
+  <text x="${WIDTH - 310}" y="44" fill="rgba(255,255,255,0.7)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="500">Requests</text>
+  <text x="${WIDTH - 220}" y="44" fill="rgba(255,255,255,0.7)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="500">Playground</text>
+  <text x="${WIDTH - 120}" y="44" fill="rgba(255,255,255,0.7)" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="500">Settings</text>
 
   <!-- Main content area -->
   <!-- Left side: tagline and CTA -->
@@ -148,5 +155,39 @@
   <rect x="750" y="420" width="660" height="80" fill="url(#fadeBottom)"/>
 
   <!-- okrunit.com watermark -->
-  <text x="1450" y="485" text-anchor="end" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" font-weight="500">okrunit.com</text>
-</svg>
+  <text x="${WIDTH - 50}" y="${HEIGHT - 15}" text-anchor="end" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" font-weight="500">okrunit.com</text>
+</svg>`;
+
+async function main() {
+  const outDir = path.resolve("public/banners");
+
+  // Composite: render the SVG, then overlay the logo PNG
+  const logoPng = await sharp(path.resolve("public/logo-icon.png"))
+    .resize(48, 48, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .toBuffer();
+
+  // White version of logo for header
+  const logoWhite = await sharp(path.resolve("public/logo-icon.png"))
+    .resize(36, 36, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .toBuffer();
+
+  const svgBuffer = Buffer.from(svg);
+
+  await sharp(svgBuffer)
+    .resize(WIDTH, HEIGHT)
+    .composite([
+      // Logo in header bar
+      { input: logoWhite, left: 42, top: 18 },
+    ])
+    .png()
+    .toFile(path.join(outDir, "twitter-banner.png"));
+
+  console.log("Generated twitter-banner.png");
+
+  // Also save the SVG
+  const fs = await import("fs");
+  fs.writeFileSync(path.join(outDir, "twitter-banner.svg"), svg);
+  console.log("Generated twitter-banner.svg");
+}
+
+main().catch(console.error);
