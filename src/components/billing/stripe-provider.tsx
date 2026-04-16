@@ -35,8 +35,21 @@ export function StripeProvider({ clientSecret, children }: StripeProviderProps) 
             colorPrimary: "#18181b",
             colorBackground: "#ffffff",
             colorText: "#18181b",
+            colorDanger: "#ef4444",
             borderRadius: "8px",
             fontFamily: "inherit",
+            spacingUnit: "4px",
+            colorTextSecondary: "#71717a",
+          },
+          rules: {
+            ".DropdownItem": {
+              fontSize: "14px",
+              padding: "8px 12px",
+            },
+            ".DropdownItem--highlight": {
+              backgroundColor: "#f4f4f5",
+              color: "#18181b",
+            },
           },
         },
       }}
