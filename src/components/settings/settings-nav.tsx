@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 interface SettingsNavProps {
   isAdmin: boolean;
+  isAppAdmin?: boolean;
   mobile?: boolean;
 }
 
@@ -17,15 +18,16 @@ interface SettingsNavItem {
   href: string;
   icon?: LucideIcon;
   adminOnly?: boolean;
+  comingSoon?: boolean;
 }
 
 const navItems: SettingsNavItem[] = [
   { id: "account", label: "Account", href: "/settings/account", icon: User },
-  { id: "calendar", label: "Calendar", href: "/settings/calendar", icon: Calendar },
+  { id: "calendar", label: "Calendar", href: "/settings/calendar", icon: Calendar, comingSoon: true },
   { id: "safety", label: "Safety", href: "/settings/safety", icon: AlertTriangle },
 ];
 
-export function SettingsNav({ isAdmin, mobile = false }: SettingsNavProps) {
+export function SettingsNav({ isAdmin, isAppAdmin = false, mobile = false }: SettingsNavProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -42,11 +44,14 @@ export function SettingsNav({ isAdmin, mobile = false }: SettingsNavProps) {
         onChange={(event) => router.push(event.target.value)}
         className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
       >
-        {visibleItems.map((item) => (
-          <option key={item.id} value={item.href}>
-            {item.label}
-          </option>
-        ))}
+        {visibleItems.map((item) => {
+          const locked = item.comingSoon && !isAppAdmin;
+          return (
+            <option key={item.id} value={item.href} disabled={locked}>
+              {item.label}{locked ? " (Coming Soon)" : ""}
+            </option>
+          );
+        })}
       </select>
     );
   }
@@ -60,6 +65,22 @@ export function SettingsNav({ isAdmin, mobile = false }: SettingsNavProps) {
       <div className="space-y-0.5">
         {visibleItems.map((item) => {
           const active = isActive(item.href);
+          const locked = item.comingSoon && !isAppAdmin;
+
+          if (locked) {
+            return (
+              <div
+                key={item.id}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] text-muted-foreground/50 cursor-not-allowed"
+              >
+                <span>{item.label}</span>
+                <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  Soon
+                </span>
+              </div>
+            );
+          }
+
           return (
             <Link
               key={item.id}
