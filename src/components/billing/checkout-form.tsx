@@ -39,15 +39,32 @@ export function CheckoutForm({ planId, billingCycle, mode = "payment" }: Checkou
 
     if (isTrialSetup) {
       // Save card for later charge (trial). No payment now.
-      const { error } = await stripe.confirmSetup({
+      const result = await stripe.confirmSetup({
         elements,
         confirmParams: { return_url: returnUrl },
+        redirect: "if_required",
       });
 
-      if (error) {
-        toast.error(error.message ?? "Failed to save payment method. Please try again.");
+      if (result.error) {
+        toast.error(result.error.message ?? "Failed to save payment method. Please try again.");
         setProcessing(false);
+        return;
       }
+
+      // Set the saved payment method as default on the subscription
+      const pmId = result.setupIntent?.payment_method;
+      if (pmId && typeof pmId === "string") {
+        const res = await fetch("/api/v1/billing/payment-methods", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payment_method_id: pmId }),
+        });
+        if (!res.ok) {
+          toast.error("Card saved but failed to set as default. Please update your payment method on the billing page.");
+        }
+      }
+
+      window.location.href = returnUrl;
     } else {
       // Charge immediately
       const { error } = await stripe.confirmPayment({
@@ -109,11 +126,28 @@ export function CheckoutForm({ planId, billingCycle, mode = "payment" }: Checkou
                     <span>Total due today</span>
                     <span>{isTrialSetup ? "$0.00" : `$${displayTotal}.00`}</span>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {isTrialSetup
-                      ? "Your card will be charged when your trial ends. 40% off your first 3 months."
-                      : `${billingCycle === "yearly" ? "Renews annually" : "Renews monthly"}. Cancel anytime.`}
-                  </p>
+                  {isTrialSetup ? (
+                    <div className="mt-2 space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">After trial (first 3 months)</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground line-through text-xs">${displayTotal}.00</span>
+                          <span className="font-medium text-green-700">${Math.round(displayTotal * 0.6)}.00</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">After that</span>
+                        <span className="font-medium">${displayTotal}.00/{billingCycle === "yearly" ? "yr" : "mo"}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        40% off your first 3 months. Cancel anytime.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {billingCycle === "yearly" ? "Renews annually" : "Renews monthly"}. Cancel anytime.
+                    </p>
+                  )}
                 </div>
               </div>
 

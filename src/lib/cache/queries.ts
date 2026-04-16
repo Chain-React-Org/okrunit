@@ -123,11 +123,12 @@ export async function getCachedOrgLayoutData(orgId: string) {
   const admin = createAdminClient();
   const [{ data: org }, { data: subscription }] = await Promise.all([
     admin.from("organizations").select("plan_override").eq("id", orgId).single(),
-    admin.from("subscriptions").select("plan_id").eq("org_id", orgId).maybeSingle(),
+    admin.from("subscriptions").select("plan_id, status").eq("org_id", orgId).maybeSingle(),
   ]);
 
   const currentPlan = (org?.plan_override ?? subscription?.plan_id ?? "free") as BillingPlan;
-  const planName = PLAN_LIMITS[currentPlan]?.name ?? "Free";
+  const baseName = PLAN_LIMITS[currentPlan]?.name ?? "Free";
+  const planName = subscription?.status === "trialing" ? `${baseName} Trial` : baseName;
 
   return { currentPlan, planName };
 }
