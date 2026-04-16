@@ -1,118 +1,107 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useSetupWizard } from "@/hooks/use-onboarding";
 import { WizardProgress } from "./wizard-progress";
 import { OrganizationStep } from "./organization-step";
 import { InviteTeamStep } from "./invite-team-step";
 import { ConnectMessagingStep } from "./connect-messaging-step";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+
+const TOTAL_STEPS = 3;
 
 interface SetupWizardProps {
   orgId: string;
   orgName: string;
   connectedPlatforms: string[];
+  initialStep?: number;
+  orgRenamed?: boolean;
+  hasInvites?: boolean;
+  hasMessaging?: boolean;
 }
 
 export function SetupWizard({
   orgId,
   orgName,
   connectedPlatforms,
+  initialStep = 0,
+  orgRenamed = false,
+  hasInvites = false,
+  hasMessaging = false,
 }: SetupWizardProps) {
   const router = useRouter();
-  const {
-    state,
-    loaded,
-    goToStep,
-    completeStep,
-    skipStep,
-    resetWizard,
-    isComplete,
-  } = useSetupWizard();
 
-  // Track step transitions for animation
+  // Derive which steps are already done from server data
+  const serverCompletedSteps = new Set<number>();
+  if (orgRenamed) serverCompletedSteps.add(0);
+  if (hasInvites) serverCompletedSteps.add(1);
+  if (hasMessaging) serverCompletedSteps.add(2);
+
+  const [currentStep, setCurrentStep] = useState(initialStep);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(serverCompletedSteps);
+  const [finishing, setFinishing] = useState(false);
+
+  // Step transition animation
   const [displayedStep, setDisplayedStep] = useState<number | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [finishing, setFinishing] = useState(false);
   const prevStepRef = useRef<number | null>(null);
 
-  const currentStep = state.currentStep;
-
-  // Animate step transitions (skip if we're finishing setup)
   useEffect(() => {
-    if (!loaded || finishing) return;
-
-    if (displayedStep === null) {
-      // Initial render. Show immediately
-      setDisplayedStep(currentStep);
-      prevStepRef.current = currentStep;
-      return;
-    }
-
-    if (currentStep !== prevStepRef.current) {
-      // Step changed. Trigger exit animation, then swap content
+    if (finishing) return;
+    if (prevStepRef.current !== null && prevStepRef.current !== currentStep) {
       setIsAnimating(true);
-      const timer = setTimeout(() => {
+      const t = setTimeout(() => {
         setDisplayedStep(currentStep);
         setIsAnimating(false);
-        prevStepRef.current = currentStep;
-      }, 200); // matches wizardSlideOut duration
-      return () => clearTimeout(timer);
+      }, 200);
+      return () => clearTimeout(t);
+    } else {
+      setDisplayedStep(currentStep);
     }
-  }, [currentStep, loaded, displayedStep, finishing]);
+    prevStepRef.current = currentStep;
+  }, [currentStep, finishing]);
 
-  // If localStorage says complete but we're still on /setup, the DB was reset
-  // (or this is a new account on the same browser). Clear the stale localStorage
-  // state so the wizard starts fresh.
-  // Skip if we're in the process of finishing (to avoid flashing step 0).
-  const didReset = useRef(false);
-  useEffect(() => {
-    if (loaded && isComplete && !didReset.current && !finishing) {
-      didReset.current = true;
-      resetWizard();
-    }
-  }, [loaded, isComplete, resetWizard, finishing]);
+  // Save step progress to database (fire-and-forget)
+  const saveStepToDb = useCallback((step: number) => {
+    fetch("/api/auth/setup-step", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ step }),
+    }).catch(() => {});
+  }, []);
 
-  // Edge case: if step is past the end (user navigated back to /setup after
-  // completing all steps in this session), complete setup via effect.
-  // This must run AFTER the reset effect above so stale state gets cleared first.
-  const didComplete = useRef(false);
+  // If initialStep >= TOTAL_STEPS, complete setup immediately
   useEffect(() => {
-    if (loaded && !finishing && !didComplete.current && !didReset.current && currentStep >= 3) {
-      didComplete.current = true;
+    if (initialStep >= TOTAL_STEPS && !finishing) {
       handleCompleteSetup();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, finishing, currentStep]);
+  }, []);
 
-  // Show skeleton while loading localStorage state or resetting stale state
-  // Don't show skeleton if we're finishing (stay on last step)
-  if (!loaded || (isComplete && !didReset.current && !finishing)) {
-    return (
-      <Card>
-        <CardContent className="space-y-6 p-8">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-10 w-32" />
-        </CardContent>
-      </Card>
-    );
+  function goToStep(step: number) {
+    setCurrentStep(step);
+  }
+
+  function completeStep(step: number) {
+    setCompletedSteps((prev) => new Set([...prev, step]));
+    const nextStep = step + 1;
+    setCurrentStep(nextStep);
+    saveStepToDb(nextStep);
+  }
+
+  function skipStep(step: number) {
+    const nextStep = step + 1;
+    setCurrentStep(nextStep);
+    saveStepToDb(nextStep);
   }
 
   async function handleCompleteSetup() {
-    // Freeze the UI on the current step while we finish up
     setFinishing(true);
     try {
       await fetch("/api/auth/complete-setup", { method: "POST" });
     } catch {
-      // Non-blocking. The layout gate will still redirect if this fails
+      // Non-blocking
     }
-    // Mark complete in localStorage after the DB call so the reset effect
-    // doesn't fire before we navigate away.
-    completeStep(2);
     router.push("/org/overview");
   }
 
@@ -123,7 +112,7 @@ export function SetupWizard({
       {/* Progress bar */}
       <WizardProgress
         currentStep={currentStep}
-        completedSteps={state.completedSteps}
+        completedSteps={[...completedSteps]}
         onStepClick={goToStep}
       />
 
@@ -167,7 +156,7 @@ export function SetupWizard({
               />
             )}
 
-            {/* Edge case: step past the end, handled by effect below */}
+            {/* Step past the end is handled by the effect above */}
           </div>
         </CardContent>
       </Card>
