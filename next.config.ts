@@ -2,10 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  productionBrowserSourceMaps: true,
   turbopack: {
     root: __dirname,
   },
   experimental: {
+    serverSourceMaps: true,
     staleTimes: {
       dynamic: 30,
       static: 180,

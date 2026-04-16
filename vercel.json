@@ -27,6 +27,10 @@
     {
       "path": "/api/v1/cron/check-calendar-ooo",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/v1/cron/error-rate-check",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

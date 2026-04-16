@@ -55,6 +55,34 @@ async function handleRetention(request: Request) {
       .lt("created_at", thirtyDaysAgo);
     cleaned.push("in_app_notifications (read, >30 days)");
 
+    // 5. Web vitals older than 90 days
+    await admin
+      .from("web_vitals")
+      .delete()
+      .lt("created_at", ninetyDaysAgo);
+    cleaned.push("web_vitals (>90 days)");
+
+    // 7. Resolved/ignored error issues with no remaining events (orphaned after event cleanup)
+    const { data: orphanedIssues } = await admin
+      .from("error_issues")
+      .select("id")
+      .in("status", ["resolved", "ignored"])
+      .eq("event_count", 0);
+
+    if (orphanedIssues && orphanedIssues.length > 0) {
+      await admin
+        .from("error_issues")
+        .delete()
+        .in("id", orphanedIssues.map((i) => i.id));
+      cleaned.push(`error_issues orphaned (${orphanedIssues.length})`);
+    }
+
+    // 8. Sync event_count on remaining issues (may drift after event deletion)
+    const { error: syncError } = await admin.rpc("sync_error_issue_counts");
+    if (!syncError) {
+      cleaned.push("error_issues event_count synced");
+    }
+
     return NextResponse.json({ cleaned, count: cleaned.length });
   } catch (error) {
     captureError({ error, service: "DataRetention" }).catch(() => {});

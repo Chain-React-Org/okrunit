@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { captureError } from "@/lib/monitoring/capture";
+import { addBreadcrumb } from "@/lib/monitoring/breadcrumbs";
 import { getCorrelationId } from "@/lib/monitoring/logger";
 
 /**
@@ -32,6 +33,7 @@ export class ApiError extends Error {
  */
 export function errorResponse(error: unknown): NextResponse {
   if (error instanceof z.ZodError) {
+    addBreadcrumb({ type: "error", category: "validation", message: `Validation failed: ${error.issues.length} issue(s)` });
     return NextResponse.json(
       { error: "Validation failed", issues: error.issues },
       { status: 400 },
@@ -39,6 +41,7 @@ export function errorResponse(error: unknown): NextResponse {
   }
 
   if (error instanceof ApiError) {
+    addBreadcrumb({ type: "error", category: "api", message: `${error.statusCode}: ${error.message}`, data: { code: error.code } });
     return NextResponse.json(
       {
         error: error.message,
@@ -49,6 +52,7 @@ export function errorResponse(error: unknown): NextResponse {
   }
 
   // Log unexpected errors for observability; never leak internals to clients.
+  addBreadcrumb({ type: "error", category: "unhandled", message: error instanceof Error ? error.message : "Unknown error" });
   console.error("[API] Unhandled error:", error);
 
   // Capture in error monitoring system (fire-and-forget)

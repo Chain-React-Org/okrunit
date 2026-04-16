@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { API_KEY_LENGTH, API_KEY_PREFIX, LEGACY_API_KEY_PREFIX } from "@/lib/constants";
 import { ApiError } from "@/lib/api/errors";
+import { addBreadcrumb } from "@/lib/monitoring/breadcrumbs";
 import type { Connection, OrgMembership, UserProfile } from "@/lib/types/database";
 
 // ---- Types ----------------------------------------------------------------
@@ -87,15 +88,24 @@ export async function authenticateRequest(
 
     // --- API Key authentication (ok_ or legacy gk_ prefix) -------------------
     if (token.startsWith(API_KEY_PREFIX) || token.startsWith(LEGACY_API_KEY_PREFIX)) {
-      return authenticateApiKey(token);
+      addBreadcrumb({ type: "auth", category: "api_key", message: "Authenticating via API key" });
+      const result = await authenticateApiKey(token);
+      addBreadcrumb({ type: "auth", category: "api_key", message: "Authenticated via API key", data: { orgId: result.orgId } });
+      return result;
     }
 
     // --- OAuth access token (no recognized prefix) --------------------------
-    return authenticateOAuthToken(token);
+    addBreadcrumb({ type: "auth", category: "oauth", message: "Authenticating via OAuth token" });
+    const result = await authenticateOAuthToken(token);
+    addBreadcrumb({ type: "auth", category: "oauth", message: "Authenticated via OAuth", data: { orgId: result.orgId } });
+    return result;
   }
 
   // --- Supabase session authentication ---------------------------------------
-  return authenticateSession();
+  addBreadcrumb({ type: "auth", category: "session", message: "Authenticating via session cookie" });
+  const result = await authenticateSession();
+  addBreadcrumb({ type: "auth", category: "session", message: "Authenticated via session", data: { orgId: result.orgId } });
+  return result;
 }
 
 // ---- Internal Helpers -----------------------------------------------------
