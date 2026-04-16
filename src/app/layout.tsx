@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, DM_Sans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
@@ -120,7 +121,7 @@ export default function RootLayout({
           {children}
           <Toaster />
           <ClientErrorReporter />
-          <WebVitalsReporter />
+          <Suspense><WebVitalsReporter /></Suspense>
           <UTMTracker />
           <InstallPromptListener />
           <InstallBanner />
