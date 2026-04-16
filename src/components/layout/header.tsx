@@ -22,6 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useOrgName } from "@/components/org/org-name-context";
 import { useInstallPromptStore } from "@/stores/install-prompt-store";
+import { useAvatarStore } from "@/stores/avatar-store";
 
 interface OrgItem {
   id: string;
@@ -51,7 +52,11 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
   const { setMobileOpen } = useSidebarStore();
   const { getOrgName } = useOrgName();
   const { deferredPrompt, isInstalled, setDeferredPrompt } = useInstallPromptStore();
+  const avatarOverride = useAvatarStore((s) => s.avatarUrl);
   const [isMac, setIsMac] = useState(false);
+
+  // Apply optimistic avatar override (undefined = use server value)
+  const displayAvatarUrl = avatarOverride !== undefined ? avatarOverride : user?.avatar_url ?? null;
 
   // Apply optimistic name overrides
   const orgName = currentOrgId ? getOrgName(currentOrgId, serverOrgName ?? "") : serverOrgName;
@@ -195,7 +200,7 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
                   <UserAvatar
                     fullName={user.full_name}
                     email={user.email}
-                    avatarUrl={user.avatar_url}
+                    avatarUrl={displayAvatarUrl}
                     className="size-8"
                   />
                 </button>
