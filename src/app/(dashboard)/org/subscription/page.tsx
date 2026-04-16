@@ -15,8 +15,6 @@ export default async function OrgBillingPage() {
   if (!ctx) redirect("/login");
   const { org, membership } = ctx;
 
-  if (membership.role !== "owner" && membership.role !== "admin") redirect("/org/overview");
-
   const [cached, oauthGrants] = await Promise.all([
     getCachedSubscriptionData(org.id),
     getActiveOAuthGrants(org.id),

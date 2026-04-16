@@ -26,11 +26,13 @@ create index if not exists idx_blog_posts_published on public.blog_posts(publish
 alter table public.blog_posts enable row level security;
 
 -- Anyone can read published posts
+drop policy if exists "Public can read published blog posts" on public.blog_posts;
 create policy "Public can read published blog posts"
   on public.blog_posts for select
   using (published = true);
 
 -- App admins can do everything
+drop policy if exists "App admins manage blog posts" on public.blog_posts;
 create policy "App admins manage blog posts"
   on public.blog_posts for all
   using (

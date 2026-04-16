@@ -31,7 +31,8 @@ const removeMemberSchema = z.object({
 
 const updateMemberSchema = z.object({
   user_id: z.string().uuid("Invalid user ID"),
-  position_id: z.string().uuid().nullable(),
+  position_id: z.string().uuid().nullable().optional(),
+  is_lead: z.boolean().optional(),
 });
 
 // ---- Helpers --------------------------------------------------------------
@@ -65,6 +66,39 @@ async function fetchTeamOrThrow(
   }
 
   return team;
+}
+
+/**
+ * Check if a user is a team lead for the given team.
+ */
+async function isTeamLead(
+  admin: ReturnType<typeof createAdminClient>,
+  teamId: string,
+  userId: string,
+): Promise<boolean> {
+  const { data } = await admin
+    .from("team_memberships")
+    .select("is_lead")
+    .eq("team_id", teamId)
+    .eq("user_id", userId)
+    .single();
+  return data?.is_lead === true;
+}
+
+/**
+ * Check if user is org admin or team lead. Throws 403 if neither.
+ */
+async function requireTeamManagePermission(
+  admin: ReturnType<typeof createAdminClient>,
+  auth: { membership: { role: string }; user: { id: string } },
+  teamId: string,
+) {
+  const isOrgAdmin = auth.membership.role === "owner" || auth.membership.role === "admin";
+  if (isOrgAdmin) return;
+  const lead = await isTeamLead(admin, teamId, auth.user.id);
+  if (!lead) {
+    throw new ApiError(403, "Insufficient permissions");
+  }
 }
 
 // ---- GET /api/v1/teams/[id]/members ---------------------------------------
@@ -189,9 +223,8 @@ export async function POST(
       throw new ApiError(403, "Only dashboard users can manage teams");
     }
 
-    if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
-      throw new ApiError(403, "Insufficient permissions");
-    }
+    const admin = createAdminClient();
+    await requireTeamManagePermission(admin, auth, id);
 
     let body: z.infer<typeof addMemberSchema>;
     try {
@@ -212,7 +245,6 @@ export async function POST(
       throw new ApiError(400, "No user IDs provided");
     }
 
-    const admin = createAdminClient();
     const team = await fetchTeamOrThrow(admin, id, auth.orgId);
 
     // Verify all users are org members
@@ -303,17 +335,13 @@ export async function DELETE(
     const { id } = await params;
     const auth = await authenticateRequest(request);
 
-    // Only dashboard (session) users may manage team members.
     if (auth.type !== "session") {
       throw new ApiError(403, "Only dashboard users can manage teams");
     }
 
-    // Must be owner or admin.
-    if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
-      throw new ApiError(403, "Insufficient permissions");
-    }
+    const admin = createAdminClient();
+    await requireTeamManagePermission(admin, auth, id);
 
-    // Validate request body.
     let body: z.infer<typeof removeMemberSchema>;
     try {
       body = removeMemberSchema.parse(await request.json());
@@ -326,8 +354,6 @@ export async function DELETE(
       }
       throw err;
     }
-
-    const admin = createAdminClient();
 
     // Verify the team exists and belongs to this org.
     const team = await fetchTeamOrThrow(admin, id, auth.orgId);
@@ -388,9 +414,8 @@ export async function PATCH(
     if (auth.type !== "session") {
       throw new ApiError(403, "Only dashboard users can manage teams");
     }
-    if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
-      throw new ApiError(403, "Insufficient permissions");
-    }
+
+    const admin = createAdminClient();
 
     let body: z.infer<typeof updateMemberSchema>;
     try {
@@ -405,18 +430,35 @@ export async function PATCH(
       throw err;
     }
 
-    const admin = createAdminClient();
+    // is_lead changes require org admin; position changes allow team leads
+    if (body.is_lead !== undefined) {
+      const isOrgAdmin = auth.membership.role === "owner" || auth.membership.role === "admin";
+      if (!isOrgAdmin) {
+        throw new ApiError(403, "Only org admins can assign team leads");
+      }
+    } else {
+      await requireTeamManagePermission(admin, auth, id);
+    }
+
     await fetchTeamOrThrow(admin, id, auth.orgId);
+
+    const update: Record<string, unknown> = {};
+    if (body.position_id !== undefined) update.position_id = body.position_id;
+    if (body.is_lead !== undefined) update.is_lead = body.is_lead;
+
+    if (Object.keys(update).length === 0) {
+      return NextResponse.json({ success: true });
+    }
 
     const { error } = await admin
       .from("team_memberships")
-      .update({ position_id: body.position_id })
+      .update(update)
       .eq("team_id", id)
       .eq("user_id", body.user_id);
 
     if (error) {
-      console.error("[Teams] Failed to update member position:", error);
-      throw new ApiError(500, "Failed to update member position");
+      console.error("[Teams] Failed to update team member:", error);
+      throw new ApiError(500, "Failed to update team member");
     }
 
     revalidateTags(CacheTags.teams(auth.orgId), CacheTags.members(auth.orgId));

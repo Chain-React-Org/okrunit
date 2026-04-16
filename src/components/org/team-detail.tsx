@@ -7,9 +7,13 @@ import {
   ArrowLeft,
   Check,
   Crown,
+  Loader2,
+  Mail,
   Plus,
+  Send,
   Settings2,
   Shield,
+  Star,
   Trash2,
   User,
   UserMinus,
@@ -20,7 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,6 +37,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 interface TeamMember {
   id: string;
@@ -41,6 +51,7 @@ interface TeamMember {
   avatar_url: string | null;
   role: "owner" | "admin" | "member";
   position_id: string | null;
+  is_lead: boolean;
   joined_at: string;
 }
 
@@ -60,6 +71,7 @@ interface TeamOwner {
   id: string;
   name: string | null;
   email: string;
+  avatar_url: string | null;
 }
 
 interface TeamDetailProps {
@@ -75,6 +87,7 @@ interface TeamDetailProps {
   owner: TeamOwner | null;
   currentUserId: string;
   canManage: boolean;
+  isOrgAdmin: boolean;
 }
 
 const roleConfig = {
@@ -98,12 +111,15 @@ export function TeamDetail({
   owner,
   currentUserId,
   canManage,
+  isOrgAdmin,
 }: TeamDetailProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [newPositionName, setNewPositionName] = useState("");
   const [creatingPosition, setCreatingPosition] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
 
   // ---- Add members (bulk) ------------------------------------------------
 
@@ -180,6 +196,26 @@ export function TeamDetail({
     }
   }
 
+  // ---- Toggle lead status ------------------------------------------------
+
+  async function handleToggleLead(userId: string, isLead: boolean) {
+    try {
+      const res = await fetch(`/api/v1/teams/${team.id}/members`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, is_lead: isLead }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to update");
+      }
+      toast.success(isLead ? "Team lead assigned" : "Team lead removed");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update");
+    }
+  }
+
   // ---- Manage positions --------------------------------------------------
 
   async function handleCreatePosition(e: React.FormEvent) {
@@ -224,6 +260,43 @@ export function TeamDetail({
     }
   }
 
+  // ---- Invite new person to team ------------------------------------------
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault();
+    const email = inviteEmail.trim().toLowerCase();
+    if (!email) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    setInviting(true);
+    try {
+      const res = await fetch("/api/v1/team/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          role: "member",
+          team_ids: [team.id],
+          can_approve: false,
+          can_connect: false,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to send invite");
+      }
+      toast.success(`Invitation sent to ${email}`);
+      setInviteEmail("");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send invite");
+    } finally {
+      setInviting(false);
+    }
+  }
+
   // ---- Render ------------------------------------------------------------
 
   return (
@@ -256,6 +329,7 @@ export function TeamDetail({
         {owner ? (
           <div className="flex items-center gap-3">
             <Avatar>
+              {owner.avatar_url && <AvatarImage src={owner.avatar_url} alt={owner.name ?? owner.email} />}
               <AvatarFallback className="text-xs font-bold">
                 {getInitials(owner.name, owner.email)}
               </AvatarFallback>
@@ -396,6 +470,53 @@ export function TeamDetail({
         </div>
       )}
 
+      {/* Invite new person */}
+      {canManage && (
+        <div className="rounded-xl border border-border/50 bg-[var(--card)] p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <Mail className="size-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold">Invite Someone New</h2>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Invite someone who isn&apos;t in the organization yet. They&apos;ll be added to this team when they accept.
+          </p>
+          <form onSubmit={handleInvite} className="flex items-end gap-2">
+            <div className="flex-1">
+              <div className="relative">
+                <Mail className="text-muted-foreground absolute left-2.5 top-1/2 size-4 -translate-y-1/2" />
+                <Input
+                  type="email"
+                  placeholder="colleague@company.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  disabled={inviting}
+                  className="pl-9 h-9"
+                  required
+                />
+              </div>
+            </div>
+            <Button
+              type="submit"
+              size="sm"
+              className="h-9 gap-1.5"
+              disabled={inviting || !inviteEmail.trim()}
+            >
+              {inviting ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="size-3.5" />
+                  Invite
+                </>
+              )}
+            </Button>
+          </form>
+        </div>
+      )}
+
       {/* Members list */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -428,6 +549,7 @@ export function TeamDetail({
                 >
                   {/* Avatar */}
                   <Avatar>
+                    {member.avatar_url && <AvatarImage src={member.avatar_url} alt={member.full_name ?? member.email} />}
                     <AvatarFallback className="text-xs font-bold">
                       {getInitials(member.full_name, member.email)}
                     </AvatarFallback>
@@ -448,6 +570,12 @@ export function TeamDetail({
                         <RoleIcon className="size-3" />
                         {rc.label}
                       </span>
+                      {member.is_lead && (
+                        <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600">
+                          <Star className="size-3" />
+                          Lead
+                        </span>
+                      )}
                       {position && (
                         <Badge variant="outline" className="text-[11px]">
                           {position.name}
@@ -462,6 +590,24 @@ export function TeamDetail({
                   {/* Position selector + remove */}
                   {canManage && (
                     <div className="flex items-center gap-2 shrink-0">
+                      {isOrgAdmin && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
+                              <span className="text-[10px] text-muted-foreground">Lead</span>
+                              <Switch
+                                checked={member.is_lead}
+                                onCheckedChange={(checked) => handleToggleLead(member.id, checked)}
+                                disabled={loading}
+                                className="scale-75"
+                              />
+                            </label>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            Team leads can add/remove members and invite new people to this team.
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                       {positions.length > 0 && (
                         <Select
                           value={member.position_id ?? "none"}

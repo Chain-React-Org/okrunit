@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripeOrThrow } from "@/lib/billing/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
 import type Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
@@ -257,6 +258,81 @@ export async function POST(req: NextRequest) {
           .from("subscriptions")
           .update({ status: "past_due", updated_at: new Date().toISOString() })
           .eq("org_id", subscription.org_id);
+      }
+      break;
+    }
+
+    case "invoice.payment_action_required": {
+      const invoice = event.data.object;
+      const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+      if (!customerId) break;
+
+      const { data: subscription } = await admin
+        .from("subscriptions")
+        .select("org_id")
+        .eq("stripe_customer_id", customerId)
+        .single();
+
+      if (subscription) {
+        // Notify all org admins/owners that payment requires action
+        const { data: admins } = await admin
+          .from("org_memberships")
+          .select("user_id")
+          .eq("org_id", subscription.org_id)
+          .in("role", ["owner", "admin"]);
+
+        if (admins?.length) {
+          const actionUrl = invoice.hosted_invoice_url ?? "/org/subscription";
+          createInAppNotificationBulk(
+            admins.map((a) => a.user_id),
+            {
+              orgId: subscription.org_id,
+              category: "billing",
+              title: "Payment requires action",
+              body: `Your bank requires additional verification to process your subscription payment. Please complete the verification to avoid service interruption.`,
+              resourceType: "billing",
+              resourceId: typeof actionUrl === "string" ? actionUrl : undefined,
+            },
+          );
+        }
+      }
+      break;
+    }
+
+    case "customer.subscription.created": {
+      const sub = event.data.object;
+      const orgId = sub.metadata?.org_id;
+      const planId = sub.metadata?.plan_id;
+      if (!orgId || !planId) break;
+
+      console.log(`[Billing Webhook] Subscription created: org=${orgId} plan=${planId} status=${sub.status}`);
+      break;
+    }
+
+    case "customer.subscription.trial_will_end": {
+      const sub = event.data.object;
+      const orgId = sub.metadata?.org_id;
+      if (!orgId) break;
+
+      // Notify all org admins/owners that their trial ends in 3 days
+      const { data: admins } = await admin
+        .from("org_memberships")
+        .select("user_id")
+        .eq("org_id", orgId)
+        .in("role", ["owner", "admin"]);
+
+      if (admins?.length) {
+        createInAppNotificationBulk(
+          admins.map((a) => a.user_id),
+          {
+            orgId,
+            category: "billing",
+            title: "Your trial ends in 3 days",
+            body: "Add a payment method to keep your Pro features. When you subscribe, you'll get 40% off your first 3 months on the monthly plan.",
+            resourceType: "billing",
+            resourceId: "/org/subscription",
+          },
+        );
       }
       break;
     }

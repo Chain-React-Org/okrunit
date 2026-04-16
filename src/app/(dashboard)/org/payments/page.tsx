@@ -13,8 +13,6 @@ export default async function OrgPaymentsPage() {
   if (!ctx) redirect("/login");
   const { org, membership } = ctx;
 
-  if (membership.role !== "owner" && membership.role !== "admin") redirect("/org/overview");
-
   const admin = createAdminClient();
 
   const { data: invoices } = await admin

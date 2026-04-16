@@ -15,8 +15,6 @@ export default async function V2OrgMembersPage() {
   if (!ctx) redirect("/login");
   const { membership } = ctx;
 
-  if (membership.role !== "owner" && membership.role !== "admin") redirect("/org/overview");
-
   const [{ members, memberStats, pendingLoadMap }, { currentPlan }] = await Promise.all([
     getCachedMembersData(membership.org_id),
     getCachedOrgLayoutData(membership.org_id),

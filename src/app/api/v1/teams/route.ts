@@ -22,7 +22,7 @@ const createTeamSchema = z.object({
   description: z
     .string()
     .max(500, "Description must be 500 characters or fewer")
-    .optional(),
+    .nullish(),
 });
 
 // ---- GET /api/v1/teams ----------------------------------------------------

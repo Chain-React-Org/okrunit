@@ -19,6 +19,7 @@ import {
   Unplug,
   ShieldAlert,
   AlertTriangle,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +54,7 @@ const CATEGORY_CONFIG: Record<
   connection_deactivated: { icon: Unplug, color: "text-red-500" },
   role_changed: { icon: ShieldAlert, color: "text-amber-500" },
   limit_approaching: { icon: AlertTriangle, color: "text-amber-500" },
+  billing: { icon: CreditCard, color: "text-emerald-500" },
 };
 
 function getNotificationHref(n: InAppNotification): string {

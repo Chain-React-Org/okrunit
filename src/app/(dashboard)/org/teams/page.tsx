@@ -14,7 +14,7 @@ export default async function V2OrgTeamsPage() {
   if (!ctx) redirect("/login");
   const { membership } = ctx;
 
-  if (membership.role !== "owner" && membership.role !== "admin") redirect("/org/overview");
+  const isAdmin = membership.role === "owner" || membership.role === "admin";
 
   const [currentPlan, { teams, memberCounts }] = await Promise.all([
     getOrgPlan(membership.org_id),
@@ -25,7 +25,7 @@ export default async function V2OrgTeamsPage() {
     <V2TeamList
       teams={teams}
       memberCounts={memberCounts}
-      currentUserRole={membership.role}
+      currentUserRole={isAdmin ? membership.role : "member"}
       currentPlan={currentPlan}
     />
   );

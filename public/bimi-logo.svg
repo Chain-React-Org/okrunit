@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" viewBox="0 0 512 512">
+  <title>OKrunit</title>
+  <!-- Square background for BIMI compliance -->
+  <rect width="512" height="512" fill="#ffffff"/>
+  <!-- Hexagon body (dark charcoal) -->
+  <polygon points="256,52 432,154 432,358 256,460 80,358 80,154" fill="#37474f"/>
+  <!-- Inner hexagon cutout / green gradient bottom-left area -->
+  <polygon points="256,82 406,139 406,348 256,430 106,348 106,139" fill="#4a635a"/>
+  <!-- Green accent on lower-left of hexagon -->
+  <polygon points="106,220 106,348 256,430 180,380 130,300" fill="#558b2f"/>
+  <polygon points="106,250 106,348 200,400" fill="#33691e"/>
+  <!-- Arrow extending right from hexagon -->
+  <rect x="350" y="232" width="110" height="20" fill="#37474f" rx="2"/>
+  <rect x="350" y="260" width="110" height="20" fill="#37474f" rx="2"/>
+  <polygon points="460,220 510,256 460,292" fill="#37474f"/>
+  <!-- Shield shape (white) -->
+  <path d="M256,120 C256,120 330,140 340,150 C350,160 355,180 355,200 C355,260 320,320 256,360 C192,320 157,260 157,200 C157,180 162,160 172,150 C182,140 256,120 256,120Z" fill="#ffffff"/>
+  <!-- Shield border (light gray) -->
+  <path d="M256,128 C256,128 324,146 333,155 C342,164 347,182 347,200 C347,256 314,312 256,350 C198,312 165,256 165,200 C165,182 170,164 179,155 C188,146 256,128 256,128Z" fill="none" stroke="#e0e0e0" stroke-width="3"/>
+  <!-- Green checkmark -->
+  <path d="M210,230 L245,270 L310,190" fill="none" stroke="#4caf50" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

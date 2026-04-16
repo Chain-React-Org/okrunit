@@ -182,15 +182,19 @@ async function InviteAcceptContent({
     org_id: invite.org_id,
     role: invite.role,
     is_default: true,
+    can_approve: invite.can_approve,
+    can_connect: invite.can_connect,
   });
 
   // 4. Auto-add to teams if specified on the invite.
   const teamIds: string[] = invite.team_ids ?? [];
+  const teamLeadIds: string[] = invite.team_lead_ids ?? [];
   if (teamIds.length > 0) {
     const rows = teamIds.map((tid) => ({
       team_id: tid,
       user_id: user.id,
       position_id: invite.position_id ?? null,
+      is_lead: teamLeadIds.includes(tid),
     }));
     await admin
       .from("team_memberships")

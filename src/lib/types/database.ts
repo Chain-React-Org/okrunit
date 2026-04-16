@@ -318,6 +318,9 @@ export interface OrgInvite {
   accepted_at: string | null;
   team_ids: string[];
   position_id: string | null;
+  can_approve: boolean;
+  can_connect: boolean;
+  team_lead_ids: string[];
   created_at: string;
 }
 
@@ -462,6 +465,7 @@ export interface TeamMembership {
   team_id: string;
   user_id: string;
   position_id: string | null;
+  is_lead: boolean;
   created_at: string;
 }
 
@@ -711,7 +715,8 @@ export type NotificationCategory =
   | "welcome"
   | "connection_deactivated"
   | "role_changed"
-  | "limit_approaching";
+  | "limit_approaching"
+  | "billing";
 
 export interface InAppNotification {
   id: string;

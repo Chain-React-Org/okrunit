@@ -56,9 +56,10 @@ const ROLE_COLORS = [
 
 interface CustomRolesManagerProps {
   initialRoles: CustomRole[];
+  canManage?: boolean;
 }
 
-export function CustomRolesManager({ initialRoles }: CustomRolesManagerProps) {
+export function CustomRolesManager({ initialRoles, canManage = true }: CustomRolesManagerProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CustomRole | null>(null);
@@ -150,10 +151,12 @@ export function CustomRolesManager({ initialRoles }: CustomRolesManagerProps) {
             Define custom roles that map to permission levels. Assign them to members for clearer team structure.
           </p>
         </div>
-        <Button size="sm" onClick={openCreate} className="gap-1.5 h-8">
-          <Plus className="size-3.5" />
-          New Role
-        </Button>
+        {canManage && (
+          <Button size="sm" onClick={openCreate} className="gap-1.5 h-8">
+            <Plus className="size-3.5" />
+            New Role
+          </Button>
+        )}
       </div>
 
       {/* Built-in roles reference */}
@@ -185,10 +188,12 @@ export function CustomRolesManager({ initialRoles }: CustomRolesManagerProps) {
           <p className="text-xs text-muted-foreground/60 mt-1">
             Create roles like &quot;Security Reviewer&quot; or &quot;Finance Approver&quot; to organize your team.
           </p>
-          <Button size="sm" className="mt-4 gap-1.5" onClick={openCreate}>
-            <Plus className="size-3.5" />
-            Create Role
-          </Button>
+          {canManage && (
+            <Button size="sm" className="mt-4 gap-1.5" onClick={openCreate}>
+              <Plus className="size-3.5" />
+              Create Role
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
@@ -225,20 +230,22 @@ export function CustomRolesManager({ initialRoles }: CustomRolesManagerProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(role)}>
-                    <Pencil className="size-3.5 text-muted-foreground" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={() => handleDelete(role.id)}
-                    disabled={deleting === role.id}
-                  >
-                    <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
-                  </Button>
-                </div>
+                {canManage && (
+                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(role)}>
+                      <Pencil className="size-3.5 text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => handleDelete(role.id)}
+                      disabled={deleting === role.id}
+                    >
+                      <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                  </div>
+                )}
               </div>
             );
           })}

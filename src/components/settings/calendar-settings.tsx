@@ -14,9 +14,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -227,16 +224,7 @@ export function CalendarSettings({ orgId, userId }: CalendarSettingsProps) {
   if (loading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="size-5" />
-            Calendar Connection
-          </CardTitle>
-          <CardDescription>
-            Connect your calendar for automatic out-of-office delegation.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <Skeleton className="h-5 w-48" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-9 w-24" />
@@ -250,17 +238,7 @@ export function CalendarSettings({ orgId, userId }: CalendarSettingsProps) {
   if (!connection) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="size-5" />
-            Calendar Connection
-          </CardTitle>
-          <CardDescription>
-            Connect your calendar to automatically delegate approvals when
-            you are out of office.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="flex flex-col items-center gap-4 py-6 text-center">
             <div className="flex size-12 items-center justify-center rounded-full bg-muted">
               <Calendar className="size-6 text-muted-foreground" />
@@ -307,16 +285,7 @@ export function CalendarSettings({ orgId, userId }: CalendarSettingsProps) {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="size-5" />
-            Calendar Connection
-          </CardTitle>
-          <CardDescription>
-            Manage your connected calendar and out-of-office delegation.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           {/* Connection info */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
