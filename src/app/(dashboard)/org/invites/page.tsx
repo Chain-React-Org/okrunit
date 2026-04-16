@@ -21,7 +21,7 @@ export default async function V2OrgInvitesPage() {
   const [{ data: pendingInvites }, { data: teams }] = await Promise.all([
     admin
       .from("org_invites")
-      .select("id, org_id, email, role, invited_by, expires_at, accepted_at, team_ids, position_id, created_at")
+      .select("id, org_id, email, role, invited_by, expires_at, accepted_at, team_ids, position_id, can_approve, can_connect, team_lead_ids, created_at")
       .eq("org_id", membership.org_id)
       .is("accepted_at", null)
       .gt("expires_at", new Date().toISOString())

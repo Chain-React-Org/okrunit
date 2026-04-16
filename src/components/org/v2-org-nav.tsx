@@ -49,9 +49,9 @@ export function V2OrgNav({ isAdmin, pendingInviteCount, planName, mobile }: V2Or
       items: [
         { id: "overview", label: "Overview", href: "/org/overview", icon: LayoutDashboard },
         { id: "organizations", label: "Organizations", href: "/org/organizations", icon: Building2 },
-        { id: "teams", label: "Teams", href: "/org/teams", icon: UsersRound, adminOnly: true },
-        { id: "members", label: "Members", href: "/org/members", icon: Users, adminOnly: true },
-        { id: "roles", label: "Roles", href: "/org/roles", icon: Shield, adminOnly: true },
+        { id: "teams", label: "Teams", href: "/org/teams", icon: UsersRound },
+        { id: "members", label: "Members", href: "/org/members", icon: Users },
+        { id: "roles", label: "Roles", href: "/org/roles", icon: Shield },
         {
           id: "invites",
           label: "Invites",
@@ -71,10 +71,9 @@ export function V2OrgNav({ isAdmin, pendingInviteCount, planName, mobile }: V2Or
           label: "Subscription",
           href: "/org/subscription",
           icon: CreditCard,
-          adminOnly: true,
           badge: planName,
         },
-        { id: "payments", label: "Payments", href: "/org/payments", icon: Receipt, adminOnly: true },
+        { id: "payments", label: "Payments", href: "/org/payments", icon: Receipt },
       ],
     },
   ];
@@ -85,7 +84,6 @@ export function V2OrgNav({ isAdmin, pendingInviteCount, planName, mobile }: V2Or
     label: "SSO",
     href: "/org/sso",
     icon: Shield,
-    adminOnly: true,
   };
 
   const settingsItem: NavItem = {
@@ -93,7 +91,6 @@ export function V2OrgNav({ isAdmin, pendingInviteCount, planName, mobile }: V2Or
     label: "Settings",
     href: "/org/settings",
     icon: Settings,
-    adminOnly: true,
   };
 
   // Flatten for mobile + filtering

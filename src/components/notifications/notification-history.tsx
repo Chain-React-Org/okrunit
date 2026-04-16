@@ -19,6 +19,7 @@ import {
   Unplug,
   ShieldAlert,
   AlertTriangle,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ const CATEGORY_CONFIG: Record<
   connection_deactivated: { icon: Unplug, color: "text-red-500", label: "Connection" },
   role_changed: { icon: ShieldAlert, color: "text-amber-500", label: "Permissions" },
   limit_approaching: { icon: AlertTriangle, color: "text-amber-500", label: "Limit" },
+  billing: { icon: CreditCard, color: "text-emerald-500", label: "Billing" },
 };
 
 function timeAgo(dateStr: string): string {

@@ -32,6 +32,24 @@ async function fetchTeamOrThrow(
   return team;
 }
 
+async function requireTeamManagePermission(
+  admin: ReturnType<typeof createAdminClient>,
+  auth: { membership: { role: string }; user: { id: string } },
+  teamId: string,
+) {
+  const isOrgAdmin = auth.membership.role === "owner" || auth.membership.role === "admin";
+  if (isOrgAdmin) return;
+  const { data } = await admin
+    .from("team_memberships")
+    .select("is_lead")
+    .eq("team_id", teamId)
+    .eq("user_id", auth.user.id)
+    .single();
+  if (data?.is_lead !== true) {
+    throw new ApiError(403, "Insufficient permissions");
+  }
+}
+
 // ---- GET /api/v1/teams/[id]/positions ------------------------------------
 
 export async function GET(
@@ -69,12 +87,11 @@ export async function POST(
     const { id } = await params;
     const auth = await authenticateRequest(request);
     if (auth.type !== "session") throw new ApiError(403, "Session auth required");
-    if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
-      throw new ApiError(403, "Insufficient permissions");
-    }
+
+    const admin = createAdminClient();
+    await requireTeamManagePermission(admin, auth, id);
 
     const body = createPositionSchema.parse(await request.json());
-    const admin = createAdminClient();
     await fetchTeamOrThrow(admin, id, auth.orgId);
 
     const { data, error } = await admin
@@ -107,12 +124,11 @@ export async function DELETE(
     const { id } = await params;
     const auth = await authenticateRequest(request);
     if (auth.type !== "session") throw new ApiError(403, "Session auth required");
-    if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
-      throw new ApiError(403, "Insufficient permissions");
-    }
+
+    const admin = createAdminClient();
+    await requireTeamManagePermission(admin, auth, id);
 
     const body = deletePositionSchema.parse(await request.json());
-    const admin = createAdminClient();
     await fetchTeamOrThrow(admin, id, auth.orgId);
 
     const { error } = await admin

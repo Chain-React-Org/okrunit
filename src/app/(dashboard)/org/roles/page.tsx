@@ -15,10 +15,6 @@ export default async function CustomRolesPage() {
   if (!ctx) redirect("/login");
   const { membership } = ctx;
 
-  if (membership.role !== "owner" && membership.role !== "admin") {
-    redirect("/org/overview");
-  }
-
   const [roles, { currentPlan }] = await Promise.all([
     getCachedRolesData(membership.org_id),
     getCachedOrgLayoutData(membership.org_id),
@@ -37,7 +33,10 @@ export default async function CustomRolesPage() {
           />
         </div>
       )}
-      <CustomRolesManager initialRoles={roles} />
+      <CustomRolesManager
+        initialRoles={roles}
+        canManage={membership.role === "owner" || membership.role === "admin"}
+      />
     </div>
   );
 }

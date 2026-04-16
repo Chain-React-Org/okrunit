@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Users, Send, Clock, X, Shield, ShieldCheck, User, ChevronDown, Check, Plus, Loader2, ArrowLeft } from "lucide-react";
+import { Mail, Users, Send, Clock, X, Shield, ShieldCheck, User, ChevronDown, Check, Plus, Loader2, ArrowLeft, Plug } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -29,6 +29,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import type { OrgInvite } from "@/lib/types/database";
 
 interface BulkInviteEntry {
@@ -60,7 +66,10 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "approver" | "member">("member");
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [teamLeadIds, setTeamLeadIds] = useState<string[]>([]);
   const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
+  const [canApprove, setCanApprove] = useState(false);
+  const [canConnect, setCanConnect] = useState(false);
   const [loading, setLoading] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [revoking, setRevoking] = useState<string | null>(null);
@@ -71,6 +80,9 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
   const [bulkInput, setBulkInput] = useState("");
   const [bulkEntries, setBulkEntries] = useState<BulkInviteEntry[]>([]);
   const [bulkTeamIds, setBulkTeamIds] = useState<string[]>([]);
+  const [bulkCanApprove, setBulkCanApprove] = useState(false);
+  const [bulkCanConnect, setBulkCanConnect] = useState(false);
+  const [bulkTeamLeadIds, setBulkTeamLeadIds] = useState<string[]>([]);
   const [bulkTeamDropdownOpen, setBulkTeamDropdownOpen] = useState(false);
   const [showBulkList, setShowBulkList] = useState(false);
 
@@ -206,11 +218,21 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
     targetRole: "admin" | "approver" | "member",
     teamIds: string[] = [],
     positionId: string | null = null,
+    permissions: { can_approve: boolean; can_connect: boolean } = { can_approve: false, can_connect: false },
+    leadIds: string[] = [],
   ): Promise<{ ok: boolean; error?: string }> {
     const res = await fetch("/api/v1/team/invite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: targetEmail, role: targetRole, team_ids: teamIds, position_id: positionId }),
+      body: JSON.stringify({
+        email: targetEmail,
+        role: targetRole,
+        team_ids: teamIds,
+        position_id: positionId,
+        can_approve: permissions.can_approve,
+        can_connect: permissions.can_connect,
+        team_lead_ids: leadIds,
+      }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -230,13 +252,19 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
 
     setLoading(true);
     try {
-      const result = await sendInvite(trimmedEmail, role, selectedTeamIds, selectedPositionId);
+      const result = await sendInvite(trimmedEmail, role, selectedTeamIds, selectedPositionId, {
+        can_approve: canApprove,
+        can_connect: canConnect,
+      }, teamLeadIds);
       if (!result.ok) throw new Error(result.error);
       toast.success(`Invitation sent to ${trimmedEmail}`);
       setEmail("");
       setRole("member");
       setSelectedTeamIds([]);
+      setTeamLeadIds([]);
       setSelectedPositionId(null);
+      setCanApprove(false);
+      setCanConnect(false);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send invite");
@@ -254,7 +282,10 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
     const errors: string[] = [];
 
     for (const entry of bulkEntries) {
-      const result = await sendInvite(entry.email, entry.role, bulkTeamIds, bulkPositionId);
+      const result = await sendInvite(entry.email, entry.role, bulkTeamIds, bulkPositionId, {
+        can_approve: bulkCanApprove,
+        can_connect: bulkCanConnect,
+      }, bulkTeamLeadIds);
       if (result.ok) sent++;
       else {
         failed++;
@@ -274,7 +305,10 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
     setBulkInput("");
     setBulkEntries([]);
     setBulkTeamIds([]);
+    setBulkTeamLeadIds([]);
     setBulkPositionId(null);
+    setBulkCanApprove(false);
+    setBulkCanConnect(false);
     setShowBulkList(false);
     setLoading(false);
     router.refresh();
@@ -483,6 +517,9 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                                     setBulkTeamIds((prev) =>
                                       selected ? prev.filter((id) => id !== team.id) : [...prev, team.id],
                                     );
+                                    if (selected) {
+                                      setBulkTeamLeadIds((prev) => prev.filter((id) => id !== team.id));
+                                    }
                                   }}
                                   className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 transition-colors"
                                 >
@@ -497,22 +534,48 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                           </div>
                         )}
                       </div>
-                      {bulkTeamIds.length > 1 && (
-                        <div className="flex flex-wrap gap-1">
+                      {bulkTeamIds.length > 0 && (
+                        <div className="space-y-1.5">
                           {bulkTeamIds.map((id) => (
-                            <span
+                            <div
                               key={id}
-                              className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium"
+                              className="flex items-center justify-between rounded-md bg-muted px-2.5 py-1.5"
                             >
-                              {teamMap.get(id)}
-                              <button
-                                type="button"
-                                onClick={() => setBulkTeamIds((prev) => prev.filter((tid) => tid !== id))}
-                                className="text-muted-foreground hover:text-foreground"
-                              >
-                                <X className="size-2.5" />
-                              </button>
-                            </span>
+                              <div className="flex items-center gap-1.5">
+                                <Users className="size-3 text-muted-foreground" />
+                                <span className="text-[11px] font-medium">{teamMap.get(id)}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setBulkTeamIds((prev) => prev.filter((tid) => tid !== id));
+                                    setBulkTeamLeadIds((prev) => prev.filter((tid) => tid !== id));
+                                  }}
+                                  className="text-muted-foreground hover:text-foreground"
+                                >
+                                  <X className="size-2.5" />
+                                </button>
+                              </div>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <label className="flex items-center gap-1.5 cursor-pointer">
+                                    <span className="text-[10px] text-muted-foreground">Lead</span>
+                                    <Switch
+                                      checked={bulkTeamLeadIds.includes(id)}
+                                      onCheckedChange={(checked) =>
+                                        setBulkTeamLeadIds((prev) =>
+                                          checked ? [...prev, id] : prev.filter((tid) => tid !== id),
+                                        )
+                                      }
+                                      disabled={loading}
+                                      className="scale-75"
+                                    />
+                                  </label>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  Make invitees team leads. They can add/remove members and invite new people to this team.
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
                           ))}
                         </div>
                       )}
@@ -569,6 +632,35 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                     </div>
                   )}
 
+                  {/* Permissions for bulk invites */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Permissions</Label>
+                    <div className="space-y-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className={`size-3.5 ${bulkCanApprove ? "text-emerald-500" : "text-muted-foreground/40"}`} />
+                          <span className="text-xs">Can approve requests</span>
+                        </div>
+                        <Switch
+                          checked={bulkCanApprove}
+                          onCheckedChange={setBulkCanApprove}
+                          disabled={loading}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Plug className={`size-3.5 ${bulkCanConnect ? "text-blue-500" : "text-muted-foreground/40"}`} />
+                          <span className="text-xs">Can create connections</span>
+                        </div>
+                        <Switch
+                          checked={bulkCanConnect}
+                          onCheckedChange={setBulkCanConnect}
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
@@ -579,7 +671,10 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                         setShowBulkList(false);
                         setBulkEntries([]);
                         setBulkTeamIds([]);
+                        setBulkTeamLeadIds([]);
                         setBulkPositionId(null);
+                        setBulkCanApprove(false);
+                        setBulkCanConnect(false);
                       }}
                       disabled={loading}
                     >
@@ -627,7 +722,16 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                 </Label>
                 <Select
                   value={role}
-                  onValueChange={(v) => setRole(v as "admin" | "approver" | "member")}
+                  onValueChange={(v) => {
+                    const r = v as "admin" | "approver" | "member";
+                    setRole(r);
+                    if (r === "admin") {
+                      setCanApprove(true);
+                      setCanConnect(true);
+                    } else if (r === "approver") {
+                      setCanApprove(true);
+                    }
+                  }}
                   disabled={loading}
                 >
                   <SelectTrigger id="invite-role" className="w-full h-9">
@@ -639,6 +743,52 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              {/* Permissions */}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Permissions</Label>
+                <div className="space-y-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className={`size-3.5 ${canApprove ? "text-emerald-500" : "text-muted-foreground/40"}`} />
+                          <span className="text-xs">Can approve requests</span>
+                        </div>
+                        <Switch
+                          checked={canApprove}
+                          onCheckedChange={setCanApprove}
+                          disabled={loading || role === "admin" || role === "approver"}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      {role === "admin" || role === "approver"
+                        ? `${role === "admin" ? "Admins" : "Approvers"} always have approval permission.`
+                        : "Allow this member to approve or reject requests."}
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Plug className={`size-3.5 ${canConnect ? "text-blue-500" : "text-muted-foreground/40"}`} />
+                          <span className="text-xs">Can create connections</span>
+                        </div>
+                        <Switch
+                          checked={canConnect}
+                          onCheckedChange={setCanConnect}
+                          disabled={loading || role === "admin"}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      {role === "admin"
+                        ? "Admins always have connect permission."
+                        : "Allow this member to create API connections and OAuth apps."}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
               {teams.length > 0 && (
                 <div className="space-y-1.5">
@@ -671,6 +821,9 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                                 setSelectedTeamIds((prev) =>
                                   selected ? prev.filter((id) => id !== team.id) : [...prev, team.id],
                                 );
+                                if (selected) {
+                                  setTeamLeadIds((prev) => prev.filter((id) => id !== team.id));
+                                }
                               }}
                               className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 transition-colors"
                             >
@@ -685,22 +838,48 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                       </div>
                     )}
                   </div>
-                  {selectedTeamIds.length > 1 && (
-                    <div className="flex flex-wrap gap-1">
+                  {selectedTeamIds.length > 0 && (
+                    <div className="space-y-1.5">
                       {selectedTeamIds.map((id) => (
-                        <span
+                        <div
                           key={id}
-                          className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium"
+                          className="flex items-center justify-between rounded-md bg-muted px-2.5 py-1.5"
                         >
-                          {teamMap.get(id)}
-                          <button
-                            type="button"
-                            onClick={() => setSelectedTeamIds((prev) => prev.filter((tid) => tid !== id))}
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            <X className="size-2.5" />
-                          </button>
-                        </span>
+                          <div className="flex items-center gap-1.5">
+                            <Users className="size-3 text-muted-foreground" />
+                            <span className="text-[11px] font-medium">{teamMap.get(id)}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedTeamIds((prev) => prev.filter((tid) => tid !== id));
+                                setTeamLeadIds((prev) => prev.filter((tid) => tid !== id));
+                              }}
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <X className="size-2.5" />
+                            </button>
+                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <label className="flex items-center gap-1.5 cursor-pointer">
+                                <span className="text-[10px] text-muted-foreground">Lead</span>
+                                <Switch
+                                  checked={teamLeadIds.includes(id)}
+                                  onCheckedChange={(checked) =>
+                                    setTeamLeadIds((prev) =>
+                                      checked ? [...prev, id] : prev.filter((tid) => tid !== id),
+                                    )
+                                  }
+                                  disabled={loading}
+                                  className="scale-75"
+                                />
+                              </label>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              Make this person a team lead. They can add/remove members and invite new people to this team.
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -817,10 +996,25 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                         addSuffix: true,
                       })}
                     </span>
+                    {invite.can_approve && (
+                      <span className="flex items-center gap-0.5 text-emerald-600">
+                        <ShieldCheck className="size-2.5" />
+                        Approve
+                      </span>
+                    )}
+                    {invite.can_connect && (
+                      <span className="flex items-center gap-0.5 text-blue-600">
+                        <Plug className="size-2.5" />
+                        Connect
+                      </span>
+                    )}
                     {invite.team_ids?.length > 0 && invite.team_ids.map((tid) => (
                       <span key={tid} className="flex items-center gap-0.5">
                         <Users className="size-2.5" />
                         {teamMap.get(tid) ?? "Unknown team"}
+                        {invite.team_lead_ids?.includes(tid) && (
+                          <span className="text-amber-600 font-semibold">(Lead)</span>
+                        )}
                       </span>
                     ))}
                   </div>

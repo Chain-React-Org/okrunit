@@ -22,7 +22,7 @@ export default async function TeamDetailPage({
   if (!ctx) redirect("/login");
   const { membership, profile } = ctx;
 
-  if (membership.role !== "owner" && membership.role !== "admin") redirect("/org/overview");
+  const isAdmin = membership.role === "owner" || membership.role === "admin";
 
   const admin = createAdminClient();
 
@@ -40,7 +40,7 @@ export default async function TeamDetailPage({
   const [{ data: teamMemberships }, { data: orgMemberships }, { data: positions }] = await Promise.all([
     admin
       .from("team_memberships")
-      .select("id, team_id, user_id, position_id, created_at")
+      .select("id, team_id, user_id, position_id, is_lead, created_at")
       .eq("team_id", team.id),
     admin
       .from("org_memberships")
@@ -78,9 +78,14 @@ export default async function TeamDetailPage({
       avatar_url: prof?.avatar_url ?? null,
       role: (orgMem?.role ?? "member") as "owner" | "admin" | "member",
       position_id: tm.position_id as string | null,
+      is_lead: (tm as Record<string, unknown>).is_lead as boolean ?? false,
       joined_at: tm.created_at,
     };
   });
+
+  // Check if current user is a team lead for this team
+  const currentUserTeamMembership = (teamMemberships ?? []).find((tm) => tm.user_id === profile.id);
+  const isTeamLead = (currentUserTeamMembership as Record<string, unknown> | undefined)?.is_lead === true;
 
   // Available org members (not yet in this team, excluding team owner)
   const availableMembers = (orgMemberships ?? [])
@@ -98,7 +103,7 @@ export default async function TeamDetailPage({
   // Owner info
   const ownerProfile = team.created_by ? profileMap.get(team.created_by) : null;
   const owner = ownerProfile
-    ? { id: team.created_by!, name: ownerProfile.full_name, email: ownerProfile.email }
+    ? { id: team.created_by!, name: ownerProfile.full_name, email: ownerProfile.email, avatar_url: ownerProfile.avatar_url }
     : null;
 
   return (
@@ -114,7 +119,8 @@ export default async function TeamDetailPage({
       positions={(positions ?? []).map((p) => ({ id: p.id, name: p.name }))}
       owner={owner}
       currentUserId={profile.id}
-      canManage={membership.role === "owner" || membership.role === "admin"}
+      canManage={isAdmin || isTeamLead}
+      isOrgAdmin={isAdmin}
     />
   );
 }

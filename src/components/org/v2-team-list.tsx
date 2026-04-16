@@ -61,10 +61,17 @@ export function V2TeamList({
   const [deleteTarget, setDeleteTarget] = useState<TeamData | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [optimisticTeams, setOptimisticTeams] = useState<TeamData[]>([]);
+  const [deletedTeamIds, setDeletedTeamIds] = useState<Set<string>>(new Set());
+
+  const allTeams = [
+    ...initialTeams,
+    ...optimisticTeams.filter((o) => !initialTeams.some((t) => t.id === o.id)),
+  ].filter((t) => !deletedTeamIds.has(t.id));
 
   const canManage = currentUserRole === "owner" || currentUserRole === "admin";
   const planLimits = PLAN_LIMITS[currentPlan];
-  const atTeamLimit = !isUnlimited(planLimits.maxTeams) && initialTeams.length >= planLimits.maxTeams;
+  const atTeamLimit = !isUnlimited(planLimits.maxTeams) && allTeams.length >= planLimits.maxTeams;
 
   function openCreateDialog() {
     setName("");
@@ -87,10 +94,18 @@ export function V2TeamList({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), description: description.trim() || null }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error ?? "Failed to create team");
       }
+      const created = data.data;
+      setOptimisticTeams((prev) => [...prev, {
+        id: created.id,
+        name: created.name,
+        description: created.description ?? null,
+        created_at: created.created_at,
+        updated_at: created.updated_at,
+      }]);
       toast.success("Team created");
       setCreateDialogOpen(false);
       setName("");
@@ -138,6 +153,7 @@ export function V2TeamList({
         const data = await res.json();
         throw new Error(data.error ?? "Failed to delete team");
       }
+      setDeletedTeamIds((prev) => new Set(prev).add(deleteTarget.id));
       toast.success("Team deleted");
       setDeleteTarget(null);
       router.refresh();
@@ -156,7 +172,7 @@ export function V2TeamList({
           <p className="text-xs font-medium text-primary mb-0.5">Organization</p>
           <h1 className="text-xl font-semibold tracking-tight">Teams</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {initialTeams.length} team{initialTeams.length !== 1 ? "s" : ""} in this organization
+            {allTeams.length} team{allTeams.length !== 1 ? "s" : ""} in this organization
           </p>
         </div>
         {canManage && (
@@ -185,7 +201,7 @@ export function V2TeamList({
       </div>
 
       {/* Team list */}
-      {initialTeams.length === 0 ? (
+      {allTeams.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 bg-[var(--card)] py-16">
           <UsersRound className="text-muted-foreground/30 mb-3 size-10" />
           <p className="text-sm text-muted-foreground">No teams yet</p>
@@ -199,7 +215,7 @@ export function V2TeamList({
         </div>
       ) : (
         <div className="grid gap-3">
-          {initialTeams.map((team) => {
+          {allTeams.map((team) => {
             const memberCount = initialMemberCounts[team.id] ?? 0;
 
             return (
@@ -232,8 +248,8 @@ export function V2TeamList({
                 </div>
 
                 {/* Actions - visible on hover */}
-                {canManage && (
-                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {canManage && (
                     <button
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEditDialog(team); }}
                       className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -241,6 +257,8 @@ export function V2TeamList({
                     >
                       <Pencil className="size-3.5" />
                     </button>
+                  )}
+                  {canManage && allTeams.length > 1 ? (
                     <button
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteTarget(team); }}
                       className="rounded-md p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -248,8 +266,30 @@ export function V2TeamList({
                     >
                       <Trash2 className="size-3.5" />
                     </button>
-                  </div>
-                )}
+                  ) : canManage && allTeams.length <= 1 ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="rounded-md p-1.5 cursor-default" tabIndex={0} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                          <Trash2 className="size-3.5 text-muted-foreground/30" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>Cannot delete your only team</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="rounded-md p-1.5 cursor-default" tabIndex={0} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                          <Trash2 className="size-3.5 text-muted-foreground/30" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>Only owners and admins can delete teams</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
               </Link>
             );
           })}
@@ -274,7 +314,7 @@ export function V2TeamList({
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)} disabled={loading}>Cancel</Button>
-              <Button type="submit" disabled={loading || !name.trim()}>{loading ? "Creating..." : "Create Team"}</Button>
+              <Button type="submit" variant="success" disabled={loading || !name.trim()}>{loading ? "Creating..." : "Create Team"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

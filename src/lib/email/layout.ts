@@ -18,7 +18,7 @@ export function escapeHtml(str: string): string {
 
 const PROD_URL = "https://okrunit.com";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || PROD_URL;
-const LOGO_URL = `${PROD_URL}/logo_text.png`;
+const LOGO_URL = `${PROD_URL}/logo-icon.png`;
 
 export { APP_URL, PROD_URL };
 
@@ -491,12 +491,12 @@ export function emailSignoff(options: {
 
 export function emailLayout(options: {
   body: string;
-  /** Optional hero banner that renders ABOVE the white card */
+  /** @deprecated Hero banner is no longer rendered. Kept for API compat. */
   heroBanner?: string;
   footerText?: string;
   preheader?: string;
 }): string {
-  const { body, heroBanner, footerText, preheader } = options;
+  const { body, footerText, preheader } = options;
 
   const preheaderBlock = preheader
     ? `<div style="display:none;font-size:1px;color:${emailTheme.pageBackground};line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${escapeHtml(preheader)}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>`
@@ -522,18 +522,18 @@ export function emailLayout(options: {
   ${preheaderBlock}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;background-color:${emailTheme.pageBackground};">
     <tr>
-      <td align="center" style="padding:40px 16px 64px;">
+      <td align="center" style="padding:32px 16px 48px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
           <!-- Logo -->
           <tr>
-            <td align="center" style="padding:0 0 28px;">
+            <td align="center" style="padding:0 0 24px;">
               <a href="${PROD_URL}" style="text-decoration:none;">
                 <img
                   src="${LOGO_URL}"
                   alt="OKrunit"
-                  width="140"
-                  style="display:block;width:140px;height:auto;border:0;"
+                  width="80"
+                  style="display:block;width:80px;height:auto;border:0;"
                 />
               </a>
             </td>
@@ -543,10 +543,9 @@ export function emailLayout(options: {
           <tr>
             <td>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${emailTheme.cardBackground};border:1px solid ${emailTheme.cardBorder};border-radius:16px;overflow:hidden;">
-                ${heroBanner ?? ""}
                 <!-- Body content -->
                 <tr>
-                  <td style="padding:44px 44px 28px;">
+                  <td style="padding:40px 44px 28px;">
                     ${body}
                   </td>
                 </tr>

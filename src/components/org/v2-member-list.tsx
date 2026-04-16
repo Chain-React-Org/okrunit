@@ -102,7 +102,8 @@ export function V2MemberList({
   const [optimisticConnect, setOptimisticConnect] = useState<Record<string, boolean>>({});
 
   const isOwner = currentUserRole === "owner";
-  const canRemove = currentUserRole === "owner" || currentUserRole === "admin";
+  const isAdmin = currentUserRole === "owner" || currentUserRole === "admin";
+  const canRemove = isAdmin;
 
   const filteredMembers = useMemo(() => {
     let result = members;
@@ -293,10 +294,12 @@ export function V2MemberList({
             <Download className="size-3.5" />
             Export CSV
           </Button>
-          <Button size="sm" onClick={() => router.push("/org/invites")} className="gap-1.5 h-9">
-            <UserPlus className="size-3.5" />
-            Invite Member
-          </Button>
+          {isAdmin && (
+            <Button size="sm" onClick={() => router.push("/org/invites")} className="gap-1.5 h-9">
+              <UserPlus className="size-3.5" />
+              Invite Member
+            </Button>
+          )}
         </div>
       </div>
 
@@ -313,7 +316,7 @@ export function V2MemberList({
           <p className="text-sm text-muted-foreground">
             {search || roleFilter !== "all" ? "No members match your filters" : "No members found"}
           </p>
-          {!search && roleFilter === "all" && (
+          {!search && roleFilter === "all" && isAdmin && (
             <>
               <p className="text-xs text-muted-foreground/60 mt-1">Invite someone to get your team started</p>
               <Button size="sm" className="mt-4 gap-1.5" onClick={() => router.push("/org/invites")}>
@@ -409,7 +412,7 @@ export function V2MemberList({
                           <Switch
                             checked={canApproveValue}
                             onCheckedChange={(checked) => handleCanApproveChange(member.id, checked)}
-                            disabled={isSelf || member.role === "approver"}
+                            disabled={!isAdmin || isSelf || member.role === "approver"}
                           />
                         </div>
                       </TooltipTrigger>
@@ -442,7 +445,7 @@ export function V2MemberList({
                           <Switch
                             checked={canConnectValue}
                             onCheckedChange={(checked) => handleCanConnectChange(member.id, checked)}
-                            disabled={isSelf || isAdminOrOwner}
+                            disabled={!isAdmin || isSelf || isAdminOrOwner}
                           />
                         </div>
                       </TooltipTrigger>
@@ -459,7 +462,7 @@ export function V2MemberList({
 
                 {/* Role */}
                 <div className="shrink-0">
-                  {(isOwner || currentUserRole === "admin") && !isSelf && member.role !== "owner" && !(currentUserRole === "admin" && member.role === "admin") ? (
+                  {isAdmin && !isSelf && member.role !== "owner" && !(currentUserRole === "admin" && member.role === "admin") ? (
                     <Select
                       value={member.role}
                       onValueChange={(value) => handleRoleChange(member.id, value)}

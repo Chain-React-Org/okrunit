@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useOnboardingTourStore } from "@/stores/onboarding-tour-store";
 import { TOUR_STEPS, findPageTour } from "@/components/onboarding/tour-steps";
-import { AlertTriangle, Menu, HelpCircle, LogOut, Settings, Check, ChevronsUpDown, Building2, Search, BookOpen, Sparkles, ArrowUpRight, Download } from "lucide-react";
+import { AlertTriangle, Menu, HelpCircle, LogOut, Settings, Check, ChevronsUpDown, Building2, Crown, Search, BookOpen, Sparkles, ArrowUpRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
@@ -50,7 +50,7 @@ interface HeaderProps {
 export function Header({ emergencyStopActive, user, orgName: serverOrgName, pendingCount = 0, currentOrgId, userOrgs: serverUserOrgs = [], userId, currentPlan }: HeaderProps) {
   const router = useRouter();
   const { setMobileOpen } = useSidebarStore();
-  const { getOrgName } = useOrgName();
+  const { getOrgName, isOrgDeleted } = useOrgName();
   const { deferredPrompt, isInstalled, setDeferredPrompt } = useInstallPromptStore();
   const avatarOverride = useAvatarStore((s) => s.avatarUrl);
   const [isMac, setIsMac] = useState(false);
@@ -58,12 +58,14 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
   // Apply optimistic avatar override (undefined = use server value)
   const displayAvatarUrl = avatarOverride !== undefined ? avatarOverride : user?.avatar_url ?? null;
 
-  // Apply optimistic name overrides
+  // Apply optimistic name overrides and filter deleted orgs
   const orgName = currentOrgId ? getOrgName(currentOrgId, serverOrgName ?? "") : serverOrgName;
-  const userOrgs = serverUserOrgs.map((org) => ({
-    ...org,
-    org_name: getOrgName(org.org_id, org.org_name),
-  }));
+  const userOrgs = serverUserOrgs
+    .filter((org) => !isOrgDeleted(org.org_id))
+    .map((org) => ({
+      ...org,
+      org_name: getOrgName(org.org_id, org.org_name),
+    }));
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
@@ -136,7 +138,10 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
                       <div className="flex size-6 shrink-0 items-center justify-center rounded bg-muted text-[10px] font-semibold">
                         {org.org_name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="flex-1 truncate">{org.org_name}</span>
+                      <span className="flex items-center gap-1.5 flex-1 truncate">
+                        {org.org_name}
+                        {org.role === "owner" && <Crown className="size-3 text-amber-500 shrink-0" />}
+                      </span>
                       {org.org_id === currentOrgId && <Check className="size-4 shrink-0 text-primary" />}
                     </DropdownMenuItem>
                   ))}

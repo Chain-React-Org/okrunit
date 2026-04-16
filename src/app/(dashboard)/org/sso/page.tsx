@@ -18,10 +18,6 @@ export default async function SSOSettingsPage() {
   const { membership, org } = ctx;
   const isAdmin = membership.role === "owner" || membership.role === "admin";
 
-  if (!isAdmin) {
-    redirect("/org/overview");
-  }
-
   const ssoFeature = await canUseFeature(org.id, "sso_saml");
 
   return (

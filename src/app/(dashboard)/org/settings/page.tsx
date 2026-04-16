@@ -13,8 +13,6 @@ export default async function V2OrgSettingsPage() {
   if (!ctx) redirect("/login");
   const { membership, org } = ctx;
 
-  if (membership.role !== "owner" && membership.role !== "admin") redirect("/org/overview");
-
   return (
     <V2OrgSettings
       org={org}

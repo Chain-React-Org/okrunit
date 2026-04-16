@@ -26,6 +26,9 @@ const inviteBodySchema = z.object({
   role: z.enum(["admin", "approver", "member"]),
   team_ids: z.array(z.string().uuid()).optional().default([]),
   position_id: z.string().uuid().nullable().optional().default(null),
+  can_approve: z.boolean().optional().default(false),
+  can_connect: z.boolean().optional().default(false),
+  team_lead_ids: z.array(z.string().uuid()).optional().default([]),
 });
 
 const revokeBodySchema = z.object({
@@ -48,10 +51,7 @@ export async function POST(request: Request) {
       throw new ApiError(403, "Only dashboard users can manage team invites");
     }
 
-    // Must be admin or owner.
-    if (auth.membership.role !== "owner" && auth.membership.role !== "admin") {
-      throw new ApiError(403, "Insufficient permissions");
-    }
+    const isOrgAdmin = auth.membership.role === "owner" || auth.membership.role === "admin";
 
     // Billing plan enforcement
     const billingCheck = await canAddTeamMember(auth.orgId);
@@ -81,6 +81,40 @@ export async function POST(request: Request) {
         );
       }
       throw err;
+    }
+
+    // Permission check: org admin or team lead
+    if (!isOrgAdmin) {
+      // Team leads can only invite as "member" role
+      if (body.role !== "member") {
+        throw new ApiError(403, "Team leads can only invite members");
+      }
+
+      // Team leads cannot assign other team leads
+      if (body.team_lead_ids.length > 0) {
+        throw new ApiError(403, "Only org admins can assign team leads");
+      }
+
+      // Must include at least one team the user leads
+      if (body.team_ids.length === 0) {
+        throw new ApiError(403, "Team leads must assign invitees to their team");
+      }
+
+      const admin2 = createAdminClient();
+      const { data: leaderships } = await admin2
+        .from("team_memberships")
+        .select("team_id")
+        .eq("user_id", auth.user.id)
+        .eq("is_lead", true)
+        .in("team_id", body.team_ids);
+
+      if (!leaderships || leaderships.length === 0) {
+        throw new ApiError(403, "You are not a team lead for any of the specified teams");
+      }
+
+      // Restrict team_ids to only teams the lead manages
+      const leadTeamIds = new Set(leaderships.map((l) => l.team_id));
+      body.team_ids = body.team_ids.filter((tid) => leadTeamIds.has(tid));
     }
 
     // Only owners can invite as admin.
@@ -142,6 +176,9 @@ export async function POST(request: Request) {
     expiresAt.setDate(expiresAt.getDate() + INVITE_EXPIRY_DAYS);
 
     // Insert the invite.
+    // Validate team_lead_ids are a subset of team_ids
+    const validLeadIds = body.team_lead_ids.filter((id) => body.team_ids.includes(id));
+
     const { data: invite, error: insertError } = await admin
       .from("org_invites")
       .insert({
@@ -153,8 +190,11 @@ export async function POST(request: Request) {
         expires_at: expiresAt.toISOString(),
         team_ids: body.team_ids,
         position_id: body.position_id,
+        can_approve: body.can_approve,
+        can_connect: body.can_connect,
+        team_lead_ids: validLeadIds,
       })
-      .select("id, org_id, email, role, invited_by, expires_at, team_ids, position_id, created_at")
+      .select("id, org_id, email, role, invited_by, expires_at, team_ids, position_id, can_approve, can_connect, team_lead_ids, created_at")
       .single<Omit<OrgInvite, "token" | "accepted_at">>();
 
     if (insertError || !invite) {
@@ -176,7 +216,7 @@ export async function POST(request: Request) {
       process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const inviteLink = `${appUrl}/invite/${token}`;
     const fromAddress =
-      process.env.RESEND_FROM_EMAIL ?? "OKrunit <noreply@okrunit.com>";
+      process.env.EMAIL_FROM ?? "OKrunit <noreply@okrunit.com>";
 
     if (process.env.RESEND_API_KEY) {
       try {
@@ -216,7 +256,7 @@ export async function POST(request: Request) {
       action: "invite.created",
       resourceType: "org_invite",
       resourceId: invite.id,
-      details: { email: normalizedEmail, role: body.role, team_ids: body.team_ids, position_id: body.position_id },
+      details: { email: normalizedEmail, role: body.role, team_ids: body.team_ids, position_id: body.position_id, can_approve: body.can_approve, can_connect: body.can_connect, team_lead_ids: validLeadIds },
       ipAddress,
     });
 

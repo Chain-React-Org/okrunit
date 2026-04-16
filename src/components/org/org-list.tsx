@@ -6,9 +6,11 @@ import {
   Building2,
   Check,
   Crown,
+  Loader2,
   Pencil,
   Plus,
   Shield,
+  Trash2,
   User,
   Users,
   UsersRound,
@@ -33,6 +35,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
+import { checkMfaRequired, verifyMfaCode } from "@/lib/mfa";
 
 interface OrgItem {
   id: string;
@@ -58,12 +62,22 @@ export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCoun
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [optimisticOrgs, setOptimisticOrgs] = useState<OrgItem[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<OrgItem | null>(null);
+  const [confirmName, setConfirmName] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | undefined>();
   const [editingOrgId, setEditingOrgId] = useState<string | null>(null);
   const editRef = useRef<HTMLHeadingElement>(null);
-  const { getOrgName, setOrgName } = useOrgName();
+  const { getOrgName, setOrgName, isOrgDeleted, deleteOrg } = useOrgName();
 
-  // Apply optimistic name overrides
-  const orgs = serverOrgs.map((org) => ({
+  // Apply optimistic name overrides, merge created orgs, filter deleted orgs
+  const mergedOrgs = [...serverOrgs, ...optimisticOrgs.filter(
+    (o) => !serverOrgs.some((s) => s.org_id === o.org_id)
+  )].filter((o) => !isOrgDeleted(o.org_id));
+  const orgs = mergedOrgs.map((org) => ({
     ...org,
     org_name: getOrgName(org.org_id, org.org_name),
   }));
@@ -100,10 +114,18 @@ export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCoun
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newName.trim() }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
         throw new Error(data?.error ?? "Failed to create organization");
       }
+      const created = data.data;
+      setOptimisticOrgs((prev) => [...prev, {
+        id: created.id,
+        org_id: created.id,
+        org_name: created.name,
+        role: "owner",
+        is_default: false,
+      }]);
       toast.success("Organization created");
       setCreateOpen(false);
       setNewName("");
@@ -200,6 +222,74 @@ export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCoun
     })();
   }
 
+  async function openDeleteDialog(org: OrgItem) {
+    setDeleteTarget(org);
+    setConfirmName("");
+    setTotpCode("");
+    setMfaRequired(false);
+    setMfaFactorId(undefined);
+
+    // Check if user has MFA enabled
+    const supabase = createClient();
+    const mfa = await checkMfaRequired(supabase);
+    if (mfa.required && mfa.factorId) {
+      setMfaRequired(true);
+      setMfaFactorId(mfa.factorId);
+    } else {
+      // Also check if already at AAL2 (MFA enrolled and verified this session)
+      const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (data?.currentLevel === "aal2") {
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const totpFactor = factors?.totp?.find((f) => f.status === "verified");
+        if (totpFactor) {
+          setMfaRequired(true);
+          setMfaFactorId(totpFactor.id);
+        }
+      }
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    if (confirmName.trim() !== deleteTarget.org_name) return;
+    if (mfaRequired && !totpCode.trim()) return;
+
+    setDeleting(true);
+    try {
+      // Verify TOTP if required
+      if (mfaRequired && mfaFactorId) {
+        const supabase = createClient();
+        const result = await verifyMfaCode(supabase, mfaFactorId, totpCode.trim());
+        if (result.error) {
+          toast.error(result.error);
+          setDeleting(false);
+          return;
+        }
+      }
+
+      const res = await fetch(`/api/v1/org/${deleteTarget.org_id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed to delete organization");
+      }
+
+      deleteOrg(deleteTarget.org_id);
+      if (data?.switched_to) {
+        toast.success("Organization deleted. Switched to another organization.");
+      } else {
+        toast.success("Organization deleted");
+      }
+      setDeleteTarget(null);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete organization");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -208,7 +298,7 @@ export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCoun
           <p className="text-xs font-medium text-primary mb-0.5">Account</p>
           <h1 className="text-xl font-semibold tracking-tight">Organizations</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {orgs.length} organization{orgs.length !== 1 ? "s" : ""}
+            {orgs.length} organization{orgs.length !== 1 ? "s" : ""} · Your active organization is remembered across sessions
           </p>
         </div>
         {canCreateOrg ? (
@@ -240,8 +330,9 @@ export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCoun
           const isActive = org.org_id === currentOrgId;
           const isEditing = editingOrgId === org.org_id;
           const isSwitching = switching === org.org_id;
-          const members = memberCounts[org.org_id] ?? 0;
-          const teams = teamCounts[org.org_id] ?? 0;
+          const isOptimistic = optimisticOrgs.some((o) => o.org_id === org.org_id);
+          const members = memberCounts[org.org_id] ?? (isOptimistic ? 1 : 0);
+          const teams = teamCounts[org.org_id] ?? (isOptimistic ? 1 : 0);
 
           return (
             <div
@@ -282,19 +373,6 @@ export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCoun
                   >
                     {org.org_name}
                   </h3>
-                  {(org.role === "owner" || org.role === "admin") && (
-                    <button
-                      type="button"
-                      className={`inline-flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors ${
-                        isEditing ? "invisible" : "opacity-0 group-hover:opacity-100 focus:opacity-100"
-                      }`}
-                      onClick={() => startEditing(org)}
-                      title="Rename organization"
-                      tabIndex={isEditing ? -1 : undefined}
-                    >
-                      <Pencil className="size-3" />
-                    </button>
-                  )}
                   {isActive && (
                     <Badge variant="default" className="text-[10px] gap-1 shrink-0">
                       <Check className="size-2.5" />
@@ -332,18 +410,55 @@ export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCoun
                 </div>
               </div>
 
-              {/* Switch button */}
-              {!isActive && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 shrink-0"
-                  onClick={() => handleSwitch(org.org_id)}
-                  disabled={isSwitching || switching !== null}
-                >
-                  {isSwitching ? "Switching..." : "Switch"}
-                </Button>
-              )}
+              {/* Actions */}
+              <div className="flex items-center gap-1 shrink-0">
+                {(org.role === "owner" || org.role === "admin") && (
+                  <button
+                    type="button"
+                    className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    onClick={() => startEditing(org)}
+                    title="Rename organization"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                )}
+                {org.role === "owner" && orgs.length > 1 ? (
+                  <button
+                    type="button"
+                    className="rounded-md p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    onClick={() => openDeleteDialog(org)}
+                    title="Delete organization"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="rounded-md p-1.5 cursor-default opacity-0 group-hover:opacity-100" tabIndex={0}>
+                        <Trash2 className="size-3.5 text-muted-foreground/30" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p>
+                        {org.role !== "owner"
+                          ? "Only the organization owner can delete it"
+                          : "Cannot delete your only organization"}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {!isActive && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 ml-1"
+                    onClick={() => handleSwitch(org.org_id)}
+                    disabled={isSwitching || switching !== null}
+                  >
+                    {isSwitching ? "Switching..." : "Switch"}
+                  </Button>
+                )}
+              </div>
             </div>
           );
         })}
@@ -376,11 +491,70 @@ export function OrgList({ orgs: serverOrgs, currentOrgId, memberCounts, teamCoun
               <Button type="button" variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={creating || !newName.trim()}>
+              <Button type="submit" variant="success" disabled={creating || !newName.trim()}>
                 {creating ? "Creating..." : "Create Organization"}
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Organization Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setConfirmName(""); setTotpCode(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Organization</DialogTitle>
+            <DialogDescription>
+              This will permanently delete <strong>{deleteTarget?.org_name}</strong> and all of its teams, members, API keys, approval requests, and billing data. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="confirm-org-name">
+                Type <strong>{deleteTarget?.org_name}</strong> to confirm
+              </Label>
+              <Input
+                id="confirm-org-name"
+                placeholder="Organization name"
+                value={confirmName}
+                onChange={(e) => setConfirmName(e.target.value)}
+                disabled={deleting}
+                autoFocus
+              />
+            </div>
+            {mfaRequired && (
+              <div className="space-y-2">
+                <Label htmlFor="totp-code">Two-factor authentication code</Label>
+                <Input
+                  id="totp-code"
+                  placeholder="123456"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  maxLength={6}
+                  disabled={deleting}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                />
+              </div>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={
+                  deleting ||
+                  confirmName.trim() !== deleteTarget?.org_name ||
+                  (mfaRequired && totpCode.length < 6)
+                }
+              >
+                {deleting && <Loader2 className="size-4 animate-spin" />}
+                {deleting ? "Deleting..." : "Delete Organization"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
