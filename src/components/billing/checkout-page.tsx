@@ -15,6 +15,7 @@ interface CheckoutPageProps {
 
 function NewSubscriptionCheckout({ planId, billingCycle }: { planId: BillingPlan; billingCycle: "monthly" | "yearly" }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [mode, setMode] = useState<"setup" | "payment">("payment");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ function NewSubscriptionCheckout({ planId, billingCycle }: { planId: BillingPlan
 
         if (data.clientSecret) {
           setClientSecret(data.clientSecret);
+          setMode(data.mode ?? "payment");
         } else {
           setError(data.error ?? "Failed to initialize checkout");
           toast.error(data.error ?? "Failed to initialize checkout");
@@ -71,7 +73,7 @@ function NewSubscriptionCheckout({ planId, billingCycle }: { planId: BillingPlan
 
   return (
     <StripeProvider clientSecret={clientSecret}>
-      <CheckoutForm planId={planId} billingCycle={billingCycle} />
+      <CheckoutForm planId={planId} billingCycle={billingCycle} mode={mode} />
     </StripeProvider>
   );
 }

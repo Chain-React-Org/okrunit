@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   const { data: subscription } = await admin
     .from("subscriptions")
-    .select("stripe_customer_id, stripe_subscription_id, status, plan_id")
+    .select("stripe_customer_id, stripe_subscription_id, status, plan_id, trial_end")
     .eq("org_id", org.id)
     .single();
 
@@ -75,9 +75,18 @@ export async function POST(req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  // Check if this org qualifies for new customer trial + discount
+  // Check if this org qualifies for new customer discount
   const firstTime = await isFirstTimeSubscriber(org.id);
   const couponId = firstTime ? await getNewCustomerCoupon(stripe) : undefined;
+
+  // If org is on a DB trial with time remaining, carry trial to Stripe
+  const isOnTrial = subscription?.status === "trialing" && subscription.trial_end;
+  const trialEndTimestamp = isOnTrial
+    ? Math.max(
+        Math.floor(new Date(subscription.trial_end!).getTime() / 1000),
+        Math.floor(Date.now() / 1000) + 60,
+      )
+    : undefined;
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
@@ -88,6 +97,7 @@ export async function POST(req: NextRequest) {
     metadata: { org_id: org.id, plan_id },
     subscription_data: {
       metadata: { org_id: org.id, plan_id },
+      ...(trialEndTimestamp ? { trial_end: trialEndTimestamp } : {}),
     },
     ...(couponId ? { discounts: [{ coupon: couponId }] } : {}),
   });

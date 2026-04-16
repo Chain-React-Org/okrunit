@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   const { data: subscription } = await admin
     .from("subscriptions")
-    .select("stripe_customer_id, stripe_subscription_id, status, plan_id")
+    .select("stripe_customer_id, stripe_subscription_id, status, plan_id, trial_end")
     .eq("org_id", org.id)
     .single();
 
@@ -78,6 +78,16 @@ export async function POST(req: NextRequest) {
   const firstTime = await isFirstTimeSubscriber(org.id);
   const couponId = firstTime ? await getNewCustomerCoupon(stripe) : undefined;
 
+  // If the org is currently on a DB trial with time remaining, carry
+  // that trial over to Stripe so the first charge happens after it ends.
+  const isOnTrial = subscription?.status === "trialing" && subscription.trial_end;
+  const trialEndTimestamp = isOnTrial
+    ? Math.max(
+        Math.floor(new Date(subscription.trial_end!).getTime() / 1000),
+        Math.floor(Date.now() / 1000) + 60, // Stripe requires at least 48 hours in the future, use 60s minimum as safety
+      )
+    : undefined;
+
   let stripeSub;
   try {
     stripeSub = await stripe.subscriptions.create({
@@ -87,27 +97,40 @@ export async function POST(req: NextRequest) {
       payment_settings: { save_default_payment_method: "on_subscription" },
       metadata: { org_id: org.id, plan_id },
       ...(couponId ? { coupon: couponId } : {}),
-      expand: ["latest_invoice.payment_intent"],
+      ...(trialEndTimestamp ? { trial_end: trialEndTimestamp } : {}),
+      expand: ["latest_invoice.payment_intent", "pending_setup_intent"],
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Stripe subscription creation failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  const invoice = stripeSub.latest_invoice;
-  const paymentIntent =
-    typeof invoice === "object" && invoice !== null && "payment_intent" in invoice
-      ? invoice.payment_intent
-      : null;
+  // When there's a trial, Stripe creates a SetupIntent (to save card) instead of a PaymentIntent.
+  // When there's no trial, Stripe creates a PaymentIntent (to charge immediately).
+  let clientSecret: string | null = null;
+  let mode: "setup" | "payment" = "payment";
 
-  const clientSecret =
-    typeof paymentIntent === "object" && paymentIntent !== null && "client_secret" in paymentIntent
-      ? (paymentIntent as { client_secret: string }).client_secret
-      : null;
+  if (stripeSub.status === "trialing") {
+    // Extract SetupIntent client secret
+    const setupIntent = stripeSub.pending_setup_intent;
+    if (typeof setupIntent === "object" && setupIntent !== null && "client_secret" in setupIntent) {
+      clientSecret = (setupIntent as { client_secret: string }).client_secret;
+      mode = "setup";
+    }
+  } else {
+    // Extract PaymentIntent client secret
+    const invoice = stripeSub.latest_invoice;
+    const paymentIntent =
+      typeof invoice === "object" && invoice !== null && "payment_intent" in invoice
+        ? invoice.payment_intent
+        : null;
+
+    if (typeof paymentIntent === "object" && paymentIntent !== null && "client_secret" in paymentIntent) {
+      clientSecret = (paymentIntent as { client_secret: string }).client_secret;
+    }
+  }
 
   if (!clientSecret) {
-    // This can happen if the subscription was auto-confirmed (e.g. customer has a card on file).
-    // Clean up the incomplete subscription to avoid duplicates.
     if (stripeSub.id) {
       try { await stripe.subscriptions.cancel(stripeSub.id); } catch { /* best effort */ }
     }
@@ -117,14 +140,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Mark as having had a paid subscription (non-trial path)
+  // Mark as having had a paid subscription
   await admin
     .from("subscriptions")
-    .update({ has_had_paid_subscription: true })
+    .update({
+      has_had_paid_subscription: true,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: stripeSub.id,
+    })
     .eq("org_id", org.id);
 
   return NextResponse.json({
     subscriptionId: stripeSub.id,
     clientSecret,
+    mode,
   });
 }
