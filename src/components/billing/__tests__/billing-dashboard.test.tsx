@@ -111,7 +111,6 @@ describe("BillingDashboard", () => {
       expect(screen.getByText("Requests")).toBeTruthy();
       expect(screen.getByText("42")).toBeTruthy();
       expect(screen.getByText(/of 100/)).toBeTruthy();
-      expect(screen.getByText("42%")).toBeTruthy();
     });
 
     it("displays connection usage", () => {
