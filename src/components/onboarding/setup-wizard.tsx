@@ -63,18 +63,9 @@ export function SetupWizard({
     }
   }, [currentStep, loaded, displayedStep, finishing]);
 
-  // Edge case: if step is past the end, complete setup via effect (not during render)
-  const didComplete = useRef(false);
-  useEffect(() => {
-    if (loaded && !finishing && !didComplete.current && currentStep >= 3) {
-      didComplete.current = true;
-      handleCompleteSetup();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, finishing, currentStep]);
-
-  // If localStorage says complete but we're still on /setup, the DB was reset.
-  // Clear the stale localStorage state so the wizard starts fresh.
+  // If localStorage says complete but we're still on /setup, the DB was reset
+  // (or this is a new account on the same browser). Clear the stale localStorage
+  // state so the wizard starts fresh.
   // Skip if we're in the process of finishing (to avoid flashing step 0).
   const didReset = useRef(false);
   useEffect(() => {
@@ -83,6 +74,18 @@ export function SetupWizard({
       resetWizard();
     }
   }, [loaded, isComplete, resetWizard, finishing]);
+
+  // Edge case: if step is past the end (user navigated back to /setup after
+  // completing all steps in this session), complete setup via effect.
+  // This must run AFTER the reset effect above so stale state gets cleared first.
+  const didComplete = useRef(false);
+  useEffect(() => {
+    if (loaded && !finishing && !didComplete.current && !didReset.current && currentStep >= 3) {
+      didComplete.current = true;
+      handleCompleteSetup();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, finishing, currentStep]);
 
   // Show skeleton while loading localStorage state or resetting stale state
   // Don't show skeleton if we're finishing (stay on last step)

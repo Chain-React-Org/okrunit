@@ -117,6 +117,7 @@ export function SocialLoginButtons({
       provider: providerId,
       options: {
         redirectTo: redirectTo.toString(),
+        queryParams: providerId === "azure" ? { prompt: "select_account" } : undefined,
       },
     });
 
