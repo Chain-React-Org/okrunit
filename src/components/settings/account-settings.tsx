@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useAvatarStore } from "@/stores/avatar-store";
 import type { NotificationSettings, ApprovalPriority } from "@/lib/types/database";
 
 const TIMEZONES = [
@@ -91,6 +92,7 @@ export function AccountSettings({
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
+  const setGlobalAvatarUrl = useAvatarStore((s) => s.setAvatarUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Email change
@@ -203,6 +205,7 @@ export function AccountSettings({
 
       const data = await res.json();
       setAvatarUrl(data.avatar_url);
+      setGlobalAvatarUrl(data.avatar_url);
       toast.success("Profile picture updated.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to upload avatar.");
@@ -222,6 +225,7 @@ export function AccountSettings({
       }
 
       setAvatarUrl(null);
+      setGlobalAvatarUrl(null);
       toast.success("Profile picture removed.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to remove avatar.");
