@@ -78,14 +78,14 @@ export default async function TeamDetailPage({
       avatar_url: prof?.avatar_url ?? null,
       role: (orgMem?.role ?? "member") as "owner" | "admin" | "member",
       position_id: tm.position_id as string | null,
-      is_lead: (tm as Record<string, unknown>).is_lead as boolean ?? false,
+      is_lead: !!(tm as Record<string, unknown>).is_lead,
       joined_at: tm.created_at,
     };
   });
 
   // Check if current user is a team lead for this team
   const currentUserTeamMembership = (teamMemberships ?? []).find((tm) => tm.user_id === profile.id);
-  const isTeamLead = (currentUserTeamMembership as Record<string, unknown> | undefined)?.is_lead === true;
+  const isTeamLead = !!(currentUserTeamMembership as Record<string, unknown> | undefined)?.is_lead;
 
   // Available org members (not yet in this team, excluding team owner)
   const availableMembers = (orgMemberships ?? [])

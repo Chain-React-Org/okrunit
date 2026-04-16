@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
 import { getOrgPlan } from "@/lib/billing/enforce";
 import { getCachedTeamsData } from "@/lib/cache/queries";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { V2TeamList } from "@/components/org/v2-team-list";
 
 export const metadata = {
@@ -12,14 +13,22 @@ export const metadata = {
 export default async function V2OrgTeamsPage() {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
-  const { membership } = ctx;
+  const { membership, profile } = ctx;
 
   const isAdmin = membership.role === "owner" || membership.role === "admin";
 
-  const [currentPlan, { teams, memberCounts }] = await Promise.all([
+  const admin = createAdminClient();
+  const [currentPlan, { teams, memberCounts }, { data: leaderships }] = await Promise.all([
     getOrgPlan(membership.org_id),
     getCachedTeamsData(membership.org_id),
+    admin
+      .from("team_memberships")
+      .select("team_id")
+      .eq("user_id", profile.id)
+      .eq("is_lead", true),
   ]);
+
+  const leadTeamIds = new Set((leaderships ?? []).map((l) => l.team_id));
 
   return (
     <V2TeamList
@@ -27,6 +36,7 @@ export default async function V2OrgTeamsPage() {
       memberCounts={memberCounts}
       currentUserRole={isAdmin ? membership.role : "member"}
       currentPlan={currentPlan}
+      leadTeamIds={[...leadTeamIds]}
     />
   );
 }

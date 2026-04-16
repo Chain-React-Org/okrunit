@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   Plus,
   Pencil,
+  Star,
   Trash2,
   Users,
   UsersRound,
@@ -46,6 +47,7 @@ interface V2TeamListProps {
   memberCounts: Record<string, number>;
   currentUserRole: string;
   currentPlan: BillingPlan;
+  leadTeamIds?: string[];
 }
 
 export function V2TeamList({
@@ -53,6 +55,7 @@ export function V2TeamList({
   memberCounts: initialMemberCounts,
   currentUserRole,
   currentPlan,
+  leadTeamIds = [],
 }: V2TeamListProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -233,6 +236,12 @@ export function V2TeamList({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-semibold truncate">{team.name}</h3>
+                    {leadTeamIds.includes(team.id) && (
+                      <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 shrink-0">
+                        <Star className="size-2.5" />
+                        Lead
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="secondary" className="text-[11px] gap-1">

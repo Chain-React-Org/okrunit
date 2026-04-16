@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, DM_Sans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { ClientErrorReporter } from "@/components/client-error-reporter";
+import { WebVitalsReporter } from "@/components/web-vitals-reporter";
 import { UTMTracker } from "@/components/tracking/utm-tracker";
 import { InstallPromptListener } from "@/components/pwa/install-prompt-listener";
 import { InstallBanner } from "@/components/pwa/install-banner";
@@ -119,6 +121,7 @@ export default function RootLayout({
           {children}
           <Toaster />
           <ClientErrorReporter />
+          <Suspense><WebVitalsReporter /></Suspense>
           <UTMTracker />
           <InstallPromptListener />
           <InstallBanner />
