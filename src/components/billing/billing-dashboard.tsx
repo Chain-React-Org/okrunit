@@ -87,9 +87,6 @@ function UsageRow({ label, used, limit, suffix }: { label: string; used: number;
                   <span className="font-medium">{used.toLocaleString()}</span>
                   <span className="text-muted-foreground"> of {limit.toLocaleString()}</span>
                   {suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
-                  <span className={cn("ml-2 text-xs", pct >= 80 ? "text-amber-600 font-medium" : "text-muted-foreground")}>
-                    {pct}%
-                  </span>
                 </span>
               )}
             </div>
