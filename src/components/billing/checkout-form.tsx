@@ -202,7 +202,7 @@ export function CheckoutForm({ planId, billingCycle, mode = "payment" }: Checkou
               <form onSubmit={handleSubmit} className="mt-6 space-y-6">
                 <PaymentElement
                   options={{
-                    layout: "tabs",
+                    layout: "accordion",
                   }}
                 />
 
