@@ -13,8 +13,6 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import type { OrgInvite, Organization } from "@/lib/types/database";
 
-export const dynamic = "force-dynamic";
-
 export const metadata = {
   title: "Accept Invite - OKrunit",
   description: "Accept your team invitation.",

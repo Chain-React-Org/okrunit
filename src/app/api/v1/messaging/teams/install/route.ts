@@ -7,8 +7,6 @@
 // permission to send messages to Teams channels.
 // ---------------------------------------------------------------------------
 
-export const dynamic = "force-dynamic";
-
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 
