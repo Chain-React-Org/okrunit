@@ -123,7 +123,7 @@ describe("logNotificationDelivery", () => {
     ).resolves.toBeUndefined();
   });
 
-  it("logs to console.error when insert fails", async () => {
+  it("logs error when insert fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockInsert.mockRejectedValue(new Error("Connection timeout"));
 
@@ -133,10 +133,8 @@ describe("logNotificationDelivery", () => {
       status: "sent",
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[DeliveryLog]"),
-      expect.any(Error),
-    );
+    // logger.error outputs JSON via console.error
+    expect(consoleSpy).toHaveBeenCalled();
 
     consoleSpy.mockRestore();
   });
@@ -248,7 +246,7 @@ describe("logNotificationDeliveryBatch", () => {
     ).resolves.toBeUndefined();
   });
 
-  it("logs to console.error when batch insert fails", async () => {
+  it("logs error when batch insert fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockInsert.mockRejectedValue(new Error("Batch failed"));
 
@@ -256,10 +254,8 @@ describe("logNotificationDeliveryBatch", () => {
       { orgId: "org-1", channel: "email", status: "sent" },
     ]);
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[DeliveryLog]"),
-      expect.any(Error),
-    );
+    // logger.error outputs JSON via console.error
+    expect(consoleSpy).toHaveBeenCalled();
 
     consoleSpy.mockRestore();
   });

@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { captureError } from "@/lib/monitoring/capture";
 import { addBreadcrumb } from "@/lib/monitoring/breadcrumbs";
-import { getCorrelationId } from "@/lib/monitoring/logger";
+import { logger, getCorrelationId } from "@/lib/monitoring/logger";
 
 /**
  * Structured API error with an HTTP status code and optional machine-readable
@@ -53,7 +53,7 @@ export function errorResponse(error: unknown): NextResponse {
 
   // Log unexpected errors for observability; never leak internals to clients.
   addBreadcrumb({ type: "error", category: "unhandled", message: error instanceof Error ? error.message : "Unknown error" });
-  console.error("[API] Unhandled error:", error);
+  logger.error("[API] Unhandled error:", error);
 
   // Capture in error monitoring system (fire-and-forget)
   captureError({ error, severity: "error", service: "API" }).catch(() => {});

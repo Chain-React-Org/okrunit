@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 import type { ApprovalPriority } from "@/lib/types/database";
 
 // ---------------------------------------------------------------------------
@@ -124,7 +125,7 @@ export async function getSlaMetrics(
     .not("sla_deadline", "is", null);
 
   if (error) {
-    console.error("[SLA] Failed to fetch SLA metrics:", error);
+    logger.error("[SLA] Failed to fetch SLA metrics:", error);
     return emptyMetrics();
   }
 

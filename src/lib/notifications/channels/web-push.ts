@@ -4,6 +4,7 @@
 
 import webPush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- VAPID Configuration ---------------------------------------------------
 
@@ -17,7 +18,7 @@ if (vapidPublicKey && vapidPrivateKey) {
   webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
   vapidConfigured = true;
 } else {
-  console.warn(
+  logger.warn(
     "[WebPush] VAPID keys not configured. Set NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY to enable web push notifications.",
   );
 }
@@ -53,7 +54,7 @@ export async function sendWebPush(
   payload: PushPayload,
 ): Promise<void> {
   if (!vapidConfigured) {
-    console.warn("[WebPush] Skipping send -- VAPID keys not configured");
+    logger.warn("[WebPush] Skipping send -- VAPID keys not configured");
     return;
   }
 
@@ -65,7 +66,7 @@ export async function sendWebPush(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("[WebPush] Failed to fetch subscriptions for user:", userId, error);
+    logger.error("[WebPush] Failed to fetch subscriptions for user:", userId, error);
     return;
   }
 
@@ -86,7 +87,7 @@ export async function sendWebPushToOrg(
   payload: PushPayload,
 ): Promise<void> {
   if (!vapidConfigured) {
-    console.warn("[WebPush] Skipping send -- VAPID keys not configured");
+    logger.warn("[WebPush] Skipping send -- VAPID keys not configured");
     return;
   }
 
@@ -100,7 +101,7 @@ export async function sendWebPushToOrg(
 
   if (memberError || !memberships || memberships.length === 0) {
     if (memberError) {
-      console.error("[WebPush] Failed to fetch org members:", orgId, memberError);
+      logger.error("[WebPush] Failed to fetch org members:", orgId, memberError);
     }
     return;
   }
@@ -114,7 +115,7 @@ export async function sendWebPushToOrg(
     .in("user_id", userIds);
 
   if (subError) {
-    console.error("[WebPush] Failed to fetch subscriptions for org:", orgId, subError);
+    logger.error("[WebPush] Failed to fetch subscriptions for org:", orgId, subError);
     return;
   }
 
@@ -155,7 +156,7 @@ async function sendToSubscriptions(
           // Subscription is no longer valid -- mark for cleanup
           staleIds.push(sub.id);
         } else {
-          console.error(
+          logger.error(
             "[WebPush] Failed to send to endpoint:",
             sub.endpoint,
             err,
@@ -173,15 +174,15 @@ async function sendToSubscriptions(
       .in("id", staleIds);
 
     if (deleteError) {
-      console.error("[WebPush] Failed to clean up stale subscriptions:", deleteError);
+      logger.error("[WebPush] Failed to clean up stale subscriptions:", deleteError);
     } else {
-      console.info(`[WebPush] Cleaned up ${staleIds.length} stale subscription(s)`);
+      logger.info(`[WebPush] Cleaned up ${staleIds.length} stale subscription(s)`);
     }
   }
 
   // Log summary of any unexpected failures
   const failures = results.filter((r) => r.status === "rejected");
   if (failures.length > 0) {
-    console.error(`[WebPush] ${failures.length}/${results.length} sends failed`);
+    logger.error(`[WebPush] ${failures.length}/${results.length} sends failed`);
   }
 }

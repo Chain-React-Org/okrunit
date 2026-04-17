@@ -16,6 +16,7 @@
 // webhook_notification_channels table).
 // ---------------------------------------------------------------------------
 
+import { logger } from "@/lib/monitoring/logger";
 import type { NotificationEvent, NotificationEventType } from "@/lib/notifications/types";
 import {
   shouldNotify,
@@ -203,7 +204,7 @@ export async function dispatchNotifications(
               });
             })
             .catch((err: unknown) => {
-              console.error(
+              logger.error(
                 `[Notifications] Web push failed for user ${userId}:`,
                 err,
               );
@@ -250,7 +251,7 @@ export async function dispatchNotifications(
                 });
               })
               .catch((err: unknown) => {
-                console.error(
+                logger.error(
                   `[Notifications] Approval email failed for ${email}:`,
                   err,
                 );
@@ -287,7 +288,7 @@ export async function dispatchNotifications(
                 });
               })
               .catch((err: unknown) => {
-                console.error(
+                logger.error(
                   `[Notifications] Decision email failed for ${email}:`,
                   err,
                 );
@@ -324,7 +325,7 @@ export async function dispatchNotifications(
                 });
               })
               .catch((err: unknown) => {
-                console.error(
+                logger.error(
                   `[Notifications] SMS failed for user ${userId}:`,
                   err,
                 );
@@ -475,7 +476,7 @@ export async function dispatchNotifications(
               logNotificationDelivery({ ...logBase, status: "sent" });
             })
             .catch((err: unknown) => {
-              console.error(
+              logger.error(
                 `[Notifications] Webhook failed for channel ${channel.id} (${channel.name}):`,
                 err,
               );
@@ -496,7 +497,7 @@ export async function dispatchNotifications(
       logNotificationDeliveryBatch(suppressionLogs);
     }
   } catch (error) {
-    console.error("[Notifications] Orchestrator error:", error);
+    logger.error("[Notifications] Orchestrator error:", error);
   }
 }
 
@@ -553,7 +554,7 @@ function dispatchSlack(
         logNotificationDelivery({ ...logBase, status: "sent" });
       })
       .catch((err: unknown) => {
-        console.error(
+        logger.error(
           `[Notifications] Slack notification failed for connection ${conn.id}:`,
           err,
         );
@@ -577,7 +578,7 @@ function dispatchSlack(
       logNotificationDelivery({ ...logBase, status: "sent" });
     })
     .catch((err: unknown) => {
-      console.error(
+      logger.error(
         `[Notifications] Slack decision failed for connection ${conn.id}:`,
         err,
       );
@@ -629,7 +630,7 @@ async function dispatchDiscord(
         logNotificationDelivery({ ...logBase, status: "sent" });
       })
       .catch((err: unknown) => {
-        console.error(
+        logger.error(
           `[Notifications] Discord notification failed for connection ${conn.id}:`,
           err,
         );
@@ -655,7 +656,7 @@ async function dispatchDiscord(
       logNotificationDelivery({ ...logBase, status: "sent" });
     })
     .catch((err: unknown) => {
-      console.error(
+      logger.error(
         `[Notifications] Discord decision failed for connection ${conn.id}:`,
         err,
       );
@@ -696,7 +697,7 @@ function dispatchTeams(
         logNotificationDelivery({ ...logBase, status: "sent" });
       })
       .catch((err: unknown) => {
-        console.error(
+        logger.error(
           `[Notifications] Teams notification failed for connection ${conn.id}:`,
           err,
         );
@@ -720,7 +721,7 @@ function dispatchTeams(
       logNotificationDelivery({ ...logBase, status: "sent" });
     })
     .catch((err: unknown) => {
-      console.error(
+      logger.error(
         `[Notifications] Teams decision failed for connection ${conn.id}:`,
         err,
       );
@@ -762,7 +763,7 @@ function dispatchTelegram(
         logNotificationDelivery({ ...logBase, status: "sent" });
       })
       .catch((err: unknown) => {
-        console.error(
+        logger.error(
           `[Notifications] Telegram notification failed for connection ${conn.id}:`,
           err,
         );
@@ -787,7 +788,7 @@ function dispatchTelegram(
       logNotificationDelivery({ ...logBase, status: "sent" });
     })
     .catch((err: unknown) => {
-      console.error(
+      logger.error(
         `[Notifications] Telegram decision failed for connection ${conn.id}:`,
         err,
       );
@@ -1023,7 +1024,7 @@ async function resolveUserName(userId: string): Promise<string> {
       return profile.full_name || profile.email || userId;
     }
   } catch (err) {
-    console.error("[Notifications] Failed to resolve user name:", err);
+    logger.error("[Notifications] Failed to resolve user name:", err);
   }
   return userId;
 }
@@ -1041,13 +1042,13 @@ async function loadTeamMemberIds(teamId: string): Promise<Set<string>> {
       .eq("team_id", teamId);
 
     if (error || !memberships) {
-      console.error("[Notifications] Failed to load team memberships:", error);
+      logger.error("[Notifications] Failed to load team memberships:", error);
       return new Set();
     }
 
     return new Set(memberships.map((m) => m.user_id));
   } catch (err) {
-    console.error("[Notifications] Team membership lookup error:", err);
+    logger.error("[Notifications] Team membership lookup error:", err);
     return new Set();
   }
 }
@@ -1069,7 +1070,7 @@ async function loadUserPhoneNumbers(
       .not("phone_number", "is", null);
 
     if (error || !data) {
-      console.error("[Notifications] Failed to load phone numbers:", error);
+      logger.error("[Notifications] Failed to load phone numbers:", error);
       return new Map();
     }
 
@@ -1081,7 +1082,7 @@ async function loadUserPhoneNumbers(
     }
     return map;
   } catch (err) {
-    console.error("[Notifications] Phone number lookup error:", err);
+    logger.error("[Notifications] Phone number lookup error:", err);
     return new Map();
   }
 }

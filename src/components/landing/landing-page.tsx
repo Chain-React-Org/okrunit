@@ -1488,10 +1488,11 @@ function ScaledMockup({
     >
       <div
         ref={innerRef}
+        className="mx-auto"
         style={{
           width: internalWidth,
           transform: `scale(${scale})`,
-          transformOrigin: "top left",
+          transformOrigin: "top center",
         }}
       >
         {children}

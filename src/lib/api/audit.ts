@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 export interface AuditChange {
   field: string;
@@ -45,7 +46,7 @@ export async function logAuditEvent(params: AuditEventParams): Promise<void> {
   });
 
   if (error) {
-    console.error("[Audit] Failed to write audit log entry:", error);
+    logger.error("[Audit] Failed to write audit log entry:", error);
   }
 }
 

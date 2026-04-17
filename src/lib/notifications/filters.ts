@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 import type { NotificationSettings } from "@/lib/types/database";
 import { PRIORITY_ORDER } from "@/lib/constants";
 
@@ -110,7 +111,7 @@ export async function getOrgNotificationSettings(
     .eq("org_id", orgId);
 
   if (membershipsError) {
-    console.error(
+    logger.error(
       "[Notifications] Failed to load org memberships:",
       membershipsError.message,
     );
@@ -128,7 +129,7 @@ export async function getOrgNotificationSettings(
     .in("id", memberUserIds);
 
   if (profilesError) {
-    console.error(
+    logger.error(
       "[Notifications] Failed to load user profiles:",
       profilesError.message,
     );
@@ -147,7 +148,7 @@ export async function getOrgNotificationSettings(
     .in("user_id", userIds);
 
   if (settingsError) {
-    console.error(
+    logger.error(
       "[Notifications] Failed to load notification settings:",
       settingsError.message,
     );

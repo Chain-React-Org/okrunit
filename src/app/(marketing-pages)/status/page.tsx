@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { CheckCircle, XCircle, Loader2, RefreshCw } from "lucide-react";
+import { XCircle, Loader2, RefreshCw, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HealthStatus {
@@ -41,16 +40,15 @@ export default function StatusPage() {
   const isHealthy = health?.status === "healthy";
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-        <div className="text-center mb-12">
-          <Link href="/" className="text-lg font-bold text-zinc-900">
-            OKrunit
-          </Link>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-zinc-900">
-            System Status
-          </h1>
-        </div>
+    <div>
+      <div className="mb-12">
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
+          System Status
+        </h1>
+        <p className="mt-2 text-lg text-zinc-600">
+          Real-time health checks for OKrunit services.
+        </p>
+      </div>
 
         {/* Main status */}
         <div className="rounded-2xl border border-zinc-200 p-8 text-center">
@@ -146,7 +144,6 @@ export default function StatusPage() {
             </a>
           </p>
         </div>
-      </div>
     </div>
   );
 }

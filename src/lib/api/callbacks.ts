@@ -5,6 +5,7 @@
 import { createHmac } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CALLBACK_TIMEOUT_MS } from "@/lib/constants";
+import { logger } from "@/lib/monitoring/logger";
 import { resolveAndCheckUrl } from "./ssrf";
 
 // ---------------------------------------------------------------------------
@@ -176,7 +177,7 @@ export async function deliverCallback(params: CallbackParams): Promise<void> {
 
   // SSRF protection: block callbacks to private/internal networks (with DNS resolution)
   if (await resolveAndCheckUrl(callbackUrl)) {
-    console.warn(
+    logger.warn(
       `[Callback] Blocked SSRF attempt: ${callbackUrl} for request ${requestId}`,
     );
     return;
@@ -213,7 +214,7 @@ export async function deliverCallback(params: CallbackParams): Promise<void> {
         error_message: result.errorMessage,
       });
     } catch (logError) {
-      console.error(
+      logger.error(
         `[Callback] Failed to write delivery log for request ${requestId}:`,
         logError,
       );
@@ -224,7 +225,7 @@ export async function deliverCallback(params: CallbackParams): Promise<void> {
       return;
     }
 
-    console.warn(
+    logger.warn(
       `[Callback] Inline attempt failed for request ${requestId} ` +
         `to ${callbackUrl}: ${result.errorMessage}. Queuing for retry.`,
     );
@@ -248,14 +249,14 @@ export async function deliverCallback(params: CallbackParams): Promise<void> {
         status: "pending",
       });
     } catch (queueError) {
-      console.error(
+      logger.error(
         `[Callback] Failed to queue retry for request ${requestId}:`,
         queueError,
       );
     }
   } catch (outerError) {
     // Catch-all: callback delivery must never propagate exceptions.
-    console.error(
+    logger.error(
       `[Callback] Unexpected error delivering callback for request ${requestId}:`,
       outerError,
     );

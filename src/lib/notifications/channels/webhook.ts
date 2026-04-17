@@ -9,6 +9,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAndCheckUrl } from "@/lib/api/ssrf";
+import { logger } from "@/lib/monitoring/logger";
 
 export interface WebhookChannel {
   id: string;
@@ -57,7 +58,7 @@ export async function getOrgWebhookChannels(
     .eq("is_active", true);
 
   if (error) {
-    console.error(
+    logger.error(
       "[Webhook] Failed to load webhook channels:",
       error.message,
     );
@@ -92,7 +93,7 @@ export async function sendWebhookNotification(
   // Defense-in-depth SSRF check at delivery time
   const isPrivate = await resolveAndCheckUrl(channel.url);
   if (isPrivate) {
-    console.warn("[Webhook] Blocked delivery to private URL:", channel.id);
+    logger.warn("[Webhook] Blocked delivery to private URL:", channel.id);
     return;
   }
 

@@ -11,6 +11,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 export interface DeliveryLogEntry {
   orgId: string;
@@ -45,7 +46,7 @@ export async function logNotificationDelivery(entry: DeliveryLogEntry): Promise<
     });
   } catch (err) {
     // Never let delivery logging break the notification flow
-    console.error("[DeliveryLog] Failed to log notification delivery:", err);
+    logger.error("[DeliveryLog] Failed to log notification delivery:", err);
   }
 }
 
@@ -71,6 +72,6 @@ export async function logNotificationDeliveryBatch(entries: DeliveryLogEntry[]):
       })),
     );
   } catch (err) {
-    console.error("[DeliveryLog] Failed to batch-log notification deliveries:", err);
+    logger.error("[DeliveryLog] Failed to batch-log notification deliveries:", err);
   }
 }

@@ -11,6 +11,8 @@
 //   TWILIO_FROM_NUMBER  -- Twilio phone number to send from (e.g. +1234567890)
 // ---------------------------------------------------------------------------
 
+import { logger } from "@/lib/monitoring/logger";
+
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER;
@@ -37,7 +39,7 @@ export async function sendSms(
   params: SmsParams,
 ): Promise<{ sid: string } | null> {
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_FROM_NUMBER) {
-    console.warn("[SMS] Twilio not configured, skipping SMS");
+    logger.warn("[SMS] Twilio not configured, skipping SMS");
     return null;
   }
 

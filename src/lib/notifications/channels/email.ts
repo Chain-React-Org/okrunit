@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { Resend } from "resend";
+import { logger } from "@/lib/monitoring/logger";
 import {
   type EmailTone,
   PROD_URL,
@@ -289,7 +290,7 @@ export async function sendApprovalEmail(
   const resend = getResendClient();
 
   if (!resend) {
-    console.warn(
+    logger.warn(
       "[Email] RESEND_API_KEY is not set -- skipping approval email to",
       params.to,
     );
@@ -307,15 +308,15 @@ export async function sendApprovalEmail(
     });
 
     if (error) {
-      console.error("[Email] Resend API error:", error);
+      logger.error("[Email] Resend API error:", error);
       return;
     }
 
-    console.log(
+    logger.info(
       `[Email] Approval email sent to ${params.to} for request ${params.requestId}`,
     );
   } catch (err) {
-    console.error("[Email] Failed to send approval email:", err);
+    logger.error("[Email] Failed to send approval email:", err);
   }
 }
 
@@ -330,7 +331,7 @@ export async function sendDecisionEmail(
   const resend = getResendClient();
 
   if (!resend) {
-    console.warn(
+    logger.warn(
       "[Email] RESEND_API_KEY is not set -- skipping decision email to",
       params.to,
     );
@@ -348,14 +349,14 @@ export async function sendDecisionEmail(
     });
 
     if (error) {
-      console.error("[Email] Resend API error:", error);
+      logger.error("[Email] Resend API error:", error);
       return;
     }
 
-    console.log(
+    logger.info(
       `[Email] Decision email sent to ${params.to} for "${params.requestTitle}"`,
     );
   } catch (err) {
-    console.error("[Email] Failed to send decision email:", err);
+    logger.error("[Email] Failed to send decision email:", err);
   }
 }

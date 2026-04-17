@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Types ----------------------------------------------------------------
 
@@ -135,7 +136,7 @@ export async function updateTrustCounter(
       }
     }
   } catch (err) {
-    console.error("[TrustEngine] Failed to update trust counters:", err);
+    logger.error("[TrustEngine] Failed to update trust counters:", err);
   }
 }
 
@@ -154,7 +155,7 @@ export async function getTrustCounters(
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("[TrustEngine] Failed to fetch trust counters:", error);
+    logger.error("[TrustEngine] Failed to fetch trust counters:", error);
     throw error;
   }
 
