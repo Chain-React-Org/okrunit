@@ -6,18 +6,28 @@
 // ---------------------------------------------------------------------------
 
 import { NextResponse } from "next/server";
+import { connection } from "next/server";
 
 export async function GET() {
-  // Dynamic import so the openapi module (which patches Zod's prototype
-  // via extendZodWithOpenApi) is only evaluated at request time, not
-  // during Turbopack's production build.
-  const { generateOpenAPISpec } = await import("@/lib/api/openapi");
-  const spec = generateOpenAPISpec();
+  // Bail out of static prerendering. This route can only run at request time
+  // because extendZodWithOpenApi prototype patching doesn't survive Turbopack
+  // bundling during the build phase.
+  await connection();
 
-  return NextResponse.json(spec, {
-    headers: {
-      "Cache-Control": "public, max-age=3600, s-maxage=3600",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
+  try {
+    const { generateOpenAPISpec } = await import("@/lib/api/openapi");
+    const spec = generateOpenAPISpec();
+
+    return NextResponse.json(spec, {
+      headers: {
+        "Cache-Control": "public, max-age=3600, s-maxage=3600",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Failed to generate OpenAPI spec", detail: err instanceof Error ? err.message : "Unknown error" },
+      { status: 500 },
+    );
+  }
 }
