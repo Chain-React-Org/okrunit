@@ -45,12 +45,12 @@ async function InviteAcceptContent({
   const { token } = await params;
   const admin = createAdminClient();
 
-  // Look up the invite: must exist, not yet accepted, not expired.
+  // Look up the invite by token (include already-accepted invites so we can
+  // handle the case where the DB trigger already processed the invite).
   const { data: invite } = await admin
     .from("org_invites")
     .select("*")
     .eq("token", token)
-    .is("accepted_at", null)
     .gt("expires_at", new Date().toISOString())
     .single<OrgInvite>();
 
@@ -113,7 +113,7 @@ async function InviteAcceptContent({
           invitation.
         </p>
         <Link
-          href="/login"
+          href={`/login?invite=${token}`}
           className="text-primary inline-block text-sm font-medium underline underline-offset-4"
         >
           Sign in with a different account
