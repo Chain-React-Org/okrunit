@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWelcomeEmailHtml } from "@/lib/email/welcome";
 import { logger } from "@/lib/monitoring/logger";
 import { safeRedirectUrl } from "@/lib/redirect";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 
@@ -38,6 +39,14 @@ export async function GET(request: NextRequest) {
   // Send welcome email on first sign-in (when profile doesn't exist yet)
   const { data: { user } } = await supabase.auth.getUser();
   const admin = createAdminClient();
+
+  // Invalidate the org context cache so the dashboard layout fetches fresh
+  // data. The handle_new_user trigger may have just created the profile,
+  // org, and membership, but a stale cache would return null and cause
+  // a "no_org" redirect.
+  if (user) {
+    revalidateTags(CacheTags.orgContext(user.id), CacheTags.dashboard(user.id));
+  }
 
   if (user && process.env.RESEND_API_KEY) {
     const { data: profile } = await admin

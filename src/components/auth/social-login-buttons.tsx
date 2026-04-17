@@ -127,7 +127,7 @@ export function SocialLoginButtons({
     }
   }
 
-  const action = mode === "login" ? "Sign in" : "Sign up";
+  const action = "Continue";
 
   return (
     <>
