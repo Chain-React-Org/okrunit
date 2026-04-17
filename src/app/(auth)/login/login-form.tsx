@@ -37,6 +37,8 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const inviteToken = searchParams.get("invite");
+
   const [showSso, setShowSso] = useState(false);
   const [ssoEmail, setSsoEmail] = useState("");
   const [lastProvider, setLastProvider] = useState<string | null>(null);
@@ -111,6 +113,13 @@ export function LoginForm() {
         return;
       }
 
+      // If there's an invite token, route to the invite acceptance page
+      // so the user gets added to the invited org.
+      if (inviteToken) {
+        router.push(`/invite/${inviteToken}`);
+        return;
+      }
+
       // If there's a redirect_to param (e.g. from OAuth authorize), go there instead.
       // Validate it's a safe relative path to prevent open redirect attacks.
       router.push(safeRedirectUrl(redirectTo));
@@ -126,7 +135,7 @@ export function LoginForm() {
         </p>
       </div>
 
-      <SocialLoginButtons mode="login" disabled={isPending} />
+      <SocialLoginButtons mode="login" inviteToken={inviteToken} disabled={isPending} />
 
       <form onSubmit={handleSubmit} className="relative flex flex-col gap-4">
         {error && (
@@ -249,7 +258,7 @@ export function LoginForm() {
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
         <Link
-          href="/signup"
+          href={inviteToken ? `/signup?invite=${inviteToken}` : "/signup"}
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
           Sign up
