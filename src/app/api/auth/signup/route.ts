@@ -73,11 +73,7 @@ export async function POST(request: Request) {
           { status: 409 },
         );
       }
-      logger.error("[Auth] generateLink error:", linkError, {
-        code: (linkError as Record<string, unknown>).code,
-        status: (linkError as Record<string, unknown>).status,
-        message: linkError.message,
-      });
+      logger.error("[Auth] generateLink error:", linkError);
       return NextResponse.json(
         { error: linkError.message || "Failed to create account" },
         { status: 400 },
