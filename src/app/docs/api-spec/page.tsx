@@ -6,6 +6,7 @@
 // ---------------------------------------------------------------------------
 
 import type { Metadata } from "next";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "API Reference | OKrunit",
@@ -26,26 +27,26 @@ export default function ApiSpecPage() {
       </head>
       <body style={{ margin: 0 }}>
         <div id="swagger-ui" />
-        <script
+        <Script
           src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"
-          crossOrigin="anonymous"
+          strategy="beforeInteractive"
         />
-        <script
+        <Script
+          id="swagger-init"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
-              document.addEventListener('DOMContentLoaded', function() {
-                SwaggerUIBundle({
-                  url: "${specUrl}",
-                  dom_id: '#swagger-ui',
-                  presets: [
-                    SwaggerUIBundle.presets.apis,
-                    SwaggerUIBundle.SwaggerUIStandalonePreset
-                  ],
-                  layout: 'BaseLayout',
-                  deepLinking: true,
-                  defaultModelsExpandDepth: 1,
-                  defaultModelExpandDepth: 2,
-                });
+              SwaggerUIBundle({
+                url: "${specUrl}",
+                dom_id: '#swagger-ui',
+                presets: [
+                  SwaggerUIBundle.presets.apis,
+                  SwaggerUIBundle.SwaggerUIStandalonePreset
+                ],
+                layout: 'BaseLayout',
+                deepLinking: true,
+                defaultModelsExpandDepth: 1,
+                defaultModelExpandDepth: 2,
               });
             `,
           }}
