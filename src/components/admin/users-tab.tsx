@@ -518,10 +518,21 @@ export function UsersTab({ users, organizations = [] }: UsersTabProps) {
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
               Are you sure you want to permanently delete{" "}
-              <strong>{deleteUser?.email}</strong>? This will remove their
-              account, all organization memberships, and cannot be undone.
+              <strong>{deleteUser?.email}</strong>? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
+          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm space-y-1">
+            <p className="font-medium text-destructive">This will permanently delete:</p>
+            <ul className="list-disc list-inside text-muted-foreground text-xs space-y-0.5">
+              <li>Their user account and profile</li>
+              <li>All organization memberships</li>
+              {deleteUser && deleteUser.memberships.some((m) => m.role === "owner") && (
+                <li className="text-destructive font-medium">
+                  Organizations they own (and all org data: teams, connections, billing, requests)
+                </li>
+              )}
+            </ul>
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
