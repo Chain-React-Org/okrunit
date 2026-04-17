@@ -44,8 +44,9 @@ export async function GET(request: Request) {
 
     // Build state with org_id and a random nonce for CSRF protection
     const nonce = randomBytes(16).toString("hex");
+    const from = new URL(request.url).searchParams.get("from") ?? undefined;
     const state = Buffer.from(
-      JSON.stringify({ orgId, nonce, userId: auth.user.id }),
+      JSON.stringify({ orgId, nonce, userId: auth.user.id, ...(from ? { from } : {}) }),
     ).toString("base64url");
 
     const redirectUri = `${APP_URL}/api/v1/messaging/discord/callback`;
