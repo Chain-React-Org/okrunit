@@ -47,8 +47,9 @@ export async function GET(request: Request) {
     }
 
     const nonce = randomBytes(16).toString("hex");
+    const from = new URL(request.url).searchParams.get("from") ?? undefined;
     const state = Buffer.from(
-      JSON.stringify({ orgId, nonce, userId }),
+      JSON.stringify({ orgId, nonce, userId, ...(from ? { from } : {}) }),
     ).toString("base64url");
 
     const redirectUri = `${APP_URL}/api/v1/messaging/slack/callback`;

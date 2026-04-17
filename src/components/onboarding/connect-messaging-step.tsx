@@ -21,25 +21,25 @@ const PLATFORMS: PlatformDef[] = [
     id: "slack",
     name: "Slack",
     logo: "/logos/platforms/slack.png",
-    connectUrl: "/api/v1/messaging/slack/install",
+    connectUrl: "/api/v1/messaging/slack/install?from=setup",
   },
   {
     id: "discord",
     name: "Discord",
     logo: "/logos/platforms/discord.png",
-    connectUrl: "/api/v1/messaging/discord/install",
+    connectUrl: "/api/v1/messaging/discord/install?from=setup",
   },
   {
     id: "teams",
     name: "Teams",
     logo: "/logos/platforms/teams.png",
-    connectUrl: "/api/v1/messaging/teams/install",
+    connectUrl: "/api/v1/messaging/teams/install?from=setup",
   },
   {
     id: "telegram",
     name: "Telegram",
     logo: "/logos/platforms/telegram.png",
-    connectUrl: "/api/v1/messaging/telegram/install",
+    connectUrl: "/api/v1/messaging/telegram/install?from=setup",
   },
 ];
 

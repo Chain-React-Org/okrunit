@@ -51,29 +51,34 @@ export async function GET(request: Request) {
   const stateParam = url.searchParams.get("state");
   const errorParam = url.searchParams.get("error");
 
+  // Determine redirect base from state (if available)
+  function redirectUrl(params: string): string {
+    try {
+      const s = stateParam ? JSON.parse(Buffer.from(stateParam, "base64url").toString()) : null;
+      if (s?.from === "setup") return `${APP_URL}/setup?${params}`;
+    } catch { /* fall through */ }
+    return `${APP_URL}/requests/messaging?${params}`;
+  }
+
   if (errorParam) {
-    return NextResponse.redirect(
-      `${APP_URL}/requests/messaging?error=${encodeURIComponent(errorParam)}`,
-    );
+    return NextResponse.redirect(redirectUrl(`error=${encodeURIComponent(errorParam)}`));
   }
 
   if (!code || !stateParam) {
-    return NextResponse.redirect(
-      `${APP_URL}/requests/messaging?error=missing_params`,
-    );
+    return NextResponse.redirect(redirectUrl("error=missing_params"));
   }
 
-  let state: { orgId: string; nonce: string; userId: string };
+  let state: { orgId: string; nonce: string; userId: string; from?: string };
   try {
     state = JSON.parse(Buffer.from(stateParam, "base64url").toString());
     if (!state.orgId || !state.userId) {
       throw new Error("Invalid state payload");
     }
   } catch {
-    return NextResponse.redirect(
-      `${APP_URL}/requests/messaging?error=invalid_state`,
-    );
+    return NextResponse.redirect(redirectUrl("error=invalid_state"));
   }
+
+  const dest = state.from === "setup" ? `${APP_URL}/setup` : `${APP_URL}/requests/messaging`;
 
   try {
     // 1. Exchange code for access token
@@ -93,18 +98,14 @@ export async function GET(request: Request) {
     if (!tokenResponse.ok) {
       const body = await tokenResponse.text();
       logger.error("[Slack Callback] Token exchange HTTP error:", body);
-      return NextResponse.redirect(
-        `${APP_URL}/requests/messaging?error=token_exchange_failed`,
-      );
+      return NextResponse.redirect(`${dest}?error=token_exchange_failed`);
     }
 
     const tokenData: SlackOAuthV2Response = await tokenResponse.json();
 
     if (!tokenData.ok) {
       logger.error("[Slack Callback] Slack API error:", tokenData.error);
-      return NextResponse.redirect(
-        `${APP_URL}/requests/messaging?error=${encodeURIComponent(tokenData.error ?? "slack_error")}`,
-      );
+      return NextResponse.redirect(`${dest}?error=${encodeURIComponent(tokenData.error ?? "slack_error")}`);
     }
 
     // 2. Extract workspace and channel info
@@ -144,9 +145,7 @@ export async function GET(request: Request) {
 
     if (upsertError) {
       logger.error("[Slack Callback] Upsert failed:", upsertError);
-      return NextResponse.redirect(
-        `${APP_URL}/requests/messaging?error=save_failed`,
-      );
+      return NextResponse.redirect(`${dest}?error=save_failed`);
     }
 
     // 4. Audit log
@@ -165,13 +164,9 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.redirect(
-      `${APP_URL}/requests/messaging?success=slack`,
-    );
+    return NextResponse.redirect(`${dest}?success=slack`);
   } catch (error) {
     logger.error("[Slack Callback] Unexpected error:", error);
-    return NextResponse.redirect(
-      `${APP_URL}/requests/messaging?error=unexpected`,
-    );
+    return NextResponse.redirect(`${dest}?error=unexpected`);
   }
 }
