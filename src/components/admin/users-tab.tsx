@@ -5,7 +5,7 @@
 // Table of all users with create, edit, and delete capabilities.
 // ---------------------------------------------------------------------------
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -66,7 +66,7 @@ function getInitials(name: string | null, email: string): string {
   return email.charAt(0).toUpperCase();
 }
 
-export function UsersTab({ users, organizations = [] }: UsersTabProps) {
+export const UsersTab = memo(function UsersTab({ users, organizations = [] }: UsersTabProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
 
@@ -554,4 +554,4 @@ export function UsersTab({ users, organizations = [] }: UsersTabProps) {
       </Dialog>
     </div>
   );
-}
+});

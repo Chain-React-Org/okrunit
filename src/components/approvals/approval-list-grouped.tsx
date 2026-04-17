@@ -1,12 +1,19 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ApprovalCard } from "@/components/approvals/approval-card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InboxIcon } from "lucide-react";
 import { getCurrentlyResponsible } from "@/lib/approvals/responsible";
 import type { ApprovalRequest, Connection, UserProfile } from "@/lib/types/database";
+
+/** Threshold: only virtualize sections with this many items or more */
+const VIRTUALIZE_THRESHOLD = 50;
+
+/** Estimated height (in px) per approval card row including the gap */
+const ESTIMATED_ITEM_HEIGHT = 68;
 
 interface ApprovalListGroupedProps {
   approvals: ApprovalRequest[];
@@ -31,6 +38,119 @@ interface ApprovalListGroupedProps {
   totalPendingCount?: number;
   /** Total resolved count across all pages (not just current page) */
   totalResolvedCount?: number;
+}
+
+/**
+ * Virtualized list for a single approval section.
+ * Uses @tanstack/react-virtual to only render visible items.
+ */
+function VirtualizedSection({
+  items,
+  connectionMap,
+  approvalCreators,
+  userProfiles,
+  teamsLookup,
+  onSelect,
+  canApprove,
+  isLoading,
+  skipConfirmation,
+  onInlineAction,
+  onSkipConfirmationChange,
+  newIds,
+  selectedIds,
+  onToggleSelect,
+  onArchive,
+  onUnarchive,
+  onConfigureFlow,
+  wrapperClassName,
+}: {
+  items: ApprovalRequest[];
+  connectionMap: Map<string, string>;
+  approvalCreators: Record<string, string>;
+  userProfiles: Map<string, UserProfile>;
+  teamsLookup: Map<string, { id: string; name: string }>;
+  onSelect: (approval: ApprovalRequest) => void;
+  canApprove: boolean;
+  isLoading: boolean;
+  skipConfirmation: boolean;
+  onInlineAction?: (approvalId: string, decision: "approved" | "rejected", comment?: string) => void;
+  onSkipConfirmationChange?: (skip: boolean) => void;
+  newIds?: Set<string>;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onArchive?: (approvalId: string) => void;
+  onUnarchive?: (approvalId: string) => void;
+  onConfigureFlow?: (approval: ApprovalRequest) => void;
+  wrapperClassName?: string;
+}) {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ESTIMATED_ITEM_HEIGHT,
+    overscan: 10,
+  });
+
+  return (
+    <div
+      ref={parentRef}
+      className="overflow-auto"
+      style={{ maxHeight: "70vh" }}
+    >
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualItem) => {
+          const approval = items[virtualItem.index];
+          return (
+            <div
+              key={approval.id}
+              data-index={virtualItem.index}
+              ref={virtualizer.measureElement}
+              className={wrapperClassName}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+            >
+              <div className="pb-3">
+                <ApprovalCard
+                  approval={approval}
+                  connectionName={
+                    approval.connection_id
+                      ? connectionMap.get(approval.connection_id)
+                      : undefined
+                  }
+                  creatorName={approvalCreators[approval.id]}
+                  currentlyResponsible={getCurrentlyResponsible(approval, userProfiles, teamsLookup)}
+                  onClick={() => onSelect(approval)}
+                  canApprove={canApprove}
+                  isLoading={isLoading}
+                  skipConfirmation={skipConfirmation}
+                  onInlineAction={onInlineAction}
+                  onSkipConfirmationChange={onSkipConfirmationChange}
+                  isNew={newIds?.has(approval.id)}
+                  isSelected={selectedIds?.has(approval.id)}
+                  onToggleSelect={onToggleSelect}
+                  onArchive={onArchive}
+                  onUnarchive={onUnarchive}
+                  onConfigureFlow={onConfigureFlow}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export const ApprovalListGrouped = memo(function ApprovalListGrouped({
@@ -71,6 +191,56 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
   const needsAttention = approvals.filter((a) => a.status === "pending");
   const resolved = approvals.filter((a) => a.status !== "pending");
 
+  const sharedProps = {
+    connectionMap,
+    approvalCreators,
+    userProfiles,
+    teamsLookup,
+    onSelect,
+    canApprove,
+    isLoading,
+    skipConfirmation,
+    onInlineAction,
+    onSkipConfirmationChange,
+    newIds,
+    selectedIds,
+    onToggleSelect,
+    onArchive,
+    onUnarchive,
+    onConfigureFlow,
+  };
+
+  const renderCards = (items: ApprovalRequest[], wrapperClassName?: string) => (
+    <div className="grid gap-3">
+      {items.map((approval) => (
+        <div key={approval.id} className={wrapperClassName}>
+          <ApprovalCard
+            approval={approval}
+            connectionName={
+              approval.connection_id
+                ? connectionMap.get(approval.connection_id)
+                : undefined
+            }
+            creatorName={approvalCreators[approval.id]}
+            currentlyResponsible={getCurrentlyResponsible(approval, userProfiles, teamsLookup)}
+            onClick={() => onSelect(approval)}
+            canApprove={canApprove}
+            isLoading={isLoading}
+            skipConfirmation={skipConfirmation}
+            onInlineAction={onInlineAction}
+            onSkipConfirmationChange={onSkipConfirmationChange}
+            isNew={newIds?.has(approval.id)}
+            isSelected={selectedIds?.has(approval.id)}
+            onToggleSelect={onToggleSelect}
+            onArchive={onArchive}
+            onUnarchive={onUnarchive}
+            onConfigureFlow={onConfigureFlow}
+          />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {needsAttention.length > 0 && (
@@ -90,33 +260,11 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
               {totalPendingCount ?? needsAttention.length}
             </span>
           </div>
-          <div className="grid gap-3">
-            {needsAttention.map((approval) => (
-              <ApprovalCard
-                key={approval.id}
-                approval={approval}
-                connectionName={
-                  approval.connection_id
-                    ? connectionMap.get(approval.connection_id)
-                    : undefined
-                }
-                creatorName={approvalCreators[approval.id]}
-                currentlyResponsible={getCurrentlyResponsible(approval, userProfiles, teamsLookup)}
-                onClick={() => onSelect(approval)}
-                canApprove={canApprove}
-                isLoading={isLoading}
-                skipConfirmation={skipConfirmation}
-                onInlineAction={onInlineAction}
-                onSkipConfirmationChange={onSkipConfirmationChange}
-                isNew={newIds?.has(approval.id)}
-                isSelected={selectedIds?.has(approval.id)}
-                onToggleSelect={onToggleSelect}
-                onArchive={onArchive}
-                onUnarchive={onUnarchive}
-                onConfigureFlow={onConfigureFlow}
-              />
-            ))}
-          </div>
+          {needsAttention.length >= VIRTUALIZE_THRESHOLD ? (
+            <VirtualizedSection items={needsAttention} {...sharedProps} />
+          ) : (
+            renderCards(needsAttention)
+          )}
         </section>
       )}
 
@@ -137,32 +285,11 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
               {totalResolvedCount ?? resolved.length}
             </span>
           </div>
-          <div className="grid gap-3">
-            {resolved.map((approval) => (
-              <div key={approval.id} className="opacity-75">
-                <ApprovalCard
-                  approval={approval}
-                  connectionName={
-                    approval.connection_id
-                      ? connectionMap.get(approval.connection_id)
-                      : undefined
-                  }
-                  onClick={() => onSelect(approval)}
-                  canApprove={canApprove}
-                  isLoading={isLoading}
-                  skipConfirmation={skipConfirmation}
-                  onInlineAction={onInlineAction}
-                  onSkipConfirmationChange={onSkipConfirmationChange}
-                  isNew={newIds?.has(approval.id)}
-                  isSelected={selectedIds?.has(approval.id)}
-                  onToggleSelect={onToggleSelect}
-                  onArchive={onArchive}
-                  onUnarchive={onUnarchive}
-                  onConfigureFlow={onConfigureFlow}
-                />
-              </div>
-            ))}
-          </div>
+          {resolved.length >= VIRTUALIZE_THRESHOLD ? (
+            <VirtualizedSection items={resolved} {...sharedProps} wrapperClassName="opacity-75" />
+          ) : (
+            renderCards(resolved, "opacity-75")
+          )}
         </section>
       )}
     </div>

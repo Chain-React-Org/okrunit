@@ -10,6 +10,11 @@ import type { ApprovalFlow } from "@/lib/types/database";
 
 const FlowCard = dynamic(
   () => import("@/components/routes/flow-card").then((m) => m.FlowCard),
+  {
+    loading: () => (
+      <div className="h-48 animate-pulse rounded-lg border bg-muted" />
+    ),
+  },
 );
 
 // ---------------------------------------------------------------------------

@@ -5,7 +5,7 @@
 // Paginated, filterable table displaying organization audit log entries.
 // ---------------------------------------------------------------------------
 
-import { Fragment, useCallback, useMemo, useState, useTransition } from "react";
+import { Fragment, useCallback, useMemo, useState, useTransition, memo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ChevronDown, ChevronRight, Download, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -96,7 +96,7 @@ interface AuditLogTableProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function AuditLogTable({
+export const AuditLogTable = memo(function AuditLogTable({
   initialEntries,
   orgId,
   pageSize = 50,
@@ -499,4 +499,4 @@ export function AuditLogTable({
       )}
     </div>
   );
-}
+});

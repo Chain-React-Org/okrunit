@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -85,7 +85,7 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString();
 }
 
-export function NotificationPanel({ userId }: NotificationPanelProps) {
+export const NotificationPanel = memo(function NotificationPanel({ userId }: NotificationPanelProps) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<InAppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -353,7 +353,7 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});
 
 function NotificationRow({
   notification: n,

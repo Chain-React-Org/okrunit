@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Crown,
@@ -86,7 +86,7 @@ interface V2MemberListProps {
   pendingLoadMap: Record<string, number>;
 }
 
-export function V2MemberList({
+export const V2MemberList = memo(function V2MemberList({
   members,
   currentUserId,
   currentUserRole,
@@ -538,4 +538,4 @@ export function V2MemberList({
       </Dialog>
     </>
   );
-}
+});

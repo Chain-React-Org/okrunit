@@ -5,7 +5,7 @@
 // Displays a filterable, paginated table of notification delivery events.
 // ---------------------------------------------------------------------------
 
-import { Fragment, useCallback, useEffect, useState, useTransition } from "react";
+import { Fragment, useCallback, useEffect, useState, useTransition, memo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Bell,
@@ -124,7 +124,7 @@ interface NotificationDeliveryLogProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps) {
+export const NotificationDeliveryLog = memo(function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps) {
   const [entries, setEntries] = useState<DeliveryLogEntry[] | null>(null);
   const [channelFilter, setChannelFilter] = useState<string>(ALL_VALUE);
   const [statusFilter, setStatusFilter] = useState<string>(ALL_VALUE);
@@ -457,4 +457,4 @@ export function NotificationDeliveryLog({ orgId }: NotificationDeliveryLogProps)
       )}
     </div>
   );
-}
+});

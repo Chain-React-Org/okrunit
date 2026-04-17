@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -76,7 +77,7 @@ export interface AtRiskRequest {
   created_at: string;
 }
 
-export function SlaComplianceDashboard({ metrics, slaConfig, showDemo, days, plan, atRiskRequests = [] }: SlaComplianceDashboardProps) {
+export const SlaComplianceDashboard = memo(function SlaComplianceDashboard({ metrics, slaConfig, showDemo, days, plan, atRiskRequests = [] }: SlaComplianceDashboardProps) {
   const complianceRate = metrics.total > 0 ? Math.round((1 - metrics.breach_rate / 100) * 10000) / 100 : 100;
 
   return (
@@ -428,4 +429,4 @@ export function SlaComplianceDashboard({ metrics, slaConfig, showDemo, days, pla
       </Card>
     </div>
   );
-}
+});

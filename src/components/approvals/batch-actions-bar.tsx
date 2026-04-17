@@ -4,7 +4,7 @@
 // OKrunit -- Batch Actions Bar: Sticky bottom bar for bulk actions
 // ---------------------------------------------------------------------------
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ interface BatchActionsBarProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function BatchActionsBar({
+export const BatchActionsBar = memo(function BatchActionsBar({
   selectedIds,
   onClear,
   onBatchAction,
@@ -200,4 +200,4 @@ export function BatchActionsBar({
       </div>
     </div>
   );
-}
+});

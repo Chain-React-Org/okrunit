@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Globe,
@@ -405,7 +405,7 @@ interface WebhookChannelsProps {
   initialChannels: WebhookChannel[];
 }
 
-export function WebhookChannels({ initialChannels }: WebhookChannelsProps) {
+export const WebhookChannels = memo(function WebhookChannels({ initialChannels }: WebhookChannelsProps) {
   const router = useRouter();
   const [channels, setChannels] = useState<WebhookChannel[]>(initialChannels);
   const [formOpen, setFormOpen] = useState(false);
@@ -705,4 +705,4 @@ export function WebhookChannels({ initialChannels }: WebhookChannelsProps) {
       </Dialog>
     </div>
   );
-}
+});

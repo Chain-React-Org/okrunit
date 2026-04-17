@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, ArrowLeft } from "lucide-react";
@@ -11,7 +11,7 @@ interface ApprovalResponseFormProps {
   isLoading: boolean;
 }
 
-export function ApprovalResponseForm({
+export const ApprovalResponseForm = memo(function ApprovalResponseForm({
   onRespond,
   isLoading,
 }: ApprovalResponseFormProps) {
@@ -90,4 +90,4 @@ export function ApprovalResponseForm({
       </Button>
     </div>
   );
-}
+});

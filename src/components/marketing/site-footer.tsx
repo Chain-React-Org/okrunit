@@ -40,7 +40,7 @@ export function SiteFooter() {
           <div className="max-w-md space-y-4">
             <div className="flex items-center gap-3">
               <Image
-                src="/logo-icon.png"
+                src="/logo-icon.webp"
                 alt="OKrunit"
                 width={32}
                 height={32}

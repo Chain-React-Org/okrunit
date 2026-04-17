@@ -28,7 +28,7 @@ export function MarketingSiteHeader({ user }: MarketingSiteHeaderProps) {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:gap-6 sm:py-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 sm:gap-3">
           <Image
-            src="/logo-icon.png"
+            src="/logo-icon.webp"
             alt="OKrunit"
             width={36}
             height={36}

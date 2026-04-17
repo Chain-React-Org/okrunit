@@ -8,6 +8,7 @@
 
 import {
   Fragment,
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -132,7 +133,7 @@ interface DeliveryLogTableProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function DeliveryLogTable({
+export const DeliveryLogTable = memo(function DeliveryLogTable({
   initialEntries,
   connections,
   orgId,
@@ -626,4 +627,4 @@ export function DeliveryLogTable({
       )}
     </div>
   );
-}
+});

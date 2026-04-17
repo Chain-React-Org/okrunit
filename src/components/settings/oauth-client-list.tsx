@@ -4,7 +4,7 @@
 // OKrunit -- OAuth Client List Component
 // ---------------------------------------------------------------------------
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Copy, Check, ExternalLink, RefreshCw } from "lucide-react";
 
@@ -46,7 +46,7 @@ interface OAuthClientListProps {
   role: UserRole;
 }
 
-export function OAuthClientList({ clients, role }: OAuthClientListProps) {
+export const OAuthClientList = memo(function OAuthClientList({ clients, role }: OAuthClientListProps) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState<string | null>(null);
@@ -418,4 +418,4 @@ export function OAuthClientList({ clients, role }: OAuthClientListProps) {
       )}
     </div>
   );
-}
+});
