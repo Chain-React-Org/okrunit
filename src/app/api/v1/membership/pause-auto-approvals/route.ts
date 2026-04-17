@@ -9,6 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 const schema = z.object({
   paused: z.boolean(),
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
       .eq("org_id", auth.orgId);
 
     if (error) {
-      console.error("[PauseAutoApprovals] Update failed:", error);
+      logger.error("[PauseAutoApprovals] Update failed:", error);
       throw new ApiError(500, "Failed to update auto-approval pause state");
     }
 

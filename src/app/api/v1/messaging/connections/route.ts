@@ -12,6 +12,7 @@ import { errorResponse, ApiError } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 export async function GET(request: Request) {
   try {
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("[Messaging Connections] Failed to list:", error);
+      logger.error("[Messaging Connections] Failed to list:", error);
       return NextResponse.json(
         { error: "Failed to load messaging connections" },
         { status: 500 },
@@ -97,7 +98,7 @@ export async function DELETE(request: Request) {
       .eq("org_id", orgId);
 
     if (deleteError) {
-      console.error("[Messaging Connections] Delete failed:", deleteError);
+      logger.error("[Messaging Connections] Delete failed:", deleteError);
       return NextResponse.json(
         { error: "Failed to delete connection" },
         { status: 500 },
@@ -173,7 +174,7 @@ export async function PATCH(request: Request) {
       .single();
 
     if (error) {
-      console.error("[Messaging Connections] Update failed:", error);
+      logger.error("[Messaging Connections] Update failed:", error);
       throw new ApiError(500, "Failed to update connection");
     }
 

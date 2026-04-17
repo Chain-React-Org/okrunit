@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { verifyMondayAuth } from "@/lib/api/monday-auth";
+import { logger } from "@/lib/monitoring/logger";
 
 interface MondayActionPayload {
   payload: {
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(approval);
   } catch (error) {
-    console.error("[monday.com Action] Unexpected error:", error);
+    logger.error("[monday.com Action] Unexpected error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

@@ -12,6 +12,7 @@ import { logAuditEvent, computeAuditChanges } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Column allowlist (never return api_key_hash) -------------------------
 
@@ -86,7 +87,7 @@ export async function PATCH(
       .single();
 
     if (updateError || !connection) {
-      console.error("[Connections] Failed to update connection:", updateError);
+      logger.error("[Connections] Failed to update connection:", updateError);
       throw new ApiError(500, "Failed to update connection");
     }
 
@@ -187,7 +188,7 @@ export async function DELETE(
       .eq("org_id", auth.orgId);
 
     if (deleteError) {
-      console.error(
+      logger.error(
         "[Connections] Failed to delete connection:",
         deleteError,
       );

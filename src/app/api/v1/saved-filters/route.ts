@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation Schemas ---------------------------------------------------
 
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: true });
 
     if (filtersError) {
-      console.error(
+      logger.error(
         "[SavedFilters] Failed to fetch saved filters:",
         filtersError,
       );
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError || !filter) {
-      console.error(
+      logger.error(
         "[SavedFilters] Failed to insert saved filter:",
         insertError,
       );
@@ -182,7 +183,7 @@ export async function DELETE(request: Request) {
       .eq("user_id", auth.user.id);
 
     if (deleteError) {
-      console.error(
+      logger.error(
         "[SavedFilters] Failed to delete saved filter:",
         deleteError,
       );

@@ -7,6 +7,7 @@
 
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 export async function GET() {
   const start = Date.now();
@@ -23,7 +24,7 @@ export async function GET() {
     const duration = Date.now() - start;
 
     if (error) {
-      console.error("[Health] Database check failed:", error.message);
+      logger.error("[Health] Database check failed:", error.message);
       return NextResponse.json(
         {
           status: "unhealthy",

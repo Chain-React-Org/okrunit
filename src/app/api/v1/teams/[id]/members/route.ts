@@ -13,6 +13,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { emailLayout, emailCard, emailButton, escapeHtml } from "@/lib/email/layout";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -129,7 +130,7 @@ export async function GET(
       .eq("team_id", id);
 
     if (memberError) {
-      console.error("[Teams] Failed to fetch team members:", memberError);
+      logger.error("[Teams] Failed to fetch team members:", memberError);
       throw new ApiError(500, "Failed to fetch team members");
     }
 
@@ -205,7 +206,7 @@ async function sendTeamAddedEmail(
       html,
     });
   } catch (err) {
-    console.error("[Email] Failed to send team-added email:", err);
+    logger.error("[Email] Failed to send team-added email:", err);
   }
 }
 
@@ -269,7 +270,7 @@ export async function POST(
       .select("*");
 
     if (insertError) {
-      console.error("[Teams] Failed to add team members:", insertError);
+      logger.error("[Teams] Failed to add team members:", insertError);
       throw new ApiError(500, "Failed to add team members");
     }
 
@@ -378,7 +379,7 @@ export async function DELETE(
       .eq("user_id", body.user_id);
 
     if (deleteError) {
-      console.error("[Teams] Failed to remove team member:", deleteError);
+      logger.error("[Teams] Failed to remove team member:", deleteError);
       throw new ApiError(500, "Failed to remove team member");
     }
 
@@ -457,7 +458,7 @@ export async function PATCH(
       .eq("user_id", body.user_id);
 
     if (error) {
-      console.error("[Teams] Failed to update team member:", error);
+      logger.error("[Teams] Failed to update team member:", error);
       throw new ApiError(500, "Failed to update team member");
     }
 

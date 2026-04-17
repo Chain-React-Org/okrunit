@@ -14,6 +14,7 @@ import { validateAndConsumeToken } from "@/lib/notifications/tokens";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp, checkIpRateLimit, rateLimitResponse, AUTH_RATE_LIMIT } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -332,7 +333,7 @@ export async function POST(
     .single();
 
   if (updateError || !updated) {
-    console.error("[EmailAction] Failed to update approval request:", updateError);
+    logger.error("Failed to update approval request", { service: "EmailAction", error: (updateError as Error).message });
     return htmlPage(
       "Error",
       "Failed to process your action",

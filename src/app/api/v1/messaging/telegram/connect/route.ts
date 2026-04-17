@@ -15,6 +15,7 @@ import { errorResponse, ApiError } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 const TELEGRAM_API_BASE = "https://api.telegram.org";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -149,7 +150,7 @@ export async function POST(request: Request) {
       await setWebhookResponse.json();
 
     if (!setWebhookData.ok) {
-      console.error(
+      logger.error(
         "[Telegram Connect] setWebhook failed:",
         setWebhookData.description,
       );
@@ -183,7 +184,7 @@ export async function POST(request: Request) {
       .single();
 
     if (upsertError) {
-      console.error("[Telegram Connect] Upsert failed:", upsertError);
+      logger.error("[Telegram Connect] Upsert failed:", upsertError);
       return NextResponse.json(
         { error: "Failed to save connection" },
         { status: 500 },

@@ -12,6 +12,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { canUseFeature } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Partial update schema (all fields optional) --------------------------
 
@@ -90,7 +91,7 @@ export async function PATCH(
       .single();
 
     if (updateError || !rule) {
-      console.error("[Rules] Failed to update rule:", updateError);
+      logger.error("[Rules] Failed to update rule:", updateError);
       throw new ApiError(500, "Failed to update rule");
     }
 
@@ -160,7 +161,7 @@ export async function DELETE(
       .eq("org_id", auth.orgId);
 
     if (deleteError) {
-      console.error("[Rules] Failed to delete rule:", deleteError);
+      logger.error("[Rules] Failed to delete rule:", deleteError);
       throw new ApiError(500, "Failed to delete rule");
     }
 

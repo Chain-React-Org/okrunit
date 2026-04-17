@@ -13,6 +13,7 @@ import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { dispatchNotifications } from "@/lib/notifications/orchestrator";
 import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- GET /api/v1/approvals/[id]/comments ----------------------------------
 
@@ -47,7 +48,7 @@ export async function GET(
       .order("created_at", { ascending: true });
 
     if (commentsError) {
-      console.error("[Comments] Failed to fetch comments:", commentsError);
+      logger.error("[Comments] Failed to fetch comments:", commentsError);
       throw new ApiError(500, "Failed to fetch comments");
     }
 
@@ -127,7 +128,7 @@ export async function POST(
       .single();
 
     if (insertError || !comment) {
-      console.error("[Comments] Failed to insert comment:", insertError);
+      logger.error("[Comments] Failed to insert comment:", insertError);
       throw new ApiError(500, "Failed to create comment");
     }
 
@@ -159,7 +160,7 @@ export async function POST(
       actionType: approval.action_type ?? undefined,
       decidedBy: auth.type === "session" ? auth.user.id : undefined,
     }).catch((err) => {
-      console.error("[Comments] Failed to dispatch notification:", err);
+      logger.error("[Comments] Failed to dispatch notification:", err);
     });
 
     // 7. In-app notifications for watchers, assigned approvers, and request creator
@@ -209,7 +210,7 @@ export async function POST(
           });
         }
       } catch (err) {
-        console.error("[Comments] In-app notification failed:", err);
+        logger.error("[Comments] In-app notification failed:", err);
       }
     });
 
@@ -286,7 +287,7 @@ export async function DELETE(
       .eq("id", commentId);
 
     if (deleteError) {
-      console.error("[Comments] Failed to delete comment:", deleteError);
+      logger.error("[Comments] Failed to delete comment:", deleteError);
       throw new ApiError(500, "Failed to delete comment");
     }
 

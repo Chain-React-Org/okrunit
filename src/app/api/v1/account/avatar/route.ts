@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
     });
 
   if (uploadError) {
-    console.error("[Avatar] Upload failed:", uploadError);
+    logger.error("[Avatar] Upload failed:", uploadError);
     return NextResponse.json(
       { error: "Failed to upload avatar" },
       { status: 500 },
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
     .eq("id", user.id);
 
   if (updateError) {
-    console.error("[Avatar] Profile update failed:", updateError);
+    logger.error("[Avatar] Profile update failed:", updateError);
     return NextResponse.json(
       { error: "Failed to update profile" },
       { status: 500 },
@@ -154,7 +155,7 @@ export async function DELETE() {
     .eq("id", user.id);
 
   if (updateError) {
-    console.error("[Avatar] Profile clear failed:", updateError);
+    logger.error("[Avatar] Profile clear failed:", updateError);
     return NextResponse.json(
       { error: "Failed to update profile" },
       { status: 500 },

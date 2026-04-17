@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { getAppAdminContext } from "@/lib/app-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 export async function GET(request: Request) {
   try {
     const profile = await getAppAdminContext();
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ trends });
   } catch (error) {
-    console.error("[AdminErrors] Trends error:", error);
+    logger.error("[AdminErrors] Trends error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

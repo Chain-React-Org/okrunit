@@ -10,6 +10,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 import { stripe } from "@/lib/billing/stripe";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- DELETE /api/v1/org/[id] ------------------------------------------------
 
@@ -100,7 +101,7 @@ export async function DELETE(
         try {
           await stripe.subscriptions.cancel(sub.stripe_subscription_id);
         } catch (stripeErr) {
-          console.error("[Org] Failed to cancel Stripe subscription:", stripeErr);
+          logger.error("[Org] Failed to cancel Stripe subscription:", stripeErr);
         }
       }
     }
@@ -129,7 +130,7 @@ export async function DELETE(
     });
 
     if (deleteError) {
-      console.error("[Org] Failed to delete organization:", deleteError);
+      logger.error("[Org] Failed to delete organization:", deleteError);
       throw new ApiError(500, "Failed to delete organization");
     }
 

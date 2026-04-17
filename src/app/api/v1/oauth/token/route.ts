@@ -24,6 +24,7 @@ import {
   OAUTH_ACCESS_TOKEN_EXPIRY_SECONDS,
   OAUTH_REFRESH_GRACE_PERIOD_SECONDS,
 } from "@/lib/constants";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- RFC 6749 error response helper ----------------------------------------
 
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
       `Grant type "${grantType}" is not supported.`,
     );
   } catch (err) {
-    console.error("[OAuth Token] Unhandled error:", err);
+    logger.error("[OAuth Token] Unhandled error:", err);
     return oauthError("server_error", "An unexpected error occurred.", 500);
   }
 }
@@ -283,14 +284,14 @@ async function handleRefreshToken(
     .single();
 
   if (!client || !client.is_active) {
-    console.warn("[OAuth Refresh] Client not found or inactive");
+    logger.warn("[OAuth Refresh] Client not found or inactive");
     return oauthError("invalid_client", "Unknown or inactive client.", 401);
   }
 
   if (client_secret) {
     const secretHash = hashApiKey(client_secret);
     if (secretHash !== client.client_secret_hash) {
-      console.warn("[OAuth Refresh] Secret mismatch");
+      logger.warn("[OAuth Refresh] Secret mismatch");
       return oauthError("invalid_client", "Invalid client secret.", 401);
     }
   }
@@ -315,7 +316,7 @@ async function handleRefreshToken(
       .single();
 
     if (!graceToken) {
-      console.warn("[OAuth Refresh] Refresh token not found");
+      logger.warn("[OAuth Refresh] Refresh token not found");
       return oauthError("invalid_grant", "Invalid refresh token.");
     }
 

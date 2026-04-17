@@ -27,6 +27,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Bot Framework Auth Constants
@@ -128,7 +129,7 @@ async function verifyBotFrameworkToken(
     const alg = header.alg as string | undefined;
 
     if (!alg || !alg.startsWith("RS")) {
-      console.warn("[Teams Interact] Unsupported JWT algorithm:", alg);
+      logger.warn("[Teams Interact] Unsupported JWT algorithm:", alg);
       return false;
     }
 
@@ -139,7 +140,7 @@ async function verifyBotFrameworkToken(
       : keys.find((k) => k.kty === "RSA" && k.use === "sig");
 
     if (!key) {
-      console.warn("[Teams Interact] No matching JWK found for kid:", kid);
+      logger.warn("[Teams Interact] No matching JWK found for kid:", kid);
       return false;
     }
 
@@ -160,7 +161,7 @@ async function verifyBotFrameworkToken(
         format: "jwk",
       });
     } else {
-      console.warn("[Teams Interact] JWK missing key material");
+      logger.warn("[Teams Interact] JWK missing key material");
       return false;
     }
 
@@ -176,7 +177,7 @@ async function verifyBotFrameworkToken(
     const isValid = verifier.verify(publicKey, signature);
 
     if (!isValid) {
-      console.warn("[Teams Interact] JWT signature verification failed");
+      logger.warn("[Teams Interact] JWT signature verification failed");
       return false;
     }
 
@@ -185,33 +186,33 @@ async function verifyBotFrameworkToken(
 
     // Check issuer
     if (payload.iss !== "https://api.botframework.com") {
-      console.warn("[Teams Interact] JWT issuer mismatch:", payload.iss);
+      logger.warn("[Teams Interact] JWT issuer mismatch:", payload.iss);
       return false;
     }
 
     // Check audience
     if (payload.aud !== TEAMS_CLIENT_ID) {
-      console.warn("[Teams Interact] JWT audience mismatch:", payload.aud);
+      logger.warn("[Teams Interact] JWT audience mismatch:", payload.aud);
       return false;
     }
 
     // Check expiration
     const now = Math.floor(Date.now() / 1000);
     if (payload.exp && payload.exp < now) {
-      console.warn("[Teams Interact] JWT has expired");
+      logger.warn("[Teams Interact] JWT has expired");
       return false;
     }
 
     // Check not-before
     if (payload.nbf && payload.nbf > now + 300) {
       // Allow 5 min clock skew
-      console.warn("[Teams Interact] JWT not yet valid");
+      logger.warn("[Teams Interact] JWT not yet valid");
       return false;
     }
 
     return true;
   } catch (err) {
-    console.warn("[Teams Interact] Bot Framework JWT verification failed:", err);
+    logger.warn("[Teams Interact] Bot Framework JWT verification failed:", err);
     return false;
   }
 }
@@ -436,7 +437,7 @@ export async function POST(request: Request) {
   if (authHeader.toLowerCase().startsWith("bearer ")) {
     authenticated = await verifyBotFrameworkToken(authHeader);
     if (!authenticated) {
-      console.warn("[Teams Interact] Bot Framework JWT auth failed");
+      logger.warn("[Teams Interact] Bot Framework JWT auth failed");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 401 },
@@ -447,7 +448,7 @@ export async function POST(request: Request) {
   else if (signingSecret) {
     const signature = request.headers.get("X-OKrunit-Signature") ?? "";
     if (!verifyTeamsSignature(signingSecret, rawBody, signature)) {
-      console.warn("[Teams Interact] Invalid HMAC signature");
+      logger.warn("[Teams Interact] Invalid HMAC signature");
       return NextResponse.json(
         { error: "Invalid request signature" },
         { status: 401 },
@@ -523,7 +524,7 @@ async function handleConversationUpdate(
   const _tenantId = activity.conversation?.tenantId;
 
   if (!conversationId || !serviceUrl) {
-    console.warn("[Teams Interact] conversationUpdate missing conversation data");
+    logger.warn("[Teams Interact] conversationUpdate missing conversation data");
     return NextResponse.json({ ok: true });
   }
 
@@ -694,7 +695,7 @@ async function handleActionSubmit(
     .single();
 
   if (updateError || !updated) {
-    console.error("[Teams Interact] Failed to update approval:", updateError);
+    logger.error("[Teams Interact] Failed to update approval:", updateError);
     return NextResponse.json(
       buildErrorCard(
         "Failed to process your action. Please try again from the dashboard.",

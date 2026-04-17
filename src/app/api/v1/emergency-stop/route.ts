@@ -11,6 +11,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getClientIp, checkIpRateLimit, rateLimitResponse, WRITE_RATE_LIMIT } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
       .eq("id", orgId);
 
     if (updateError) {
-      console.error("[EmergencyStop] Update failed:", updateError);
+      logger.error("[EmergencyStop] Update failed:", updateError);
       throw new ApiError(500, "Failed to update emergency stop state");
     }
 
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
         .eq("status", "pending");
 
       if (fetchError) {
-        console.error("[EmergencyStop] Failed to fetch pending approvals:", fetchError);
+        logger.error("[EmergencyStop] Failed to fetch pending approvals:", fetchError);
       }
 
       if (pendingApprovals && pendingApprovals.length > 0) {
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
           .eq("status", "pending");
 
         if (cancelError) {
-          console.error("[EmergencyStop] Failed to cancel pending approvals:", cancelError);
+          logger.error("[EmergencyStop] Failed to cancel pending approvals:", cancelError);
         } else {
           cancelledCount = pendingApprovals.length;
         }

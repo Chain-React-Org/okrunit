@@ -8,6 +8,7 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 const updateSchema = z.object({
   email_enabled: z.boolean().optional(),
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (error) {
-      console.error("[Notification Settings] Failed to fetch:", error);
+      logger.error("[Notification Settings] Failed to fetch:", error);
       throw new ApiError(500, "Failed to fetch notification settings");
     }
 
@@ -74,7 +75,7 @@ export async function PUT(request: Request) {
       .single();
 
     if (error) {
-      console.error("[Notification Settings] Failed to save:", error);
+      logger.error("[Notification Settings] Failed to save:", error);
       throw new ApiError(500, "Failed to save notification settings");
     }
 

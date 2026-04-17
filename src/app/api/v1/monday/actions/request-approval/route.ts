@@ -16,6 +16,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { verifyMondayAuth } from "@/lib/api/monday-auth";
+import { logger } from "@/lib/monitoring/logger";
 
 
 interface MondayActionPayload {
@@ -131,7 +132,7 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError) {
-      console.error("[monday.com Action] Insert failed:", insertError);
+      logger.error("[monday.com Action] Insert failed:", insertError);
       return NextResponse.json(
         { error: "Failed to create approval request" },
         { status: 500 },
@@ -161,7 +162,7 @@ export async function POST(request: Request) {
       created_at: approval.created_at,
     });
   } catch (error) {
-    console.error("[monday.com Action] Unexpected error:", error);
+    logger.error("[monday.com Action] Unexpected error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

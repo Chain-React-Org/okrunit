@@ -9,6 +9,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Constants ------------------------------------------------------------
 
@@ -73,7 +74,7 @@ export async function GET(
       .order("created_at", { ascending: true });
 
     if (attachmentsError) {
-      console.error(
+      logger.error(
         "[Attachments] Failed to fetch attachments:",
         attachmentsError,
       );
@@ -165,7 +166,7 @@ export async function POST(
       });
 
     if (uploadError) {
-      console.error("[Attachments] Storage upload failed:", uploadError);
+      logger.error("[Attachments] Storage upload failed:", uploadError);
       throw new ApiError(500, "Failed to upload file to storage");
     }
 
@@ -185,7 +186,7 @@ export async function POST(
       .single();
 
     if (insertError || !attachment) {
-      console.error("[Attachments] DB insert failed:", insertError);
+      logger.error("[Attachments] DB insert failed:", insertError);
       // Attempt to clean up the orphaned storage object
       void admin.storage.from("approval-attachments").remove([storagePath]);
       throw new ApiError(500, "Failed to save attachment record");

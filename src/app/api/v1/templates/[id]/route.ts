@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { updateTemplateSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -106,7 +107,7 @@ export async function PATCH(
       .single();
 
     if (updateError || !template) {
-      console.error("[Templates] Failed to update template:", updateError);
+      logger.error("[Templates] Failed to update template:", updateError);
       throw new ApiError(500, "Failed to update template");
     }
 
@@ -167,7 +168,7 @@ export async function DELETE(
       .eq("org_id", auth.orgId);
 
     if (updateError) {
-      console.error("[Templates] Failed to deactivate template:", updateError);
+      logger.error("[Templates] Failed to deactivate template:", updateError);
       throw new ApiError(500, "Failed to delete template");
     }
 

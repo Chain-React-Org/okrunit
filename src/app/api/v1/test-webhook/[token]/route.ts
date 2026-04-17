@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 const MAX_BODY_SIZE = 50_000; // 50 KB
 
@@ -87,7 +88,7 @@ async function captureRequest(
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    console.error("[WebhookTest] Capture error:", err);
+    logger.error("[WebhookTest] Capture error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

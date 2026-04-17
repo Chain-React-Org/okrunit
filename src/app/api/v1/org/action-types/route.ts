@@ -12,6 +12,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -88,7 +89,7 @@ export async function PUT(request: Request) {
       .single();
 
     if (error || !org) {
-      console.error("[Org] Failed to update action types:", error);
+      logger.error("[Org] Failed to update action types:", error);
       throw new ApiError(500, "Failed to update action types");
     }
 

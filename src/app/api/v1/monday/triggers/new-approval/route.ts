@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyMondayAuth } from "@/lib/api/monday-auth";
+import { logger } from "@/lib/monitoring/logger";
 
 interface MondayTriggerPayload {
   payload: {
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
     const { data: approvals, error: fetchError } = await query;
 
     if (fetchError) {
-      console.error("[monday.com Trigger] New approval poll failed:", fetchError);
+      logger.error("[monday.com Trigger] New approval poll failed:", fetchError);
       return NextResponse.json(
         { error: "Failed to fetch approvals" },
         { status: 500 },
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(approvals ?? []);
   } catch (error) {
-    console.error("[monday.com Trigger] Unexpected error:", error);
+    logger.error("[monday.com Trigger] Unexpected error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

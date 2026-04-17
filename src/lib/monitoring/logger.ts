@@ -60,6 +60,35 @@ interface LogContext {
   [key: string]: unknown;
 }
 
+/**
+ * Normalize a context argument to LogContext. Handles error objects,
+ * strings, and other non-object values that may be passed from
+ * migrated console.log/error/warn calls.
+ */
+function normalizeContext(...args: unknown[]): LogContext | undefined {
+  if (args.length === 0) return undefined;
+  if (args.length === 1) {
+    const val = args[0];
+    if (val == null) return undefined;
+    if (val instanceof Error) return { error: val.message, stack: val.stack };
+    if (typeof val === "object") return val as LogContext;
+    return { detail: String(val) };
+  }
+  // Multiple extra args: combine into a single context
+  const ctx: LogContext = {};
+  for (const val of args) {
+    if (val instanceof Error) {
+      ctx.error = val.message;
+      ctx.stack = val.stack;
+    } else if (typeof val === "object" && val !== null) {
+      Object.assign(ctx, val);
+    } else if (val !== undefined && val !== null) {
+      ctx.detail = (ctx.detail ? ctx.detail + " " : "") + String(val);
+    }
+  }
+  return ctx;
+}
+
 const LEVEL_PRIORITY: Record<LogLevel, number> = {
   debug: 0,
   info: 1,
@@ -96,24 +125,24 @@ function formatLog(level: LogLevel, message: string, context?: LogContext): stri
 }
 
 export const logger = {
-  debug(message: string, context?: LogContext) {
+  debug(message: string, ...args: unknown[]) {
     if (!shouldLog("debug")) return;
-    console.log(formatLog("debug", message, context));
+    console.log(formatLog("debug", message, normalizeContext(...args)));
   },
 
-  info(message: string, context?: LogContext) {
+  info(message: string, ...args: unknown[]) {
     if (!shouldLog("info")) return;
-    console.log(formatLog("info", message, context));
+    console.log(formatLog("info", message, normalizeContext(...args)));
   },
 
-  warn(message: string, context?: LogContext) {
+  warn(message: string, ...args: unknown[]) {
     if (!shouldLog("warn")) return;
-    console.warn(formatLog("warn", message, context));
+    console.warn(formatLog("warn", message, normalizeContext(...args)));
   },
 
-  error(message: string, context?: LogContext) {
+  error(message: string, ...args: unknown[]) {
     if (!shouldLog("error")) return;
-    console.error(formatLog("error", message, context));
+    console.error(formatLog("error", message, normalizeContext(...args)));
   },
 
   /**

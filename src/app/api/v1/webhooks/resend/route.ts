@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { captureError } from "@/lib/monitoring/capture";
 import { Webhook } from "svix";
+import { logger } from "@/lib/monitoring/logger";
 
 interface ResendEvent {
   type: string;
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
     const rawBody = await request.text();
 
     if (!webhookSecret) {
-      console.error("[Resend Webhook] RESEND_WEBHOOK_SECRET is not configured");
+      logger.error("[Resend Webhook] RESEND_WEBHOOK_SECRET is not configured");
       return new NextResponse(null, { status: 500 });
     }
 
@@ -125,7 +126,7 @@ export async function POST(request: Request) {
             { onConflict: "user_id" },
           );
 
-        console.warn(
+        logger.warn(
           `[Resend] Hard bounce for ${email}, disabled email notifications`,
         );
       }

@@ -11,6 +11,7 @@ import { createTrustCounterSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { canUseFeature } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- GET /api/v1/trust ----------------------------------------------------
 
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("[Trust] Failed to list trust counters:", error);
+      logger.error("[Trust] Failed to list trust counters:", error);
       throw new ApiError(500, "Failed to list trust counters");
     }
 
@@ -99,7 +100,7 @@ export async function POST(request: Request) {
           "DUPLICATE_COUNTER",
         );
       }
-      console.error("[Trust] Failed to create trust counter:", error);
+      logger.error("[Trust] Failed to create trust counter:", error);
       throw new ApiError(500, "Failed to create trust counter");
     }
 

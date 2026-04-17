@@ -11,6 +11,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { canCreateTeam } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
       .order("name", { ascending: true });
 
     if (error) {
-      console.error("[Teams] Failed to list teams:", error);
+      logger.error("[Teams] Failed to list teams:", error);
       throw new ApiError(500, "Failed to list teams");
     }
 
@@ -63,7 +64,7 @@ export async function GET(request: Request) {
         .in("team_id", teamIds);
 
       if (countError) {
-        console.error("[Teams] Failed to fetch member counts:", countError);
+        logger.error("[Teams] Failed to fetch member counts:", countError);
         // Non-fatal: proceed with zero counts rather than failing the request.
       } else {
         // Tally counts by team_id.
@@ -145,7 +146,7 @@ export async function POST(request: Request) {
           "DUPLICATE_NAME",
         );
       }
-      console.error("[Teams] Failed to create team:", error);
+      logger.error("[Teams] Failed to create team:", error);
       throw new ApiError(500, "Failed to create team");
     }
 

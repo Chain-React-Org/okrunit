@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyWebhookSignature, createCheckRun } from "@/lib/api/github";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // POST /api/v1/github/webhook
@@ -82,7 +83,7 @@ async function handleInstallation(
     );
 
     if (error) {
-      console.error("[GitHub Webhook] Failed to upsert installation:", error);
+      logger.error("[GitHub Webhook] Failed to upsert installation:", error);
       return NextResponse.json({ error: "Database error" }, { status: 500 });
     }
 
@@ -119,7 +120,7 @@ async function handleInstallation(
       .eq("installation_id", installationId);
 
     if (error) {
-      console.error("[GitHub Webhook] Failed to deactivate installation:", error);
+      logger.error("[GitHub Webhook] Failed to deactivate installation:", error);
     }
 
     return NextResponse.json({ ok: true, action: action });
@@ -135,7 +136,7 @@ async function handleInstallation(
       .eq("installation_id", installationId);
 
     if (error) {
-      console.error("[GitHub Webhook] Failed to reactivate installation:", error);
+      logger.error("[GitHub Webhook] Failed to reactivate installation:", error);
     }
 
     return NextResponse.json({ ok: true, action: "unsuspend" });
@@ -254,7 +255,7 @@ async function handlePullRequest(
       },
     });
   } catch (err) {
-    console.error("[GitHub Webhook] Failed to create check run:", err);
+    logger.error("[GitHub Webhook] Failed to create check run:", err);
   }
 
   // Find a connection for this org to use as the API key source
@@ -299,7 +300,7 @@ async function handlePullRequest(
     .single();
 
   if (error) {
-    console.error("[GitHub Webhook] Failed to create approval:", error);
+    logger.error("[GitHub Webhook] Failed to create approval:", error);
     return NextResponse.json({ error: "Failed to create approval" }, { status: 500 });
   }
 
@@ -317,7 +318,7 @@ async function handlePullRequest(
       },
     });
   } catch (err) {
-    console.error("[GitHub Webhook] Failed to update check run:", err);
+    logger.error("[GitHub Webhook] Failed to update check run:", err);
   }
 
   logAuditEvent({
@@ -410,7 +411,7 @@ async function handleCheckSuite(
       },
     });
   } catch (err) {
-    console.error("[GitHub Webhook] Failed to create check run:", err);
+    logger.error("[GitHub Webhook] Failed to create check run:", err);
   }
 
   return NextResponse.json({ ok: true });

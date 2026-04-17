@@ -9,6 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { webhookLogQuerySchema } from "@/lib/api/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 // ---- GET /api/v1/webhooks -------------------------------------------------
 
 export async function GET(request: Request) {
@@ -103,7 +104,7 @@ export async function GET(request: Request) {
     const { data: logs, error: queryError } = await query;
 
     if (queryError) {
-      console.error("[Webhooks] Query failed:", queryError);
+      logger.error("[Webhooks] Query failed:", queryError);
       throw new ApiError(500, "Failed to fetch webhook delivery logs");
     }
 

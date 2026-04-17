@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { hashApiKey } from "@/lib/api/auth";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- POST /api/v1/oauth/revoke ---------------------------------------------
 
@@ -110,7 +111,7 @@ export async function POST(request: Request) {
     // Per RFC 7009, return 200 even if token not found.
     return NextResponse.json({});
   } catch (err) {
-    console.error("[OAuth Revoke] Unhandled error:", err);
+    logger.error("[OAuth Revoke] Unhandled error:", err);
     return NextResponse.json(
       { error: "server_error", error_description: "An unexpected error occurred." },
       { status: 500 },

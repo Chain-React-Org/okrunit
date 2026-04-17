@@ -5,6 +5,7 @@ import { getPlanLimits, isUnlimited } from "@/lib/billing/plans";
 import { buildUsageAlertEmailHtml } from "@/lib/email/usage-alert";
 import { verifyCronAuth } from "@/lib/api/cron-auth";
 import type { BillingPlan } from "@/lib/types/database";
+import { logger } from "@/lib/monitoring/logger";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 
@@ -151,7 +152,7 @@ export async function POST(req: NextRequest) {
           });
           emailsSent++;
         } catch (err) {
-          console.error(`[Usage Alerts] Failed to send to ${profile.email}:`, err);
+          logger.error(`[Usage Alerts] Failed to send to ${profile.email}:`, err);
         }
       }
     }

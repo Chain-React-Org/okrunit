@@ -13,6 +13,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { updateMessagingConnectionSchema } from "@/lib/api/validation";
 import { z } from "zod";
+import { logger } from "@/lib/monitoring/logger";
 
 export async function DELETE(
   request: Request,
@@ -53,7 +54,7 @@ export async function DELETE(
       .eq("org_id", orgId);
 
     if (deleteError) {
-      console.error("[Messaging Connections] Delete failed:", deleteError);
+      logger.error("[Messaging Connections] Delete failed:", deleteError);
       throw new ApiError(500, "Failed to delete connection");
     }
 
@@ -150,7 +151,7 @@ export async function PATCH(
       .single();
 
     if (updateError || !updated) {
-      console.error("[Messaging Connections] Update failed:", updateError);
+      logger.error("[Messaging Connections] Update failed:", updateError);
       return NextResponse.json(
         { error: "Failed to update messaging connection" },
         { status: 500 },

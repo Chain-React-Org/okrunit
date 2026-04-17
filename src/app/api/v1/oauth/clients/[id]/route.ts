@@ -11,6 +11,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateScopes } from "@/lib/api/oauth";
 import { OAUTH_SCOPES } from "@/lib/constants";
+import { logger } from "@/lib/monitoring/logger";
 
 const CLIENT_COLUMNS =
   "id, org_id, name, logo_url, client_id, client_secret_prefix, redirect_uris, scopes, is_active, created_by, created_at, updated_at" as const;
@@ -125,7 +126,7 @@ export async function PATCH(
       .single();
 
     if (error || !client) {
-      console.error("[OAuth Clients] Failed to update client:", error);
+      logger.error("[OAuth Clients] Failed to update client:", error);
       throw new ApiError(500, "Failed to update OAuth client");
     }
 
@@ -189,7 +190,7 @@ export async function DELETE(
       .eq("id", id);
 
     if (error) {
-      console.error("[OAuth Clients] Failed to delete client:", error);
+      logger.error("[OAuth Clients] Failed to delete client:", error);
       throw new ApiError(500, "Failed to delete OAuth client");
     }
 

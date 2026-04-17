@@ -10,6 +10,7 @@ import { createHmac } from "crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createCheckRun } from "@/lib/api/github";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -155,7 +156,7 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    console.error("[GitHub Callback] Error:", error);
+    logger.error("[GitHub Callback] Error:", error);
     return NextResponse.json(
       { error: "Failed to update GitHub check run" },
       { status: 500 },

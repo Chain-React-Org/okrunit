@@ -13,6 +13,7 @@ import {
   createIdentityProvider,
   findSSOConfigByEmail,
 } from "@/lib/saml/provider";
+import { logger } from "@/lib/monitoring/logger";
 export async function GET(request: NextRequest) {
   try {
     const email = request.nextUrl.searchParams.get("email");
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(redirectUrl);
   } catch (err) {
-    console.error("[SAML Login] Error:", err);
+    logger.error("[SAML Login] Error:", err);
     return NextResponse.redirect(
       new URL("/login?error=sso_failed", request.url),
     );

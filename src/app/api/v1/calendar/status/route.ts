@@ -13,6 +13,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Schemas --------------------------------------------------------------
 
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
       .eq("org_id", auth.orgId);
 
     if (error) {
-      console.error("[Calendar] Failed to fetch connections:", error);
+      logger.error("[Calendar] Failed to fetch connections:", error);
       throw new ApiError(500, "Failed to fetch calendar connections");
     }
 
@@ -99,7 +100,7 @@ export async function PATCH(request: Request) {
       .select("id, provider, calendar_email, is_active, auto_delegate_to, updated_at");
 
     if (error) {
-      console.error("[Calendar] Failed to update auto_delegate_to:", error);
+      logger.error("[Calendar] Failed to update auto_delegate_to:", error);
       throw new ApiError(500, "Failed to update delegation setting");
     }
 
@@ -136,7 +137,7 @@ export async function DELETE(request: Request) {
       .eq("org_id", auth.orgId);
 
     if (error) {
-      console.error("[Calendar] Failed to delete connections:", error);
+      logger.error("[Calendar] Failed to delete connections:", error);
       throw new ApiError(500, "Failed to disconnect calendar");
     }
 

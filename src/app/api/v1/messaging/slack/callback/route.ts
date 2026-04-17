@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID!;
 const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET!;
@@ -91,7 +92,7 @@ export async function GET(request: Request) {
 
     if (!tokenResponse.ok) {
       const body = await tokenResponse.text();
-      console.error("[Slack Callback] Token exchange HTTP error:", body);
+      logger.error("[Slack Callback] Token exchange HTTP error:", body);
       return NextResponse.redirect(
         `${APP_URL}/requests/messaging?error=token_exchange_failed`,
       );
@@ -100,7 +101,7 @@ export async function GET(request: Request) {
     const tokenData: SlackOAuthV2Response = await tokenResponse.json();
 
     if (!tokenData.ok) {
-      console.error("[Slack Callback] Slack API error:", tokenData.error);
+      logger.error("[Slack Callback] Slack API error:", tokenData.error);
       return NextResponse.redirect(
         `${APP_URL}/requests/messaging?error=${encodeURIComponent(tokenData.error ?? "slack_error")}`,
       );
@@ -142,7 +143,7 @@ export async function GET(request: Request) {
       .single();
 
     if (upsertError) {
-      console.error("[Slack Callback] Upsert failed:", upsertError);
+      logger.error("[Slack Callback] Upsert failed:", upsertError);
       return NextResponse.redirect(
         `${APP_URL}/requests/messaging?error=save_failed`,
       );
@@ -168,7 +169,7 @@ export async function GET(request: Request) {
       `${APP_URL}/requests/messaging?success=slack`,
     );
   } catch (error) {
-    console.error("[Slack Callback] Unexpected error:", error);
+    logger.error("[Slack Callback] Unexpected error:", error);
     return NextResponse.redirect(
       `${APP_URL}/requests/messaging?error=unexpected`,
     );

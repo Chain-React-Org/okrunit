@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { ApprovalCard } from "@/components/approvals/approval-card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -32,7 +33,7 @@ interface ApprovalListGroupedProps {
   totalResolvedCount?: number;
 }
 
-export function ApprovalListGrouped({
+export const ApprovalListGrouped = memo(function ApprovalListGrouped({
   approvals,
   connections,
   approvalCreators = {},
@@ -166,4 +167,4 @@ export function ApprovalListGrouped({
       )}
     </div>
   );
-}
+});

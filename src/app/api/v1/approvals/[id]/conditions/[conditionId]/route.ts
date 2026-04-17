@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { updateConditionSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -129,7 +130,7 @@ export async function PATCH(
       .single();
 
     if (updateError || !updated) {
-      console.error("[Conditions] Update failed:", updateError);
+      logger.error("[Conditions] Update failed:", updateError);
       throw new ApiError(500, "Failed to update condition");
     }
 
@@ -206,7 +207,7 @@ export async function DELETE(
       .eq("id", conditionId);
 
     if (deleteError) {
-      console.error("[Conditions] Delete failed:", deleteError);
+      logger.error("[Conditions] Delete failed:", deleteError);
       throw new ApiError(500, "Failed to delete condition");
     }
 

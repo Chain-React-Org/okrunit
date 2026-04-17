@@ -12,6 +12,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { canUseFeature } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- GET /api/v1/rules ----------------------------------------------------
 
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
       .order("priority_order", { ascending: true });
 
     if (error) {
-      console.error("[Rules] Failed to list rules:", error);
+      logger.error("[Rules] Failed to list rules:", error);
       throw new ApiError(500, "Failed to list rules");
     }
 
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error || !rule) {
-      console.error("[Rules] Failed to create rule:", error);
+      logger.error("[Rules] Failed to create rule:", error);
       throw new ApiError(500, "Failed to create rule");
     }
 

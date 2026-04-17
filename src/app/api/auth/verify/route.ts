@@ -11,6 +11,7 @@ import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWelcomeEmailHtml } from "@/lib/email/welcome";
+import { logger } from "@/lib/monitoring/logger";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (error) {
-    console.error("[Auth] OTP verification failed:", error.message);
+    logger.error("[Auth] OTP verification failed:", error.message);
     return NextResponse.redirect(
       new URL("/login?error=verification_failed", APP_URL),
     );
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
           html: buildWelcomeEmailHtml({ fullName }),
         });
       } catch (err) {
-        console.error("[Auth] Failed to send welcome email:", err);
+        logger.error("[Auth] Failed to send welcome email:", err);
       }
     }
 

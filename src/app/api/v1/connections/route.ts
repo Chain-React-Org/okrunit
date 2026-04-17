@@ -12,6 +12,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canCreateConnection } from "@/lib/billing/enforce";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Column allowlist (never return api_key_hash) -------------------------
 
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("[Connections] Failed to list connections:", error);
+      logger.error("[Connections] Failed to list connections:", error);
       throw new ApiError(500, "Failed to list connections");
     }
 
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error || !connection) {
-      console.error("[Connections] Failed to create connection:", error);
+      logger.error("[Connections] Failed to create connection:", error);
       throw new ApiError(500, "Failed to create connection");
     }
 

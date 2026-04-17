@@ -8,6 +8,7 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation Schema -----------------------------------------------------
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
       .eq("user_id", auth.user.id);
 
     if (deleteError) {
-      console.error("[Push] Failed to delete subscription:", deleteError);
+      logger.error("[Push] Failed to delete subscription:", deleteError);
       throw new ApiError(500, "Failed to remove push subscription");
     }
 

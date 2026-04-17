@@ -14,6 +14,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- DELETE /api/v1/oauth/grants/[clientId] ---------------------------------
 
@@ -58,7 +59,7 @@ export async function DELETE(
       .select("id");
 
     if (refreshError || accessError) {
-      console.error(
+      logger.error(
         "[OAuth Grants] Revoke error:",
         refreshError,
         accessError,

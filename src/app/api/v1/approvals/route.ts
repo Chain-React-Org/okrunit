@@ -30,6 +30,7 @@ import { checkBottleneckThreshold } from "@/lib/api/bottleneck";
 import { enforceFourEyesOnCreation } from "@/lib/api/four-eyes";
 import { canCreateRequest } from "@/lib/billing/enforce";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Helpers ---------------------------------------------------------------
 
@@ -339,7 +340,7 @@ export async function POST(request: Request) {
           .from("approval_flows")
           .update(flowUpdate)
           .eq("id", existingFlow.id)
-          .then(({ error }) => { if (error) console.error("[Approvals] Flow update failed:", error); });
+          .then(({ error }) => { if (error) logger.error("[Approvals] Flow update failed:", error); });
       } else {
         // Auto-create a new unconfigured flow
         const { data: newFlow } = await admin
@@ -378,7 +379,7 @@ export async function POST(request: Request) {
     });
 
     if (anomaly.isAnomaly) {
-      console.warn(`[Approvals] Anomaly detected: ${anomaly.reason}`);
+      logger.warn(`[Approvals] Anomaly detected: ${anomaly.reason}`);
       logAuditEvent({
         orgId: auth.orgId,
         connectionId: connectionId ?? undefined,
@@ -649,7 +650,7 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError || !approval) {
-      console.error("[Approvals] Insert failed:", insertError);
+      logger.error("[Approvals] Insert failed:", insertError);
       throw new ApiError(500, "Failed to create approval request");
     }
 
@@ -668,7 +669,7 @@ export async function POST(request: Request) {
         .insert(conditionRecords);
 
       if (condInsertError) {
-        console.error("[Approvals] Condition insert failed:", condInsertError);
+        logger.error("[Approvals] Condition insert failed:", condInsertError);
         // Non-fatal: approval was created, conditions just failed to insert
       }
     }
@@ -858,7 +859,7 @@ export async function POST(request: Request) {
       void admin
         .from("request_watchers")
         .upsert({ request_id: approval.id, user_id: watchOwnerId }, { onConflict: "request_id,user_id" })
-        .then(({ error }) => { if (error) console.error("[Approvals] Watcher upsert failed:", error); });
+        .then(({ error }) => { if (error) logger.error("[Approvals] Watcher upsert failed:", error); });
     }
 
     // 15b. Bottleneck detection (fire-and-forget)
@@ -895,7 +896,7 @@ export async function POST(request: Request) {
             }
           }
         } catch (err) {
-          console.error("[Approvals] Bottleneck check failed:", err);
+          logger.error("[Approvals] Bottleneck check failed:", err);
         }
       });
     }
@@ -918,7 +919,7 @@ export async function POST(request: Request) {
               .eq("id", auth.orgId);
           }
         } catch (err) {
-          console.error("[Approvals] Auto-register action type failed:", err);
+          logger.error("[Approvals] Auto-register action type failed:", err);
         }
       });
     }
@@ -1080,7 +1081,7 @@ export async function GET(request: Request) {
     const { data: approvals, error: queryError } = await query;
 
     if (queryError) {
-      console.error("[Approvals] Query failed:", queryError);
+      logger.error("[Approvals] Query failed:", queryError);
       throw new ApiError(500, "Failed to fetch approval requests");
     }
 
@@ -1175,7 +1176,7 @@ export async function GET(request: Request) {
         .from("approval_requests")
         .update({ status: "expired" })
         .in("id", expiredIds)
-        .then(({ error }) => { if (error) console.error("[Approvals] Expire update failed:", error); });
+        .then(({ error }) => { if (error) logger.error("[Approvals] Expire update failed:", error); });
     }
 
     // Fire-and-forget: lazy SLA breach check for pending approvals
@@ -1197,7 +1198,7 @@ export async function GET(request: Request) {
         })
         .in("id", slaBreachIds)
         .eq("sla_breached", false)
-        .then(({ error }) => { if (error) console.error("[Approvals] SLA breach update failed:", error); });
+        .then(({ error }) => { if (error) logger.error("[Approvals] SLA breach update failed:", error); });
 
       // Dispatch SLA breach notifications for each breached approval
       after(async () => {
@@ -1239,7 +1240,7 @@ export async function GET(request: Request) {
         })
         .eq("id", autoId)
         .eq("status", "pending") // guard against races
-        .then(({ error }) => { if (error) console.error("[Approvals] Auto-action update failed:", error); });
+        .then(({ error }) => { if (error) logger.error("[Approvals] Auto-action update failed:", error); });
 
       // Audit the auto-action
       logAuditEvent({
@@ -1313,7 +1314,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      console.warn("[Approvals GET] auth error:", error.statusCode, error.code);
+      logger.warn("[Approvals GET] auth error:", error.statusCode, error.code);
     }
     if (error instanceof z.ZodError) {
       return NextResponse.json(

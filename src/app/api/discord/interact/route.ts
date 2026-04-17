@@ -23,6 +23,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Discord Interaction Types
@@ -123,7 +124,7 @@ async function verifyDiscordSignature(
       message,
     );
   } catch (err) {
-    console.error("[Discord Interact] Signature verification error:", err);
+    logger.error("[Discord Interact] Signature verification error:", err);
     return false;
   }
 }
@@ -328,7 +329,7 @@ async function applyDecision(request: Request, params: {
     .single();
 
   if (updateError || !updated) {
-    console.error(
+    logger.error(
       "[Discord Interact] Failed to update approval:",
       updateError,
     );
@@ -394,7 +395,7 @@ export async function POST(request: Request) {
   const publicKey = process.env.DISCORD_PUBLIC_KEY;
 
   if (!publicKey) {
-    console.error("[Discord Interact] DISCORD_PUBLIC_KEY is not set");
+    logger.error("[Discord Interact] DISCORD_PUBLIC_KEY is not set");
     return NextResponse.json(
       { error: "Discord integration is not configured" },
       { status: 500 },
@@ -423,7 +424,7 @@ export async function POST(request: Request) {
   );
 
   if (!isValid) {
-    console.warn("[Discord Interact] Invalid Discord signature");
+    logger.warn("[Discord Interact] Invalid Discord signature");
     return NextResponse.json(
       { error: "Invalid request signature" },
       { status: 401 },

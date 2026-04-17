@@ -27,6 +27,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Twilio Signature Validation
@@ -104,7 +105,7 @@ function escapeXml(text: string): string {
 export async function POST(request: Request) {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   if (!authToken) {
-    console.error("[Twilio Webhook] TWILIO_AUTH_TOKEN is not set");
+    logger.error("TWILIO_AUTH_TOKEN is not set", { service: "Twilio Webhook" });
     return NextResponse.json({ error: "Not configured" }, { status: 500 });
   }
 
@@ -126,11 +127,11 @@ export async function POST(request: Request) {
       : request.url;
 
   if (!twilioSignature) {
-    console.warn("[Twilio Webhook] Missing Twilio signature header");
+    logger.warn("Missing Twilio signature header", { service: "Twilio Webhook" });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!validateTwilioSignature(authToken, requestUrl, params, twilioSignature)) {
-    console.warn("[Twilio Webhook] Invalid Twilio signature");
+    logger.warn("Invalid Twilio signature", { service: "Twilio Webhook" });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -150,9 +151,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (profileError || !profile) {
-    console.warn(
-      `[Twilio Webhook] No user found for phone number ${fromNumber}`,
-    );
+    logger.warn(`No user found for phone number ${fromNumber}`, { service: "Twilio Webhook" });
     return twimlResponse(
       "No OKRunit account is linked to this phone number.",
     );
@@ -230,7 +229,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (updateError || !updated) {
-    console.error("[Twilio Webhook] Update failed:", updateError);
+    logger.error("Update failed", { service: "Twilio Webhook", error: (updateError as Error).message });
     return twimlResponse(
       "Failed to process your decision. The request may have already been actioned.",
     );

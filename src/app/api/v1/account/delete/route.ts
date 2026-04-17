@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildAccountDeletionEmailHtml } from "@/lib/email/account-deletion";
 import { hashApiKey } from "@/lib/api/auth";
 import { checkIpRateLimit, getClientIp, AUTH_RATE_LIMIT, rateLimitResponse } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
       });
 
     if (tokenError) {
-      console.error("Failed to create deletion token:", tokenError);
+      logger.error("Failed to create deletion token:", tokenError);
       return NextResponse.json(
         { error: "Failed to initiate account deletion" },
         { status: 500 }
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Account deletion request failed:", err);
+    logger.error("Account deletion request failed:", err);
     return NextResponse.json(
       { error: "Failed to send confirmation email" },
       { status: 500 }

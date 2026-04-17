@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -72,7 +73,7 @@ export async function GET(
       .eq("team_id", id);
 
     if (memberError) {
-      console.error("[Teams] Failed to fetch team members:", memberError);
+      logger.error("[Teams] Failed to fetch team members:", memberError);
       throw new ApiError(500, "Failed to fetch team members");
     }
 
@@ -185,7 +186,7 @@ export async function PATCH(
           "DUPLICATE_NAME",
         );
       }
-      console.error("[Teams] Failed to update team:", updateError);
+      logger.error("[Teams] Failed to update team:", updateError);
       throw new ApiError(500, "Failed to update team");
     }
 
@@ -250,7 +251,7 @@ export async function DELETE(
       .eq("org_id", auth.orgId);
 
     if (deleteError) {
-      console.error("[Teams] Failed to delete team:", deleteError);
+      logger.error("[Teams] Failed to delete team:", deleteError);
       throw new ApiError(500, "Failed to delete team");
     }
 

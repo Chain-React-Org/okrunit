@@ -4,9 +4,13 @@ import { useState, useCallback } from "react";
 import { Route } from "lucide-react";
 import { toast } from "sonner";
 
+import dynamic from "next/dynamic";
 import { EmptyState } from "@/components/ui/empty-state";
-import { FlowCard } from "@/components/routes/flow-card";
 import type { ApprovalFlow } from "@/lib/types/database";
+
+const FlowCard = dynamic(
+  () => import("@/components/routes/flow-card").then((m) => m.FlowCard),
+);
 
 // ---------------------------------------------------------------------------
 // Types

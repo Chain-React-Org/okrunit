@@ -10,6 +10,7 @@ import { createHmac } from "crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { captureError } from "@/lib/monitoring/capture";
+import { logger } from "@/lib/monitoring/logger";
 
 interface OAuthState {
   userId: string;
@@ -196,7 +197,7 @@ export async function GET(request: NextRequest) {
       );
 
     if (upsertError) {
-      console.error("[Calendar] Failed to store connection:", upsertError);
+      logger.error("[Calendar] Failed to store connection:", upsertError);
       return NextResponse.redirect(
         `${settingsUrl}?calendar_error=storage_failed`,
       );

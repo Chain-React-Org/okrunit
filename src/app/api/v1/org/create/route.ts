@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canCreateOrganization } from "@/lib/billing/enforce";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
       .single();
 
     if (orgError || !org) {
-      console.error("[Org] Failed to create organization:", orgError);
+      logger.error("[Org] Failed to create organization:", orgError);
       throw new ApiError(500, "Failed to create organization");
     }
 
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
       });
 
     if (memberError) {
-      console.error("[Org] Failed to create membership:", memberError);
+      logger.error("[Org] Failed to create membership:", memberError);
       // Clean up the org
       await admin.from("organizations").delete().eq("id", org.id);
       throw new ApiError(500, "Failed to create organization membership");
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
       });
 
     if (subError) {
-      console.error("[Org] Failed to create subscription:", subError);
+      logger.error("[Org] Failed to create subscription:", subError);
       // Non-fatal. Billing can be fixed later.
     }
 
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
       });
 
     if (teamError) {
-      console.error("[Org] Failed to create default team:", teamError);
+      logger.error("[Org] Failed to create default team:", teamError);
       // Non-fatal. Org still works without a team.
     }
 

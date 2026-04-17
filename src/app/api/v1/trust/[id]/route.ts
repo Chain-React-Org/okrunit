@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { updateTrustCounterSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -134,7 +135,7 @@ export async function PATCH(
       .single();
 
     if (updateError || !counter) {
-      console.error("[Trust] Failed to update trust counter:", updateError);
+      logger.error("[Trust] Failed to update trust counter:", updateError);
       throw new ApiError(500, "Failed to update trust counter");
     }
 
@@ -197,7 +198,7 @@ export async function DELETE(
       .eq("org_id", auth.orgId);
 
     if (deleteError) {
-      console.error("[Trust] Failed to delete trust counter:", deleteError);
+      logger.error("[Trust] Failed to delete trust counter:", deleteError);
       throw new ApiError(500, "Failed to delete trust counter");
     }
 

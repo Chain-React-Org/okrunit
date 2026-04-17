@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- GET /api/v1/approvals/[id]/webhooks ---------------------------------
 
@@ -71,7 +72,7 @@ export async function GET(
       .order("created_at", { ascending: false });
 
     if (queryError) {
-      console.error("[Webhooks] Query failed:", queryError);
+      logger.error("[Webhooks] Query failed:", queryError);
       throw new ApiError(500, "Failed to fetch webhook delivery history");
     }
 

@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
 
     if (!response.ok) {
       const body = await response.text();
-      console.error("[Discord Channels] API error:", response.status, body);
+      logger.error("[Discord Channels] API error:", response.status, body);
       throw new ApiError(502, "Failed to fetch Discord channels");
     }
 
