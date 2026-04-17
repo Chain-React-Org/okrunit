@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     // Only send welcome email if this is a new user (no profile yet)
     if (!profile) {
       try {
-        const fullName = user.user_metadata?.full_name || "there";
+        const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "there";
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
           from: FROM_EMAIL,
