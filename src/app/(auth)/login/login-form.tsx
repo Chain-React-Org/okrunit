@@ -129,9 +129,9 @@ export function LoginForm() {
   return (
     <div className="flex flex-col gap-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Sign in to OKrunit</h1>
         <p className="text-sm text-muted-foreground">
-          Enter your credentials to sign in to your account
+          New here? Choose a provider below and your account will be created automatically.
         </p>
       </div>
 

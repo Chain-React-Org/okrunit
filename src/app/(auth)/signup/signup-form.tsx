@@ -120,7 +120,20 @@ export function SignupForm() {
         </p>
       </div>
 
-      <SocialLoginButtons mode="signup" inviteToken={inviteToken} disabled={isPending} />
+      {inviteToken ? (
+        <SocialLoginButtons mode="signup" inviteToken={inviteToken} disabled={isPending} />
+      ) : (
+        <p className="text-center text-sm text-muted-foreground">
+          Want to use Google, GitHub, or Microsoft?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Sign in here
+          </Link>{" "}
+          and your account will be created automatically.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {error && (
