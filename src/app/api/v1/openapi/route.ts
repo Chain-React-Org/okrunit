@@ -7,13 +7,10 @@
 
 import { NextResponse } from "next/server";
 
-// Force dynamic so the openapi module isn't evaluated during build.
-// extendZodWithOpenApi must run at request time, not at build time,
-// because Turbopack's production bundling may not preserve the
-// prototype extension.
-export const dynamic = "force-dynamic";
-
 export async function GET() {
+  // Dynamic import so the openapi module (which patches Zod's prototype
+  // via extendZodWithOpenApi) is only evaluated at request time, not
+  // during Turbopack's production build.
   const { generateOpenAPISpec } = await import("@/lib/api/openapi");
   const spec = generateOpenAPISpec();
 
