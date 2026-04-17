@@ -229,7 +229,7 @@ function MockDashboard() {
         <div className="hidden w-48 shrink-0 border-r sm:flex sm:flex-col" style={{ borderColor: "#e5e7eb", backgroundColor: "#fafafa" }}>
           {/* Logo */}
           <div className="flex items-center justify-center border-b px-3 py-2.5" style={{ borderColor: "#e5e7eb" }}>
-            <Image src="/logo_text.png" alt="OKrunit" width={220} height={60} className="h-7 w-auto" />
+            <Image src="/logo_text.webp" alt="OKrunit" width={220} height={60} className="h-7 w-auto" />
           </div>
           {/* Nav items */}
           <div className="flex-1 space-y-0.5 px-2 py-2">
@@ -395,7 +395,7 @@ export function TesslateHero({ user }: TesslateHeroProps) {
         <div className="flex items-center justify-between rounded-xl border px-3 py-2 shadow-lg backdrop-blur-md" style={{ backgroundColor: "rgba(255,255,255,0.92)", borderColor: "#e5e7eb" }}>
           {/* Logo, actual app logo */}
           <Link href="/tesslate" className="flex items-center">
-            <Image src="/logo_text.png" alt="OKrunit" width={440} height={120} className="h-9 w-auto" />
+            <Image src="/logo_text.webp" alt="OKrunit" width={440} height={120} className="h-9 w-auto" />
           </Link>
 
           {/* Desktop nav */}
@@ -691,7 +691,7 @@ export function TesslateHero({ user }: TesslateHeroProps) {
             <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-5">
               <div className="md:col-span-1">
                 <Link href="/tesslate" className="flex items-center">
-                  <Image src="/logo_text.png" alt="OKrunit" width={220} height={60} className="h-8 w-auto" />
+                  <Image src="/logo_text.webp" alt="OKrunit" width={220} height={60} className="h-8 w-auto" />
                 </Link>
               </div>
               {Object.entries(footerLinks).map(([heading, links]) => (

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -33,7 +34,7 @@ interface ApprovalFiltersProps {
   };
 }
 
-export function ApprovalFilters({
+export const ApprovalFilters = memo(function ApprovalFilters({
   onFilterChange,
   connections,
   currentFilters,
@@ -184,4 +185,4 @@ export function ApprovalFilters({
       </div>
     </div>
   );
-}
+});

@@ -65,7 +65,7 @@ export default function DocsLayout({
             className="flex items-center gap-2 font-semibold text-zinc-900 hover:text-zinc-700 transition-colors"
           >
             <Image
-              src="/logo-icon.png"
+              src="/logo-icon.webp"
               alt="OKrunit"
               width={24}
               height={24}

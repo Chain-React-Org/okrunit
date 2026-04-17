@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -624,7 +624,7 @@ function DiscordChannelPicker({
 // Connection List
 // ---------------------------------------------------------------------------
 
-export function ConnectionList({
+export const ConnectionList = memo(function ConnectionList({
   connections,
   sources,
   onDisconnect,
@@ -901,4 +901,4 @@ export function ConnectionList({
       </Dialog>
     </>
   );
-}
+});

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, memo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ApprovalFilters } from "@/components/approvals/approval-filters";
 import { ApprovalListGrouped } from "@/components/approvals/approval-list-grouped";
@@ -32,7 +32,7 @@ interface ApprovalDashboardProps {
   userRole: string;
 }
 
-export function ApprovalDashboard({
+export const ApprovalDashboard = memo(function ApprovalDashboard({
   initialApprovals,
   connections: initialConnections,
   approvalCreators = {},
@@ -1066,4 +1066,4 @@ export function ApprovalDashboard({
       />
     </div>
   );
-}
+});

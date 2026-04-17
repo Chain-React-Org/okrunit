@@ -48,26 +48,122 @@ export async function GET(request: NextRequest) {
     revalidateTags(CacheTags.orgContext(user.id), CacheTags.dashboard(user.id));
   }
 
-  if (user && process.env.RESEND_API_KEY) {
+  if (user) {
     const { data: profile } = await admin
       .from("user_profiles")
       .select("id")
       .eq("id", user.id)
       .single();
 
-    // Only send welcome email if this is a new user (no profile yet)
+    // If the handle_new_user trigger didn't create the required rows (e.g.
+    // the auth user already existed from a previous attempt), create them
+    // now so the user isn't stuck on the "no_org" error.
     if (!profile) {
+      const resolvedName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.user_metadata?.preferred_username ||
+        "";
+
       try {
-        const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "there";
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        await resend.emails.send({
-          from: FROM_EMAIL,
-          to: user.email!,
-          subject: "Welcome to OKrunit!",
-          html: buildWelcomeEmailHtml({ fullName }),
-        });
+        // Create org
+        const { data: newOrg } = await admin
+          .from("organizations")
+          .insert({ name: "My Organization", plan_id: "pro" })
+          .select("id")
+          .single();
+
+        if (newOrg) {
+          // Create profile, membership, subscription, and default team
+          await Promise.all([
+            admin
+              .from("user_profiles")
+              .insert({ id: user.id, email: user.email!, full_name: resolvedName }),
+            admin
+              .from("org_memberships")
+              .insert({ user_id: user.id, org_id: newOrg.id, role: "owner", is_default: true }),
+            admin
+              .from("subscriptions")
+              .insert({
+                org_id: newOrg.id,
+                plan_id: "pro",
+                status: "trialing",
+                trial_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+                current_period_start: new Date().toISOString(),
+                current_period_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+              }),
+            admin
+              .from("teams")
+              .insert({ org_id: newOrg.id, name: "My Team", created_by: user.id }),
+          ]);
+        }
+
+        // Invalidate cache again after creating the data
+        revalidateTags(CacheTags.orgContext(user.id), CacheTags.dashboard(user.id));
+
+        logger.info("[Auth] Created missing org data for user via callback fallback", { userId: user.id });
       } catch (err) {
-        logger.error("[Auth] Failed to send welcome email:", err);
+        logger.error("[Auth] Failed to create fallback org data:", err);
+      }
+
+      // Send welcome email for new user
+      if (process.env.RESEND_API_KEY) {
+        try {
+          const fullName = resolvedName || "there";
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          await resend.emails.send({
+            from: FROM_EMAIL,
+            to: user.email!,
+            subject: "Welcome to OKrunit!",
+            html: buildWelcomeEmailHtml({ fullName }),
+          });
+        } catch (err) {
+          logger.error("[Auth] Failed to send welcome email:", err);
+        }
+      }
+    } else {
+      // Profile exists. Check if the membership is missing (partial trigger failure).
+      const { data: membership } = await admin
+        .from("org_memberships")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .single();
+
+      if (!membership) {
+        try {
+          const { data: newOrg } = await admin
+            .from("organizations")
+            .insert({ name: "My Organization", plan_id: "pro" })
+            .select("id")
+            .single();
+
+          if (newOrg) {
+            await Promise.all([
+              admin
+                .from("org_memberships")
+                .insert({ user_id: user.id, org_id: newOrg.id, role: "owner", is_default: true }),
+              admin
+                .from("subscriptions")
+                .insert({
+                  org_id: newOrg.id,
+                  plan_id: "pro",
+                  status: "trialing",
+                  trial_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+                  current_period_start: new Date().toISOString(),
+                  current_period_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+                }),
+              admin
+                .from("teams")
+                .insert({ org_id: newOrg.id, name: "My Team", created_by: user.id }),
+            ]);
+          }
+
+          revalidateTags(CacheTags.orgContext(user.id), CacheTags.dashboard(user.id));
+          logger.info("[Auth] Created missing membership/org for existing user", { userId: user.id });
+        } catch (err) {
+          logger.error("[Auth] Failed to create fallback membership:", err);
+        }
       }
     }
   }

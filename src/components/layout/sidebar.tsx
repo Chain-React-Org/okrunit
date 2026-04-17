@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -51,7 +51,7 @@ const navItems: NavItem[] = [
   { id: "admin", href: "/admin", label: "Admin", icon: ShieldAlert, appAdminOnly: true, overflow: true },
 ];
 
-export function Sidebar({ pendingCount: initialPendingCount, userRole, isAppAdmin, currentOrgId }: SidebarProps) {
+export const Sidebar = memo(function Sidebar({ pendingCount: initialPendingCount, userRole, isAppAdmin, currentOrgId }: SidebarProps) {
   const pathname = usePathname();
   const { activePanel, setActivePanel, setMobileOpen } = useSidebarStore();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -321,7 +321,7 @@ export function Sidebar({ pendingCount: initialPendingCount, userRole, isAppAdmi
           className="mb-2 flex w-full items-center justify-center px-2 py-1"
           onClick={() => { setActivePanel(null); setMobileOpen(false); }}
         >
-          <img src="/logo-icon.png" alt="OKrunit" className="size-14 object-contain drop-shadow-md" />
+          <img src="/logo-icon.webp" alt="OKrunit" className="size-14 object-contain drop-shadow-md" />
         </Link>
 
         {/* First item (Org/Home), above divider like Make.com */}
@@ -420,4 +420,4 @@ export function Sidebar({ pendingCount: initialPendingCount, userRole, isAppAdmi
       )}
     </div>
   );
-}
+});
