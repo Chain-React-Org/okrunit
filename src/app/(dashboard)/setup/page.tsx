@@ -40,11 +40,13 @@ export default async function SetupPage() {
   const hasInvites = (inviteCount ?? 0) > 0;
   const hasMessaging = connectedPlatforms.length > 0;
 
-  // Determine the starting step: use DB value, but skip ahead if data exists
+  // Determine the starting step: use DB value, but skip ahead if data exists.
+  // Never auto-advance past step 2 (messaging) so the user can review
+  // connected platforms and optionally connect more before finishing.
   let initialStep = profile.setup_wizard_step ?? 0;
   if (orgRenamed && initialStep < 1) initialStep = 1;
   if (hasInvites && initialStep < 2) initialStep = 2;
-  if (hasMessaging && initialStep < 3) initialStep = 3;
+  if (hasMessaging && initialStep < 2) initialStep = 2;
 
   return (
     <PageContainer className="mx-auto max-w-2xl">
