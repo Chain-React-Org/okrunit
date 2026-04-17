@@ -196,29 +196,64 @@ export async function DELETE(request: Request) {
 
     const admin = createAdminClient();
 
-    // Remove memberships
+    // 1. Find orgs where this user is the sole owner (these should be deleted entirely)
+    const { data: memberships } = await admin
+      .from("org_memberships")
+      .select("org_id, role")
+      .eq("user_id", validated.user_id);
+
+    const ownedOrgIds = (memberships ?? [])
+      .filter((m) => m.role === "owner")
+      .map((m) => m.org_id);
+
+    // For each owned org, check if there are other owners
+    const orgsToDelete: string[] = [];
+    for (const orgId of ownedOrgIds) {
+      const { count } = await admin
+        .from("org_memberships")
+        .select("id", { count: "exact", head: true })
+        .eq("org_id", orgId)
+        .eq("role", "owner")
+        .neq("user_id", validated.user_id);
+
+      if ((count ?? 0) === 0) {
+        orgsToDelete.push(orgId);
+      }
+    }
+
+    // 2. Delete orgs where user is the sole owner (cascades teams, subs, connections, etc.)
+    for (const orgId of orgsToDelete) {
+      const { error: rpcError } = await admin.rpc("delete_organization", { target_org_id: orgId });
+      if (rpcError) {
+        logger.error("[AdminUsers] Failed to delete org:", orgId, rpcError);
+      }
+    }
+
+    // 3. Remove remaining memberships (orgs where user was not sole owner)
     await admin
       .from("org_memberships")
       .delete()
       .eq("user_id", validated.user_id);
 
-    // Remove profile
+    // 4. Remove profile
     await admin
       .from("user_profiles")
       .delete()
       .eq("id", validated.user_id);
 
-    // Remove auth user
+    // 5. Remove auth user
     const { error: authError } = await admin.auth.admin.deleteUser(
       validated.user_id,
     );
 
     if (authError) {
       logger.error("[AdminUsers] Auth user deletion failed:", authError);
-      // Profile already deleted, log but don't fail
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      orgsDeleted: orgsToDelete.length,
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
