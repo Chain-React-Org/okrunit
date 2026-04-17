@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { StepLayout } from "./step-layout";
 import { Building2, ShieldCheck } from "lucide-react";
+import { useOrgName } from "@/components/org/org-name-context";
 import type { RejectionReasonPolicy } from "@/lib/types/database";
 
 interface OrganizationStepProps {
@@ -43,6 +44,7 @@ export function OrganizationStep({
   onComplete,
   onBack,
 }: OrganizationStepProps) {
+  const { setOrgName } = useOrgName();
   const [name, setName] = useState(initialName || "");
   const [rejectionPolicy, setRejectionPolicy] =
     useState<RejectionReasonPolicy>("optional");
@@ -72,6 +74,10 @@ export function OrganizationStep({
           setError(data.error ?? "Failed to update organization name.");
           return;
         }
+
+        // Optimistically update the header so it reflects the new name
+        // without needing a full page refresh after setup completes.
+        setOrgName(orgId, name.trim());
 
         onComplete();
       } catch {
