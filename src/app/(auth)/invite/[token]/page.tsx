@@ -207,6 +207,12 @@ async function InviteAcceptContent({
     .update({ accepted_at: new Date().toISOString() })
     .eq("id", invite.id);
 
+  // Skip setup wizard for invited users (the org is already configured).
+  await admin
+    .from("user_profiles")
+    .update({ setup_completed_at: new Date().toISOString() })
+    .eq("id", user.id);
+
   // Audit the acceptance.
   await logAuditEvent({
     orgId: invite.org_id,
