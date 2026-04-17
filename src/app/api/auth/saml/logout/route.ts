@@ -10,6 +10,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { findSSOConfigByEmail, APP_URL } from "@/lib/saml/provider";
+import { logger } from "@/lib/monitoring/logger";
 
 /**
  * Creates a read-only Supabase client from the request cookies to read
@@ -67,7 +68,7 @@ export async function GET() {
     // No SLO URL configured, just redirect to login
     return NextResponse.redirect(new URL("/login", APP_URL));
   } catch (err) {
-    console.error("[SAML SLO] SP-initiated logout error:", err);
+    logger.error("[SAML SLO] SP-initiated logout error:", err);
     return NextResponse.redirect(new URL("/login", APP_URL));
   }
 }
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.redirect(new URL(redirectPath, APP_URL));
   } catch (err) {
-    console.error("[SAML SLO] IdP-initiated logout error:", err);
+    logger.error("[SAML SLO] IdP-initiated logout error:", err);
     return NextResponse.redirect(new URL("/login", APP_URL));
   }
 }

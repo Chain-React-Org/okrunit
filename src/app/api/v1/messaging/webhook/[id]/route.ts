@@ -15,6 +15,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { resolveAndCheckUrl } from "@/lib/api/ssrf";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -126,7 +127,7 @@ export async function PATCH(
       .single();
 
     if (error) {
-      console.error("[Webhook Channels] Update failed:", error);
+      logger.error("[Webhook Channels] Update failed:", error);
       throw new ApiError(500, "Failed to update webhook channel");
     }
 
@@ -187,7 +188,7 @@ export async function DELETE(
       .eq("org_id", auth.orgId);
 
     if (error) {
-      console.error("[Webhook Channels] Delete failed:", error);
+      logger.error("[Webhook Channels] Delete failed:", error);
       throw new ApiError(500, "Failed to deactivate webhook channel");
     }
 

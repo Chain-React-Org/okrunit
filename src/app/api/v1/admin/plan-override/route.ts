@@ -9,6 +9,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { getAppAdminContext } from "@/lib/app-admin";
+import { logger } from "@/lib/monitoring/logger";
 
 const bodySchema = z.object({
   org_id: z.string().uuid("Invalid org ID"),
@@ -55,7 +56,7 @@ export async function PATCH(request: Request) {
       .eq("id", body.org_id);
 
     if (updateError) {
-      console.error("[Admin] Failed to update plan override:", updateError);
+      logger.error("[Admin] Failed to update plan override:", updateError);
       throw new ApiError(500, "Failed to update plan override");
     }
 

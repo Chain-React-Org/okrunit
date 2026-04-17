@@ -15,6 +15,7 @@ import type {
 } from "@simplewebauthn/server";
 import { getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 const RP_NAME = "OKrunit";
 const RP_ID = process.env.NEXT_PUBLIC_APP_URL
@@ -63,7 +64,7 @@ export async function POST() {
 
     return NextResponse.json(options);
   } catch (error) {
-    console.error("[WebAuthn] Registration options error:", error);
+    logger.error("[WebAuthn] Registration options error:", error);
     return NextResponse.json({ error: "Failed to generate options" }, { status: 500 });
   }
 }
@@ -121,13 +122,13 @@ export async function PUT(request: Request) {
     challengeStore.delete(user.id);
 
     if (error) {
-      console.error("[WebAuthn] Save credential error:", error);
+      logger.error("[WebAuthn] Save credential error:", error);
       return NextResponse.json({ error: "Failed to save credential" }, { status: 500 });
     }
 
     return NextResponse.json({ verified: true });
   } catch (error) {
-    console.error("[WebAuthn] Registration verify error:", error);
+    logger.error("[WebAuthn] Registration verify error:", error);
     return NextResponse.json({ error: "Verification failed" }, { status: 500 });
   }
 }

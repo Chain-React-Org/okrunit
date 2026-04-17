@@ -12,6 +12,7 @@ import { Resend } from "resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildConfirmEmailHtml } from "@/lib/email/confirm";
 import { checkIpRateLimit, getClientIp, AUTH_RATE_LIMIT, rateLimitResponse } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
           { status: 409 },
         );
       }
-      console.error("[Auth] generateLink error:", linkError);
+      logger.error("[Auth] generateLink error:", linkError);
       return NextResponse.json(
         { error: linkError.message || "Failed to create account" },
         { status: 400 },
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
       }
     } catch {
       // If URL parsing fails, fall back to the raw action link
-      console.warn("[Auth] Failed to parse action link, using raw Supabase URL");
+      logger.warn("[Auth] Failed to parse action link, using raw Supabase URL");
     }
 
     // Send the branded confirmation email via Resend.
@@ -120,13 +121,13 @@ export async function POST(request: Request) {
         });
 
         if (emailError) {
-          console.error("[Auth] Resend API error:", emailError);
+          logger.error("[Auth] Resend API error:", emailError);
         }
       } catch (emailErr) {
-        console.error("[Auth] Failed to send confirmation email:", emailErr);
+        logger.error("[Auth] Failed to send confirmation email:", emailErr);
       }
     } else {
-      console.warn(
+      logger.warn(
         "[Auth] RESEND_API_KEY is not set -- skipping confirmation email for:",
         body.email,
       );
@@ -148,7 +149,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    console.error("[Auth] Unexpected signup error:", error);
+    logger.error("[Auth] Unexpected signup error:", error);
     return NextResponse.json(
       { error: "An unexpected error occurred" },
       { status: 500 },

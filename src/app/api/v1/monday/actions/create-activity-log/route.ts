@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 interface MondayActionPayload {
   payload: {
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError) {
-      console.error("[monday.com Action] Create activity log failed:", insertError);
+      logger.error("[monday.com Action] Create activity log failed:", insertError);
       return NextResponse.json(
         { error: "Failed to create activity log" },
         { status: 500 },
@@ -122,7 +123,7 @@ export async function POST(request: Request) {
       created_at: log.created_at,
     });
   } catch (error) {
-    console.error("[monday.com Action] Unexpected error:", error);
+    logger.error("[monday.com Action] Unexpected error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

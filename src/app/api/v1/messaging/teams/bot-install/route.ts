@@ -21,6 +21,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -123,7 +124,7 @@ export async function POST(request: Request) {
         .eq("id", existing.id);
 
       if (updateError) {
-        console.error("[Teams Bot Install] Update failed:", updateError);
+        logger.error("[Teams Bot Install] Update failed:", updateError);
         throw new ApiError(500, "Failed to update Teams bot connection");
       }
 
@@ -158,7 +159,7 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError || !created) {
-      console.error("[Teams Bot Install] Insert failed:", insertError);
+      logger.error("[Teams Bot Install] Insert failed:", insertError);
       throw new ApiError(500, "Failed to create Teams bot connection");
     }
 

@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { getAppAdminContext } from "@/lib/app-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ErrorIssue, ErrorEvent, ErrorIssueStatus } from "@/lib/monitoring/types";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- GET /api/v1/admin/errors/[id] ----------------------------------------
 
@@ -53,7 +54,7 @@ export async function GET(
       ai_debug_context: aiDebugContext,
     });
   } catch (error) {
-    console.error("[AdminErrors] GET detail error:", error);
+    logger.error("[AdminErrors] GET detail error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -115,7 +116,7 @@ export async function PATCH(
 
     return NextResponse.json({ issue: data });
   } catch (error) {
-    console.error("[AdminErrors] PATCH error:", error);
+    logger.error("[AdminErrors] PATCH error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

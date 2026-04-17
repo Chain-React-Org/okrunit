@@ -15,6 +15,7 @@ import {
   verifyWebhookSignature,
   createCheckRun,
 } from "@/lib/api/github";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
     // Other PR actions (e.g. labeled, assigned) are ignored
     return NextResponse.json({ message: "Action ignored" }, { status: 200 });
   } catch (error) {
-    console.error("[GitHub Webhook] Error:", error);
+    logger.error("[GitHub Webhook] Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -238,7 +239,7 @@ async function handlePrOpenedOrSync(
     .single();
 
   if (insertError || !approval) {
-    console.error("[GitHub Webhook] Failed to create approval:", insertError);
+    logger.error("[GitHub Webhook] Failed to create approval:", insertError);
     return NextResponse.json(
       { error: "Failed to create approval request" },
       { status: 500 },
@@ -260,7 +261,7 @@ async function handlePrOpenedOrSync(
     });
   } catch (checkError) {
     // Non-fatal: the approval was created even if the check run fails
-    console.error("[GitHub Webhook] Failed to create check run:", checkError);
+    logger.error("[GitHub Webhook] Failed to create check run:", checkError);
   }
 
   // Audit log

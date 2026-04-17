@@ -12,6 +12,7 @@ import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canUseFeature } from "@/lib/billing/enforce";
 import type { SSOConfig } from "@/lib/types/database";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -229,7 +230,7 @@ export async function POST(request: NextRequest) {
         .single<SSOConfig>();
 
       if (error) {
-        console.error("[SSO] Failed to update SSO config:", error);
+        logger.error("[SSO] Failed to update SSO config:", error);
         throw new ApiError(500, "Failed to update SSO configuration");
       }
       result = data;
@@ -253,7 +254,7 @@ export async function POST(request: NextRequest) {
         .single<SSOConfig>();
 
       if (error) {
-        console.error("[SSO] Failed to create SSO config:", error);
+        logger.error("[SSO] Failed to create SSO config:", error);
         throw new ApiError(500, "Failed to create SSO configuration");
       }
       result = data;

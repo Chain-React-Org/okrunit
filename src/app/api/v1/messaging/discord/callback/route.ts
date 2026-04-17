@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID!;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
@@ -86,7 +87,7 @@ export async function GET(request: Request) {
 
     if (!tokenResponse.ok) {
       const body = await tokenResponse.text();
-      console.error("[Discord Callback] Token exchange failed:", body);
+      logger.error("[Discord Callback] Token exchange failed:", body);
       return NextResponse.redirect(
         `${APP_URL}/requests/messaging?error=token_exchange_failed`,
       );
@@ -139,7 +140,7 @@ export async function GET(request: Request) {
       .single();
 
     if (upsertError) {
-      console.error("[Discord Callback] Upsert failed:", upsertError);
+      logger.error("[Discord Callback] Upsert failed:", upsertError);
       return NextResponse.redirect(
         `${APP_URL}/requests/messaging?error=save_failed`,
       );
@@ -165,7 +166,7 @@ export async function GET(request: Request) {
       `${APP_URL}/requests/messaging?success=discord`,
     );
   } catch (error) {
-    console.error("[Discord Callback] Unexpected error:", error);
+    logger.error("[Discord Callback] Unexpected error:", error);
     return NextResponse.redirect(
       `${APP_URL}/requests/messaging?error=unexpected`,
     );

@@ -17,6 +17,7 @@ import {
   WEBHOOK_RETRY_DELAYS_MS,
 } from "@/lib/api/callbacks";
 import { captureError } from "@/lib/monitoring/capture";
+import { logger } from "@/lib/monitoring/logger";
 
 /** Number of consecutive webhook failures before auto-pausing a connection. */
 const AUTO_PAUSE_THRESHOLD = 10;
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
     .limit(BATCH_SIZE);
 
   if (fetchError) {
-    console.error("[Webhook Cron] Failed to fetch retry queue:", fetchError);
+    logger.error("[Webhook Cron] Failed to fetch retry queue:", fetchError);
     return NextResponse.json(
       { error: "Failed to fetch queue" },
       { status: 500 },
@@ -93,7 +94,7 @@ export async function GET(request: Request) {
             error_message: result.errorMessage,
           });
         } catch (logErr) {
-          console.error(
+          logger.error(
             `[Webhook Cron] Failed to log delivery for queue row ${row.id}:`,
             logErr,
           );
@@ -177,7 +178,7 @@ export async function GET(request: Request) {
               // Auto-pause if threshold reached
               if (newFailures >= AUTO_PAUSE_THRESHOLD) {
                 updates.webhook_paused_at = new Date().toISOString();
-                console.warn(
+                logger.warn(
                   `[Webhook Cron] Auto-paused connection ${row.connection_id} ` +
                     `after ${newFailures} consecutive webhook failures`,
                 );

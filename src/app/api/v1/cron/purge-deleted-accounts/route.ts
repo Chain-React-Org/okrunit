@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyCronAuth } from "@/lib/api/cron-auth";
+import { logger } from "@/lib/monitoring/logger";
 
 /**
  * GET /api/v1/cron/purge-deleted-accounts
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
       }
 
       purged++;
-      console.log(`[Purge] Deleted account ${user.id}`);
+      logger.info(`[Purge] Deleted account ${user.id}`);
     } catch (err) {
       errors.push(`${user.id}: ${err instanceof Error ? err.message : "unknown error"}`);
     }

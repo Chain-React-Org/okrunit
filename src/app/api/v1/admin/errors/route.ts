@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { getAppAdminContext } from "@/lib/app-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ErrorIssue } from "@/lib/monitoring/types";
+import { logger } from "@/lib/monitoring/logger";
 export async function GET(request: Request) {
   try {
     const profile = await getAppAdminContext();
@@ -90,7 +91,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("[AdminErrors] GET error:", error);
+    logger.error("[AdminErrors] GET error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

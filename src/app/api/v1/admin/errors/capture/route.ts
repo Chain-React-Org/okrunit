@@ -14,6 +14,7 @@ import {
   rateLimitResponse,
 } from "@/lib/api/ip-rate-limiter";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/monitoring/logger";
 
 const CAPTURE_RATE_LIMIT = { limit: 10, windowSeconds: 60 };
 
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    console.error("[ErrorCapture] POST error:", error);
+    logger.error("[ErrorCapture] POST error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

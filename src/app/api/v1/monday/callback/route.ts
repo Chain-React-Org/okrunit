@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 const MONDAY_CLIENT_ID = process.env.MONDAY_CLIENT_ID!;
 const MONDAY_CLIENT_SECRET = process.env.MONDAY_CLIENT_SECRET!;
@@ -93,7 +94,7 @@ export async function GET(request: Request) {
 
     if (!tokenResponse.ok) {
       const body = await tokenResponse.text();
-      console.error("[monday.com Callback] Token exchange HTTP error:", body);
+      logger.error("[monday.com Callback] Token exchange HTTP error:", body);
       return NextResponse.redirect(
         `${APP_URL}/requests/messaging?error=token_exchange_failed`,
       );
@@ -102,7 +103,7 @@ export async function GET(request: Request) {
     const tokenData: MondayTokenResponse = await tokenResponse.json();
 
     if (!tokenData.access_token) {
-      console.error("[monday.com Callback] No access token in response");
+      logger.error("[monday.com Callback] No access token in response");
       return NextResponse.redirect(
         `${APP_URL}/requests/messaging?error=no_access_token`,
       );
@@ -154,7 +155,7 @@ export async function GET(request: Request) {
       .single();
 
     if (upsertError) {
-      console.error("[monday.com Callback] Upsert failed:", upsertError);
+      logger.error("[monday.com Callback] Upsert failed:", upsertError);
       return NextResponse.redirect(
         `${APP_URL}/requests/messaging?error=save_failed`,
       );
@@ -180,7 +181,7 @@ export async function GET(request: Request) {
       `${APP_URL}/requests/messaging?success=monday`,
     );
   } catch (error) {
-    console.error("[monday.com Callback] Unexpected error:", error);
+    logger.error("[monday.com Callback] Unexpected error:", error);
     return NextResponse.redirect(
       `${APP_URL}/requests/messaging?error=unexpected`,
     );

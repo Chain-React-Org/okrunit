@@ -13,6 +13,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { checkIpRateLimit, getClientIp, AUTH_RATE_LIMIT, rateLimitResponse } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
     );
 
     if (updateError) {
-      console.error("[Reauth] Failed to update user metadata:", updateError);
+      logger.error("[Reauth] Failed to update user metadata:", updateError);
       throw new ApiError(500, "Failed to record re-authentication");
     }
 

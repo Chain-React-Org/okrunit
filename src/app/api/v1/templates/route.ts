@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createTemplateSchema, paginationSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- GET /api/v1/templates ------------------------------------------------
 
@@ -97,7 +98,7 @@ export async function GET(request: Request) {
     const { data: templates, error: queryError } = await query;
 
     if (queryError) {
-      console.error("[Templates] Query failed:", queryError);
+      logger.error("[Templates] Query failed:", queryError);
       throw new ApiError(500, "Failed to fetch templates");
     }
 
@@ -187,7 +188,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error || !template) {
-      console.error("[Templates] Failed to create template:", error);
+      logger.error("[Templates] Failed to create template:", error);
       throw new ApiError(500, "Failed to create template");
     }
 

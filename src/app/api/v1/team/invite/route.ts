@@ -18,6 +18,7 @@ import { canAddTeamMember } from "@/lib/billing/enforce";
 import { INVITE_EXPIRY_DAYS } from "@/lib/constants";
 import { buildInviteEmailHtml } from "@/lib/email/invite";
 import type { OrgInvite } from "@/lib/types/database";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -198,7 +199,7 @@ export async function POST(request: Request) {
       .single<Omit<OrgInvite, "token" | "accepted_at">>();
 
     if (insertError || !invite) {
-      console.error("[Team] Failed to create invite:", insertError);
+      logger.error("[Team] Failed to create invite:", insertError);
       throw new ApiError(500, "Failed to create invite");
     }
 
@@ -235,10 +236,10 @@ export async function POST(request: Request) {
         });
       } catch (emailError) {
         // Log but don't fail the request -- the invite is already created.
-        console.error("[Team] Failed to send invite email:", emailError);
+        logger.error("[Team] Failed to send invite email:", emailError);
       }
     } else {
-      console.warn(
+      logger.warn(
         "[Team] RESEND_API_KEY is not set. Skipping invite email for:",
         normalizedEmail,
       );
@@ -320,7 +321,7 @@ export async function DELETE(request: Request) {
       .eq("id", body.invite_id);
 
     if (deleteError) {
-      console.error("[Team] Failed to revoke invite:", deleteError);
+      logger.error("[Team] Failed to revoke invite:", deleteError);
       throw new ApiError(500, "Failed to revoke invite");
     }
 

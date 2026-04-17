@@ -12,6 +12,7 @@ import { canUseFeature } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateClientCredentials, validateScopes } from "@/lib/api/oauth";
 import { OAUTH_SCOPES } from "@/lib/constants";
+import { logger } from "@/lib/monitoring/logger";
 
 // Column allowlist. Never return client_secret_hash.
 const CLIENT_COLUMNS =
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("[OAuth Clients] Failed to list clients:", error);
+      logger.error("[OAuth Clients] Failed to list clients:", error);
       throw new ApiError(500, "Failed to list OAuth clients");
     }
 
@@ -123,7 +124,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error || !client) {
-      console.error("[OAuth Clients] Failed to create client:", error);
+      logger.error("[OAuth Clients] Failed to create client:", error);
       throw new ApiError(500, "Failed to create OAuth client");
     }
 

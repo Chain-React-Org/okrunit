@@ -11,6 +11,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
     const { data: memberships, error } = await query;
 
     if (error) {
-      console.error("[Team] Failed to list members:", error);
+      logger.error("[Team] Failed to list members:", error);
       throw new ApiError(500, "Failed to list members");
     }
 
@@ -189,7 +190,7 @@ export async function PATCH(request: Request) {
       .eq("org_id", auth.orgId);
 
     if (updateError) {
-      console.error("[Team] Failed to update member:", updateError);
+      logger.error("[Team] Failed to update member:", updateError);
       throw new ApiError(500, "Failed to update member");
     }
 
@@ -330,7 +331,7 @@ export async function DELETE(request: Request) {
       .eq("org_id", auth.orgId);
 
     if (deleteError) {
-      console.error("[Team] Failed to remove member:", deleteError);
+      logger.error("[Team] Failed to remove member:", deleteError);
       throw new ApiError(500, "Failed to remove member");
     }
 

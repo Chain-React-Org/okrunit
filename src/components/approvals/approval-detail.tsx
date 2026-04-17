@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, memo } from "react";
 import { useOnboardingTourStore } from "@/stores/onboarding-tour-store";
 import {
   Sheet,
@@ -87,7 +87,7 @@ function LabelWithTip({ label, tip }: { label: string; tip: string }) {
   );
 }
 
-export function ApprovalDetail({
+export const ApprovalDetail = memo(function ApprovalDetail({
   approval,
   open,
   onClose,
@@ -545,4 +545,4 @@ export function ApprovalDetail({
       </SheetContent>
     </Sheet>
   );
-}
+});

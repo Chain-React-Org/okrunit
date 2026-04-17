@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
 import type Stripe from "stripe";
+import { logger } from "@/lib/monitoring/logger";
 
 export async function POST(req: NextRequest) {
   const stripe = getStripeOrThrow();
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
         }, { onConflict: "org_id" });
 
       if (subError) {
-        console.error("[Billing Webhook] Failed to upsert subscription:", subError);
+        logger.error("[Billing Webhook] Failed to upsert subscription:", subError);
       }
 
       await admin
@@ -305,7 +306,7 @@ export async function POST(req: NextRequest) {
       const planId = sub.metadata?.plan_id;
       if (!orgId || !planId) break;
 
-      console.log(`[Billing Webhook] Subscription created: org=${orgId} plan=${planId} status=${sub.status}`);
+      logger.info(`[Billing Webhook] Subscription created: org=${orgId} plan=${planId} status=${sub.status}`);
       break;
     }
 

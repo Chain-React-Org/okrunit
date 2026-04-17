@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWeeklyDigestEmailHtml } from "@/lib/email/weekly-digest";
 import type { WeeklyDigestAnalytics } from "@/lib/email/weekly-digest";
 import { verifyCronAuth } from "@/lib/api/cron-auth";
+import { logger } from "@/lib/monitoring/logger";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 
@@ -274,7 +275,7 @@ async function handleDigest(req: NextRequest) {
     try {
       analytics = await computeOrgAnalytics(org.id, weekAgo, now);
     } catch (err) {
-      console.error(`[Weekly Digest] Failed to compute analytics for org ${org.id}:`, err);
+      logger.error(`[Weekly Digest] Failed to compute analytics for org ${org.id}:`, err);
     }
 
     // Get top connections by request count
@@ -368,7 +369,7 @@ async function handleDigest(req: NextRequest) {
         });
         totalSent++;
       } catch (err) {
-        console.error(`[Weekly Digest] Failed to send to ${profile.email}:`, err);
+        logger.error(`[Weekly Digest] Failed to send to ${profile.email}:`, err);
       }
     }
   }

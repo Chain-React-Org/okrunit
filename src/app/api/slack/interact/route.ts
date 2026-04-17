@@ -22,6 +22,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Signature Verification
@@ -101,7 +102,7 @@ async function openSlackModal(params: {
 }): Promise<boolean> {
   const slackToken = process.env.SLACK_BOT_TOKEN;
   if (!slackToken) {
-    console.error("[Slack Interact] SLACK_BOT_TOKEN is not set");
+    logger.error("[Slack Interact] SLACK_BOT_TOKEN is not set");
     return false;
   }
 
@@ -172,13 +173,13 @@ async function openSlackModal(params: {
     const result = await response.json();
 
     if (!result.ok) {
-      console.error("[Slack Interact] Failed to open modal:", result.error);
+      logger.error("[Slack Interact] Failed to open modal:", result.error);
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error("[Slack Interact] Error opening modal:", err);
+    logger.error("[Slack Interact] Error opening modal:", err);
     return false;
   }
 }
@@ -266,7 +267,7 @@ async function applyDecisionAndRespond(request: Request, params: {
     .single();
 
   if (updateError || !updated) {
-    console.error("[Slack Interact] Failed to update approval:", updateError);
+    logger.error("[Slack Interact] Failed to update approval:", updateError);
     return {
       response_action: "clear",
     };
@@ -329,7 +330,7 @@ export async function POST(request: Request) {
   const signingSecret = process.env.SLACK_SIGNING_SECRET;
 
   if (!signingSecret) {
-    console.error("[Slack Interact] SLACK_SIGNING_SECRET is not set");
+    logger.error("[Slack Interact] SLACK_SIGNING_SECRET is not set");
     return NextResponse.json(
       { error: "Slack integration is not configured" },
       { status: 500 },
@@ -346,7 +347,7 @@ export async function POST(request: Request) {
   if (
     !verifySlackSignature(signingSecret, timestamp, rawBody, slackSignature)
   ) {
-    console.warn("[Slack Interact] Invalid Slack signature");
+    logger.warn("[Slack Interact] Invalid Slack signature");
     return NextResponse.json(
       { error: "Invalid request signature" },
       { status: 401 },
@@ -491,7 +492,7 @@ export async function POST(request: Request) {
           });
         }
       } catch (err) {
-        console.error("[Slack Interact] Background processing error:", err);
+        logger.error("[Slack Interact] Background processing error:", err);
       }
     };
 
@@ -516,7 +517,7 @@ export async function POST(request: Request) {
     try {
       metadata = JSON.parse(view.private_metadata ?? "{}");
     } catch {
-      console.error("[Slack Interact] Invalid private_metadata in modal");
+      logger.error("[Slack Interact] Invalid private_metadata in modal");
       return NextResponse.json({ response_action: "clear" });
     }
 
@@ -571,7 +572,7 @@ export async function POST(request: Request) {
           }),
         });
       } catch (err) {
-        console.error(
+        logger.error(
           "[Slack Interact] Failed to update original message:",
           err,
         );

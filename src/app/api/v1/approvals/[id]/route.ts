@@ -22,6 +22,7 @@ import { checkFourEyes } from "@/lib/api/four-eyes";
 import { checkReauthRequired } from "@/lib/api/session-security";
 import type { RejectionReasonPolicy } from "@/lib/types/database";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -227,7 +228,7 @@ export async function GET(
         })
         .eq("id", approval.id)
         .eq("sla_breached", false)
-        .then(({ error }) => { if (error) console.error("[Approvals] SLA breach update failed:", error); });
+        .then(({ error }) => { if (error) logger.error("[Approvals] SLA breach update failed:", error); });
 
       // Notify about the breach (fire-and-forget)
       dispatchNotifications({
@@ -650,7 +651,7 @@ export async function PATCH(
             "DUPLICATE_VOTE",
           );
         }
-        console.error("[Approvals] Vote insert failed:", voteError);
+        logger.error("[Approvals] Vote insert failed:", voteError);
         throw new ApiError(500, "Failed to record vote");
       }
 
@@ -677,7 +678,7 @@ export async function PATCH(
           .single();
 
         if (rejectError || !rejectedData) {
-          console.error("[Approvals] Reject update failed:", rejectError);
+          logger.error("[Approvals] Reject update failed:", rejectError);
           throw new ApiError(500, "Failed to update approval request");
         }
 
@@ -724,7 +725,7 @@ export async function PATCH(
           .single();
 
         if (approveError || !approvedData) {
-          console.error("[Approvals] Approve update failed:", approveError);
+          logger.error("[Approvals] Approve update failed:", approveError);
           throw new ApiError(500, "Failed to update approval request");
         }
 
@@ -941,7 +942,7 @@ export async function PATCH(
       .single();
 
     if (updateError || !updated) {
-      console.error("[Approvals] Update failed:", updateError);
+      logger.error("[Approvals] Update failed:", updateError);
       throw new ApiError(500, "Failed to update approval request");
     }
 
@@ -1117,7 +1118,7 @@ export async function DELETE(
       .single();
 
     if (updateError || !updated) {
-      console.error("[Approvals] Cancel failed:", updateError);
+      logger.error("[Approvals] Cancel failed:", updateError);
       throw new ApiError(500, "Failed to cancel approval request");
     }
 

@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api/auth";
 import { errorResponse, ApiError } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API_BASE = "https://api.telegram.org";
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      console.error("[Telegram Start-Link] Insert failed:", error);
+      logger.error("[Telegram Start-Link] Insert failed:", error);
       throw new ApiError(500, "Failed to create link");
     }
 
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(webhookBody),
     }).catch((err) => {
-      console.error("[Telegram Start-Link] setWebhook failed:", err);
+      logger.error("[Telegram Start-Link] setWebhook failed:", err);
     });
 
     const deepLink = `https://t.me/${botUsername}?start=${nonce}`;

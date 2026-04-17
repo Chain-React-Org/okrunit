@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- GET /api/v1/flows ----------------------------------------------------
 
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
       .order("last_request_at", { ascending: false, nullsFirst: false });
 
     if (error) {
-      console.error("[Flows] Query failed:", error);
+      logger.error("[Flows] Query failed:", error);
       throw new ApiError(500, "Failed to fetch approval flows");
     }
 

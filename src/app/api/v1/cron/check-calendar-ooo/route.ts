@@ -19,6 +19,7 @@ import {
   cancelDelegation,
 } from "@/lib/api/delegation";
 import { captureError } from "@/lib/monitoring/capture";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Types ----------------------------------------------------------------
 
@@ -233,7 +234,7 @@ export async function GET(request: Request) {
       // Ensure we have a valid access token
       const accessToken = await ensureValidToken(conn);
       if (!accessToken) {
-        console.warn(`[Calendar OOO] Could not get valid token for connection ${conn.id}`);
+        logger.warn(`[Calendar OOO] Could not get valid token for connection ${conn.id}`);
         continue;
       }
 

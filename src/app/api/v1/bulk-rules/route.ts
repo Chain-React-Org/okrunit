@@ -11,6 +11,7 @@ import { createBulkRuleSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { canUseFeature } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("[BulkRules] Failed to list rules:", error);
+      logger.error("[BulkRules] Failed to list rules:", error);
       throw new ApiError(500, "Failed to list bulk rules");
     }
 
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error || !rule) {
-      console.error("[BulkRules] Failed to create rule:", error);
+      logger.error("[BulkRules] Failed to create rule:", error);
       throw new ApiError(500, "Failed to create bulk rule");
     }
 

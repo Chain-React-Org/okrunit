@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 // ---- GET /api/v1/notifications/delivery-log -------------------------------
 
 export async function GET(request: Request) {
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
     const { data: rawEntries, error, count } = await query;
 
     if (error) {
-      console.error("[DeliveryLog] Failed to fetch:", error);
+      logger.error("[DeliveryLog] Failed to fetch:", error);
       return NextResponse.json(
         { error: "Failed to fetch delivery log" },
         { status: 500 },

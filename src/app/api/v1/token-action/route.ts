@@ -16,6 +16,7 @@ import { validateAndConsumeToken } from "@/lib/notifications/tokens";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp, checkIpRateLimit, rateLimitResponse, AUTH_RATE_LIMIT } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // POST /api/v1/token-action
@@ -160,7 +161,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (updateError || !updated) {
-    console.error("[TokenAction] Failed to update approval request:", updateError);
+    logger.error("[TokenAction] Failed to update approval request:", updateError);
     return NextResponse.json(
       { error: "Failed to process decision" },
       { status: 500 },

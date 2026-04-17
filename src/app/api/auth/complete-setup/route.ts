@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createInAppNotification } from "@/lib/notifications/in-app";
+import { logger } from "@/lib/monitoring/logger";
 
 export async function POST() {
   const supabase = await createClient();
@@ -27,7 +28,7 @@ export async function POST() {
     .eq("id", user.id);
 
   if (error) {
-    console.error("[Auth] Failed to mark setup complete:", error);
+    logger.error("[Auth] Failed to mark setup complete:", error);
     return NextResponse.json(
       { error: "Failed to update profile" },
       { status: 500 },

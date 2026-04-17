@@ -8,6 +8,7 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation Schema -----------------------------------------------------
 
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
         .eq("id", existing.id);
 
       if (updateError) {
-        console.error("[Push] Failed to update subscription:", updateError);
+        logger.error("[Push] Failed to update subscription:", updateError);
         throw new ApiError(500, "Failed to update push subscription");
       }
     } else {
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
         });
 
       if (insertError) {
-        console.error("[Push] Failed to store subscription:", insertError);
+        logger.error("[Push] Failed to store subscription:", insertError);
         throw new ApiError(500, "Failed to store push subscription");
       }
     }

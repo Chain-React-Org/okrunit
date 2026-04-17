@@ -4,7 +4,7 @@
 // OKrunit -- Approval Comments: Threaded Comment List + Reply Form
 // ---------------------------------------------------------------------------
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, memo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Send, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -123,7 +123,7 @@ function getSourceBadge(comment: ApprovalComment): { label: string; variant: "se
 
 // ---- Component ------------------------------------------------------------
 
-export function ApprovalComments({
+export const ApprovalComments = memo(function ApprovalComments({
   requestId,
   comments,
   onCommentAdded,
@@ -414,4 +414,4 @@ export function ApprovalComments({
       </AlertDialog>
     </div>
   );
-}
+});

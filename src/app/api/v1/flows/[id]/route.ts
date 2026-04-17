@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -110,7 +111,7 @@ export async function PATCH(
       .single();
 
     if (error || !updated) {
-      console.error("[Flows] Update failed:", error);
+      logger.error("[Flows] Update failed:", error);
       throw new ApiError(500, "Failed to update approval flow");
     }
 
@@ -167,7 +168,7 @@ export async function DELETE(
       .eq("org_id", auth.orgId);
 
     if (error) {
-      console.error("[Flows] Delete failed:", error);
+      logger.error("[Flows] Delete failed:", error);
       throw new ApiError(500, "Failed to delete approval flow");
     }
 

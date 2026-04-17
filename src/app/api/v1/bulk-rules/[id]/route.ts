@@ -10,6 +10,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { updateBulkRuleSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -108,7 +109,7 @@ export async function PATCH(
       .single();
 
     if (updateError || !rule) {
-      console.error("[BulkRules] Failed to update rule:", updateError);
+      logger.error("[BulkRules] Failed to update rule:", updateError);
       throw new ApiError(500, "Failed to update bulk rule");
     }
 
@@ -167,7 +168,7 @@ export async function DELETE(
       .eq("org_id", auth.orgId);
 
     if (deleteError) {
-      console.error("[BulkRules] Failed to delete rule:", deleteError);
+      logger.error("[BulkRules] Failed to delete rule:", deleteError);
       throw new ApiError(500, "Failed to delete bulk rule");
     }
 

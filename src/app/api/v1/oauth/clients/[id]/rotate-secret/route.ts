@@ -9,6 +9,7 @@ import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateClientCredentials } from "@/lib/api/oauth";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- POST /api/v1/oauth/clients/[id]/rotate-secret -----------------------
 
@@ -55,7 +56,7 @@ export async function POST(
       .eq("id", id);
 
     if (error) {
-      console.error("[OAuth Clients] Failed to rotate secret:", error);
+      logger.error("[OAuth Clients] Failed to rotate secret:", error);
       throw new ApiError(500, "Failed to rotate client secret");
     }
 

@@ -17,6 +17,7 @@ import {
   APP_URL,
 } from "@/lib/saml/provider";
 import type { SSOConfig } from "@/lib/types/database";
+import { logger } from "@/lib/monitoring/logger";
 
 /** 303 See Other — forces browser to GET the redirect target (critical since IdP POSTs here) */
 function redirect303(url: string | URL) {
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
             break;
           }
         } catch (err) {
-          console.warn("[SAML] IdP cert validation failed for config", config.entity_id, ":", String(err));
+          logger.warn("[SAML] IdP cert validation failed for config", config.entity_id, ":", String(err));
           continue;
         }
       }
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!parsedResult || !matchedConfig) {
-      console.error("[SAML] No matching SSO config validated the assertion");
+      logger.error("[SAML] No matching SSO config validated the assertion");
       return redirect303(
         new URL("/login?error=saml_validation_failed", APP_URL),
       );
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
     )?.toLowerCase();
 
     if (!email || !email.includes("@")) {
-      console.error("[SAML] No email found in assertion", { nameID, attributes });
+      logger.error("[SAML] No email found in assertion", { nameID, attributes });
       return redirect303(
         new URL("/login?error=saml_no_email", APP_URL),
       );
@@ -175,7 +176,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (createError || !newUser?.user) {
-        console.error("[SAML] Failed to create user:", createError);
+        logger.error("[SAML] Failed to create user:", createError);
         return redirect303(
           new URL("/login?error=saml_user_creation_failed", APP_URL),
         );
@@ -215,7 +216,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (linkError || !linkData) {
-      console.error("[SAML] Failed to generate magic link:", linkError);
+      logger.error("[SAML] Failed to generate magic link:", linkError);
       return redirect303(
         new URL("/login?error=saml_session_failed", APP_URL),
       );
@@ -234,7 +235,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (verifyError) {
-      console.error("[SAML] Failed to verify OTP:", verifyError);
+      logger.error("[SAML] Failed to verify OTP:", verifyError);
       return redirect303(
         new URL("/login?error=saml_session_failed", APP_URL),
       );
@@ -242,7 +243,7 @@ export async function POST(request: NextRequest) {
 
     return redirect303(new URL(redirectDestination, APP_URL));
   } catch (err) {
-    console.error("[SAML] Callback error:", err);
+    logger.error("[SAML] Callback error:", err);
     return redirect303(
       new URL("/login?error=saml_error", APP_URL),
     );

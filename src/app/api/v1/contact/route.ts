@@ -8,6 +8,7 @@ import {
   rateLimitResponse,
 } from "@/lib/api/ip-rate-limiter";
 import { emailCard, emailLayout, escapeHtml } from "@/lib/email/layout";
+import { logger } from "@/lib/monitoring/logger";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
     const body = contactSchema.parse(await request.json());
 
     if (!process.env.RESEND_API_KEY) {
-      console.warn("[Contact] RESEND_API_KEY is not set");
+      logger.warn("[Contact] RESEND_API_KEY is not set");
       return NextResponse.json(
         { error: "Contact form is not configured yet." },
         { status: 503 },
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      console.error("[Contact] Resend API error:", error);
+      logger.error("[Contact] Resend API error:", error);
       return NextResponse.json(
         { error: "Failed to send message" },
         { status: 500 },
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("[Contact] Unexpected error:", error);
+    logger.error("[Contact] Unexpected error:", error);
     return NextResponse.json(
       { error: "Failed to send message" },
       { status: 500 },

@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { getAppAdminContext } from "@/lib/app-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- Schemas --------------------------------------------------------------
 
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
       });
 
     if (authError) {
-      console.error("[AdminUsers] Auth user creation failed:", authError);
+      logger.error("[AdminUsers] Auth user creation failed:", authError);
       return NextResponse.json(
         { error: authError.message },
         { status: 400 },
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    console.error("[AdminUsers] Create error:", error);
+    logger.error("[AdminUsers] Create error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -143,7 +144,7 @@ export async function PATCH(request: Request) {
       .eq("id", validated.user_id);
 
     if (error) {
-      console.error("[AdminUsers] Update failed:", error);
+      logger.error("[AdminUsers] Update failed:", error);
       return NextResponse.json(
         { error: "Failed to update user" },
         { status: 500 },
@@ -165,7 +166,7 @@ export async function PATCH(request: Request) {
         { status: 400 },
       );
     }
-    console.error("[AdminUsers] Update error:", error);
+    logger.error("[AdminUsers] Update error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -213,7 +214,7 @@ export async function DELETE(request: Request) {
     );
 
     if (authError) {
-      console.error("[AdminUsers] Auth user deletion failed:", authError);
+      logger.error("[AdminUsers] Auth user deletion failed:", authError);
       // Profile already deleted, log but don't fail
     }
 
@@ -225,7 +226,7 @@ export async function DELETE(request: Request) {
         { status: 400 },
       );
     }
-    console.error("[AdminUsers] Delete error:", error);
+    logger.error("[AdminUsers] Delete error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

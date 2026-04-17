@@ -26,6 +26,7 @@ import {
   answerCallbackQuery,
   editMessage,
 } from "@/lib/notifications/channels/telegram";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -209,7 +210,7 @@ async function applyDecision(request: Request, params: {
     .single();
 
   if (updateError || !updated) {
-    console.error("[Telegram Webhook] Update failed:", updateError);
+    logger.error("[Telegram Webhook] Update failed:", updateError);
     return;
   }
 
@@ -281,7 +282,7 @@ async function sendBotMessage(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text }),
   }).catch((err) => {
-    console.error("[Telegram Webhook] sendMessage failed:", err);
+    logger.error("[Telegram Webhook] sendMessage failed:", err);
   });
 }
 
@@ -365,7 +366,7 @@ async function handleStartCommand(
     .single();
 
   if (upsertError) {
-    console.error("[Telegram Webhook] Connection upsert failed:", upsertError);
+    logger.error("[Telegram Webhook] Connection upsert failed:", upsertError);
     await sendBotMessage(
       botToken,
       chatId,
@@ -426,7 +427,7 @@ async function handleStartCommand(
 export async function POST(request: Request) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
-    console.error("[Telegram Webhook] TELEGRAM_BOT_TOKEN is not set");
+    logger.error("[Telegram Webhook] TELEGRAM_BOT_TOKEN is not set");
     return NextResponse.json({ error: "Not configured" }, { status: 500 });
   }
 

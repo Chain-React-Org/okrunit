@@ -11,6 +11,7 @@ import { createConditionSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAndCheckUrl } from "@/lib/api/ssrf";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- GET /api/v1/approvals/[id]/conditions --------------------------------
 
@@ -45,7 +46,7 @@ export async function GET(
       .order("created_at", { ascending: true });
 
     if (error) {
-      console.error("[Conditions] Fetch failed:", error);
+      logger.error("[Conditions] Fetch failed:", error);
       throw new ApiError(500, "Failed to fetch conditions");
     }
 
@@ -140,7 +141,7 @@ export async function POST(
           "DUPLICATE_CONDITION",
         );
       }
-      console.error("[Conditions] Insert failed:", insertError);
+      logger.error("[Conditions] Insert failed:", insertError);
       throw new ApiError(500, "Failed to add condition");
     }
 

@@ -15,6 +15,7 @@ import { errorResponse, ApiError } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
+import { logger } from "@/lib/monitoring/logger";
 
 const connectSchema = z.object({
   email: z
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
       .single();
 
     if (upsertError) {
-      console.error("[Email Connect] Upsert failed:", upsertError);
+      logger.error("[Email Connect] Upsert failed:", upsertError);
       return NextResponse.json(
         { error: "Failed to save connection" },
         { status: 500 },

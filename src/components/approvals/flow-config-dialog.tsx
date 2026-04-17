@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,7 @@ const ROLE_OPTIONS: { label: string; value: UserRole }[] = [
 
 // ---- Component --------------------------------------------------------------
 
-export function FlowConfigDialog({
+export const FlowConfigDialog = memo(function FlowConfigDialog({
   approval,
   open,
   onClose,
@@ -721,4 +721,4 @@ export function FlowConfigDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});

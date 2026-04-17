@@ -14,6 +14,7 @@ import { ApiError } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { getInstallationToken } from "@/lib/api/github";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // GET /api/github/install?installation_id=123&setup_action=install
@@ -107,7 +108,7 @@ export async function GET(request: Request) {
       }
     } catch (fetchError) {
       // Non-fatal: we still store the installation even if we can't fetch details
-      console.error(
+      logger.error(
         "[GitHub Install] Failed to fetch installation details:",
         fetchError,
       );
@@ -174,7 +175,7 @@ export async function GET(request: Request) {
       );
     }
 
-    console.error("[GitHub Install] Error:", error);
+    logger.error("[GitHub Install] Error:", error);
     return NextResponse.redirect(
       `${appUrl}/settings/integrations?github=error`,
     );

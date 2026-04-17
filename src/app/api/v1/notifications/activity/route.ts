@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 export async function GET(request: NextRequest) {
   const { user } = await getAuthUser();
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   if (error) {
-    console.error("[Notifications] Failed to fetch:", error);
+    logger.error("[Notifications] Failed to fetch:", error);
     return NextResponse.json({ error: "Failed to fetch notifications" }, { status: 500 });
   }
 

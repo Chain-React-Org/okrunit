@@ -12,6 +12,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 const transferSchema = z.object({
   new_owner_id: z.string().uuid("Invalid user ID"),
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
     });
 
     if (rpcError) {
-      console.error("[Transfer] RPC error:", rpcError);
+      logger.error("[Transfer] RPC error:", rpcError);
       throw new ApiError(500, "Failed to transfer ownership");
     }
 
