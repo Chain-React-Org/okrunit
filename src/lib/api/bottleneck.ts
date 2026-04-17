@@ -6,6 +6,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -72,7 +73,7 @@ export async function detectBottlenecks(orgId: string): Promise<{
     .single();
 
   if (orgError || !org) {
-    console.error("[Bottleneck] Failed to fetch org settings:", orgError);
+    logger.error("[Bottleneck] Failed to fetch org settings:", orgError);
     return { alerts: [], threshold: 10, alertEnabled: true };
   }
 
@@ -121,7 +122,7 @@ export async function getApprovalLoadDistribution(
     .not("assigned_approvers", "is", null);
 
   if (error) {
-    console.error("[Bottleneck] Failed to fetch pending approvals:", error);
+    logger.error("[Bottleneck] Failed to fetch pending approvals:", error);
     return [];
   }
 

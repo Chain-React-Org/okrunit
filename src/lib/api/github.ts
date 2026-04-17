@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { createHmac, timingSafeEqual } from "crypto";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -197,7 +198,7 @@ export function verifyWebhookSignature(
   const secret = process.env.GITHUB_WEBHOOK_SECRET;
 
   if (!secret) {
-    console.error("[GitHub] GITHUB_WEBHOOK_SECRET is not configured");
+    logger.error("[GitHub] GITHUB_WEBHOOK_SECRET is not configured");
     return false;
   }
 

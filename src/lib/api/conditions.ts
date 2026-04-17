@@ -4,6 +4,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAndCheckUrl } from "@/lib/api/ssrf";
+import { logger } from "@/lib/monitoring/logger";
 import type { ApprovalCondition } from "@/lib/types/database";
 
 // ---------------------------------------------------------------------------
@@ -120,7 +121,7 @@ export async function checkConditions(
     .order("created_at", { ascending: true });
 
   if (error || !conditions) {
-    console.error("[Conditions] Failed to fetch conditions:", error);
+    logger.error("[Conditions] Failed to fetch conditions:", error);
     return { allMet: false, conditions: [] };
   }
 

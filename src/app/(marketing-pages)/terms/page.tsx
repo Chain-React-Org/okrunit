@@ -9,12 +9,13 @@ export const metadata: Metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+    <div>
+      <div className="mb-12">
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Terms of Service</h1>
         <p className="mt-2 text-sm text-zinc-500">Last updated: March 30, 2026</p>
+      </div>
 
-        <div className="mt-8 prose prose-zinc max-w-none prose-headings:font-semibold prose-a:text-primary">
+      <div className="prose prose-zinc max-w-none prose-headings:font-semibold prose-a:text-primary">
           <h2>1. Acceptance of Terms</h2>
           <p>
             By accessing or using OKrunit (&quot;the Service&quot;), operated by OKrunit (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;),
@@ -105,7 +106,6 @@ export default function TermsOfServicePage() {
               support@okrunit.com
             </a>.
           </p>
-        </div>
       </div>
     </div>
   );

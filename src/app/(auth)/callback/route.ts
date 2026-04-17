@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWelcomeEmailHtml } from "@/lib/email/welcome";
+import { logger } from "@/lib/monitoring/logger";
 import { safeRedirectUrl } from "@/lib/redirect";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
           html: buildWelcomeEmailHtml({ fullName }),
         });
       } catch (err) {
-        console.error("[Auth] Failed to send welcome email:", err);
+        logger.error("[Auth] Failed to send welcome email:", err);
       }
     }
   }

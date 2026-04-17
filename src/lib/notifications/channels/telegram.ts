@@ -2,6 +2,8 @@
 // OKrunit -- Telegram Notification Channel (Bot API)
 // ---------------------------------------------------------------------------
 
+import { logger } from "@/lib/monitoring/logger";
+
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -85,7 +87,7 @@ export async function sendTelegramNotification(
   const botToken = params.botToken ?? getBotToken();
 
   if (!botToken) {
-    console.warn(
+    logger.warn(
       "[Telegram] No bot token available -- skipping notification for request",
       params.requestId,
     );
@@ -154,18 +156,18 @@ export async function sendTelegramNotification(
 
     if (!response.ok) {
       const body = await response.text();
-      console.error(
+      logger.error(
         `[Telegram] API returned ${response.status} for request ${params.requestId}:`,
         body,
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[Telegram] Notification sent for request ${params.requestId}`,
     );
   } catch (err) {
-    console.error("[Telegram] Failed to send notification:", err);
+    logger.error("[Telegram] Failed to send notification:", err);
   }
 }
 
@@ -182,7 +184,7 @@ export async function sendTelegramDecisionNotification(
   const botToken = params.botToken ?? getBotToken();
 
   if (!botToken) {
-    console.warn(
+    logger.warn(
       "[Telegram] No bot token available -- skipping decision notification for",
       params.requestTitle,
     );
@@ -214,18 +216,18 @@ export async function sendTelegramDecisionNotification(
 
     if (!response.ok) {
       const body = await response.text();
-      console.error(
+      logger.error(
         `[Telegram] Decision API returned ${response.status}:`,
         body,
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[Telegram] Decision notification sent for "${params.requestTitle}"`,
     );
   } catch (err) {
-    console.error("[Telegram] Failed to send decision notification:", err);
+    logger.error("[Telegram] Failed to send decision notification:", err);
   }
 }
 
@@ -254,7 +256,7 @@ export async function answerCallbackQuery(
       }),
     });
   } catch (err) {
-    console.error("[Telegram] Failed to answer callback query:", err);
+    logger.error("[Telegram] Failed to answer callback query:", err);
   }
 }
 
@@ -301,12 +303,12 @@ export async function editMessage(
 
     if (!response.ok) {
       const responseBody = await response.text();
-      console.error(
+      logger.error(
         `[Telegram] editMessageText returned ${response.status}:`,
         responseBody,
       );
     }
   } catch (err) {
-    console.error("[Telegram] Failed to edit message:", err);
+    logger.error("[Telegram] Failed to edit message:", err);
   }
 }

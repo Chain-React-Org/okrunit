@@ -1,7 +1,8 @@
 import Stripe from "stripe";
+import { logger } from "@/lib/monitoring/logger";
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn("STRIPE_SECRET_KEY not set. Billing features disabled.");
+  logger.warn("STRIPE_SECRET_KEY not set. Billing features disabled.");
 }
 
 export const stripe = process.env.STRIPE_SECRET_KEY

@@ -6,6 +6,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 import type { InAppNotificationInsert, NotificationCategory } from "@/lib/types/database";
 
 interface CreateNotificationParams {
@@ -43,7 +44,7 @@ export async function createInAppNotification(params: CreateNotificationParams):
 
   const { error } = await admin.from("in_app_notifications").insert(row);
   if (error) {
-    console.error("[Notifications] Failed to create in-app notification:", error);
+    logger.error("[Notifications] Failed to create in-app notification:", error);
   }
 }
 
@@ -73,6 +74,6 @@ export async function createInAppNotificationBulk(
 
   const { error } = await admin.from("in_app_notifications").insert(rows);
   if (error) {
-    console.error("[Notifications] Failed to create bulk in-app notifications:", error);
+    logger.error("[Notifications] Failed to create bulk in-app notifications:", error);
   }
 }

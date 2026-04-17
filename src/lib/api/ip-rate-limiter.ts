@@ -6,6 +6,7 @@
 // ---------------------------------------------------------------------------
 
 import { getRedisClient, prefixKey } from "@/lib/redis";
+import { logger } from "@/lib/monitoring/logger";
 
 // ---- In-memory fallback ---------------------------------------------------
 
@@ -96,7 +97,7 @@ async function checkRedisRateLimit(
       resetAt,
     };
   } catch (err) {
-    console.warn("[RateLimit] Redis error, falling back to memory:", (err as Error).message);
+    logger.warn("[RateLimit] Redis error, falling back to memory:", (err as Error).message);
     return checkMemoryRateLimit(key, config);
   }
 }

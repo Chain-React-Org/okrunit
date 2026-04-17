@@ -2,6 +2,8 @@
 // OKrunit -- Slack Notification Channel (Block Kit via Incoming Webhooks)
 // ---------------------------------------------------------------------------
 
+import { logger } from "@/lib/monitoring/logger";
+
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -174,18 +176,18 @@ export async function sendSlackNotification(
 
     if (!response.ok) {
       const body = await response.text();
-      console.error(
+      logger.error(
         `[Slack] Webhook returned ${response.status} for request ${params.requestId}:`,
         body,
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[Slack] Notification sent for request ${params.requestId}`,
     );
   } catch (err) {
-    console.error("[Slack] Failed to send notification:", err);
+    logger.error("[Slack] Failed to send notification:", err);
   }
 }
 
@@ -226,17 +228,17 @@ export async function sendSlackDecisionNotification(
 
     if (!response.ok) {
       const body = await response.text();
-      console.error(
+      logger.error(
         `[Slack] Decision webhook returned ${response.status}:`,
         body,
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[Slack] Decision notification sent for "${params.requestTitle}"`,
     );
   } catch (err) {
-    console.error("[Slack] Failed to send decision notification:", err);
+    logger.error("[Slack] Failed to send decision notification:", err);
   }
 }

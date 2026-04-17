@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import { generateActionTokens } from "@/lib/notifications/tokens";
+import { logger } from "@/lib/monitoring/logger";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -262,18 +263,18 @@ export async function sendTeamsNotification(
 
     if (!response.ok) {
       const body = await response.text();
-      console.error(
+      logger.error(
         `[Teams] Webhook returned ${response.status} for request ${params.requestId}:`,
         body,
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[Teams] Notification sent for request ${params.requestId}`,
     );
   } catch (err) {
-    console.error("[Teams] Failed to send notification:", err);
+    logger.error("[Teams] Failed to send notification:", err);
   }
 }
 
@@ -328,17 +329,17 @@ export async function sendTeamsDecisionNotification(
 
     if (!response.ok) {
       const body = await response.text();
-      console.error(
+      logger.error(
         `[Teams] Decision webhook returned ${response.status}:`,
         body,
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[Teams] Decision notification sent for "${params.requestTitle}"`,
     );
   } catch (err) {
-    console.error("[Teams] Failed to send decision notification:", err);
+    logger.error("[Teams] Failed to send decision notification:", err);
   }
 }

@@ -6,6 +6,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 import type { MessagingConnection } from "@/lib/types/database";
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
@@ -56,7 +57,7 @@ async function refreshDiscordToken(
   const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 
   if (!clientId || !clientSecret || !conn.refresh_token) {
-    console.warn("[Token Refresh] Missing Discord credentials for refresh");
+    logger.warn("[Token Refresh] Missing Discord credentials for refresh");
     return null;
   }
 
@@ -74,7 +75,7 @@ async function refreshDiscordToken(
 
     if (!response.ok) {
       const body = await response.text();
-      console.error("[Token Refresh] Discord refresh failed:", response.status, body);
+      logger.error("[Token Refresh] Discord refresh failed:", response.status, body);
       return null;
     }
 
@@ -100,10 +101,10 @@ async function refreshDiscordToken(
       })
       .eq("id", conn.id);
 
-    console.log("[Token Refresh] Discord token refreshed for connection:", conn.id);
+    logger.info("[Token Refresh] Discord token refreshed for connection:", conn.id);
     return data.access_token;
   } catch (err) {
-    console.error("[Token Refresh] Discord refresh error:", err);
+    logger.error("[Token Refresh] Discord refresh error:", err);
     return null;
   }
 }

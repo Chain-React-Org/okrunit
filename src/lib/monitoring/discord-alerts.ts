@@ -5,6 +5,7 @@
 // Rate-limited per fingerprint to prevent spam.
 // ---------------------------------------------------------------------------
 
+import { logger } from "@/lib/monitoring/logger";
 import type { ErrorSeverity } from "./types";
 
 const SEVERITY_COLORS: Record<ErrorSeverity, number> = {
@@ -135,6 +136,6 @@ export async function sendErrorDiscordAlert(
     });
   } catch {
     // Never let alert failures propagate
-    console.error("[ErrorMonitor] Failed to send Discord alert");
+    logger.error("[ErrorMonitor] Failed to send Discord alert");
   }
 }

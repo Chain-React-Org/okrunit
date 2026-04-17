@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 import { logAuditEvent } from "@/lib/api/audit";
 import type { BulkApprovalRule } from "@/lib/types/database";
 
@@ -122,7 +123,7 @@ export async function executeBulkRule(
   const { data: approvals, error: fetchError } = await query;
 
   if (fetchError) {
-    console.error("[BulkRules] Failed to fetch matching approvals:", fetchError);
+    logger.error("[BulkRules] Failed to fetch matching approvals:", fetchError);
     return { affected: 0, results: [] };
   }
 

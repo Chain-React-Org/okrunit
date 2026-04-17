@@ -7,6 +7,7 @@ import { randomBytes } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashApiKey } from "@/lib/api/auth";
 import { EMAIL_TOKEN_EXPIRY_HOURS } from "@/lib/constants";
+import { logger } from "@/lib/monitoring/logger";
 import type { EmailAction } from "@/lib/types/database";
 
 // ---------------------------------------------------------------------------
@@ -67,7 +68,7 @@ export async function generateActionTokens(
   ]);
 
   if (error) {
-    console.error("[Tokens] Failed to insert email action tokens:", error);
+    logger.error("[Tokens] Failed to insert email action tokens:", error);
     throw new Error("Failed to generate email action tokens");
   }
 
@@ -96,7 +97,7 @@ export async function validateAndConsumeToken(
     .maybeSingle();
 
   if (lookupError) {
-    console.error("[Tokens] Failed to look up email action token:", lookupError);
+    logger.error("[Tokens] Failed to look up email action token:", lookupError);
     return null;
   }
 
@@ -126,7 +127,7 @@ export async function validateAndConsumeToken(
     .maybeSingle();
 
   if (consumeError || !consumed) {
-    console.error("[Tokens] Failed to mark token as consumed:", consumeError);
+    logger.error("[Tokens] Failed to mark token as consumed:", consumeError);
     // Either the update failed or another request already consumed the
     // token. Return null to be safe.
     return null;

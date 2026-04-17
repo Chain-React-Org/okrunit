@@ -2,6 +2,8 @@
 // OKrunit -- Discord Notification Channel (Webhook Embeds + Buttons)
 // ---------------------------------------------------------------------------
 
+import { logger } from "@/lib/monitoring/logger";
+
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -201,7 +203,7 @@ export async function sendDiscordNotification(
       // Webhook URL approach
       url = params.webhookUrl;
     } else {
-      console.warn("[Discord] No webhook URL or bot token. Skipping.");
+      logger.warn("[Discord] No webhook URL or bot token. Skipping.");
       return;
     }
 
@@ -213,18 +215,18 @@ export async function sendDiscordNotification(
 
     if (!response.ok) {
       const body = await response.text();
-      console.error(
+      logger.error(
         `[Discord] API returned ${response.status} for request ${params.requestId}:`,
         body,
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[Discord] Notification sent for request ${params.requestId}`,
     );
   } catch (err) {
-    console.error("[Discord] Failed to send notification:", err);
+    logger.error("[Discord] Failed to send notification:", err);
   }
 }
 
@@ -273,7 +275,7 @@ export async function sendDiscordDecisionNotification(
     } else if (params.webhookUrl) {
       url = params.webhookUrl;
     } else {
-      console.warn("[Discord] No webhook URL or bot token. Skipping decision.");
+      logger.warn("[Discord] No webhook URL or bot token. Skipping decision.");
       return;
     }
 
@@ -285,17 +287,17 @@ export async function sendDiscordDecisionNotification(
 
     if (!response.ok) {
       const body = await response.text();
-      console.error(
+      logger.error(
         `[Discord] Decision webhook returned ${response.status}:`,
         body,
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[Discord] Decision notification sent for "${params.requestTitle}"`,
     );
   } catch (err) {
-    console.error("[Discord] Failed to send decision notification:", err);
+    logger.error("[Discord] Failed to send decision notification:", err);
   }
 }

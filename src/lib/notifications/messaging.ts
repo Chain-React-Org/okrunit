@@ -6,6 +6,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/monitoring/logger";
 import type { MessagingConnection } from "@/lib/types/database";
 
 /**
@@ -27,7 +28,7 @@ export async function getOrgMessagingConnections(
     .eq("is_active", true);
 
   if (error) {
-    console.error(
+    logger.error(
       "[Messaging] Failed to load messaging connections:",
       error.message,
     );

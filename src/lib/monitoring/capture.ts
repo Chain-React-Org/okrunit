@@ -13,7 +13,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateFingerprint } from "./fingerprint";
 import { sendErrorDiscordAlert } from "./discord-alerts";
 import { getBreadcrumbs } from "./breadcrumbs";
-import { getCorrelationId } from "./logger";
+import { logger, getCorrelationId } from "./logger";
 import type { CaptureErrorParams, ErrorSeverity } from "./types";
 
 /** Current release. Read once from env. */
@@ -74,7 +74,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
         .single();
 
       if (insertErr || !inserted) {
-        console.error("[ErrorMonitor] Failed to insert issue:", insertErr);
+        logger.error("[ErrorMonitor] Failed to insert issue:", insertErr);
         return;
       }
       issueId = inserted.id;
@@ -192,7 +192,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
     }
   } catch (err) {
     // The error monitor itself must never crash the app
-    console.error("[ErrorMonitor] captureError failed:", err);
+    logger.error("[ErrorMonitor] captureError failed:", err);
   }
 }
 
