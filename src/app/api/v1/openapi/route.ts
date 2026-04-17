@@ -7,9 +7,14 @@
 
 import { NextResponse } from "next/server";
 
-import { generateOpenAPISpec } from "@/lib/api/openapi";
+// Force dynamic so the openapi module isn't evaluated during build.
+// extendZodWithOpenApi must run at request time, not at build time,
+// because Turbopack's production bundling may not preserve the
+// prototype extension.
+export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const { generateOpenAPISpec } = await import("@/lib/api/openapi");
   const spec = generateOpenAPISpec();
 
   return NextResponse.json(spec, {

@@ -12,6 +12,9 @@ import {
 } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
+// Extend Zod with the .openapi() method
+extendZodWithOpenApi(z);
+
 import {
   createApprovalSchema,
   respondApprovalSchema,
@@ -25,9 +28,6 @@ import {
   batchApprovalSchema,
   createCommentSchema,
 } from "@/lib/api/validation";
-
-// Extend Zod with the .openapi() method
-extendZodWithOpenApi(z);
 
 const registry = new OpenAPIRegistry();
 
