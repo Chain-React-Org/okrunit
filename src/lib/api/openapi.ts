@@ -19,17 +19,18 @@ export function generateOpenAPISpec() {
   return cachedSpec;
 }
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 function buildSpec() {
   // These imports are deferred so the module top level stays side-effect-free.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const {
-    OpenAPIRegistry,
-    OpenApiGeneratorV31,
-    extendZodWithOpenApi,
-  } = require("@asteasolutions/zod-to-openapi") as typeof import("@asteasolutions/zod-to-openapi");
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { z } = require("zod") as typeof import("zod");
+  // Turbopack's production bundler doesn't preserve Zod prototype patching
+  // when modules are evaluated at build time, so we use require() here.
+  const openApiLib = require("@asteasolutions/zod-to-openapi") as typeof import("@asteasolutions/zod-to-openapi");
+  const zodLib = require("zod") as typeof import("zod");
+  const validationLib = require("@/lib/api/validation") as typeof import("@/lib/api/validation");
+  /* eslint-enable @typescript-eslint/no-require-imports */
 
+  const { OpenAPIRegistry, OpenApiGeneratorV31, extendZodWithOpenApi } = openApiLib;
+  const { z } = zodLib;
   extendZodWithOpenApi(z);
 
   const {
@@ -44,8 +45,7 @@ function buildSpec() {
     webhookLogQuerySchema,
     batchApprovalSchema,
     createCommentSchema,
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-  } = require("@/lib/api/validation") as typeof import("@/lib/api/validation");
+  } = validationLib;
 
   const registry = new OpenAPIRegistry();
 
