@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWelcomeEmailHtml } from "@/lib/email/welcome";
 import { logger } from "@/lib/monitoring/logger";
+import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -45,6 +46,13 @@ export async function GET(request: NextRequest) {
 
   // Send welcome email on first sign-in (when profile doesn't exist yet)
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Invalidate org context cache so the dashboard sees the profile/org/membership
+  // that the handle_new_user trigger just created.
+  if (user) {
+    revalidateTags(CacheTags.orgContext(user.id), CacheTags.dashboard(user.id));
+  }
+
   if (user && process.env.RESEND_API_KEY) {
     const admin = createAdminClient();
     const { data: profile } = await admin
