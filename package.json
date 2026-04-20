@@ -76,7 +76,7 @@
     "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^9",
-    "eslint-config-next": "16.2.3",
+    "eslint-config-next": "16.2.4",
     "jsdom": "^27.4.0",
     "rolldown": "^1.0.0-rc.15",
     "shadcn": "^3.8.5",
