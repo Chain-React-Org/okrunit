@@ -957,7 +957,13 @@ export async function POST(request: Request) {
     }
 
     // 16. Invalidate caches
-    revalidateTags(CacheTags.requests(auth.orgId), CacheTags.overview(auth.orgId), CacheTags.analytics(auth.orgId));
+    const tagsToInvalidate = [
+      CacheTags.requests(auth.orgId),
+      CacheTags.overview(auth.orgId),
+      CacheTags.analytics(auth.orgId),
+    ];
+    if (flowId) tagsToInvalidate.push(CacheTags.routes(auth.orgId));
+    revalidateTags(...tagsToInvalidate);
 
     // 17. Return created approval (with rate limit headers if applicable)
     const response = NextResponse.json(approval, { status: 201 });
