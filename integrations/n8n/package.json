@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-okrunit",
-  "version": "0.3.0",
+  "version": "0.9.17",
   "description": "n8n community node for OKRunit human-in-the-loop approval gateway",
   "keywords": [
     "n8n-community-node-package",

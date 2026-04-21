@@ -397,7 +397,10 @@ export const V2MemberList = memo(function V2MemberList({
 
                 {/* Can approve toggle */}
                 {(() => {
-                  const canApproveValue = optimisticApprove[member.id] ?? member.can_approve;
+                  const isOwnerRow = member.role === "owner";
+                  const canApproveValue = isOwnerRow
+                    ? true
+                    : optimisticApprove[member.id] ?? member.can_approve;
                   return (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -412,12 +415,14 @@ export const V2MemberList = memo(function V2MemberList({
                           <Switch
                             checked={canApproveValue}
                             onCheckedChange={(checked) => handleCanApproveChange(member.id, checked)}
-                            disabled={!isAdmin || isSelf || member.role === "approver"}
+                            disabled={!isAdmin || isSelf || isOwnerRow || member.role === "approver"}
                           />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        {member.role === "approver"
+                        {isOwnerRow
+                          ? "Owners always have approval permission."
+                          : member.role === "approver"
                           ? "Approvers always have approval permission."
                           : canApproveValue
                           ? "This member can approve or reject requests. Toggle off to revoke."
