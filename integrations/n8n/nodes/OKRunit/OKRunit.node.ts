@@ -295,8 +295,12 @@ export class OKRunit implements INodeType {
             i,
           ) as Record<string, unknown>;
 
-          // Auto-set source and idempotency key per spec
+          // Auto-set source, source_id, and idempotency key per spec.
+          // source_id groups requests from the same workflow into a Route,
+          // so admins can configure defaults (approvers, priority, etc.) per
+          // workflow without hand-editing every incoming request.
           const idempotencyKey = `n8n-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+          const workflow = this.getWorkflow();
 
           const body: Record<string, unknown> = {
             title: title || "Approval request from n8n",
@@ -304,6 +308,9 @@ export class OKRunit implements INodeType {
             source: "n8n",
             idempotency_key: idempotencyKey,
           };
+
+          if (workflow?.id) body.source_id = String(workflow.id);
+          if (workflow?.name) body.source_name = workflow.name;
 
           for (const [key, value] of Object.entries(additionalFields)) {
             if (value === "" || value === undefined || value === null) continue;
