@@ -63,9 +63,13 @@ interface V2InviteSectionProps {
 
 export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
   const router = useRouter();
+  const defaultTeamIds = useMemo<string[]>(
+    () => (teams.length === 1 ? [teams[0].id] : []),
+    [teams],
+  );
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "approver" | "member">("member");
-  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>(defaultTeamIds);
   const [teamLeadIds, setTeamLeadIds] = useState<string[]>([]);
   const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
   const [canApprove, setCanApprove] = useState(false);
@@ -79,7 +83,7 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
   // Bulk mode state
   const [bulkInput, setBulkInput] = useState("");
   const [bulkEntries, setBulkEntries] = useState<BulkInviteEntry[]>([]);
-  const [bulkTeamIds, setBulkTeamIds] = useState<string[]>([]);
+  const [bulkTeamIds, setBulkTeamIds] = useState<string[]>(defaultTeamIds);
   const [bulkCanApprove, setBulkCanApprove] = useState(false);
   const [bulkCanConnect, setBulkCanConnect] = useState(false);
   const [bulkTeamLeadIds, setBulkTeamLeadIds] = useState<string[]>([]);
@@ -260,7 +264,7 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
       toast.success(`Invitation sent to ${trimmedEmail}`);
       setEmail("");
       setRole("member");
-      setSelectedTeamIds([]);
+      setSelectedTeamIds(defaultTeamIds);
       setTeamLeadIds([]);
       setSelectedPositionId(null);
       setCanApprove(false);
@@ -304,7 +308,7 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
 
     setBulkInput("");
     setBulkEntries([]);
-    setBulkTeamIds([]);
+    setBulkTeamIds(defaultTeamIds);
     setBulkTeamLeadIds([]);
     setBulkPositionId(null);
     setBulkCanApprove(false);
@@ -670,7 +674,7 @@ export function V2InviteSection({ invites, teams }: V2InviteSectionProps) {
                       onClick={() => {
                         setShowBulkList(false);
                         setBulkEntries([]);
-                        setBulkTeamIds([]);
+                        setBulkTeamIds(defaultTeamIds);
                         setBulkTeamLeadIds([]);
                         setBulkPositionId(null);
                         setBulkCanApprove(false);
