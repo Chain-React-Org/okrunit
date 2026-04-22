@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { SourceAvatar } from "@/components/approvals/source-icons";
 import { UserName } from "@/components/approvals/user-name";
 import { canDecideOnApproval } from "@/lib/approvals/responsible";
-import { titleCaseName } from "@/lib/format-name";
 import {
   Users,
   UserCheck,
