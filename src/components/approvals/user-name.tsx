@@ -12,8 +12,6 @@ interface UserNameProps {
   userProfiles?: Map<string, UserProfile>;
   /** Explicit override name (e.g., precomputed from a connection). */
   name?: string | null;
-  /** Append email in the label when another approver shares the same name. */
-  appendEmailForDisambiguation?: boolean;
   className?: string;
 }
 
@@ -33,16 +31,11 @@ export const UserName = memo(function UserName({
   userId,
   userProfiles,
   name,
-  appendEmailForDisambiguation,
   className,
 }: UserNameProps) {
   const profile = userId ? userProfiles?.get(userId) : undefined;
-  const baseLabel = resolveLabel(userId, profile, name);
+  const displayLabel = resolveLabel(userId, profile, name);
   const email = profile?.email;
-  const displayLabel =
-    appendEmailForDisambiguation && email && baseLabel !== email
-      ? `${baseLabel} (${email})`
-      : baseLabel;
 
   const handleCopy = useCallback(
     async (e: React.MouseEvent) => {
@@ -89,7 +82,7 @@ export const UserName = memo(function UserName({
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-xs">
         <div className="space-y-0.5">
-          <p className="font-medium text-zinc-900">{profile?.full_name || baseLabel}</p>
+          <p className="font-medium text-zinc-900">{profile?.full_name ? titleCaseName(profile.full_name) : displayLabel}</p>
           <p className="text-[11px] text-zinc-600 break-all">{email}</p>
           <p className="text-[10px] text-zinc-500 pt-0.5">Click to copy email</p>
         </div>

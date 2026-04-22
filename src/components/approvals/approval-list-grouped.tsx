@@ -6,7 +6,7 @@ import { ApprovalCard } from "@/components/approvals/approval-card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InboxIcon } from "lucide-react";
-import { getCurrentlyResponsible } from "@/lib/approvals/responsible";
+import { getCurrentlyResponsible, canDecideOnApproval } from "@/lib/approvals/responsible";
 import type { ApprovalRequest, Connection, UserProfile } from "@/lib/types/database";
 
 /** Threshold: only virtualize sections with this many items or more */
@@ -198,7 +198,18 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
     );
   }
 
-  const needsAttention = approvals.filter((a) => a.status === "pending");
+  // Split pending into two buckets so a user who's already taken their
+  // turn (or is later in the chain) doesn't keep seeing the request under
+  // "Needs Your Attention". Uses the same eligibility gate as the detail
+  // panel's Approve/Reject buttons so the groupings can never drift from
+  // what the user can actually do.
+  const pending = approvals.filter((a) => a.status === "pending");
+  const needsAttention = pending.filter((a) =>
+    canDecideOnApproval(a, currentUserId, !!canApprove, delegatorIds),
+  );
+  const awaitingOthers = pending.filter(
+    (a) => !canDecideOnApproval(a, currentUserId, !!canApprove, delegatorIds),
+  );
   const resolved = approvals.filter((a) => a.status !== "pending");
 
   const sharedProps = {
@@ -271,13 +282,38 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
               Needs Your Attention
             </span>
             <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-medium">
-              {totalPendingCount ?? needsAttention.length}
+              {needsAttention.length}
             </span>
           </div>
           {needsAttention.length >= VIRTUALIZE_THRESHOLD ? (
             <VirtualizedSection items={needsAttention} {...sharedProps} />
           ) : (
             renderCards(needsAttention)
+          )}
+        </section>
+      )}
+
+      {awaitingOthers.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            {onToggleSelectSection && (
+              <Checkbox
+                checked={awaitingOthers.every((a) => selectedIds?.has(a.id))}
+                onCheckedChange={() => onToggleSelectSection(awaitingOthers.map((a) => a.id))}
+                className="bg-white dark:bg-zinc-900"
+              />
+            )}
+            <span className="text-sm font-medium text-foreground">
+              Awaiting Others
+            </span>
+            <span className="bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 px-2 py-0.5 rounded-full text-xs font-medium">
+              {awaitingOthers.length}
+            </span>
+          </div>
+          {awaitingOthers.length >= VIRTUALIZE_THRESHOLD ? (
+            <VirtualizedSection items={awaitingOthers} {...sharedProps} />
+          ) : (
+            renderCards(awaitingOthers)
           )}
         </section>
       )}

@@ -90,12 +90,19 @@ export function canDecideOnApproval(
   if (approval.status !== "pending") return false;
   if (approval.is_log) return false;
 
-  // Self-approval is always blocked, regardless of whether the user is in
-  // assigned_approvers.
   const createdBy = approval.created_by as { user_id?: string } | null;
-  if (createdBy?.user_id && createdBy.user_id === currentUserId) return false;
-
+  const isSelfCreated = !!createdBy?.user_id && createdBy.user_id === currentUserId;
   const hasAssigned = !!approval.assigned_approvers?.length;
+  const isExplicitlyInChain =
+    hasAssigned && approval.assigned_approvers!.includes(currentUserId);
+
+  // Block self-approval in the default "any approver" case, where a
+  // creator acting as approver would be trivial self-approval. When a
+  // creator is explicitly listed on the chain (e.g., added themselves
+  // via Configure Flow Rules), respect that intent — the audit log still
+  // captures exactly who approved.
+  if (isSelfCreated && !isExplicitlyInChain) return false;
+
   if (!hasAssigned) return true;
 
   // Set of IDs that "count as" the current user: themselves + anyone who has

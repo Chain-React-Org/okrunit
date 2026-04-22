@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { SourceAvatar } from "@/components/approvals/source-icons";
 import { UserName } from "@/components/approvals/user-name";
 import { canDecideOnApproval } from "@/lib/approvals/responsible";
-import { titleCaseName } from "@/lib/format-name";
 import {
   Users,
   UserCheck,
@@ -71,36 +70,6 @@ const statusStyles: Record<string, { label: string; dot: string; badge: string }
   cancelled: { label: "Cancelled", dot: "bg-zinc-400", badge: "bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700" },
   expired: { label: "Expired", dot: "bg-zinc-400", badge: "bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700" },
 };
-
-function getUserDisplayName(userId: string, profiles?: Map<string, UserProfile>): string {
-  const profile = profiles?.get(userId);
-  if (profile?.full_name) return titleCaseName(profile.full_name);
-  if (profile?.email) return profile.email;
-  return userId.slice(0, 8) + "...";
-}
-
-/**
- * Given a set of approver IDs, return the subset whose display names
- * collide — these are the ones that benefit from having their email
- * rendered alongside the name for disambiguation.
- */
-function getDuplicateNameUserIds(
-  userIds: string[],
-  profiles?: Map<string, UserProfile>,
-): Set<string> {
-  const byName = new Map<string, string[]>();
-  for (const id of userIds) {
-    const name = getUserDisplayName(id, profiles);
-    const arr = byName.get(name) ?? [];
-    arr.push(id);
-    byName.set(name, arr);
-  }
-  const dupes = new Set<string>();
-  for (const ids of byName.values()) {
-    if (ids.length > 1) for (const id of ids) dupes.add(id);
-  }
-  return dupes;
-}
 
 /** Humanize an elapsed duration, e.g. "3h 15m" or "2d 5h". */
 function formatDuration(fromIso: string, toIso: string): string {
@@ -249,7 +218,6 @@ export const ApprovalDetail = memo(function ApprovalDetail({
     ? Math.round((approval.current_approvals / approval.required_approvals) * 100)
     : 0;
   const createdBy = approval.created_by as CreatedByInfo | null;
-  const duplicateNameIds = getDuplicateNameUserIds(approval.assigned_approvers ?? [], userProfiles);
 
   // Whether the current user is the one the request is waiting on right now.
   const isResponsibleApprover = (() => {
@@ -274,6 +242,18 @@ export const ApprovalDetail = memo(function ApprovalDetail({
   const isSelfAnAssignedApprover =
     !!currentUserId && hasAssignedApprovers && approval.assigned_approvers!.includes(currentUserId);
 
+  // In a sequential chain, find the current user's slot and whether they've
+  // already approved (slot index strictly before current_approvals). Used
+  // to tell the difference between "waiting on you later" and "you already
+  // did your part".
+  const currentUserSequentialSlot =
+    approval.is_sequential && isSelfAnAssignedApprover
+      ? approval.assigned_approvers!.indexOf(currentUserId!)
+      : -1;
+  const userAlreadyApprovedSequential =
+    currentUserSequentialSlot >= 0 &&
+    currentUserSequentialSlot < approval.current_approvals;
+
   // Authoritative gate — shared with ApprovalCard so the inline and detail
   // buttons can never drift. Hides for self-created, non-assigned, and
   // non-next-in-line users. Delegates are treated as eligible on behalf of
@@ -294,7 +274,12 @@ export const ApprovalDetail = memo(function ApprovalDetail({
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()} modal={!tourActive}>
-      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col bg-card" data-tour="detail-panel">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md p-0 flex flex-col bg-card"
+        data-tour="detail-panel"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         {/* Header */}
         <div className="px-5 pt-5 pb-4 bg-card border-b border-border/50">
           <SheetTitle className="text-base font-semibold leading-snug">{approval.title}</SheetTitle>
@@ -449,11 +434,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
                             : <Circle className="size-4 text-muted-foreground/25 shrink-0" />
                           )}
                           <span className={cn("text-sm flex-1 min-w-0", isNext ? "font-semibold" : isCompleted ? "" : "text-muted-foreground")}>
-                            <UserName
-                              userId={userId}
-                              userProfiles={userProfiles}
-                              appendEmailForDisambiguation={duplicateNameIds.has(userId)}
-                            />
+                            <UserName userId={userId} userProfiles={userProfiles} />
                           </span>
                           {isCompleted && <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium shrink-0">Approved</span>}
                           {approval.is_sequential && isNext && <span className="text-[11px] text-primary font-medium shrink-0">Next</span>}
@@ -470,11 +451,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
                   <div key={userId} className="flex items-center gap-2.5 py-2 first:pt-0 last:pb-0">
                     <UserCheck className="size-4 text-muted-foreground/40 shrink-0" />
                     <span className="text-sm flex-1 min-w-0">
-                      <UserName
-                        userId={userId}
-                        userProfiles={userProfiles}
-                        appendEmailForDisambiguation={duplicateNameIds.has(userId)}
-                      />
+                      <UserName userId={userId} userProfiles={userProfiles} />
                     </span>
                     <span className="text-[11px] text-muted-foreground shrink-0">Assigned</span>
                   </div>
@@ -584,22 +561,46 @@ export const ApprovalDetail = memo(function ApprovalDetail({
               <p className="text-muted-foreground text-sm text-center">
                 {!canApprove ? (
                   "You do not have approval permissions. Contact your admin."
-                ) : isSelfCreated ? (
-                  isSelfAnAssignedApprover
-                    ? "You created this request."
-                    : "You created this request. Another approver must decide."
                 ) : hasAssignedApprovers ? (
                   approval.is_sequential ? (
+                    userAlreadyApprovedSequential ? (
+                      <>
+                        You approved this request. Waiting on{" "}
+                        <UserName
+                          userId={approval.assigned_approvers![approval.current_approvals]}
+                          userProfiles={userProfiles}
+                        />
+                        .
+                      </>
+                    ) : isSelfAnAssignedApprover ? (
+                      <>
+                        Waiting on{" "}
+                        <UserName
+                          userId={approval.assigned_approvers![approval.current_approvals]}
+                          userProfiles={userProfiles}
+                        />
+                        . You&rsquo;re later in the approval chain.
+                      </>
+                    ) : (
+                      <>
+                        You&rsquo;re not assigned to this request. Waiting on{" "}
+                        <UserName
+                          userId={approval.assigned_approvers![approval.current_approvals]}
+                          userProfiles={userProfiles}
+                        />
+                        .
+                      </>
+                    )
+                  ) : isSelfAnAssignedApprover ? (
                     <>
-                      Waiting on{" "}
-                      <UserName
-                        userId={approval.assigned_approvers![approval.current_approvals]}
-                        userProfiles={userProfiles}
-                        appendEmailForDisambiguation={duplicateNameIds.has(
-                          approval.assigned_approvers![approval.current_approvals],
-                        )}
-                      />
-                      . You&rsquo;re later in the approval chain.
+                      You already responded to this request. Waiting on{" "}
+                      {remainingApprovers.map((id, i) => (
+                        <span key={id}>
+                          {i > 0 && ", "}
+                          <UserName userId={id} userProfiles={userProfiles} />
+                        </span>
+                      ))}
+                      .
                     </>
                   ) : (
                     <>
@@ -607,16 +608,14 @@ export const ApprovalDetail = memo(function ApprovalDetail({
                       {remainingApprovers.map((id, i) => (
                         <span key={id}>
                           {i > 0 && ", "}
-                          <UserName
-                            userId={id}
-                            userProfiles={userProfiles}
-                            appendEmailForDisambiguation={duplicateNameIds.has(id)}
-                          />
+                          <UserName userId={id} userProfiles={userProfiles} />
                         </span>
                       ))}
                       .
                     </>
                   )
+                ) : isSelfCreated ? (
+                  "You created this request. Another approver must decide."
                 ) : (
                   "Only approvers assigned to this request can decide."
                 )}

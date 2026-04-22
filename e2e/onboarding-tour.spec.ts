@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
-const E2E_EMAIL = process.env.E2E_EMAIL ?? "test@okrunit.com";
-const E2E_PASSWORD = process.env.E2E_PASSWORD ?? "E2eScreenshot2026!";
+const E2E_EMAIL = process.env.E2E_EMAIL;
+const E2E_PASSWORD = process.env.E2E_PASSWORD;
 
 test.describe("Onboarding Tour", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
@@ -12,8 +12,8 @@ test.describe("Onboarding Tour", () => {
     // Login first
     await page.goto("/login", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1000);
-    await page.fill('input[type="email"]', E2E_EMAIL);
-    await page.fill('input[type="password"]', E2E_PASSWORD);
+    await page.fill('input[type="email"]', E2E_EMAIL!);
+    await page.fill('input[type="password"]', E2E_PASSWORD!);
     await page.click('button[type="submit"]');
     await page.waitForURL(/\/(org|dashboard|setup)/, { timeout: 30000 });
     await page.waitForTimeout(1000);
@@ -132,8 +132,8 @@ test.describe("Onboarding Tour (Mobile)", () => {
   test("tour tooltip fits on mobile viewport", async ({ page }) => {
     await page.goto("/login", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1000);
-    await page.fill('input[type="email"]', E2E_EMAIL);
-    await page.fill('input[type="password"]', E2E_PASSWORD);
+    await page.fill('input[type="email"]', E2E_EMAIL!);
+    await page.fill('input[type="password"]', E2E_PASSWORD!);
     await page.click('button[type="submit"]');
     await page.waitForURL(/\/(org|dashboard|setup)/, { timeout: 30000 });
     await page.waitForTimeout(1000);

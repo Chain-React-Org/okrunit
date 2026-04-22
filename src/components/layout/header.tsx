@@ -210,9 +210,9 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
                   />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-64">
                 <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{user.email}</p>
+                  <p className="text-sm font-medium break-all leading-tight">{user.email}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild className="cursor-pointer">
