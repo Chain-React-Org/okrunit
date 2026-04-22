@@ -5,7 +5,7 @@ test.describe('Auth pages', () => {
     await page.goto('/login');
 
     // Should show heading
-    await expect(page.locator('h1')).toContainText('Welcome back');
+    await expect(page.locator('h1')).toContainText('Sign in to OKrunit');
 
     // Should have email and password inputs
     await expect(page.locator('input[type="email"]')).toBeVisible();

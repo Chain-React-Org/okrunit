@@ -55,20 +55,22 @@ test.describe('Docs pages', () => {
     const sidebar = page.locator('aside nav');
     await expect(sidebar).toBeVisible();
 
-    // Navigate to API Reference
+    // Navigate to API Reference. Next.js Link triggers a client-side
+    // transition, so give the new route's content time to render before
+    // asserting the heading.
     await sidebar.locator('a', { hasText: 'API Reference' }).click();
     await expect(page).toHaveURL(/\/docs\/api/);
-    await expect(page.locator('main h1')).toContainText('API Reference');
+    await expect(page.locator('main h1')).toContainText('API Reference', { timeout: 10_000 });
 
     // Navigate to Integrations
     await page.locator('aside nav').locator('a', { hasText: 'Integrations' }).click();
     await expect(page).toHaveURL(/\/docs\/integrations/);
-    await expect(page.locator('main h1')).toContainText('Integrations');
+    await expect(page.locator('main h1')).toContainText('Integrations', { timeout: 10_000 });
 
     // Navigate back to Overview (Getting Started)
     await page.locator('aside nav').locator('a', { hasText: 'Overview' }).click();
     await expect(page).toHaveURL(/\/docs$/);
-    await expect(page.locator('main h1')).toContainText('Getting Started');
+    await expect(page.locator('main h1')).toContainText('Getting Started', { timeout: 10_000 });
   });
 
   test('docs layout has proper sidebar navigation', async ({ page }) => {
