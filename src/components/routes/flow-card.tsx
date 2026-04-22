@@ -6,6 +6,7 @@ import Link from "next/link";
 import { formatDistanceToNow, differenceInDays } from "date-fns";
 import {
   ChevronDown,
+  ChevronUp,
   Check,
   ExternalLink,
   Settings2,
@@ -675,7 +676,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
             {approverMode === "designated" && (
               <div className="space-y-2">
                 <FieldLabel tooltip="Choose which team members can approve requests from this flow. Only members with approval permission are shown.">Select Approvers</FieldLabel>
-                {selectedApprovers.length > 0 && (
+                {selectedApprovers.length > 0 && !isSequential && (
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {selectedApprovers.map((id) => {
                       const member = members.find((m) => m.id === id);
@@ -690,6 +691,76 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
                             <X className="size-3" />
                           </button>
                         </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+                {selectedApprovers.length > 0 && isSequential && (
+                  <div className="mb-2 space-y-1.5 rounded-md border bg-muted/30 p-2">
+                    <p className="text-[11px] text-muted-foreground px-1">
+                      Approval order. Each approver is notified only after the previous one approves.
+                    </p>
+                    {selectedApprovers.map((id, idx) => {
+                      const member = members.find((m) => m.id === id);
+                      return (
+                        <div
+                          key={id}
+                          className="flex items-center gap-2 rounded-md border bg-background px-2 py-1.5"
+                        >
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                            {idx + 1}
+                          </span>
+                          <span className="flex-1 truncate text-sm">
+                            {member?.name ?? id.slice(0, 8)}
+                          </span>
+                          <div className="flex items-center gap-0.5">
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="size-6"
+                              disabled={saving || idx === 0}
+                              onClick={() => {
+                                setSelectedApprovers((prev) => {
+                                  const next = [...prev];
+                                  [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                                  return next;
+                                });
+                              }}
+                              aria-label="Move up"
+                            >
+                              <ChevronUp className="size-3.5" />
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="size-6"
+                              disabled={saving || idx === selectedApprovers.length - 1}
+                              onClick={() => {
+                                setSelectedApprovers((prev) => {
+                                  const next = [...prev];
+                                  [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                                  return next;
+                                });
+                              }}
+                              aria-label="Move down"
+                            >
+                              <ChevronDown className="size-3.5" />
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="size-6 text-muted-foreground hover:text-foreground"
+                              disabled={saving}
+                              onClick={() => toggleApprover(id)}
+                              aria-label="Remove"
+                            >
+                              <X className="size-3.5" />
+                            </Button>
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
