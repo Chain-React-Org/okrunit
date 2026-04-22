@@ -698,7 +698,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
                 {selectedApprovers.length > 0 && isSequential && (
                   <div className="mb-2 space-y-1.5 rounded-md border bg-muted/30 p-2">
                     <p className="text-[11px] text-muted-foreground px-1">
-                      Approval order. Each approver is notified only after the previous one approves.
+                      Approval order. Each approver is notified only after the previous one approves. Tick more people in the list below to add them to the end of the sequence.
                     </p>
                     {selectedApprovers.map((id, idx) => {
                       const member = members.find((m) => m.id === id);
