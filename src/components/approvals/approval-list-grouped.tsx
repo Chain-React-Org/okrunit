@@ -23,6 +23,8 @@ interface ApprovalListGroupedProps {
   userProfiles?: Map<string, UserProfile>;
   onSelect: (approval: ApprovalRequest) => void;
   canApprove?: boolean;
+  currentUserId?: string;
+  delegatorIds?: ReadonlySet<string>;
   isLoading?: boolean;
   skipConfirmation?: boolean;
   onInlineAction?: (approvalId: string, decision: "approved" | "rejected", comment?: string) => void;
@@ -52,6 +54,8 @@ function VirtualizedSection({
   teamsLookup,
   onSelect,
   canApprove,
+  currentUserId,
+  delegatorIds,
   isLoading,
   skipConfirmation,
   onInlineAction,
@@ -71,6 +75,8 @@ function VirtualizedSection({
   teamsLookup: Map<string, { id: string; name: string }>;
   onSelect: (approval: ApprovalRequest) => void;
   canApprove: boolean;
+  currentUserId?: string;
+  delegatorIds?: ReadonlySet<string>;
   isLoading: boolean;
   skipConfirmation: boolean;
   onInlineAction?: (approvalId: string, decision: "approved" | "rejected", comment?: string) => void;
@@ -133,6 +139,8 @@ function VirtualizedSection({
                   currentlyResponsible={getCurrentlyResponsible(approval, userProfiles, teamsLookup)}
                   onClick={() => onSelect(approval)}
                   canApprove={canApprove}
+                  currentUserId={currentUserId}
+                  delegatorIds={delegatorIds}
                   isLoading={isLoading}
                   skipConfirmation={skipConfirmation}
                   onInlineAction={onInlineAction}
@@ -161,6 +169,8 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
   userProfiles = new Map(),
   onSelect,
   canApprove = true,
+  currentUserId,
+  delegatorIds,
   isLoading = false,
   skipConfirmation = false,
   onInlineAction,
@@ -198,6 +208,8 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
     teamsLookup,
     onSelect,
     canApprove,
+    currentUserId,
+    delegatorIds,
     isLoading,
     skipConfirmation,
     onInlineAction,
@@ -225,6 +237,8 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
             currentlyResponsible={getCurrentlyResponsible(approval, userProfiles, teamsLookup)}
             onClick={() => onSelect(approval)}
             canApprove={canApprove}
+            currentUserId={currentUserId}
+            delegatorIds={delegatorIds}
             isLoading={isLoading}
             skipConfirmation={skipConfirmation}
             onInlineAction={onInlineAction}

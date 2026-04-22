@@ -31,6 +31,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { UserName } from "@/components/approvals/user-name";
 
 // ---- Types ----------------------------------------------------------------
 
@@ -272,8 +273,6 @@ export const ApprovalComments = memo(function ApprovalComments({
             return timeline.map((item) => {
               if (item.type === "vote") {
                 const v = item.data;
-                const profile = userProfiles?.get(v.user_id);
-                const name = profile?.full_name || profile?.email || v.user_id.slice(0, 8) + "…";
                 const isApprove = v.vote === "approve";
                 return (
                   <div key={`vote-${v.id}`} className="flex items-center gap-2 px-1 py-1.5 rounded-lg bg-muted/30">
@@ -282,7 +281,11 @@ export const ApprovalComments = memo(function ApprovalComments({
                       : <XCircle className="size-3.5 shrink-0 text-red-500" />
                     }
                     <span className="text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">{name}</span>
+                      <UserName
+                        userId={v.user_id}
+                        userProfiles={userProfiles}
+                        className="font-medium text-foreground"
+                      />
                       {" "}{isApprove ? "approved" : "rejected"}
                       {v.comment && <span className="italic"> · &ldquo;{v.comment}&rdquo;</span>}
                     </span>
@@ -312,9 +315,13 @@ export const ApprovalComments = memo(function ApprovalComments({
                   </Avatar>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-semibold truncate">
-                        {getAuthorName(comment, userProfiles, connectionNames)}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-semibold">
+                        {comment.user_id && (!comment.source || comment.source === "dashboard" || comment.source === "api") ? (
+                          <UserName userId={comment.user_id} userProfiles={userProfiles} />
+                        ) : (
+                          getAuthorName(comment, userProfiles, connectionNames)
+                        )}
                       </span>
                       <Badge
                         variant={badge.variant}

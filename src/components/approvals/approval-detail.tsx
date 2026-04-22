@@ -16,6 +16,8 @@ import { ApprovalComments } from "@/components/approvals/approval-comments";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SourceAvatar } from "@/components/approvals/source-icons";
+import { UserName } from "@/components/approvals/user-name";
+import { canDecideOnApproval } from "@/lib/approvals/responsible";
 import {
   Users,
   UserCheck,
@@ -27,7 +29,6 @@ import {
   HelpCircle,
   Eye,
   EyeOff,
-  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ApprovalRequest, ApprovalComment, UserProfile, CreatedByInfo } from "@/lib/types/database";
@@ -50,6 +51,10 @@ interface ApprovalDetailProps {
   onCommentsChange?: (approvalId: string, comments: ApprovalComment[]) => void;
   currentUserId?: string;
   currentUserRole?: string;
+  /** IDs of users who have actively delegated their approval authority to
+   * the current user. Used to let delegates see Approve/Reject when the
+   * original approver is assigned. */
+  delegatorIds?: ReadonlySet<string>;
   /** Pre-computed watch state for the opening approval so the Watch button
    * renders in the correct position immediately instead of flickering. */
   initialIsWatching?: boolean;
@@ -74,25 +79,26 @@ function getUserDisplayName(userId: string, profiles?: Map<string, UserProfile>)
 }
 
 /**
- * For a set of user IDs, return a labeller that disambiguates collisions by
- * appending the user's email when two or more share the same display name.
+ * Given a set of approver IDs, return the subset whose display names
+ * collide — these are the ones that benefit from having their email
+ * rendered alongside the name for disambiguation.
  */
-function makeApproverLabeller(
+function getDuplicateNameUserIds(
   userIds: string[],
   profiles?: Map<string, UserProfile>,
-): (userId: string) => string {
-  const names = userIds.map((id) => getUserDisplayName(id, profiles));
-  const counts = new Map<string, number>();
-  for (const n of names) counts.set(n, (counts.get(n) ?? 0) + 1);
-  const duplicates = new Set<string>();
-  for (const [n, c] of counts) if (c > 1) duplicates.add(n);
-
-  return (userId: string) => {
-    const name = getUserDisplayName(userId, profiles);
-    if (!duplicates.has(name)) return name;
-    const email = profiles?.get(userId)?.email;
-    return email ? `${name} (${email})` : name;
-  };
+): Set<string> {
+  const byName = new Map<string, string[]>();
+  for (const id of userIds) {
+    const name = getUserDisplayName(id, profiles);
+    const arr = byName.get(name) ?? [];
+    arr.push(id);
+    byName.set(name, arr);
+  }
+  const dupes = new Set<string>();
+  for (const ids of byName.values()) {
+    if (ids.length > 1) for (const id of ids) dupes.add(id);
+  }
+  return dupes;
 }
 
 /** Humanize an elapsed duration, e.g. "3h 15m" or "2d 5h". */
@@ -143,6 +149,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
   onCommentsChange,
   currentUserId,
   currentUserRole,
+  delegatorIds,
   initialIsWatching = false,
   onWatchChange,
 }: ApprovalDetailProps) {
@@ -200,20 +207,12 @@ export const ApprovalDetail = memo(function ApprovalDetail({
     onCommentsChange?.(currentId, resolved);
   };
 
-  // Keyboard shortcuts: a = approve, r = reject (only when detail is open and user is the responsible approver)
+  // Keyboard shortcuts: a = approve, r = reject (only when detail is open and
+  // the current user is the responsible approver — not a self-creator, not a
+  // non-assigned viewer, not out-of-turn on a sequential chain).
   useEffect(() => {
-    if (!open || !approval || approval.status !== "pending" || !canApprove) return;
-
-    // Re-check per-request eligibility inside the effect (approval state can change).
-    const hasAssigned = !!approval.assigned_approvers?.length;
-    const isNext = hasAssigned
-      ? approval.is_sequential
-        ? approval.assigned_approvers![approval.current_approvals] === currentUserId
-        : approval.assigned_approvers!.includes(currentUserId ?? "")
-      : true;
-    const createdByUser = (approval.created_by as CreatedByInfo | null)?.user_id;
-    const selfCreated = !!createdByUser && createdByUser === currentUserId;
-    if (!isNext || selfCreated) return;
+    if (!open || !approval) return;
+    if (!canDecideOnApproval(approval, currentUserId, !!canApprove, delegatorIds)) return;
 
     function handleKey(e: KeyboardEvent) {
       // Don't fire if user is typing in an input/textarea
@@ -231,7 +230,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
 
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [open, approval, canApprove, onRespond, currentUserId]);
+  }, [open, approval, canApprove, onRespond, currentUserId, delegatorIds]);
 
   // No local fetch needed. Comments are prefetched by the parent dashboard.
 
@@ -249,24 +248,29 @@ export const ApprovalDetail = memo(function ApprovalDetail({
     ? Math.round((approval.current_approvals / approval.required_approvals) * 100)
     : 0;
   const createdBy = approval.created_by as CreatedByInfo | null;
-  const approverLabel = makeApproverLabeller(approval.assigned_approvers ?? [], userProfiles);
+  const duplicateNameIds = getDuplicateNameUserIds(approval.assigned_approvers ?? [], userProfiles);
 
   // Whether the current user is the one the request is waiting on right now.
   const isResponsibleApprover = (() => {
     if (!currentUserId || approval.status !== "pending") return false;
     if (!hasAssignedApprovers) return true; // any-approver mode — org-level canApprove governs
+    const eligible = new Set<string>([currentUserId]);
+    if (delegatorIds) for (const id of delegatorIds) eligible.add(id);
     if (approval.is_sequential) {
       const nextUserId = approval.assigned_approvers![approval.current_approvals];
-      return nextUserId === currentUserId;
+      return !!nextUserId && eligible.has(nextUserId);
     }
-    return approval.assigned_approvers!.includes(currentUserId);
+    return approval.assigned_approvers!.some((uid: string) => eligible.has(uid));
   })();
 
   // Block self-approval: the requester can't approve their own request.
   const isSelfCreated = !!createdBy?.user_id && createdBy.user_id === currentUserId;
 
-  const effectiveCanApprove =
-    canApprove && isResponsibleApprover && !isSelfCreated && approval.status === "pending" && !approval.is_log;
+  // Authoritative gate — shared with ApprovalCard so the inline and detail
+  // buttons can never drift. Hides for self-created, non-assigned, and
+  // non-next-in-line users. Delegates are treated as eligible on behalf of
+  // their delegators.
+  const effectiveCanApprove = canDecideOnApproval(approval, currentUserId, !!canApprove, delegatorIds);
 
   // Names of approvers still pending a decision (parallel: everyone who hasn't
   // pushed current_approvals past their slot; sequential: the rest of the chain).
@@ -347,8 +351,16 @@ export const ApprovalDetail = memo(function ApprovalDetail({
 
               <div className="p-3.5">
                 <LabelWithTip label="Created By" tip="The person whose account was used to submit this request through the connected platform." />
-                <p className="text-sm font-medium truncate">
-                  {creatorName || "-"}
+                <p className="text-sm font-medium break-words">
+                  {createdBy?.user_id ? (
+                    <UserName
+                      userId={createdBy.user_id}
+                      userProfiles={userProfiles}
+                      name={creatorName || undefined}
+                    />
+                  ) : (
+                    creatorName || "-"
+                  )}
                 </p>
               </div>
 
@@ -362,7 +374,9 @@ export const ApprovalDetail = memo(function ApprovalDetail({
               {approval.decided_by && (
                 <div className="p-3.5">
                   <LabelWithTip label="Decided By" tip="The person who approved or rejected this request." />
-                  <p className="text-sm font-medium truncate">{getUserDisplayName(approval.decided_by, userProfiles)}</p>
+                  <p className="text-sm font-medium break-words">
+                    <UserName userId={approval.decided_by} userProfiles={userProfiles} />
+                  </p>
                 </div>
               )}
 
@@ -426,12 +440,16 @@ export const ApprovalDetail = memo(function ApprovalDetail({
                             isCompleted ? <CheckCircle className="size-4 text-emerald-500 shrink-0" />
                             : <Circle className="size-4 text-muted-foreground/25 shrink-0" />
                           )}
-                          <span className={cn("text-sm flex-1", isNext ? "font-semibold" : isCompleted ? "" : "text-muted-foreground")}>
-                            {getUserDisplayName(userId, userProfiles)}
+                          <span className={cn("text-sm flex-1 min-w-0", isNext ? "font-semibold" : isCompleted ? "" : "text-muted-foreground")}>
+                            <UserName
+                              userId={userId}
+                              userProfiles={userProfiles}
+                              appendEmailForDisambiguation={duplicateNameIds.has(userId)}
+                            />
                           </span>
-                          {isCompleted && <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Approved</span>}
-                          {approval.is_sequential && isNext && <span className="text-[11px] text-primary font-medium">Next</span>}
-                          {!isCompleted && !isNext && <span className="text-[11px] text-muted-foreground/40">Waiting</span>}
+                          {isCompleted && <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium shrink-0">Approved</span>}
+                          {approval.is_sequential && isNext && <span className="text-[11px] text-primary font-medium shrink-0">Next</span>}
+                          {!isCompleted && !isNext && <span className="text-[11px] text-muted-foreground/40 shrink-0">Waiting</span>}
                         </div>
                       );
                     })}
@@ -443,8 +461,14 @@ export const ApprovalDetail = memo(function ApprovalDetail({
                 {approval.assigned_approvers!.map((userId) => (
                   <div key={userId} className="flex items-center gap-2.5 py-2 first:pt-0 last:pb-0">
                     <UserCheck className="size-4 text-muted-foreground/40 shrink-0" />
-                    <span className="text-sm flex-1">{getUserDisplayName(userId, userProfiles)}</span>
-                    <span className="text-[11px] text-muted-foreground">Assigned</span>
+                    <span className="text-sm flex-1 min-w-0">
+                      <UserName
+                        userId={userId}
+                        userProfiles={userProfiles}
+                        appendEmailForDisambiguation={duplicateNameIds.has(userId)}
+                      />
+                    </span>
+                    <span className="text-[11px] text-muted-foreground shrink-0">Assigned</span>
                   </div>
                 ))}
               </div>
@@ -488,32 +512,6 @@ export const ApprovalDetail = memo(function ApprovalDetail({
               </Button>
             )}
           </div>}
-
-          {/* Viewer banner: show when user is not the responsible approver */}
-          {approval.status === "pending" && hasAssignedApprovers && !isResponsibleApprover && (
-            <div className="flex items-start gap-2 rounded-xl border border-blue-200/60 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 px-4 py-3">
-              <Info className="size-4 shrink-0 text-blue-500 mt-0.5" />
-              <div className="text-xs text-blue-700 dark:text-blue-400 space-y-0.5">
-                {approval.is_sequential ? (
-                  <p>
-                    <span className="font-semibold">Waiting on {approverLabel(approval.assigned_approvers![approval.current_approvals])}</span>
-                    {" · "}
-                    {approval.current_approvals} of {approval.required_approvals} approvals received
-                  </p>
-                ) : (
-                  <p>
-                    <span className="font-semibold">
-                      {approval.current_approvals} of {approval.required_approvals} approvals received
-                    </span>
-                    {remainingApprovers.length > 0 && (
-                      <> · waiting on {remainingApprovers.map(approverLabel).join(", ")}</>
-                    )}
-                  </p>
-                )}
-                {isWatching && <p className="text-[11px] opacity-80">You&rsquo;re watching this request.</p>}
-              </div>
-            </div>
-          )}
 
           {/* You're up banner: user is the responsible approver */}
           {approval.status === "pending" && hasAssignedApprovers && isResponsibleApprover && !isSelfCreated && canApprove && (
@@ -576,15 +574,42 @@ export const ApprovalDetail = memo(function ApprovalDetail({
           {approval.status === "pending" && !approval.is_log && !effectiveCanApprove && (
             <div className="rounded-xl border border-border/50 p-4">
               <p className="text-muted-foreground text-sm text-center">
-                {!canApprove
-                  ? "You do not have approval permissions. Contact your admin."
-                  : isSelfCreated
-                    ? "You created this request. Another approver must decide."
-                    : hasAssignedApprovers
-                      ? approval.is_sequential
-                        ? `Waiting on ${approverLabel(approval.assigned_approvers![approval.current_approvals])}. You're later in the approval chain.`
-                        : `You're not assigned to this request. Waiting on ${remainingApprovers.map(approverLabel).join(", ")}.`
-                      : "Only approvers assigned to this request can decide."}
+                {!canApprove ? (
+                  "You do not have approval permissions. Contact your admin."
+                ) : isSelfCreated ? (
+                  "You created this request. Another approver must decide."
+                ) : hasAssignedApprovers ? (
+                  approval.is_sequential ? (
+                    <>
+                      Waiting on{" "}
+                      <UserName
+                        userId={approval.assigned_approvers![approval.current_approvals]}
+                        userProfiles={userProfiles}
+                        appendEmailForDisambiguation={duplicateNameIds.has(
+                          approval.assigned_approvers![approval.current_approvals],
+                        )}
+                      />
+                      . You&rsquo;re later in the approval chain.
+                    </>
+                  ) : (
+                    <>
+                      You&rsquo;re not assigned to this request. Waiting on{" "}
+                      {remainingApprovers.map((id, i) => (
+                        <span key={id}>
+                          {i > 0 && ", "}
+                          <UserName
+                            userId={id}
+                            userProfiles={userProfiles}
+                            appendEmailForDisambiguation={duplicateNameIds.has(id)}
+                          />
+                        </span>
+                      ))}
+                      .
+                    </>
+                  )
+                ) : (
+                  "Only approvers assigned to this request can decide."
+                )}
               </p>
             </div>
           )}
@@ -624,7 +649,12 @@ export const ApprovalDetail = memo(function ApprovalDetail({
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {format(new Date(approval.decided_at), "PPp")}
-                      {approval.decided_by && <span> by {getUserDisplayName(approval.decided_by, userProfiles)}</span>}
+                      {approval.decided_by && (
+                        <span>
+                          {" "}by{" "}
+                          <UserName userId={approval.decided_by} userProfiles={userProfiles} />
+                        </span>
+                      )}
                       {approval.decision_source && <span> via {approval.decision_source}</span>}
                     </p>
                   </div>
