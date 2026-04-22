@@ -32,6 +32,7 @@ export interface MemberOption {
   name: string;
   email: string;
   role: string;
+  canApprove: boolean;
 }
 
 interface RoutesHubProps {

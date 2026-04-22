@@ -798,8 +798,7 @@ export async function getCachedRoutesData(orgId: string) {
     admin
       .from("org_memberships")
       .select("user_id, role, can_approve")
-      .eq("org_id", orgId)
-      .eq("can_approve", true),
+      .eq("org_id", orgId),
     admin.from("team_positions").select("*").eq("org_id", orgId),
   ]);
 
