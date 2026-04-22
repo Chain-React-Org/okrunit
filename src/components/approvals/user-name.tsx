@@ -4,6 +4,7 @@ import { memo, useCallback } from "react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { titleCaseName } from "@/lib/format-name";
 import type { UserProfile } from "@/lib/types/database";
 
 interface UserNameProps {
@@ -21,8 +22,8 @@ function resolveLabel(
   profile: UserProfile | undefined,
   name: string | null | undefined,
 ): string {
-  if (name) return name;
-  if (profile?.full_name) return profile.full_name;
+  if (name) return titleCaseName(name);
+  if (profile?.full_name) return titleCaseName(profile.full_name);
   if (profile?.email) return profile.email;
   if (userId) return userId.slice(0, 8) + "…";
   return "Unknown";

@@ -28,6 +28,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { X, Plus, Loader2, Info, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { titleCaseName } from "@/lib/format-name";
 import {
   Tooltip,
   TooltipTrigger,
@@ -173,7 +174,7 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
             }>;
             return rows.map((m) => ({
               id: m.id,
-              name: m.full_name || m.email || m.id,
+              name: m.full_name ? titleCaseName(m.full_name) : (m.email || m.id),
               email: m.email || "",
               role: m.role,
               canApprove: !!m.can_approve,

@@ -6,6 +6,7 @@ import { User, Mail, Lock, Loader2, AlertTriangle, CheckCircle, Clock, Bell, Shi
 import { useTheme } from "next-themes";
 
 import { createClient } from "@/lib/supabase/client";
+import { titleCaseName } from "@/lib/format-name";
 import { MfaSettings } from "@/components/settings/mfa-settings";
 import { PasskeySettings } from "@/components/settings/passkey-settings";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -145,21 +146,27 @@ export function AccountSettings({
       return;
     }
 
+    // Normalize to title case at save time so stored names are consistent and
+    // every display funnel shows the same "Nathaniel Stoddard" form.
+    const normalizedName = titleCaseName(fullName.trim());
+
     setIsSavingProfile(true);
     try {
       const supabase = createClient();
 
       const { error: authError } = await supabase.auth.updateUser({
-        data: { full_name: fullName.trim() },
+        data: { full_name: normalizedName },
       });
       if (authError) throw authError;
 
       const { error: profileError } = await supabase
         .from("user_profiles")
-        .update({ full_name: fullName.trim() })
+        .update({ full_name: normalizedName })
         .eq("id", userId);
       if (profileError) throw profileError;
 
+      // Reflect the normalized form in the input so the user sees what got saved.
+      setFullName(normalizedName);
       toast.success("Profile updated successfully.");
     } catch (err) {
       console.error("Failed to update profile:", err);

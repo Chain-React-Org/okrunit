@@ -26,6 +26,7 @@ import { formatDistanceToNow } from "date-fns";
 
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { TransferOwnershipDialog } from "@/components/org/transfer-ownership-dialog";
+import { titleCaseName } from "@/lib/format-name";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -362,7 +363,7 @@ export const V2MemberList = memo(function V2MemberList({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium truncate">
-                      {member.full_name ?? member.email.split("@")[0]}
+                      {member.full_name ? titleCaseName(member.full_name) : member.email.split("@")[0]}
                     </p>
                     {isSelf && (
                       <span className="shrink-0 text-[10px] font-medium text-black dark:text-foreground bg-white dark:bg-card shadow-sm px-1.5 py-0.5 rounded">you</span>
@@ -535,7 +536,7 @@ export const V2MemberList = memo(function V2MemberList({
             <DialogTitle>Remove Member</DialogTitle>
             <DialogDescription>
               Are you sure you want to remove{" "}
-              <strong>{removeTarget?.full_name ?? removeTarget?.email}</strong>{" "}
+              <strong>{removeTarget?.full_name ? titleCaseName(removeTarget.full_name) : removeTarget?.email}</strong>{" "}
               from the organization? They will lose access immediately.
             </DialogDescription>
           </DialogHeader>

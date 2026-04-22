@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { SourceAvatar } from "@/components/approvals/source-icons";
 import { UserName } from "@/components/approvals/user-name";
 import { canDecideOnApproval } from "@/lib/approvals/responsible";
+import { titleCaseName } from "@/lib/format-name";
 import {
   Users,
   UserCheck,
@@ -73,7 +74,7 @@ const statusStyles: Record<string, { label: string; dot: string; badge: string }
 
 function getUserDisplayName(userId: string, profiles?: Map<string, UserProfile>): string {
   const profile = profiles?.get(userId);
-  if (profile?.full_name) return profile.full_name;
+  if (profile?.full_name) return titleCaseName(profile.full_name);
   if (profile?.email) return profile.email;
   return userId.slice(0, 8) + "...";
 }

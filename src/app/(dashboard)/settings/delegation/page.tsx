@@ -3,7 +3,17 @@ import { getOrgContext } from "@/lib/org-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/components/layout/page-header";
 import { DelegationSettings } from "@/components/settings/delegation-settings";
+import { titleCaseName } from "@/lib/format-name";
 import type { ApprovalDelegation, ApprovalFlow } from "@/lib/types/database";
+
+function resolveDisplayName(
+  profile: { full_name: string | null; email: string } | undefined,
+  fallbackId: string,
+): string {
+  if (profile?.full_name) return titleCaseName(profile.full_name);
+  if (profile?.email) return profile.email;
+  return fallbackId.slice(0, 8);
+}
 
 export const metadata = {
   title: "Delegation - OKrunit",
@@ -69,7 +79,7 @@ export default async function DelegationSettingsPage() {
       const p = profilesById.get(m.user_id);
       return {
         id: m.user_id,
-        name: p?.full_name || p?.email || m.user_id.slice(0, 8),
+        name: resolveDisplayName(p, m.user_id),
         email: p?.email ?? "",
         role: m.role,
       };
@@ -95,7 +105,7 @@ export default async function DelegationSettingsPage() {
     const p = profilesById.get(counterpartyId);
     const counterparty = {
       id: counterpartyId,
-      name: p?.full_name || p?.email || counterpartyId.slice(0, 8),
+      name: resolveDisplayName(p, counterpartyId),
       email: p?.email ?? "",
     };
     return {
