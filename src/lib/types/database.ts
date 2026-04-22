@@ -162,6 +162,7 @@ export interface OrgMembership {
   role: UserRole;
   can_approve: boolean;
   can_connect: boolean;
+  can_manage_flows: boolean;
   is_default: boolean;
   auto_approvals_paused: boolean;
   custom_role_id: string | null;
@@ -178,6 +179,7 @@ export interface CustomRole {
   color: string;
   can_approve: boolean;
   can_connect: boolean;
+  can_manage_flows: boolean;
   created_by: string | null;
   created_at: string;
   updated_at: string;

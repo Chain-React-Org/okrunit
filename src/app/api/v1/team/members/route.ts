@@ -20,6 +20,7 @@ const updateRoleSchema = z.object({
   role: z.enum(["admin", "approver", "member"]).optional(),
   can_approve: z.boolean().optional(),
   can_connect: z.boolean().optional(),
+  can_manage_flows: z.boolean().optional(),
 });
 
 const removeMemberSchema = z.object({
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
     // Fetch memberships for this org, joined with user profiles
     let query = admin
       .from("org_memberships")
-      .select("id, user_id, org_id, role, can_approve, is_default, created_at, updated_at")
+      .select("id, user_id, org_id, role, can_approve, can_connect, can_manage_flows, is_default, created_at, updated_at")
       .eq("org_id", auth.orgId)
       .order("role", { ascending: true })
       .order("created_at", { ascending: true });
@@ -83,6 +84,8 @@ export async function GET(request: Request) {
         avatar_url: profile?.avatar_url ?? null,
         role: m.role,
         can_approve: m.can_approve,
+        can_connect: m.can_connect,
+        can_manage_flows: m.can_manage_flows,
         created_at: m.created_at,
         updated_at: m.updated_at,
       };
@@ -138,7 +141,7 @@ export async function PATCH(request: Request) {
     // Verify the target user has a membership in this org.
     const { data: targetMembership } = await admin
       .from("org_memberships")
-      .select("id, role, can_approve")
+      .select("id, role, can_approve, can_connect, can_manage_flows")
       .eq("user_id", body.user_id)
       .eq("org_id", auth.orgId)
       .single();
@@ -177,6 +180,7 @@ export async function PATCH(request: Request) {
     if (body.role) updatePayload.role = body.role;
     if (body.can_approve !== undefined) updatePayload.can_approve = body.can_approve;
     if (body.can_connect !== undefined) updatePayload.can_connect = body.can_connect;
+    if (body.can_manage_flows !== undefined) updatePayload.can_manage_flows = body.can_manage_flows;
 
     // Auto-promote a plain "member" to "approver" when approval permission is
     // granted, so their role matches their capability. Only applies when the
@@ -224,6 +228,10 @@ export async function PATCH(request: Request) {
       auditDetails.old_can_connect = (targetMembership as Record<string, unknown>).can_connect;
       auditDetails.new_can_connect = body.can_connect;
     }
+    if (body.can_manage_flows !== undefined) {
+      auditDetails.old_can_manage_flows = (targetMembership as Record<string, unknown>).can_manage_flows;
+      auditDetails.new_can_manage_flows = body.can_manage_flows;
+    }
 
     await logAuditEvent({
       orgId: auth.orgId,
@@ -245,6 +253,7 @@ export async function PATCH(request: Request) {
       if (body.role) changes.push(`role changed to ${body.role}`);
       if (body.can_approve !== undefined) changes.push(body.can_approve ? "approval permissions granted" : "approval permissions removed");
       if (body.can_connect !== undefined) changes.push(body.can_connect ? "connection permissions granted" : "connection permissions removed");
+      if (body.can_manage_flows !== undefined) changes.push(body.can_manage_flows ? "flow management permissions granted" : "flow management permissions removed");
 
       if (changes.length > 0) {
         await createInAppNotification({

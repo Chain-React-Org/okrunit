@@ -18,6 +18,7 @@ import {
   ShieldOff,
   Plug,
   Unplug,
+  Route,
   UserCog,
   UserPlus,
 } from "lucide-react";
@@ -68,6 +69,7 @@ interface TeamMember {
   role: UserRole;
   can_approve: boolean;
   can_connect: boolean;
+  can_manage_flows: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -128,7 +130,7 @@ export const V2MemberList = memo(function V2MemberList({
 
   async function patchMember(
     userId: string,
-    patch: { role?: UserRole; can_approve?: boolean; can_connect?: boolean },
+    patch: { role?: UserRole; can_approve?: boolean; can_connect?: boolean; can_manage_flows?: boolean },
     successMessage: string,
   ) {
     // Snapshot the previous row so we can revert on failure.
@@ -191,6 +193,14 @@ export const V2MemberList = memo(function V2MemberList({
     );
   }
 
+  async function handleCanManageFlowsChange(userId: string, canManageFlows: boolean) {
+    await patchMember(
+      userId,
+      { can_manage_flows: canManageFlows },
+      canManageFlows ? "Manage Flows permission granted" : "Manage Flows permission revoked",
+    );
+  }
+
   async function handleRemove() {
     if (!removeTarget) return;
     const target = removeTarget;
@@ -221,7 +231,7 @@ export const V2MemberList = memo(function V2MemberList({
   }
 
   function exportCsv() {
-    const headers = ["Name", "Email", "Role", "Can Approve", "Decisions (30d)", "Approved", "Rejected"];
+    const headers = ["Name", "Email", "Role", "Can Approve", "Can Connect", "Can Manage Flows", "Decisions (30d)", "Approved", "Rejected"];
     const rows = members.map((m) => {
       const stats = memberStats[m.id];
       return [
@@ -229,6 +239,8 @@ export const V2MemberList = memo(function V2MemberList({
         m.email,
         m.role,
         m.can_approve ? "Yes" : "No",
+        m.can_connect ? "Yes" : "No",
+        m.can_manage_flows ? "Yes" : "No",
         stats?.decisions_30d ?? 0,
         stats?.approved ?? 0,
         stats?.rejected ?? 0,
@@ -469,6 +481,40 @@ export const V2MemberList = memo(function V2MemberList({
                           : canConnectValue
                           ? "This member can create connections and OAuth apps. Toggle off to revoke."
                           : "This member cannot create connections. Toggle on to grant permission."}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })()}
+
+                {/* Can manage flows toggle — deliberately no role-based
+                    auto-true so the permission can be moved between people
+                    when someone is out. */}
+                {(() => {
+                  const canManageFlowsValue = member.can_manage_flows;
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="hidden sm:flex items-center gap-2 shrink-0 cursor-default">
+                          <span>
+                            <Route
+                              className={
+                                canManageFlowsValue
+                                  ? "size-3.5 text-purple-500"
+                                  : "size-3.5 text-muted-foreground/40"
+                              }
+                            />
+                          </span>
+                          <Switch
+                            checked={canManageFlowsValue}
+                            onCheckedChange={(checked) => handleCanManageFlowsChange(member.id, checked)}
+                            disabled={!isAdmin || isSelf}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        {canManageFlowsValue
+                          ? "This member can edit approval flows and reassign approvers. Toggle off to revoke."
+                          : "This member cannot manage flows. Toggle on to grant permission."}
                       </TooltipContent>
                     </Tooltip>
                   );

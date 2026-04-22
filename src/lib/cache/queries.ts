@@ -360,7 +360,7 @@ export async function getCachedMembersData(orgId: string) {
 
   const { data: orgMemberships } = await admin
     .from("org_memberships")
-    .select("id, user_id, org_id, role, can_approve, can_connect, created_at, updated_at")
+    .select("id, user_id, org_id, role, can_approve, can_connect, can_manage_flows, created_at, updated_at")
     .eq("org_id", orgId)
     .order("role", { ascending: true })
     .order("created_at", { ascending: true });
@@ -383,6 +383,7 @@ export async function getCachedMembersData(orgId: string) {
       role: m.role as "owner" | "admin" | "member",
       can_approve: m.can_approve ?? false,
       can_connect: m.can_connect ?? false,
+      can_manage_flows: m.can_manage_flows ?? false,
       created_at: m.created_at,
       updated_at: m.updated_at,
     };

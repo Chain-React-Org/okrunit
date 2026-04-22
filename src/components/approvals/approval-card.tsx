@@ -37,6 +37,8 @@ interface ApprovalCardProps {
   currentlyResponsible?: string | null;
   onClick: () => void;
   canApprove?: boolean;
+  /** Controls whether the inline "Configure Flow" icon button renders. */
+  canManageFlows?: boolean;
   currentUserId?: string;
   delegatorIds?: ReadonlySet<string>;
   isLoading?: boolean;
@@ -83,6 +85,7 @@ export const ApprovalCard = memo(function ApprovalCard({
   currentlyResponsible,
   onClick,
   canApprove = true,
+  canManageFlows = false,
   currentUserId,
   delegatorIds,
   isLoading = false,
@@ -277,7 +280,7 @@ export const ApprovalCard = memo(function ApprovalCard({
               "hidden items-center gap-0.5 sm:flex sm:transition-opacity",
               tourForceVisible ? "sm:opacity-100" : "sm:opacity-0 sm:group-hover/card:opacity-100",
             )}>
-              {approval.flow_id && onConfigureFlow && !approval.is_log && (
+              {approval.flow_id && onConfigureFlow && !approval.is_log && canManageFlows && (
                 <Button
                   variant="ghost"
                   size="sm"
