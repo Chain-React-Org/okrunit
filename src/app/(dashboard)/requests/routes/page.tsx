@@ -25,13 +25,14 @@ export default async function RoutesPage() {
     positions,
   } = await getCachedRoutesData(membership.org_id);
 
-  const members = approverMemberships.map((m: { user_id: string; role: string }) => {
+  const members = approverMemberships.map((m: { user_id: string; role: string; can_approve: boolean }) => {
     const name = approverProfiles[m.user_id];
     return {
       id: m.user_id,
       name: name || m.user_id,
       email: approverEmails[m.user_id] ?? "",
       role: m.role,
+      canApprove: m.can_approve,
     };
   });
 
