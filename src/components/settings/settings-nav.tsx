@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { AlertTriangle, Calendar, Settings, User } from "lucide-react";
+import { AlertTriangle, Calendar, Settings, User, UserPlus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +23,7 @@ interface SettingsNavItem {
 
 const navItems: SettingsNavItem[] = [
   { id: "account", label: "Account", href: "/settings/account", icon: User },
+  { id: "delegation", label: "Delegation", href: "/settings/delegation", icon: UserPlus },
   { id: "calendar", label: "Calendar", href: "/settings/calendar", icon: Calendar, comingSoon: true },
   { id: "safety", label: "Safety", href: "/settings/safety", icon: AlertTriangle },
 ];

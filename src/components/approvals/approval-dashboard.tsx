@@ -70,47 +70,42 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
   const { status, priority, search, source, showArchived, setStatus, setPriority, setSearch, setSource, setShowArchived } =
     useApprovalFiltersStore();
 
-  // Collect all user IDs referenced in approvals (+ connection owners) and fetch their profiles
-  const referencedUserIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const a of approvals) {
-      if (a.decided_by) ids.add(a.decided_by);
-      if (a.assigned_approvers) {
-        for (const id of a.assigned_approvers) ids.add(id);
-      }
-      if (a.created_by?.user_id) ids.add(a.created_by.user_id);
-      // Also include connection owner for API key requests without user_id
-      if (a.created_by?.connection_id && !a.created_by.user_id) {
-        const conn = connections.find((c) => c.id === a.created_by?.connection_id);
-        if (conn?.created_by) ids.add(conn.created_by);
-      }
-    }
-    return ids;
-  }, [approvals, connections]);
-
+  // Load all org members once via the admin-backed endpoint so approver
+  // names resolve reliably. The browser's Supabase client is RLS-gated and
+  // can miss rows (e.g. members whose default org differs from this one, or
+  // invitees who haven't finished onboarding). The endpoint itself is
+  // session/OAuth-only and scoped to the caller's org, so it's the same
+  // security boundary as RLS, just enforced in app code.
   useEffect(() => {
-    const idsToFetch = [...referencedUserIds].filter((id) => !userProfiles.has(id));
-    if (idsToFetch.length === 0) return;
-
-    const fetchProfiles = async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("user_profiles")
-        .select("id, email, full_name, avatar_url")
-        .in("id", idsToFetch);
-
-      if (data && data.length > 0) {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/v1/team/members");
+        if (!res.ok || cancelled) return;
+        const json = (await res.json()) as {
+          data?: Array<{ id: string; email: string; full_name: string | null; avatar_url: string | null }>;
+        };
+        if (!json.data?.length || cancelled) return;
         setUserProfiles((prev) => {
           const next = new Map(prev);
-          for (const profile of data) {
-            next.set(profile.id, profile as UserProfile);
+          for (const m of json.data!) {
+            next.set(m.id, {
+              id: m.id,
+              email: m.email,
+              full_name: m.full_name,
+              avatar_url: m.avatar_url,
+            } as UserProfile);
           }
           return next;
         });
+      } catch {
+        // Non-fatal: names will fall back to ID slices until the next load.
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-    fetchProfiles();
-  }, [referencedUserIds]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch data client-side on mount when no initial data was provided from the server.
   // This avoids passing large approval payloads through the RSC protocol which can
@@ -125,7 +120,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         const [{ data: approvalsData }, { data: connectionsData }] = await Promise.all([
           supabase
             .from("approval_requests")
-            .select("id, title, description, status, priority, action_type, source, connection_id, created_by, decided_by, assigned_approvers, assigned_team_id, flow_id, created_at, decided_at, expires_at, archived_at, required_approvals, idempotency_key, callback_url, is_log")
+            .select("id, title, description, status, priority, action_type, source, connection_id, created_by, decided_by, assigned_approvers, assigned_team_id, flow_id, created_at, decided_at, expires_at, archived_at, required_approvals, current_approvals, is_sequential, required_role, decision_comment, decision_source, context_html, metadata, idempotency_key, callback_url, is_log")
             .is("archived_at", null)
             .order("created_at", { ascending: false })
             .limit(1000),
@@ -139,35 +134,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         setApprovals(loadedApprovals);
         setConnections(loadedConnections);
 
-        // Eagerly fetch creator profiles (connection owners) so names show immediately
-        const creatorIds = new Set<string>();
-        for (const a of loadedApprovals) {
-          if (a.created_by?.user_id) {
-            creatorIds.add(a.created_by.user_id);
-          } else if (a.created_by?.connection_id) {
-            const conn = loadedConnections.find((c) => c.id === a.created_by?.connection_id);
-            if (conn?.created_by) creatorIds.add(conn.created_by);
-          }
-          if (a.decided_by) creatorIds.add(a.decided_by);
-          if (a.assigned_approvers) {
-            for (const id of a.assigned_approvers) creatorIds.add(id);
-          }
-        }
-        if (creatorIds.size > 0) {
-          const { data: profileData } = await supabase
-            .from("user_profiles")
-            .select("id, email, full_name, avatar_url")
-            .in("id", [...creatorIds]);
-          if (profileData && profileData.length > 0) {
-            setUserProfiles((prev) => {
-              const next = new Map(prev);
-              for (const p of profileData) {
-                next.set(p.id, p as UserProfile);
-              }
-              return next;
-            });
-          }
-        }
+        // Profiles for org members are populated by the admin-endpoint effect above.
 
         // Prefetch which requests the current user is watching so the detail
         // panel can show the correct Watch/Unwatch state immediately on open.
