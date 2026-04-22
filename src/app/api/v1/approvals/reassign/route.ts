@@ -66,8 +66,9 @@ export async function POST(request: Request) {
       updateData.assigned_team_id = body.assigned_team_id;
     }
     if (body.required_approvals !== undefined) {
-      // Clamp to current progress to avoid creating an already-fulfilled
-      // request (required <= current would resolve immediately).
+      // Keep required >= current so the request doesn't spontaneously
+      // resolve. If a caller wants to finalize, they should respond via
+      // the approve endpoint, not reassign.
       const clamped = Math.max(body.required_approvals, approval.current_approvals + 1);
       updateData.required_approvals = clamped;
     }
@@ -76,6 +77,22 @@ export async function POST(request: Request) {
     }
     if (body.required_role !== undefined) {
       updateData.required_role = body.required_role;
+    }
+
+    // When the approver chain changes, keep current_approvals pointing at
+    // a real slot. Without this, `assigned_approvers[current_approvals]`
+    // can reference an index past the end of the new list, which blocks
+    // the "next in line" user (including newly added ones) from ever
+    // being eligible to approve.
+    if (body.assigned_approvers !== undefined) {
+      const newLength = body.assigned_approvers?.length ?? 0;
+      if (newLength === 0) {
+        // No explicit chain → fall back to "any approver" mode; reset
+        // progress so required_approvals governs alone.
+        updateData.current_approvals = 0;
+      } else if (approval.current_approvals > newLength) {
+        updateData.current_approvals = newLength;
+      }
     }
 
     await admin
