@@ -59,6 +59,9 @@ interface FlowConfigDialogProps {
   open: boolean;
   onClose: () => void;
   orgId: string;
+  /** Fired after a successful save — receives the updated approval so the
+   * parent can splice fresh state into its list/detail views. */
+  onSaved?: (updatedApproval: ApprovalRequest | null) => void;
 }
 
 // ---- Constants --------------------------------------------------------------
@@ -87,6 +90,7 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
   open,
   onClose,
   orgId,
+  onSaved,
 }: FlowConfigDialogProps) {
   // Flow data loaded from API
   const [flow, setFlow] = useState<ApprovalFlow | null>(null);
@@ -349,7 +353,58 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
         throw new Error(body?.error ?? "Failed to save");
       }
 
+      // If the dialog was opened from a specific pending approval, also
+      // sync that request so the detail panel reflects the new chain
+      // immediately (the flow PATCH only updates the template; it doesn't
+      // cascade to the snapshot stored on the request itself).
+      let updatedApproval: ApprovalRequest | null = null;
+      if (approval && approval.status === "pending") {
+        const reassignPayload: Record<string, unknown> = { approval_id: approval.id };
+        if (approverMode === "by_position") {
+          reassignPayload.assigned_team_id = selectedTeamId === "none" ? null : selectedTeamId;
+          reassignPayload.assigned_approvers = null;
+          reassignPayload.required_role = null;
+          reassignPayload.required_approvals = requiredApprovals || 1;
+        } else if (approverMode === "designated" || approverMode === "any") {
+          reassignPayload.assigned_approvers = selectedApprovers.length > 0 ? selectedApprovers : null;
+          reassignPayload.assigned_team_id = selectedTeamId !== "none" ? selectedTeamId : null;
+          reassignPayload.required_role = null;
+          reassignPayload.is_sequential = isSequential;
+          if (selectedApprovers.length > 0) {
+            reassignPayload.required_approvals = isSequential
+              ? selectedApprovers.length
+              : Math.min(requiredApprovals, selectedApprovers.length) || 1;
+          } else {
+            reassignPayload.required_approvals = requiredApprovals || 1;
+          }
+        } else if (approverMode === "role_based") {
+          reassignPayload.required_role = requiredRole !== "none" ? requiredRole : null;
+          reassignPayload.assigned_approvers = null;
+          reassignPayload.assigned_team_id = selectedTeamId !== "none" ? selectedTeamId : null;
+          reassignPayload.required_approvals = 1;
+        }
+
+        try {
+          const reassignRes = await fetch("/api/v1/approvals/reassign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(reassignPayload),
+          });
+          if (reassignRes.ok) {
+            // Refetch the fresh approval so the parent has the full record.
+            const fetched = await fetch(`/api/v1/approvals/${approval.id}`);
+            if (fetched.ok) {
+              updatedApproval = (await fetched.json()) as ApprovalRequest;
+            }
+          }
+        } catch {
+          // Non-fatal: the flow template saved successfully even if the
+          // current request couldn't be synced.
+        }
+      }
+
       toast.success("Flow configuration saved");
+      onSaved?.(updatedApproval);
       handleOpenChange(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save flow configuration");

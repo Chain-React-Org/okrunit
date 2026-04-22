@@ -2,12 +2,13 @@
 // OKrunit -- Delegations API: DELETE (cancel delegation)
 // ---------------------------------------------------------------------------
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createInAppNotification } from "@/lib/notifications/in-app";
 import { cancelDelegation, DelegationError } from "@/lib/api/delegation";
 
 // ---- DELETE /api/v1/delegations/[id] --------------------------------------
@@ -76,6 +77,38 @@ export async function DELETE(
       },
       ipAddress,
     });
+
+    // Notify the delegate that their eligibility was revoked, unless it was
+    // the delegate themselves who (somehow) triggered the cancel.
+    if (existing.delegate_id !== auth.user.id) {
+      after(async () => {
+        try {
+          const { data: delegatorProfile } = await admin
+            .from("user_profiles")
+            .select("id, full_name, email")
+            .eq("id", existing.delegator_id)
+            .single();
+          const delegatorName =
+            delegatorProfile?.full_name ||
+            delegatorProfile?.email ||
+            "A teammate";
+
+          await createInAppNotification({
+            userId: existing.delegate_id,
+            orgId: auth.orgId,
+            category: "delegation_revoked",
+            title: `${delegatorName} cancelled their delegation to you`,
+            body: `You no longer cover requests routed to ${delegatorProfile?.full_name || "them"}. Any open requests revert to the original approver.`,
+            actorId: existing.delegator_id,
+            actorName: delegatorName,
+            resourceType: "approval_delegation",
+            resourceId: id,
+          });
+        } catch {
+          // Non-critical.
+        }
+      });
+    }
 
     return NextResponse.json(cancelled);
   } catch (error) {

@@ -602,6 +602,7 @@ export interface ApprovalDelegation {
   ends_at: string;
   is_active: boolean;
   created_at: string;
+  expiry_reminder_sent_at: string | null;
 }
 
 export interface ApprovalTrustCounter {
@@ -717,7 +718,10 @@ export type NotificationCategory =
   | "connection_deactivated"
   | "role_changed"
   | "limit_approaching"
-  | "billing";
+  | "billing"
+  | "delegation_received"
+  | "delegation_revoked"
+  | "delegation_expiring";
 
 export interface InAppNotification {
   id: string;

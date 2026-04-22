@@ -5,11 +5,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { after } from "next/server";
+
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createDelegationSchema } from "@/lib/api/validation";
 import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createInAppNotification } from "@/lib/notifications/in-app";
 import {
   createDelegation,
   listDelegations,
@@ -134,6 +137,57 @@ export async function POST(request: Request) {
         ends_at: endsAt,
       },
       ipAddress,
+    });
+
+    // Fire-and-forget in-app notification to the delegate so they see the
+    // hand-off in the bell dropdown and dashboards can pop a banner. Uses
+    // the same realtime path as every other in-app notification, so no
+    // extra subscription is needed on the client.
+    after(async () => {
+      try {
+        // Resolve delegator display name for the notification title.
+        const { data: delegatorProfile } = await admin
+          .from("user_profiles")
+          .select("id, full_name, email")
+          .eq("id", delegatorId)
+          .single();
+        const delegatorName =
+          delegatorProfile?.full_name ||
+          delegatorProfile?.email ||
+          "A teammate";
+
+        const startLabel = new Date(startsAt).toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+        const endLabel = new Date(endsAt).toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+
+        const bodyParts = [
+          `Active ${startLabel} → ${endLabel}. You can decide on any request routed to ${delegatorProfile?.full_name || "them"} during this window.`,
+        ];
+        if (validated.reason) bodyParts.push(`Note: "${validated.reason}"`);
+
+        await createInAppNotification({
+          userId: delegateId,
+          orgId: auth.orgId,
+          category: "delegation_received",
+          title: `${delegatorName} delegated approvals to you`,
+          body: bodyParts.join(" "),
+          actorId: delegatorId,
+          actorName: delegatorName,
+          resourceType: "approval_delegation",
+          resourceId: delegation.id,
+        });
+      } catch {
+        // Non-critical: delegation still works without the ping.
+      }
     });
 
     return NextResponse.json(delegation, { status: 201 });
