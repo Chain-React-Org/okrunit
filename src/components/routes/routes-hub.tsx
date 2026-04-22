@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ApprovalFlow } from "@/lib/types/database";
+import { useRealtime } from "@/hooks/use-realtime";
 
 const FlowCard = dynamic(
   () => import("@/components/routes/flow-card").then((m) => m.FlowCard),
@@ -53,6 +54,21 @@ export function RoutesHub({
   positionsMap,
 }: RoutesHubProps) {
   const [flows, setFlows] = useState(initialFlows);
+
+  useRealtime<ApprovalFlow>({
+    table: "approval_flows",
+    filter: `org_id=eq.${orgId}`,
+    onInsert: useCallback((record: ApprovalFlow) => {
+      setFlows((prev) => (prev.some((f) => f.id === record.id) ? prev : [record, ...prev]));
+      toast.info(`New flow from ${record.source}`);
+    }, []),
+    onUpdate: useCallback((record: ApprovalFlow) => {
+      setFlows((prev) => prev.map((f) => (f.id === record.id ? record : f)));
+    }, []),
+    onDelete: useCallback((oldRecord: ApprovalFlow) => {
+      setFlows((prev) => prev.filter((f) => f.id !== oldRecord.id));
+    }, []),
+  });
 
   const handleDelete = useCallback((flowId: string) => {
     const previous = flows;
