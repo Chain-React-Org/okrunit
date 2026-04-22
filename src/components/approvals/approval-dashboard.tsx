@@ -56,9 +56,15 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
   const [userProfiles, setUserProfiles] = useState<Map<string, UserProfile>>(new Map());
   const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
   const [delegatorIds, setDelegatorIds] = useState<Set<string>>(new Set());
-  // Transient banner shown when a delegation is granted to this user mid-session.
+  // Transient banner shown when the current user's delegation status changes
+  // mid-session (granted, revoked, or nearing expiry).
   const [delegationAlert, setDelegationAlert] = useState<
-    | { notificationId: string; actorName: string; body: string | null }
+    | {
+        notificationId: string;
+        title: string;
+        body: string | null;
+        kind: "received" | "revoked" | "expiring";
+      }
     | null
   >(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -133,8 +139,9 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
     );
   }, [orgId, userId]);
 
-  // Realtime: when a delegation_received notification lands, refetch the
-  // delegator set and show a dismissible banner at the top of the dashboard.
+  // Realtime: when a delegation-related notification lands, refetch the
+  // delegator set (so Approve buttons appear or disappear appropriately) and
+  // show a dismissible banner at the top of the dashboard.
   useRealtime<InAppNotification>({
     table: "in_app_notifications",
     filter: userId ? `user_id=eq.${userId}` : undefined,
@@ -142,12 +149,23 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
     enabled: !!userId,
     onInsert: useCallback(
       (record: InAppNotification) => {
-        if (record.category !== "delegation_received") return;
+        const kind =
+          record.category === "delegation_received"
+            ? "received"
+            : record.category === "delegation_revoked"
+              ? "revoked"
+              : record.category === "delegation_expiring"
+                ? "expiring"
+                : null;
+        if (!kind) return;
         setDelegationAlert({
           notificationId: record.id,
-          actorName: record.actor_name ?? "A teammate",
+          title: record.title,
           body: record.body ?? null,
+          kind,
         });
+        // received/revoked change who the user is a delegate for; expiring
+        // doesn't, but refetching is cheap and keeps the flag consistent.
         void refetchDelegations();
       },
       [refetchDelegations],
@@ -785,6 +803,12 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
     setFlowConfigApproval(null);
   }, []);
 
+  const handleFlowSaved = useCallback((updated: ApprovalRequest | null) => {
+    if (!updated) return;
+    setApprovals((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+    setSelectedApproval((prev) => (prev?.id === updated.id ? updated : prev));
+  }, []);
+
   // ---- Single archive/unarchive (from card menu) ---------------------------
 
   const handleSingleArchive = useCallback(async (approvalId: string) => {
@@ -1015,28 +1039,79 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         )}
       </div>
 
-      {/* Delegation received banner — a teammate just handed their approval
-          authority to the current user while the page was open. */}
+      {/* Delegation status banner — a teammate just granted, revoked, or is
+          about to end a delegation that affects this user. */}
       {delegationAlert && (
-        <div className="flex items-start gap-3 rounded-lg border border-emerald-200/60 dark:border-emerald-800/40 bg-emerald-50/60 dark:bg-emerald-950/20 px-4 py-3 mb-3">
-          <UserPlus className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+        <div
+          className={cn(
+            "flex items-start gap-3 rounded-lg border px-4 py-3 mb-3",
+            delegationAlert.kind === "received" &&
+              "border-emerald-200/60 dark:border-emerald-800/40 bg-emerald-50/60 dark:bg-emerald-950/20",
+            (delegationAlert.kind === "revoked" || delegationAlert.kind === "expiring") &&
+              "border-amber-200/60 dark:border-amber-800/40 bg-amber-50/60 dark:bg-amber-950/20",
+          )}
+        >
+          {delegationAlert.kind === "expiring" ? (
+            <Clock
+              className={cn(
+                "mt-0.5 size-4 shrink-0",
+                "text-amber-600 dark:text-amber-400",
+              )}
+            />
+          ) : (
+            <UserPlus
+              className={cn(
+                "mt-0.5 size-4 shrink-0",
+                delegationAlert.kind === "received"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-amber-600 dark:text-amber-400",
+              )}
+            />
+          )}
           <div className="flex-1 min-w-0 text-sm">
-            <p className="font-medium text-emerald-900 dark:text-emerald-300">
-              {delegationAlert.actorName} delegated approvals to you
+            <p
+              className={cn(
+                "font-medium",
+                delegationAlert.kind === "received"
+                  ? "text-emerald-900 dark:text-emerald-300"
+                  : "text-amber-900 dark:text-amber-300",
+              )}
+            >
+              {delegationAlert.title}
             </p>
             {delegationAlert.body && (
-              <p className="mt-0.5 text-[12px] leading-relaxed text-emerald-800/90 dark:text-emerald-400/80">
+              <p
+                className={cn(
+                  "mt-0.5 text-[12px] leading-relaxed",
+                  delegationAlert.kind === "received"
+                    ? "text-emerald-800/90 dark:text-emerald-400/80"
+                    : "text-amber-800/90 dark:text-amber-400/80",
+                )}
+              >
                 {delegationAlert.body}
               </p>
             )}
-            <p className="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-400/60">
-              Eligibility updated. Any currently-open request routed to them is
-              now actionable by you.
-            </p>
+            {delegationAlert.kind === "received" && (
+              <p className="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-400/60">
+                Eligibility updated. Any currently-open request routed to them
+                is now actionable by you.
+              </p>
+            )}
+            {delegationAlert.kind === "revoked" && (
+              <p className="mt-1 text-[11px] text-amber-700/70 dark:text-amber-400/60">
+                Eligibility revoked. Requests you had open for them will
+                require the original approver again.
+              </p>
+            )}
           </div>
           <button
             onClick={() => setDelegationAlert(null)}
-            className="mt-0.5 shrink-0 rounded-md p-0.5 text-emerald-700 hover:bg-emerald-200/60 dark:text-emerald-300 dark:hover:bg-emerald-800/40"
+            className={cn(
+              "mt-0.5 shrink-0 rounded-md p-0.5",
+              delegationAlert.kind === "received"
+                ? "text-emerald-700 hover:bg-emerald-200/60 dark:text-emerald-300 dark:hover:bg-emerald-800/40"
+                : "text-amber-700 hover:bg-amber-200/60 dark:text-amber-300 dark:hover:bg-amber-800/40",
+            )}
             aria-label="Dismiss"
           >
             <X className="size-4" />
@@ -1140,6 +1215,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         open={flowConfigApproval !== null}
         onClose={handleCloseFlowConfig}
         orgId={orgId}
+        onSaved={handleFlowSaved}
       />
     </div>
   );

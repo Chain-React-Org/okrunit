@@ -52,6 +52,8 @@ const CATEGORY_CONFIG: Record<
   limit_approaching: { icon: AlertTriangle, color: "text-amber-500", label: "Limit" },
   billing: { icon: CreditCard, color: "text-emerald-500", label: "Billing" },
   delegation_received: { icon: UserPlus, color: "text-emerald-500", label: "Delegation" },
+  delegation_revoked: { icon: UserPlus, color: "text-amber-500", label: "Delegation" },
+  delegation_expiring: { icon: Clock, color: "text-amber-500", label: "Delegation" },
 };
 
 function timeAgo(dateStr: string): string {

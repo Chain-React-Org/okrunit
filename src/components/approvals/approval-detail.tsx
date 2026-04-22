@@ -266,6 +266,13 @@ export const ApprovalDetail = memo(function ApprovalDetail({
   // Block self-approval: the requester can't approve their own request.
   const isSelfCreated = !!createdBy?.user_id && createdBy.user_id === currentUserId;
 
+  // True when the current user is explicitly listed on this request's
+  // approver chain — used to tune the self-created explainer so we don't
+  // tell them "another approver must decide" when they can see themselves
+  // in the chain above.
+  const isSelfAnAssignedApprover =
+    !!currentUserId && hasAssignedApprovers && approval.assigned_approvers!.includes(currentUserId);
+
   // Authoritative gate — shared with ApprovalCard so the inline and detail
   // buttons can never drift. Hides for self-created, non-assigned, and
   // non-next-in-line users. Delegates are treated as eligible on behalf of
@@ -577,7 +584,9 @@ export const ApprovalDetail = memo(function ApprovalDetail({
                 {!canApprove ? (
                   "You do not have approval permissions. Contact your admin."
                 ) : isSelfCreated ? (
-                  "You created this request. Another approver must decide."
+                  isSelfAnAssignedApprover
+                    ? "You created this request."
+                    : "You created this request. Another approver must decide."
                 ) : hasAssignedApprovers ? (
                   approval.is_sequential ? (
                     <>

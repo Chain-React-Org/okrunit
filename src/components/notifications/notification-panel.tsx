@@ -56,6 +56,8 @@ const CATEGORY_CONFIG: Record<
   limit_approaching: { icon: AlertTriangle, color: "text-amber-500" },
   billing: { icon: CreditCard, color: "text-emerald-500" },
   delegation_received: { icon: UserPlus, color: "text-emerald-500" },
+  delegation_revoked: { icon: UserPlus, color: "text-amber-500" },
+  delegation_expiring: { icon: Clock, color: "text-amber-500" },
 };
 
 function getNotificationHref(n: InAppNotification): string {
@@ -68,7 +70,12 @@ function getNotificationHref(n: InAppNotification): string {
   if (n.resource_type === "org_invite") {
     return "/org/members";
   }
-  if (n.resource_type === "approval_delegation" || n.category === "delegation_received") {
+  if (
+    n.resource_type === "approval_delegation" ||
+    n.category === "delegation_received" ||
+    n.category === "delegation_revoked" ||
+    n.category === "delegation_expiring"
+  ) {
     return "/settings/delegation";
   }
   return "/requests";
