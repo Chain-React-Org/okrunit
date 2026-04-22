@@ -50,6 +50,12 @@ interface ApprovalDetailProps {
   onCommentsChange?: (approvalId: string, comments: ApprovalComment[]) => void;
   currentUserId?: string;
   currentUserRole?: string;
+  /** Pre-computed watch state for the opening approval so the Watch button
+   * renders in the correct position immediately instead of flickering. */
+  initialIsWatching?: boolean;
+  /** Called when the user toggles the watch state so the parent can update
+   * its cached watch map. */
+  onWatchChange?: (approvalId: string, isWatching: boolean) => void;
 }
 
 const statusStyles: Record<string, { label: string; dot: string; badge: string }> = {
@@ -137,20 +143,30 @@ export const ApprovalDetail = memo(function ApprovalDetail({
   onCommentsChange,
   currentUserId,
   currentUserRole,
+  initialIsWatching = false,
+  onWatchChange,
 }: ApprovalDetailProps) {
   const tourActive = useOnboardingTourStore((s) => s.activePageId === "requests" && s.currentStepInPage === 4);
   const currentId = open && approval ? approval.id : null;
 
-  // Watch state
-  const [isWatching, setIsWatching] = useState(false);
+  // Watch state — seed from parent-supplied value so the button renders with
+  // the correct label immediately when the panel opens.
+  const [isWatching, setIsWatching] = useState(initialIsWatching);
   const [watcherCount, setWatcherCount] = useState(0);
 
+  // Reseed when the opened approval changes (the prop is for the *new* id).
+  useEffect(() => {
+    setIsWatching(initialIsWatching);
+  }, [currentId, initialIsWatching]);
+
+  // Fetch the total watcher count (and reconcile isWatching as a safety net
+  // if the cached prop is stale).
   useEffect(() => {
     if (!currentId) return;
     fetch(`/api/v1/approvals/${currentId}/watch`)
       .then((r) => r.json())
       .then((data) => {
-        setIsWatching(data.isWatching ?? false);
+        if (typeof data.isWatching === "boolean") setIsWatching(data.isWatching);
         setWatcherCount(data.count ?? 0);
       })
       .catch(() => {});
@@ -158,13 +174,21 @@ export const ApprovalDetail = memo(function ApprovalDetail({
 
   const toggleWatch = useCallback(async () => {
     if (!currentId) return;
-    const method = isWatching ? "DELETE" : "POST";
+    const next = !isWatching;
+    const method = next ? "POST" : "DELETE";
+    // Optimistic update for snappy UX.
+    setIsWatching(next);
+    setWatcherCount((prev) => Math.max(0, prev + (next ? 1 : -1)));
+    onWatchChange?.(currentId, next);
+
     const res = await fetch(`/api/v1/approvals/${currentId}/watch`, { method });
-    if (res.ok) {
-      setIsWatching(!isWatching);
-      setWatcherCount((prev) => prev + (isWatching ? -1 : 1));
+    if (!res.ok) {
+      // Revert if the server rejected.
+      setIsWatching(!next);
+      setWatcherCount((prev) => Math.max(0, prev + (next ? -1 : 1)));
+      onWatchChange?.(currentId, !next);
     }
-  }, [currentId, isWatching]);
+  }, [currentId, isWatching, onWatchChange]);
 
   // Comments are owned by the parent dashboard via commentsMap.
   // This component just reads them and pushes changes up.
