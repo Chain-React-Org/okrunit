@@ -154,29 +154,29 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
       const [flowRes, membersRes, teamsRes] = await Promise.all([
         fetch(`/api/v1/flows/${approval.flow_id}`),
         (async () => {
-          const supabase = createClient();
-          const { data } = await supabase
-            .from("org_memberships")
-            .select("user_id, role, can_approve")
-            .eq("org_id", orgId);
-          if (!data) return [];
-
-          const userIds = data.map((m) => m.user_id);
-          const { data: profiles } = await supabase
-            .from("user_profiles")
-            .select("id, full_name, email")
-            .in("id", userIds);
-
-          return (data ?? []).map((m) => {
-            const profile = profiles?.find((p) => p.id === m.user_id);
-            return {
-              id: m.user_id,
-              name: profile?.full_name || profile?.email || m.user_id,
-              email: profile?.email || "",
-              role: m.role as UserRole,
+          // Use the admin-backed team members endpoint so we see every member
+          // (the browser's Supabase client is RLS-gated and may miss rows).
+          try {
+            const res = await fetch("/api/v1/team/members");
+            if (!res.ok) return [];
+            const json = await res.json();
+            const rows = (json.data ?? []) as Array<{
+              id: string;
+              email: string;
+              full_name: string | null;
+              role: UserRole;
+              can_approve: boolean;
+            }>;
+            return rows.map((m) => ({
+              id: m.id,
+              name: m.full_name || m.email || m.id,
+              email: m.email || "",
+              role: m.role,
               canApprove: !!m.can_approve,
-            };
-          });
+            }));
+          } catch {
+            return [];
+          }
         })(),
         (async () => {
           const supabase = createClient();
