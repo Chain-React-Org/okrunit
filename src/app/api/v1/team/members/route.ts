@@ -178,6 +178,17 @@ export async function PATCH(request: Request) {
     if (body.can_approve !== undefined) updatePayload.can_approve = body.can_approve;
     if (body.can_connect !== undefined) updatePayload.can_connect = body.can_connect;
 
+    // Auto-promote a plain "member" to "approver" when approval permission is
+    // granted, so their role matches their capability. Only applies when the
+    // caller didn't explicitly set a different role in the same request.
+    if (
+      body.can_approve === true &&
+      !body.role &&
+      targetMembership.role === "member"
+    ) {
+      updatePayload.role = "approver";
+    }
+
     if (Object.keys(updatePayload).length === 0) {
       throw new ApiError(400, "Nothing to update");
     }
@@ -245,7 +256,7 @@ export async function PATCH(request: Request) {
       }
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, applied: updatePayload });
   } catch (err) {
     return errorResponse(err);
   }

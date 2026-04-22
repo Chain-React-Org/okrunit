@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, memo } from "react";
+import { useState, useMemo, useEffect, memo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Crown,
@@ -87,19 +87,23 @@ interface V2MemberListProps {
 }
 
 export const V2MemberList = memo(function V2MemberList({
-  members,
+  members: initialMembers,
   currentUserId,
   currentUserRole,
   memberStats,
   pendingLoadMap,
 }: V2MemberListProps) {
   const router = useRouter();
+  const [members, setMembers] = useState(initialMembers);
   const [loading, setLoading] = useState<string | null>(null);
   const [removeTarget, setRemoveTarget] = useState<TeamMember | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [optimisticApprove, setOptimisticApprove] = useState<Record<string, boolean>>({});
-  const [optimisticConnect, setOptimisticConnect] = useState<Record<string, boolean>>({});
+
+  // Keep local state in sync if the server hands us a fresh members array.
+  useEffect(() => {
+    setMembers(initialMembers);
+  }, [initialMembers]);
 
   const isOwner = currentUserRole === "owner";
   const isAdmin = currentUserRole === "owner" || currentUserRole === "admin";
@@ -121,88 +125,94 @@ export const V2MemberList = memo(function V2MemberList({
     return result;
   }, [members, search, roleFilter]);
 
-  async function handleRoleChange(userId: string, newRole: string) {
-    setLoading(userId);
+  async function patchMember(
+    userId: string,
+    patch: { role?: UserRole; can_approve?: boolean; can_connect?: boolean },
+    successMessage: string,
+  ) {
+    // Snapshot the previous row so we can revert on failure.
+    const prevMember = members.find((m) => m.id === userId);
+    if (!prevMember) return;
+
+    // Optimistic: apply the user-intended patch immediately.
+    setMembers((prev) =>
+      prev.map((m) => (m.id === userId ? { ...m, ...patch } : m)),
+    );
+
     try {
       const res = await fetch("/api/v1/team/members", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, role: newRole }),
+        body: JSON.stringify({ user_id: userId, ...patch }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Failed to update role");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Failed to update");
+
+      // Merge the server's applied payload so server-side derivations (like
+      // auto-promoting "member" to "approver" when can_approve is granted)
+      // are reflected in the UI.
+      const applied = (data.applied ?? {}) as Partial<TeamMember>;
+      if (Object.keys(applied).length > 0) {
+        setMembers((prev) =>
+          prev.map((m) => (m.id === userId ? { ...m, ...applied } : m)),
+        );
       }
-      toast.success("Role updated");
-      router.refresh();
+      toast.success(successMessage);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update role");
+      // Revert to the pre-change snapshot.
+      setMembers((prev) => prev.map((m) => (m.id === userId ? prevMember : m)));
+      toast.error(err instanceof Error ? err.message : "Failed to update");
+    }
+  }
+
+  async function handleRoleChange(userId: string, newRole: string) {
+    setLoading(userId);
+    try {
+      await patchMember(userId, { role: newRole as UserRole }, "Role updated");
     } finally {
       setLoading(null);
     }
   }
 
   async function handleCanApproveChange(userId: string, canApprove: boolean) {
-    // Optimistic update. Toggle immediately.
-    setOptimisticApprove((prev) => ({ ...prev, [userId]: canApprove }));
-    toast.success(canApprove ? "Approval permission granted" : "Approval permission revoked");
-
-    try {
-      const res = await fetch("/api/v1/team/members", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, can_approve: canApprove }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Failed to update");
-      }
-      router.refresh();
-    } catch (err) {
-      // Revert on failure
-      setOptimisticApprove((prev) => ({ ...prev, [userId]: !canApprove }));
-      toast.error(err instanceof Error ? err.message : "Failed to update");
-    }
+    await patchMember(
+      userId,
+      { can_approve: canApprove },
+      canApprove ? "Approval permission granted" : "Approval permission revoked",
+    );
   }
 
   async function handleCanConnectChange(userId: string, canConnect: boolean) {
-    setOptimisticConnect((prev) => ({ ...prev, [userId]: canConnect }));
-    toast.success(canConnect ? "Connect permission granted" : "Connect permission revoked");
-
-    try {
-      const res = await fetch("/api/v1/team/members", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, can_connect: canConnect }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Failed to update");
-      }
-      router.refresh();
-    } catch (err) {
-      setOptimisticConnect((prev) => ({ ...prev, [userId]: !canConnect }));
-      toast.error(err instanceof Error ? err.message : "Failed to update");
-    }
+    await patchMember(
+      userId,
+      { can_connect: canConnect },
+      canConnect ? "Connect permission granted" : "Connect permission revoked",
+    );
   }
 
   async function handleRemove() {
     if (!removeTarget) return;
-    setLoading(removeTarget.id);
+    const target = removeTarget;
+    setLoading(target.id);
+
+    // Optimistic: drop immediately.
+    setMembers((prev) => prev.filter((m) => m.id !== target.id));
+    setRemoveTarget(null);
+
     try {
       const res = await fetch("/api/v1/team/members", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: removeTarget.id }),
+        body: JSON.stringify({ user_id: target.id }),
       });
       if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "Failed to remove member");
       }
       toast.success("Member removed");
-      setRemoveTarget(null);
-      router.refresh();
     } catch (err) {
+      // Revert the drop on failure.
+      setMembers((prev) => (prev.some((m) => m.id === target.id) ? prev : [...prev, target]));
       toast.error(err instanceof Error ? err.message : "Failed to remove member");
     } finally {
       setLoading(null);
@@ -398,9 +408,7 @@ export const V2MemberList = memo(function V2MemberList({
                 {/* Can approve toggle */}
                 {(() => {
                   const isOwnerRow = member.role === "owner";
-                  const canApproveValue = isOwnerRow
-                    ? true
-                    : optimisticApprove[member.id] ?? member.can_approve;
+                  const canApproveValue = isOwnerRow ? true : member.can_approve;
                   return (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -434,7 +442,7 @@ export const V2MemberList = memo(function V2MemberList({
 
                 {/* Can connect toggle */}
                 {(() => {
-                  const canConnectValue = optimisticConnect[member.id] ?? member.can_connect;
+                  const canConnectValue = member.can_connect;
                   const isAdminOrOwner = member.role === "owner" || member.role === "admin";
                   return (
                     <Tooltip>
