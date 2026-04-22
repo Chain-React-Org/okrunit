@@ -380,10 +380,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
       return team ? `By position: ${team.name}` : "By position (team)";
     }
     if (flow.approver_mode === "designated" && flow.assigned_approvers?.length) {
-      const names = flow.assigned_approvers.map((id) => {
-        const m = members.find((mem) => mem.id === id);
-        return m?.name ?? id.slice(0, 8);
-      });
+      const names = flow.assigned_approvers.map(approverLabel);
       if (flow.is_sequential) return `Sequential: ${names.join(" → ")}`;
       const count = flow.default_required_approvals ?? 1;
       if (count > 1) return `${count} of ${names.join(", ")} must approve`;
@@ -494,6 +491,30 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
     setSelectedApprovers((prev) =>
       prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
     );
+  }
+
+  // Members whose display name collides with at least one other member —
+  // we disambiguate these by appending their email.
+  const duplicateNameIds = (() => {
+    const counts = new Map<string, number>();
+    for (const m of members) {
+      const key = (m.name ?? "").trim().toLowerCase();
+      if (!key) continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const ids = new Set<string>();
+    for (const m of members) {
+      const key = (m.name ?? "").trim().toLowerCase();
+      if (key && (counts.get(key) ?? 0) > 1) ids.add(m.id);
+    }
+    return ids;
+  })();
+
+  function approverLabel(userId: string): string {
+    const m = members.find((mem) => mem.id === userId);
+    if (!m) return userId.slice(0, 8);
+    if (duplicateNameIds.has(userId) && m.email) return `${m.name} (${m.email})`;
+    return m.name;
   }
 
   // ---- Render ---------------------------------------------------------------
@@ -679,10 +700,9 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
                 {selectedApprovers.length > 0 && !isSequential && (
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {selectedApprovers.map((id) => {
-                      const member = members.find((m) => m.id === id);
                       return (
                         <Badge key={id} variant="secondary" className="gap-1 pr-1">
-                          {member?.name ?? id.slice(0, 8)}
+                          {approverLabel(id)}
                           <button
                             type="button"
                             className="rounded-full p-0.5 hover:bg-muted-foreground/20 cursor-pointer"
@@ -701,7 +721,6 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
                       Approval order. Each approver is notified only after the previous one approves. Tick more people in the list below to add them to the end of the sequence.
                     </p>
                     {selectedApprovers.map((id, idx) => {
-                      const member = members.find((m) => m.id === id);
                       return (
                         <div
                           key={id}
@@ -711,7 +730,7 @@ export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, po
                             {idx + 1}
                           </span>
                           <span className="flex-1 truncate text-sm">
-                            {member?.name ?? id.slice(0, 8)}
+                            {approverLabel(id)}
                           </span>
                           <div className="flex items-center gap-0.5">
                             <Button

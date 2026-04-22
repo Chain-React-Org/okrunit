@@ -21,6 +21,7 @@ export default async function RoutesPage() {
     teams,
     approverMemberships,
     approverProfiles,
+    approverEmails,
     positions,
   } = await getCachedRoutesData(membership.org_id);
 
@@ -29,7 +30,7 @@ export default async function RoutesPage() {
     return {
       id: m.user_id,
       name: name || m.user_id,
-      email: "",
+      email: approverEmails[m.user_id] ?? "",
       role: m.role,
     };
   });
