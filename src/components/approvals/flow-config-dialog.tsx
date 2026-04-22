@@ -25,7 +25,9 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createClient } from "@/lib/supabase/client";
-import { X, Plus, Loader2, Info } from "lucide-react";
+import Link from "next/link";
+import { X, Plus, Loader2, Info, ChevronUp, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipTrigger,
@@ -48,6 +50,7 @@ interface MemberOption {
   name: string;
   email: string;
   role: UserRole;
+  canApprove: boolean;
 }
 
 interface FlowConfigDialogProps {
@@ -155,8 +158,7 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
           const { data } = await supabase
             .from("org_memberships")
             .select("user_id, role, can_approve")
-            .eq("org_id", orgId)
-            .eq("can_approve", true);
+            .eq("org_id", orgId);
           if (!data) return [];
 
           const userIds = data.map((m) => m.user_id);
@@ -172,6 +174,7 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
               name: profile?.full_name || profile?.email || m.user_id,
               email: profile?.email || "",
               role: m.role as UserRole,
+              canApprove: !!m.can_approve,
             };
           });
         })(),
@@ -363,6 +366,29 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
         ? prev.filter((id) => id !== userId)
         : [...prev, userId],
     );
+  }
+
+  // Members whose display name collides with at least one other — disambiguate by email.
+  const duplicateNameIds = (() => {
+    const counts = new Map<string, number>();
+    for (const m of members) {
+      const key = (m.name ?? "").trim().toLowerCase();
+      if (!key) continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const ids = new Set<string>();
+    for (const m of members) {
+      const key = (m.name ?? "").trim().toLowerCase();
+      if (key && (counts.get(key) ?? 0) > 1) ids.add(m.id);
+    }
+    return ids;
+  })();
+
+  function approverLabel(userId: string): string {
+    const m = members.find((mem) => mem.id === userId);
+    if (!m) return userId.slice(0, 8);
+    if (duplicateNameIds.has(userId) && m.email) return `${m.name} (${m.email})`;
+    return m.name;
   }
 
   // ---- Source display -------------------------------------------------------
@@ -557,57 +583,139 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
             {approverMode === "designated" && (
               <div className="space-y-2">
                 <Label>Select Approvers</Label>
-                {selectedApprovers.length > 0 && (
+                {selectedApprovers.length > 0 && !isSequential && (
                   <div className="flex flex-wrap gap-1.5 mb-2">
-                    {selectedApprovers.map((id) => {
-                      const member = members.find((m) => m.id === id);
-                      return (
-                        <Badge
-                          key={id}
-                          variant="secondary"
-                          className="gap-1 pr-1"
+                    {selectedApprovers.map((id) => (
+                      <Badge
+                        key={id}
+                        variant="secondary"
+                        className="gap-1 pr-1"
+                      >
+                        {approverLabel(id)}
+                        <button
+                          type="button"
+                          className="rounded-full p-0.5 hover:bg-muted-foreground/20"
+                          onClick={() => toggleApprover(id)}
                         >
-                          {member?.name ?? id.slice(0, 8)}
-                          <button
+                          <X className="size-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {selectedApprovers.length > 0 && isSequential && (
+                  <div className="mb-2 space-y-1.5 rounded-md border bg-muted/30 p-2">
+                    <p className="text-[11px] text-muted-foreground px-1">
+                      Approval order. Each approver is notified only after the previous one approves. Tick more people in the list below to add them to the end of the sequence.
+                    </p>
+                    {selectedApprovers.map((id, idx) => (
+                      <div
+                        key={id}
+                        className="flex items-center gap-2 rounded-md border bg-background px-2 py-1.5"
+                      >
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                          {idx + 1}
+                        </span>
+                        <span className="flex-1 truncate text-sm">
+                          {approverLabel(id)}
+                        </span>
+                        <div className="flex items-center gap-0.5">
+                          <Button
                             type="button"
-                            className="rounded-full p-0.5 hover:bg-muted-foreground/20"
-                            onClick={() => toggleApprover(id)}
+                            size="icon"
+                            variant="ghost"
+                            className="size-6"
+                            disabled={saving || idx === 0}
+                            onClick={() => {
+                              setSelectedApprovers((prev) => {
+                                const next = [...prev];
+                                [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                                return next;
+                              });
+                            }}
+                            aria-label="Move up"
                           >
-                            <X className="size-3" />
-                          </button>
-                        </Badge>
-                      );
-                    })}
+                            <ChevronUp className="size-3.5" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="size-6"
+                            disabled={saving || idx === selectedApprovers.length - 1}
+                            onClick={() => {
+                              setSelectedApprovers((prev) => {
+                                const next = [...prev];
+                                [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                                return next;
+                              });
+                            }}
+                            aria-label="Move down"
+                          >
+                            <ChevronDown className="size-3.5" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="size-6 text-muted-foreground hover:text-foreground"
+                            disabled={saving}
+                            onClick={() => toggleApprover(id)}
+                            aria-label="Remove"
+                          >
+                            <X className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 <div className="max-h-40 overflow-y-auto rounded-md border">
                   {members.length === 0 ? (
                     <p className="px-3 py-2 text-sm text-muted-foreground">
-                      No members with approval permission found.
+                      No members found.
                     </p>
                   ) : (
-                    members.map((member) => (
-                      <label
-                        key={member.id}
-                        className="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-accent"
-                      >
-                        <Checkbox
-                          checked={selectedApprovers.includes(member.id)}
-                          onCheckedChange={() => toggleApprover(member.id)}
-                          disabled={saving}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">
-                            {member.name}
+                    members.map((member) => {
+                      const disabled = saving || !member.canApprove;
+                      return (
+                        <label
+                          key={member.id}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2",
+                            disabled
+                              ? "cursor-not-allowed opacity-60"
+                              : "cursor-pointer hover:bg-accent",
+                          )}
+                        >
+                          <Checkbox
+                            checked={selectedApprovers.includes(member.id)}
+                            onCheckedChange={() => toggleApprover(member.id)}
+                            disabled={disabled}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium truncate">
+                              {member.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {member.email}
+                              {" "}
+                              <span className="capitalize">({member.role})</span>
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {member.email}
-                            {" "}
-                            <span className="capitalize">({member.role})</span>
-                          </div>
-                        </div>
-                      </label>
-                    ))
+                          {!member.canApprove && (
+                            <Link
+                              href="/org/members"
+                              className="shrink-0 text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                              title="Grant approval permission on the Members page"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              No approval permission
+                            </Link>
+                          )}
+                        </label>
+                      );
+                    })
                   )}
                 </div>
               </div>

@@ -836,13 +836,20 @@ export async function PATCH(
 
           const memberIds = Array.from(notifyIds);
           if (memberIds.length > 0) {
+            const isReject = updated.status === "rejected";
             await createInAppNotificationBulk(memberIds, {
               orgId: auth.orgId,
               category: "approval_decided",
-              title: `${updated.title} was ${verb}`,
+              title: isReject
+                ? `Request rejected: ${updated.title}`
+                : `${updated.title} was ${verb}`,
               body: validated.comment
-                ? `${actorName} ${verb} · "${validated.comment}"`
-                : `${actorName} ${verb} this request`,
+                ? isReject
+                  ? `Reason: "${validated.comment}" · ${actorName} rejected. Click to see details.`
+                  : `${actorName} ${verb} · "${validated.comment}"`
+                : isReject
+                  ? `${actorName} rejected this request. No reason provided. Click to see details.`
+                  : `${actorName} ${verb} this request`,
               actorId,
               actorName: actorName ?? undefined,
               resourceType: "approval_request",
@@ -1038,13 +1045,20 @@ export async function PATCH(
         .neq("user_id", actorId);
       const memberIds = (members ?? []).map((m: { user_id: string }) => m.user_id);
       if (memberIds.length > 0) {
+        const isReject = newStatus === "rejected";
         await createInAppNotificationBulk(memberIds, {
           orgId: auth.orgId,
           category: "approval_decided",
-          title: `${updated.title} was ${verb}`,
+          title: isReject
+            ? `Request rejected: ${updated.title}`
+            : `${updated.title} was ${verb}`,
           body: validated.comment
-            ? `${actorName} ${verb} · "${validated.comment}"`
-            : `${actorName} ${verb} this request`,
+            ? isReject
+              ? `Reason: "${validated.comment}" · ${actorName} rejected. Click to see details.`
+              : `${actorName} ${verb} · "${validated.comment}"`
+            : isReject
+              ? `${actorName} rejected this request. No reason provided. Click to see details.`
+              : `${actorName} ${verb} this request`,
           actorId,
           actorName: actorName ?? undefined,
           resourceType: "approval_request",
