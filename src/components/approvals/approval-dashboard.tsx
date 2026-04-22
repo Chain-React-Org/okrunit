@@ -54,6 +54,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const newIdTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const [userProfiles, setUserProfiles] = useState<Map<string, UserProfile>>(new Map());
+  const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -164,6 +165,18 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
               }
               return next;
             });
+          }
+        }
+
+        // Prefetch which requests the current user is watching so the detail
+        // panel can show the correct Watch/Unwatch state immediately on open.
+        if (userId && loadedApprovals.length > 0) {
+          const { data: watcherRows } = await supabase
+            .from("request_watchers")
+            .select("request_id")
+            .eq("user_id", userId);
+          if (watcherRows && watcherRows.length > 0) {
+            setWatchedIds(new Set(watcherRows.map((r: { request_id: string }) => r.request_id)));
           }
         }
       } catch {
@@ -1046,6 +1059,15 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         }}
         currentUserId={userId}
         currentUserRole={userRole}
+        initialIsWatching={selectedApproval ? watchedIds.has(selectedApproval.id) : false}
+        onWatchChange={(approvalId, isWatching) => {
+          setWatchedIds((prev) => {
+            const next = new Set(prev);
+            if (isWatching) next.add(approvalId);
+            else next.delete(approvalId);
+            return next;
+          });
+        }}
       />
 
       {/* Batch actions bar */}

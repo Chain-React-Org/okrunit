@@ -401,7 +401,7 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Configure Flow Approvals</DialogTitle>
           <DialogDescription>
