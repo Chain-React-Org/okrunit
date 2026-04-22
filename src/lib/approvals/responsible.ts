@@ -55,3 +55,57 @@ export function getCurrentlyResponsible(
 
   return "Any approver";
 }
+
+/**
+ * Return true when the current user is allowed to decide on this request
+ * right now.
+ *
+ * Rules:
+ *  - Request must be pending (not finalized or expired).
+ *  - User must have org-level approval permission (`canApprove`).
+ *  - Users can never decide on requests they themselves created (self-approval).
+ *  - If the request has specific assigned approvers, the user must be in the
+ *    list. For sequential flows, the user must be the next in line.
+ *  - For any-approver mode, the org-level permission is enough.
+ */
+export function canDecideOnApproval(
+  approval: Pick<
+    ApprovalRequest,
+    | "status"
+    | "is_log"
+    | "assigned_approvers"
+    | "is_sequential"
+    | "current_approvals"
+    | "created_by"
+  >,
+  currentUserId: string | undefined,
+  canApprove: boolean,
+  /** User IDs this user is an active delegate for. The user counts as
+   * eligible if any of their delegators is in assigned_approvers (or is the
+   * next-in-line for a sequential flow). */
+  delegatorIds?: ReadonlySet<string>,
+): boolean {
+  if (!currentUserId) return false;
+  if (!canApprove) return false;
+  if (approval.status !== "pending") return false;
+  if (approval.is_log) return false;
+
+  // Self-approval is always blocked, regardless of whether the user is in
+  // assigned_approvers.
+  const createdBy = approval.created_by as { user_id?: string } | null;
+  if (createdBy?.user_id && createdBy.user_id === currentUserId) return false;
+
+  const hasAssigned = !!approval.assigned_approvers?.length;
+  if (!hasAssigned) return true;
+
+  // Set of IDs that "count as" the current user: themselves + anyone who has
+  // delegated their approval authority to them for this org.
+  const eligibleIds = new Set<string>([currentUserId]);
+  if (delegatorIds) for (const id of delegatorIds) eligibleIds.add(id);
+
+  if (approval.is_sequential) {
+    const nextUserId = approval.assigned_approvers![approval.current_approvals];
+    return !!nextUserId && eligibleIds.has(nextUserId);
+  }
+  return approval.assigned_approvers!.some((uid: string) => eligibleIds.has(uid));
+}

@@ -27,6 +27,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Clock, CheckCircle, XCircle, User2, MoreVertical, Eye, Archive, ArchiveRestore, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SourceAvatar, getSourceDisplay } from "@/components/approvals/source-icons";
+import { canDecideOnApproval } from "@/lib/approvals/responsible";
 import type { ApprovalRequest } from "@/lib/types/database";
 
 interface ApprovalCardProps {
@@ -36,6 +37,8 @@ interface ApprovalCardProps {
   currentlyResponsible?: string | null;
   onClick: () => void;
   canApprove?: boolean;
+  currentUserId?: string;
+  delegatorIds?: ReadonlySet<string>;
   isLoading?: boolean;
   skipConfirmation?: boolean;
   onInlineAction?: (approvalId: string, decision: "approved" | "rejected", comment?: string) => void;
@@ -80,6 +83,8 @@ export const ApprovalCard = memo(function ApprovalCard({
   currentlyResponsible,
   onClick,
   canApprove = true,
+  currentUserId,
+  delegatorIds,
   isLoading = false,
   skipConfirmation = false,
   onInlineAction,
@@ -225,8 +230,10 @@ export const ApprovalCard = memo(function ApprovalCard({
                 Activity Log
               </Badge>
             )}
-            {/* Inline approve/reject - visible on hover (hidden for logs) */}
-            {isPending && canApprove && onInlineAction && !approval.is_log && (
+            {/* Inline approve/reject - visible on hover (hidden for logs).
+                Gated to the user who is currently responsible: hides for
+                viewers, non-assigned approvers, and self-created requests. */}
+            {onInlineAction && canDecideOnApproval(approval, currentUserId, canApprove, delegatorIds) && (
               <div className={cn(
                 "hidden items-center gap-1.5 sm:flex sm:transition-opacity",
                 tourShowApproveButtons ? "sm:opacity-100" : "sm:opacity-0 sm:group-hover/card:opacity-100",
@@ -261,7 +268,7 @@ export const ApprovalCard = memo(function ApprovalCard({
             {currentlyResponsible && (
               <span className="flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40">
                 <User2 className="size-3 shrink-0" />
-                <span className="truncate max-w-[120px]">{currentlyResponsible}</span>
+                <span>{currentlyResponsible}</span>
               </span>
             )}
 

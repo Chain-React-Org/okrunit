@@ -55,6 +55,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
   const newIdTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const [userProfiles, setUserProfiles] = useState<Map<string, UserProfile>>(new Map());
   const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
+  const [delegatorIds, setDelegatorIds] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -177,6 +178,25 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
             .eq("user_id", userId);
           if (watcherRows && watcherRows.length > 0) {
             setWatchedIds(new Set(watcherRows.map((r: { request_id: string }) => r.request_id)));
+          }
+        }
+
+        // Prefetch active delegations *received* by the current user — the
+        // list of colleagues who have delegated their approval authority to
+        // them. We treat the current user as eligible anywhere these
+        // delegators are assigned approvers.
+        if (userId) {
+          const nowIso = new Date().toISOString();
+          const { data: delegRows } = await supabase
+            .from("approval_delegations")
+            .select("delegator_id")
+            .eq("org_id", orgId)
+            .eq("delegate_id", userId)
+            .eq("is_active", true)
+            .lte("starts_at", nowIso)
+            .gte("ends_at", nowIso);
+          if (delegRows && delegRows.length > 0) {
+            setDelegatorIds(new Set(delegRows.map((d: { delegator_id: string }) => d.delegator_id)));
           }
         }
       } catch {
@@ -842,6 +862,8 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
     userProfiles,
     onSelect: handleSelect,
     canApprove,
+    currentUserId: userId,
+    delegatorIds,
     isLoading,
     skipConfirmation,
     onInlineAction: handleInlineAction,
@@ -1059,6 +1081,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         }}
         currentUserId={userId}
         currentUserRole={userRole}
+        delegatorIds={delegatorIds}
         initialIsWatching={selectedApproval ? watchedIds.has(selectedApproval.id) : false}
         onWatchChange={(approvalId, isWatching) => {
           setWatchedIds((prev) => {
