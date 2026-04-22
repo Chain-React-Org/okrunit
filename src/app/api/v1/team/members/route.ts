@@ -235,7 +235,9 @@ export async function PATCH(request: Request) {
       ipAddress,
     });
 
-    revalidateTags(CacheTags.members(auth.orgId));
+    // Routes page caches the same memberships under CacheTags.routes for the
+    // approver picker, so role/can_approve changes must invalidate both.
+    revalidateTags(CacheTags.members(auth.orgId), CacheTags.routes(auth.orgId));
 
     // Notify the affected user about their role/permission change
     after(async () => {
@@ -362,7 +364,7 @@ export async function DELETE(request: Request) {
       ipAddress,
     });
 
-    revalidateTags(CacheTags.members(auth.orgId));
+    revalidateTags(CacheTags.members(auth.orgId), CacheTags.routes(auth.orgId));
 
     return NextResponse.json({ success: true });
   } catch (err) {
