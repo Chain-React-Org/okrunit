@@ -474,6 +474,20 @@ export async function PATCH(
       );
     }
 
+    // 5b0. Always block self-approval: a requester cannot decide on a request
+    // they themselves created. This is enforced regardless of four-eyes config
+    // so API-bypass paths respect the same rule as the UI.
+    {
+      const createdBy = approval.created_by as { user_id?: string } | null;
+      if (createdBy?.user_id && createdBy.user_id === actorId) {
+        throw new ApiError(
+          403,
+          "You cannot decide on a request you created",
+          "SELF_APPROVAL_BLOCKED",
+        );
+      }
+    }
+
     // 5b1. Four-eyes principle check
     if (orgSettings) {
       const fourEyesResult = checkFourEyes(orgSettings, approval, actorId);
