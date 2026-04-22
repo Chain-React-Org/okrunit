@@ -67,6 +67,42 @@ function getUserDisplayName(userId: string, profiles?: Map<string, UserProfile>)
   return userId.slice(0, 8) + "...";
 }
 
+/**
+ * For a set of user IDs, return a labeller that disambiguates collisions by
+ * appending the user's email when two or more share the same display name.
+ */
+function makeApproverLabeller(
+  userIds: string[],
+  profiles?: Map<string, UserProfile>,
+): (userId: string) => string {
+  const names = userIds.map((id) => getUserDisplayName(id, profiles));
+  const counts = new Map<string, number>();
+  for (const n of names) counts.set(n, (counts.get(n) ?? 0) + 1);
+  const duplicates = new Set<string>();
+  for (const [n, c] of counts) if (c > 1) duplicates.add(n);
+
+  return (userId: string) => {
+    const name = getUserDisplayName(userId, profiles);
+    if (!duplicates.has(name)) return name;
+    const email = profiles?.get(userId)?.email;
+    return email ? `${name} (${email})` : name;
+  };
+}
+
+/** Humanize an elapsed duration, e.g. "3h 15m" or "2d 5h". */
+function formatDuration(fromIso: string, toIso: string): string {
+  const ms = new Date(toIso).getTime() - new Date(fromIso).getTime();
+  if (!isFinite(ms) || ms < 0) return "";
+  const totalSec = Math.floor(ms / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+  if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${totalSec}s`;
+}
+
 function getCreatedByDisplay(createdBy: CreatedByInfo): string {
   if (createdBy.connection_name) return createdBy.connection_name;
   if (createdBy.client_name) return createdBy.client_name;
@@ -140,9 +176,20 @@ export const ApprovalDetail = memo(function ApprovalDetail({
     onCommentsChange?.(currentId, resolved);
   };
 
-  // Keyboard shortcuts: a = approve, r = reject (only when detail is open and request is pending)
+  // Keyboard shortcuts: a = approve, r = reject (only when detail is open and user is the responsible approver)
   useEffect(() => {
     if (!open || !approval || approval.status !== "pending" || !canApprove) return;
+
+    // Re-check per-request eligibility inside the effect (approval state can change).
+    const hasAssigned = !!approval.assigned_approvers?.length;
+    const isNext = hasAssigned
+      ? approval.is_sequential
+        ? approval.assigned_approvers![approval.current_approvals] === currentUserId
+        : approval.assigned_approvers!.includes(currentUserId ?? "")
+      : true;
+    const createdByUser = (approval.created_by as CreatedByInfo | null)?.user_id;
+    const selfCreated = !!createdByUser && createdByUser === currentUserId;
+    if (!isNext || selfCreated) return;
 
     function handleKey(e: KeyboardEvent) {
       // Don't fire if user is typing in an input/textarea
@@ -160,7 +207,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
 
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [open, approval, canApprove, onRespond]);
+  }, [open, approval, canApprove, onRespond, currentUserId]);
 
   // No local fetch needed. Comments are prefetched by the parent dashboard.
 
@@ -178,6 +225,36 @@ export const ApprovalDetail = memo(function ApprovalDetail({
     ? Math.round((approval.current_approvals / approval.required_approvals) * 100)
     : 0;
   const createdBy = approval.created_by as CreatedByInfo | null;
+  const approverLabel = makeApproverLabeller(approval.assigned_approvers ?? [], userProfiles);
+
+  // Whether the current user is the one the request is waiting on right now.
+  const isResponsibleApprover = (() => {
+    if (!currentUserId || approval.status !== "pending") return false;
+    if (!hasAssignedApprovers) return true; // any-approver mode — org-level canApprove governs
+    if (approval.is_sequential) {
+      const nextUserId = approval.assigned_approvers![approval.current_approvals];
+      return nextUserId === currentUserId;
+    }
+    return approval.assigned_approvers!.includes(currentUserId);
+  })();
+
+  // Block self-approval: the requester can't approve their own request.
+  const isSelfCreated = !!createdBy?.user_id && createdBy.user_id === currentUserId;
+
+  const effectiveCanApprove =
+    canApprove && isResponsibleApprover && !isSelfCreated && approval.status === "pending" && !approval.is_log;
+
+  // Names of approvers still pending a decision (parallel: everyone who hasn't
+  // pushed current_approvals past their slot; sequential: the rest of the chain).
+  const remainingApprovers = (() => {
+    if (!hasAssignedApprovers) return [] as string[];
+    if (approval.is_sequential) {
+      return approval.assigned_approvers!.slice(approval.current_approvals);
+    }
+    // Parallel: we don't have the votes list here, so surface up to required-minus-received names.
+    const pendingCount = Math.max(0, approval.required_approvals - approval.current_approvals);
+    return approval.assigned_approvers!.slice(0, Math.min(pendingCount, approval.assigned_approvers!.length));
+  })();
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()} modal={!tourActive}>
@@ -388,16 +465,41 @@ export const ApprovalDetail = memo(function ApprovalDetail({
             )}
           </div>}
 
-          {/* Viewer banner: show when user is not an assigned approver */}
-          {approval.status === "pending" && approval.assigned_approvers && approval.assigned_approvers.length > 0 && currentUserId && !approval.assigned_approvers.includes(currentUserId) && (
+          {/* Viewer banner: show when user is not the responsible approver */}
+          {approval.status === "pending" && hasAssignedApprovers && !isResponsibleApprover && (
             <div className="flex items-start gap-2 rounded-xl border border-blue-200/60 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 px-4 py-3">
               <Info className="size-4 shrink-0 text-blue-500 mt-0.5" />
-              <p className="text-xs text-blue-700 dark:text-blue-400">
-                Awaiting approval from{" "}
-                {approval.assigned_approvers.length === 1
-                  ? getUserDisplayName(approval.assigned_approvers[0], userProfiles)
-                  : `${approval.assigned_approvers.length} assigned approvers`}.
-                {isWatching ? " You're watching this request." : ""}
+              <div className="text-xs text-blue-700 dark:text-blue-400 space-y-0.5">
+                {approval.is_sequential ? (
+                  <p>
+                    <span className="font-semibold">Waiting on {approverLabel(approval.assigned_approvers![approval.current_approvals])}</span>
+                    {" · "}
+                    {approval.current_approvals} of {approval.required_approvals} approvals received
+                  </p>
+                ) : (
+                  <p>
+                    <span className="font-semibold">
+                      {approval.current_approvals} of {approval.required_approvals} approvals received
+                    </span>
+                    {remainingApprovers.length > 0 && (
+                      <> · waiting on {remainingApprovers.map(approverLabel).join(", ")}</>
+                    )}
+                  </p>
+                )}
+                {isWatching && <p className="text-[11px] opacity-80">You&rsquo;re watching this request.</p>}
+              </div>
+            </div>
+          )}
+
+          {/* You're up banner: user is the responsible approver */}
+          {approval.status === "pending" && hasAssignedApprovers && isResponsibleApprover && !isSelfCreated && canApprove && (
+            <div className="flex items-start gap-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20 px-4 py-3">
+              <UserCheck className="size-4 shrink-0 text-emerald-500 mt-0.5" />
+              <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                <span className="font-semibold">You&rsquo;re up.</span>
+                {approval.is_sequential && approval.assigned_approvers!.length > 1
+                  ? ` Decide to advance the chain (${approval.current_approvals + 1} of ${approval.assigned_approvers!.length}).`
+                  : " Review and decide below."}
               </p>
             </div>
           )}
@@ -435,7 +537,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
           )}
 
           {/* Card: Decision */}
-          {approval.status === "pending" && canApprove && !approval.is_log && (
+          {effectiveCanApprove && (
             <div className="rounded-xl border border-border/50 p-4">
               <LabelWithTip label="Your Decision" tip="Approve or reject this request. Your decision gets sent back to the workflow that created it." />
               <div className="mt-1">
@@ -447,10 +549,18 @@ export const ApprovalDetail = memo(function ApprovalDetail({
             </div>
           )}
 
-          {approval.status === "pending" && !canApprove && !approval.is_log && (
+          {approval.status === "pending" && !approval.is_log && !effectiveCanApprove && (
             <div className="rounded-xl border border-border/50 p-4">
               <p className="text-muted-foreground text-sm text-center">
-                You do not have approval permissions. Contact your admin.
+                {!canApprove
+                  ? "You do not have approval permissions. Contact your admin."
+                  : isSelfCreated
+                    ? "You created this request. Another approver must decide."
+                    : hasAssignedApprovers
+                      ? approval.is_sequential
+                        ? `Waiting on ${approverLabel(approval.assigned_approvers![approval.current_approvals])}. You're later in the approval chain.`
+                        : `You're not assigned to this request. Waiting on ${remainingApprovers.map(approverLabel).join(", ")}.`
+                      : "Only approvers assigned to this request can decide."}
               </p>
             </div>
           )}
@@ -482,7 +592,12 @@ export const ApprovalDetail = memo(function ApprovalDetail({
                     {approval.decision_comment && <div className="w-px flex-1 bg-border mt-1" />}
                   </div>
                   <div className="pb-4 min-w-0">
-                    <p className="text-sm font-medium capitalize">{approval.status}</p>
+                    <p className="text-sm font-medium capitalize">
+                      {approval.status}
+                      <span className="ml-2 text-[11px] font-normal text-muted-foreground">
+                        after {formatDuration(approval.created_at, approval.decided_at)}
+                      </span>
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {format(new Date(approval.decided_at), "PPp")}
                       {approval.decided_by && <span> by {getUserDisplayName(approval.decided_by, userProfiles)}</span>}
