@@ -8,6 +8,7 @@ import { z } from "zod";
 import { getAppAdminContext } from "@/lib/app-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---- Schemas --------------------------------------------------------------
 
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const validated = createUserSchema.parse(body);
+    if (validated.full_name) validated.full_name = titleCaseName(validated.full_name);
 
     const admin = createAdminClient();
 
@@ -127,6 +129,9 @@ export async function PATCH(request: Request) {
 
     const body = await request.json();
     const validated = updateUserSchema.parse(body);
+    if (validated.full_name !== undefined) {
+      validated.full_name = titleCaseName(validated.full_name);
+    }
 
     const admin = createAdminClient();
 

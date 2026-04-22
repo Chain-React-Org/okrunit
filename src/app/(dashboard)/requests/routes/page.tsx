@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getOrgContext } from "@/lib/org-context";
 import { getCachedRoutesData } from "@/lib/cache/queries";
 import { RoutesHub } from "@/components/routes/routes-hub";
+import { titleCaseName } from "@/lib/format-name";
 
 export const metadata = {
   title: "Routes - OKrunit",
@@ -27,10 +28,14 @@ export default async function RoutesPage() {
 
   const members = approverMemberships.map((m: { user_id: string; role: string; can_approve: boolean }) => {
     const name = approverProfiles[m.user_id];
+    const email = approverEmails[m.user_id] ?? "";
+    // Format the display name even if it came from the email so casing is
+    // consistent across the routes page (e.g. "nathaniel" -> "Nathaniel").
+    const displayName = name && name !== email ? titleCaseName(name) : (name || m.user_id);
     return {
       id: m.user_id,
-      name: name || m.user_id,
-      email: approverEmails[m.user_id] ?? "",
+      name: displayName,
+      email,
       role: m.role,
       canApprove: m.can_approve,
     };

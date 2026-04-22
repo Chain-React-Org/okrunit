@@ -5,6 +5,7 @@
 
 import { cacheLife, cacheTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { titleCaseName } from "@/lib/format-name";
 import { CacheTags } from "./tags";
 import type { OrgMembership, Organization, UserProfile } from "@/lib/types/database";
 import type { BillingPlan } from "@/lib/types/database";
@@ -812,7 +813,10 @@ export async function getCachedRoutesData(orgId: string) {
       .in("id", approverUserIds);
 
     approverProfiles = Object.fromEntries(
-      (profiles ?? []).map((p) => [p.id, p.full_name || p.email || p.id.slice(0, 8)])
+      (profiles ?? []).map((p) => [
+        p.id,
+        p.full_name ? titleCaseName(p.full_name) : (p.email || p.id.slice(0, 8)),
+      ])
     );
     approverEmails = Object.fromEntries(
       (profiles ?? []).map((p) => [p.id, p.email ?? ""])

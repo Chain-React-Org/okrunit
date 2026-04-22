@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWelcomeEmailHtml } from "@/lib/email/welcome";
+import { titleCaseName } from "@/lib/format-name";
 import { logger } from "@/lib/monitoring/logger";
 import { safeRedirectUrl } from "@/lib/redirect";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
@@ -59,11 +60,12 @@ export async function GET(request: NextRequest) {
     // the auth user already existed from a previous attempt), create them
     // now so the user isn't stuck on the "no_org" error.
     if (!profile) {
-      const resolvedName =
+      const rawResolvedName =
         user.user_metadata?.full_name ||
         user.user_metadata?.name ||
         user.user_metadata?.preferred_username ||
         "";
+      const resolvedName = rawResolvedName ? titleCaseName(rawResolvedName) : "";
 
       try {
         // Create org
