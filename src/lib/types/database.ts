@@ -717,7 +717,8 @@ export type NotificationCategory =
   | "connection_deactivated"
   | "role_changed"
   | "limit_approaching"
-  | "billing";
+  | "billing"
+  | "delegation_received";
 
 export interface InAppNotification {
   id: string;

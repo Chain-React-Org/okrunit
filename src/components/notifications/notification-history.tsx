@@ -51,6 +51,7 @@ const CATEGORY_CONFIG: Record<
   role_changed: { icon: ShieldAlert, color: "text-amber-500", label: "Permissions" },
   limit_approaching: { icon: AlertTriangle, color: "text-amber-500", label: "Limit" },
   billing: { icon: CreditCard, color: "text-emerald-500", label: "Billing" },
+  delegation_received: { icon: UserPlus, color: "text-emerald-500", label: "Delegation" },
 };
 
 function timeAgo(dateStr: string): string {

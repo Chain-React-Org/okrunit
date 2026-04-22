@@ -55,6 +55,7 @@ const CATEGORY_CONFIG: Record<
   role_changed: { icon: ShieldAlert, color: "text-amber-500" },
   limit_approaching: { icon: AlertTriangle, color: "text-amber-500" },
   billing: { icon: CreditCard, color: "text-emerald-500" },
+  delegation_received: { icon: UserPlus, color: "text-emerald-500" },
 };
 
 function getNotificationHref(n: InAppNotification): string {
@@ -66,6 +67,9 @@ function getNotificationHref(n: InAppNotification): string {
   }
   if (n.resource_type === "org_invite") {
     return "/org/members";
+  }
+  if (n.resource_type === "approval_delegation" || n.category === "delegation_received") {
+    return "/settings/delegation";
   }
   return "/requests";
 }

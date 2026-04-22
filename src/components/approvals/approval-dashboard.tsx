@@ -10,7 +10,7 @@ import { useApprovalFiltersStore } from "@/stores/approval-filters-store";
 import { useRealtime } from "@/hooks/use-realtime";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { Clock, CheckCircle, XCircle, RefreshCw, Archive, Download, AlertTriangle, ArrowUpRight } from "lucide-react";
+import { Clock, CheckCircle, XCircle, RefreshCw, Archive, Download, AlertTriangle, ArrowUpRight, UserPlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,7 +18,7 @@ import { BatchActionsBar } from "@/components/approvals/batch-actions-bar";
 import { FlowConfigDialog } from "@/components/approvals/flow-config-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { ApprovalRequest, ApprovalComment, Connection, UserProfile } from "@/lib/types/database";
+import type { ApprovalRequest, ApprovalComment, Connection, UserProfile, InAppNotification } from "@/lib/types/database";
 import { useOnboardingTourStore } from "@/stores/onboarding-tour-store";
 
 interface ApprovalDashboardProps {
@@ -56,6 +56,11 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
   const [userProfiles, setUserProfiles] = useState<Map<string, UserProfile>>(new Map());
   const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
   const [delegatorIds, setDelegatorIds] = useState<Set<string>>(new Set());
+  // Transient banner shown when a delegation is granted to this user mid-session.
+  const [delegationAlert, setDelegationAlert] = useState<
+    | { notificationId: string; actorName: string; body: string | null }
+    | null
+  >(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -107,6 +112,48 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
     };
   }, []);
 
+  // Query active delegations received by the current user and replace the
+  // eligibility set. Used on load and when a delegation_received in-app
+  // notification arrives so the user can act on newly-routed requests
+  // without reloading the page.
+  const refetchDelegations = useCallback(async () => {
+    if (!userId) return;
+    const supabase = createClient();
+    const nowIso = new Date().toISOString();
+    const { data: delegRows } = await supabase
+      .from("approval_delegations")
+      .select("delegator_id")
+      .eq("org_id", orgId)
+      .eq("delegate_id", userId)
+      .eq("is_active", true)
+      .lte("starts_at", nowIso)
+      .gte("ends_at", nowIso);
+    setDelegatorIds(
+      new Set((delegRows ?? []).map((d: { delegator_id: string }) => d.delegator_id)),
+    );
+  }, [orgId, userId]);
+
+  // Realtime: when a delegation_received notification lands, refetch the
+  // delegator set and show a dismissible banner at the top of the dashboard.
+  useRealtime<InAppNotification>({
+    table: "in_app_notifications",
+    filter: userId ? `user_id=eq.${userId}` : undefined,
+    event: "INSERT",
+    enabled: !!userId,
+    onInsert: useCallback(
+      (record: InAppNotification) => {
+        if (record.category !== "delegation_received") return;
+        setDelegationAlert({
+          notificationId: record.id,
+          actorName: record.actor_name ?? "A teammate",
+          body: record.body ?? null,
+        });
+        void refetchDelegations();
+      },
+      [refetchDelegations],
+    ),
+  });
+
   // Fetch data client-side on mount when no initial data was provided from the server.
   // This avoids passing large approval payloads through the RSC protocol which can
   // stall client-side navigation in Next.js.
@@ -153,18 +200,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         // them. We treat the current user as eligible anywhere these
         // delegators are assigned approvers.
         if (userId) {
-          const nowIso = new Date().toISOString();
-          const { data: delegRows } = await supabase
-            .from("approval_delegations")
-            .select("delegator_id")
-            .eq("org_id", orgId)
-            .eq("delegate_id", userId)
-            .eq("is_active", true)
-            .lte("starts_at", nowIso)
-            .gte("ends_at", nowIso);
-          if (delegRows && delegRows.length > 0) {
-            setDelegatorIds(new Set(delegRows.map((d: { delegator_id: string }) => d.delegator_id)));
-          }
+          await refetchDelegations();
         }
       } catch {
         toast.error("Failed to load approvals");
@@ -978,6 +1014,35 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
           </Button>
         )}
       </div>
+
+      {/* Delegation received banner — a teammate just handed their approval
+          authority to the current user while the page was open. */}
+      {delegationAlert && (
+        <div className="flex items-start gap-3 rounded-lg border border-emerald-200/60 dark:border-emerald-800/40 bg-emerald-50/60 dark:bg-emerald-950/20 px-4 py-3 mb-3">
+          <UserPlus className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex-1 min-w-0 text-sm">
+            <p className="font-medium text-emerald-900 dark:text-emerald-300">
+              {delegationAlert.actorName} delegated approvals to you
+            </p>
+            {delegationAlert.body && (
+              <p className="mt-0.5 text-[12px] leading-relaxed text-emerald-800/90 dark:text-emerald-400/80">
+                {delegationAlert.body}
+              </p>
+            )}
+            <p className="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-400/60">
+              Eligibility updated. Any currently-open request routed to them is
+              now actionable by you.
+            </p>
+          </div>
+          <button
+            onClick={() => setDelegationAlert(null)}
+            className="mt-0.5 shrink-0 rounded-md p-0.5 text-emerald-700 hover:bg-emerald-200/60 dark:text-emerald-300 dark:hover:bg-emerald-800/40"
+            aria-label="Dismiss"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
       <ApprovalFilters
