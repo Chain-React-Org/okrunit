@@ -805,6 +805,7 @@ export async function getCachedRoutesData(orgId: string) {
 
   const approverUserIds = (approverMemberships ?? []).map((m) => m.user_id);
   let approverProfiles: Record<string, string> = {};
+  let approverEmails: Record<string, string> = {};
   if (approverUserIds.length > 0) {
     const { data: profiles } = await admin
       .from("user_profiles")
@@ -814,6 +815,9 @@ export async function getCachedRoutesData(orgId: string) {
     approverProfiles = Object.fromEntries(
       (profiles ?? []).map((p) => [p.id, p.full_name || p.email || p.id.slice(0, 8)])
     );
+    approverEmails = Object.fromEntries(
+      (profiles ?? []).map((p) => [p.id, p.email ?? ""])
+    );
   }
 
   return {
@@ -821,6 +825,7 @@ export async function getCachedRoutesData(orgId: string) {
     teams: teams ?? [],
     approverMemberships: approverMemberships ?? [],
     approverProfiles,
+    approverEmails,
     positions: positions ?? [],
   };
 }
