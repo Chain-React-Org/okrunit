@@ -562,10 +562,6 @@ export const ApprovalDetail = memo(function ApprovalDetail({
               <p className="text-muted-foreground text-sm text-center">
                 {!canApprove ? (
                   "You do not have approval permissions. Contact your admin."
-                ) : isSelfCreated ? (
-                  isSelfAnAssignedApprover
-                    ? "You created this request."
-                    : "You created this request. Another approver must decide."
                 ) : hasAssignedApprovers ? (
                   approval.is_sequential ? (
                     userAlreadyApprovedSequential ? (
@@ -619,6 +615,8 @@ export const ApprovalDetail = memo(function ApprovalDetail({
                       .
                     </>
                   )
+                ) : isSelfCreated ? (
+                  "You created this request. Another approver must decide."
                 ) : (
                   "Only approvers assigned to this request can decide."
                 )}
