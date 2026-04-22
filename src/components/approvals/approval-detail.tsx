@@ -44,6 +44,11 @@ interface ApprovalDetailProps {
   ) => void;
   isLoading: boolean;
   canApprove?: boolean;
+  /** Whether the current user has the `can_manage_flows` permission in
+   * this org. Controls whether the "Configure Flow Rules" button is
+   * rendered. Server also enforces this on the flow PATCH and
+   * reassign endpoints, so the button hiding is UX, not security. */
+  canManageFlows?: boolean;
   userProfiles?: Map<string, UserProfile>;
   creatorName?: string;
   onConfigureFlow?: (approval: ApprovalRequest) => void;
@@ -112,6 +117,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
   onRespond,
   isLoading,
   canApprove = true,
+  canManageFlows = false,
   userProfiles,
   creatorName,
   onConfigureFlow,
@@ -485,7 +491,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
               )}
             </Button>
 
-            {approval.flow_id && onConfigureFlow && (
+            {approval.flow_id && onConfigureFlow && canManageFlows && (
               <Button
                 variant="outline"
                 size="sm"

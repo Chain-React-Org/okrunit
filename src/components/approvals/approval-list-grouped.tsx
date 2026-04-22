@@ -23,6 +23,7 @@ interface ApprovalListGroupedProps {
   userProfiles?: Map<string, UserProfile>;
   onSelect: (approval: ApprovalRequest) => void;
   canApprove?: boolean;
+  canManageFlows?: boolean;
   currentUserId?: string;
   delegatorIds?: ReadonlySet<string>;
   isLoading?: boolean;
@@ -54,6 +55,7 @@ function VirtualizedSection({
   teamsLookup,
   onSelect,
   canApprove,
+  canManageFlows,
   currentUserId,
   delegatorIds,
   isLoading,
@@ -75,6 +77,7 @@ function VirtualizedSection({
   teamsLookup: Map<string, { id: string; name: string }>;
   onSelect: (approval: ApprovalRequest) => void;
   canApprove: boolean;
+  canManageFlows: boolean;
   currentUserId?: string;
   delegatorIds?: ReadonlySet<string>;
   isLoading: boolean;
@@ -139,6 +142,7 @@ function VirtualizedSection({
                   currentlyResponsible={getCurrentlyResponsible(approval, userProfiles, teamsLookup)}
                   onClick={() => onSelect(approval)}
                   canApprove={canApprove}
+                  canManageFlows={canManageFlows}
                   currentUserId={currentUserId}
                   delegatorIds={delegatorIds}
                   isLoading={isLoading}
@@ -169,6 +173,7 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
   userProfiles = new Map(),
   onSelect,
   canApprove = true,
+  canManageFlows = false,
   currentUserId,
   delegatorIds,
   isLoading = false,
@@ -219,6 +224,7 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
     teamsLookup,
     onSelect,
     canApprove,
+    canManageFlows,
     currentUserId,
     delegatorIds,
     isLoading,
@@ -248,6 +254,7 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
             currentlyResponsible={getCurrentlyResponsible(approval, userProfiles, teamsLookup)}
             onClick={() => onSelect(approval)}
             canApprove={canApprove}
+            canManageFlows={canManageFlows}
             currentUserId={currentUserId}
             delegatorIds={delegatorIds}
             isLoading={isLoading}

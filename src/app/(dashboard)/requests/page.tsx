@@ -21,6 +21,7 @@ export default async function RequestsPage() {
       approvalCreators={approvalCreators}
       teamsMap={teamsMap}
       canApprove={membership.can_approve ?? true}
+      canManageFlows={membership.can_manage_flows ?? false}
       orgId={membership.org_id}
       userId={membership.user_id}
       userRole={membership.role}

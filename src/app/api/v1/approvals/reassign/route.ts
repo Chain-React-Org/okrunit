@@ -9,6 +9,7 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
+import { requireManageFlowsPermission } from "@/lib/api/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const reassignSchema = z.object({
@@ -27,6 +28,9 @@ export async function POST(request: Request) {
       throw new ApiError(403, "Session required");
     }
 
+    const admin = createAdminClient();
+    await requireManageFlowsPermission(admin, auth.user.id, auth.orgId);
+
     const body = reassignSchema.parse(await request.json());
     const hasAnyField =
       body.assigned_approvers !== undefined ||
@@ -37,8 +41,6 @@ export async function POST(request: Request) {
     if (!hasAnyField) {
       throw new ApiError(400, "Provide at least one field to update");
     }
-
-    const admin = createAdminClient();
 
     // Verify the request exists, is pending, and belongs to this org
     const { data: approval, error } = await admin

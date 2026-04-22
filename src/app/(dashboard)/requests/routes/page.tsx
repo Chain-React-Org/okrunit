@@ -14,8 +14,11 @@ export default async function RoutesPage() {
   if (!ctx) redirect("/login");
   const { membership } = ctx;
 
-  if (membership.role !== "owner" && membership.role !== "admin")
-    redirect("/requests");
+  // Gate on the explicit Manage Flows permission rather than role so an
+  // admin who has had the permission revoked can't bypass via role, and
+  // so a non-admin who has been granted the permission can still access
+  // this page when covering for someone who's out.
+  if (!membership.can_manage_flows) redirect("/requests");
 
   const {
     flows,

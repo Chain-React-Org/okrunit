@@ -8,6 +8,7 @@ import { z } from "zod";
 import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { logAuditEvent } from "@/lib/api/audit";
+import { requireManageFlowsPermission } from "@/lib/api/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 import { logger } from "@/lib/monitoring/logger";
@@ -91,6 +92,12 @@ export async function PATCH(
     }
 
     const admin = createAdminClient();
+    const actingUserId =
+      auth.type === "session" ? auth.user.id : auth.type === "oauth" ? auth.userId : null;
+    if (!actingUserId) {
+      throw new ApiError(403, "Session or OAuth auth required", "SESSION_REQUIRED");
+    }
+    await requireManageFlowsPermission(admin, actingUserId, auth.orgId);
     await fetchFlow(admin, id, auth.orgId);
 
     const body = await request.json();
@@ -159,6 +166,12 @@ export async function DELETE(
     }
 
     const admin = createAdminClient();
+    const actingUserId =
+      auth.type === "session" ? auth.user.id : auth.type === "oauth" ? auth.userId : null;
+    if (!actingUserId) {
+      throw new ApiError(403, "Session or OAuth auth required", "SESSION_REQUIRED");
+    }
+    await requireManageFlowsPermission(admin, actingUserId, auth.orgId);
     await fetchFlow(admin, id, auth.orgId);
 
     const { error } = await admin

@@ -27,6 +27,10 @@ interface ApprovalDashboardProps {
   approvalCreators?: Record<string, string>;
   teamsMap?: Record<string, string>;
   canApprove?: boolean;
+  /** Whether the current user is allowed to edit approval flows and
+   * reassign approvers on pending requests. Gated by the
+   * `org_memberships.can_manage_flows` permission. */
+  canManageFlows?: boolean;
   orgId: string;
   userId: string;
   userRole: string;
@@ -38,6 +42,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
   approvalCreators = {},
   teamsMap = {},
   canApprove = true,
+  canManageFlows = false,
   orgId,
   userId,
   userRole,
@@ -889,6 +894,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
     userProfiles,
     onSelect: handleSelect,
     canApprove,
+    canManageFlows,
     currentUserId: userId,
     delegatorIds,
     isLoading,
@@ -1179,6 +1185,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         onRespond={handleRespond}
         isLoading={isLoading}
         canApprove={canApprove}
+        canManageFlows={canManageFlows}
         userProfiles={userProfiles}
         creatorName={selectedApproval ? allCreatorNames[selectedApproval.id] : undefined}
         onConfigureFlow={handleConfigureFlow}
