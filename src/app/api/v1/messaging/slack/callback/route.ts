@@ -137,6 +137,7 @@ export async function GET(request: Request) {
           refresh_token: null, // Slack v2 tokens don't expire
           token_expires_at: null,
           bot_token: tokenData.access_token,
+          bot_user_id: tokenData.bot_user_id,
           workspace_id: workspaceId,
           workspace_name: workspaceName,
           channel_id: channelId,

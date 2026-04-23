@@ -382,6 +382,7 @@ export interface MessagingConnection {
   refresh_token: string | null;
   token_expires_at: string | null;
   bot_token: string | null;
+  bot_user_id: string | null;
   workspace_id: string | null;
   workspace_name: string | null;
   channel_id: string;

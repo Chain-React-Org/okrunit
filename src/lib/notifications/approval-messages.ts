@@ -12,6 +12,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/monitoring/logger";
 import { editMessage as editTelegramMessage } from "@/lib/notifications/channels/telegram";
 import { editDiscordWebhookMessage } from "@/lib/notifications/channels/discord";
+import { updateSlackBotMessage } from "@/lib/notifications/channels/slack";
 
 export interface ApprovalMessageRef {
   id: string;
@@ -70,6 +71,26 @@ export async function editApprovalMessagesOnDecide(params: {
 
   if (!refs || refs.length === 0) return;
 
+  // Slack edits need the bot token from the connection row. Collect unique
+  // connection ids up front and fetch their tokens in one query.
+  const slackConnIds = Array.from(
+    new Set(
+      refs
+        .filter((r) => r.platform === "slack" && r.connection_id)
+        .map((r) => r.connection_id as string),
+    ),
+  );
+  let botTokens: Record<string, string | null> = {};
+  if (slackConnIds.length > 0) {
+    const { data: conns } = await admin
+      .from("messaging_connections")
+      .select("id, bot_token")
+      .in("id", slackConnIds);
+    botTokens = Object.fromEntries(
+      (conns ?? []).map((c) => [c.id, c.bot_token]),
+    );
+  }
+
   for (const ref of refs) {
     try {
       if (ref.platform === "telegram" && ref.channel_id && ref.message_id) {
@@ -93,8 +114,28 @@ export async function editApprovalMessagesOnDecide(params: {
           decidedBy: params.decidedByName,
           comment: params.comment,
         });
+      } else if (
+        ref.platform === "slack" &&
+        ref.channel_id &&
+        ref.message_id &&
+        ref.connection_id
+      ) {
+        const botToken = botTokens[ref.connection_id];
+        if (!botToken) {
+          // Legacy webhook-only install — stale-click cleanup handles it.
+          continue;
+        }
+        await updateSlackBotMessage({
+          botToken,
+          channelId: ref.channel_id,
+          ts: ref.message_id,
+          title: params.title,
+          decision: params.decision,
+          decidedBy: params.decidedByName,
+          comment: params.comment,
+        });
       }
-      // Slack/Teams are handled via response_url on stale-click instead.
+      // Teams edits still require Bot Framework (deferred).
     } catch (err) {
       logger.warn(
         `[ApprovalMessages] Edit failed for ${ref.platform} ref ${ref.id}:`,
