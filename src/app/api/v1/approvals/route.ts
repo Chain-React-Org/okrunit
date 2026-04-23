@@ -29,6 +29,7 @@ import type { EscalationConfig } from "@/lib/types/database";
 import { checkBottleneckThreshold } from "@/lib/api/bottleneck";
 import { enforceFourEyesOnCreation } from "@/lib/api/four-eyes";
 import { canCreateRequest } from "@/lib/billing/enforce";
+import { grantManageFlowsIfMissing } from "@/lib/api/permissions";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 import { logger } from "@/lib/monitoring/logger";
 
@@ -342,7 +343,10 @@ export async function POST(request: Request) {
           .eq("id", existingFlow.id)
           .then(({ error }) => { if (error) logger.error("[Approvals] Flow update failed:", error); });
       } else {
-        // Auto-create a new unconfigured flow
+        // Auto-create a new unconfigured flow, attributed to the human
+        // behind the inbound request so they can configure it without
+        // first having to be granted Manage Flows by an admin.
+        const flowCreatorUserId = (createdBy?.user_id as string | undefined) ?? null;
         const { data: newFlow } = await admin
           .from("approval_flows")
           .insert({
@@ -354,6 +358,7 @@ export async function POST(request: Request) {
             is_configured: false,
             request_count: 1,
             last_request_at: new Date().toISOString(),
+            created_by_user_id: flowCreatorUserId,
           })
           .select("id")
           .single();
@@ -362,6 +367,15 @@ export async function POST(request: Request) {
           flowId = newFlow.id;
           flowIsUnconfigured = true;
           flowIsNewlyCreated = true;
+
+          // Best-effort: auto-grant the flow creator the Manage Flows
+          // permission. Runs async via `after` so it never blocks the
+          // request lifecycle if the grant stalls.
+          if (flowCreatorUserId) {
+            after(async () => {
+              await grantManageFlowsIfMissing(admin, flowCreatorUserId, auth.orgId);
+            });
+          }
         }
       }
     }
