@@ -17,6 +17,12 @@ import { createClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/monitoring/logger";
 
 const CAPTURE_RATE_LIMIT = { limit: 10, windowSeconds: 60 };
+// Per-user + per-org daily ceiling so an authenticated attacker can't
+// keep Discord / the admin dashboard noisy for their own org by
+// legitimately staying under the per-IP burst but hammering from
+// rotating IPs.
+const CAPTURE_DAILY_USER_LIMIT = { limit: 200, windowSeconds: 86_400 };
+const CAPTURE_DAILY_ORG_LIMIT = { limit: 1000, windowSeconds: 86_400 };
 
 const clientErrorSchema = z.object({
   message: z.string().max(2000),
@@ -55,6 +61,18 @@ export async function POST(request: Request) {
       }
     } catch {
       // Auth context is optional - continue without it
+    }
+
+    // Enforce the per-user and per-org daily ceilings before we
+    // capture. Keeps a single compromised/abusive session from
+    // drowning the admin dashboard + Discord alerts.
+    if (userId) {
+      const userRl = checkIpRateLimit(`error-capture:user:${userId}`, CAPTURE_DAILY_USER_LIMIT);
+      if (!userRl.allowed) return rateLimitResponse(userRl);
+    }
+    if (orgId) {
+      const orgRl = checkIpRateLimit(`error-capture:org:${orgId}`, CAPTURE_DAILY_ORG_LIMIT);
+      if (!orgRl.allowed) return rateLimitResponse(orgRl);
     }
 
     // Build a synthetic error for fingerprinting

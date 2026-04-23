@@ -92,8 +92,16 @@ export async function POST(request: Request) {
       provider,
       nonce: randomBytes(16).toString("hex"),
     });
-    // Sign the state to prevent forgery
-    const hmacKey = process.env.CALLBACK_HMAC_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "calendar-state";
+    // Sign the state to prevent forgery. Require a dedicated HMAC
+    // secret; never fall back to the service role key (a DB god-mode
+    // credential) or a hardcoded literal.
+    const hmacKey = process.env.CALLBACK_HMAC_SECRET;
+    if (!hmacKey) {
+      return NextResponse.json(
+        { error: "Calendar integration is not configured" },
+        { status: 500 },
+      );
+    }
     const sig = createHmac("sha256", hmacKey).update(stateData).digest("hex").slice(0, 16);
     const state = Buffer.from(JSON.stringify({ d: stateData, s: sig })).toString("base64url");
 

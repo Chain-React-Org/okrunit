@@ -462,21 +462,21 @@ export async function POST(request: Request) {
     authenticated = true;
   }
 
-  // Require authentication when any auth mode is configured
+  // Always require one of the two auth modes to have succeeded. The
+  // previous code allowed unauthenticated requests in non-production
+  // environments, which meant a staging/self-hosted deploy with
+  // NODE_ENV=development accepted forged Adaptive Card submits.
   if (!authenticated) {
-    if (signingSecret || TEAMS_CLIENT_ID) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 },
-      );
-    }
-    // Neither auth mode configured: reject in production, allow in dev
-    if (process.env.NODE_ENV === "production") {
+    if (!signingSecret && !TEAMS_CLIENT_ID) {
       return NextResponse.json(
         { error: "Teams authentication not configured" },
         { status: 500 },
       );
     }
+    return NextResponse.json(
+      { error: "Authentication failed" },
+      { status: 401 },
+    );
   }
 
   // 3. Parse the JSON payload.

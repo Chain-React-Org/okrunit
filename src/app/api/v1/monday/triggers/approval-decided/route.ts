@@ -23,7 +23,17 @@ interface MondayTriggerPayload {
   challenge?: string;
 }
 
+// monday.com is marked "coming soon" — see sibling new-approval
+// route for the cross-tenant scoping bug that gates shipping this.
+const MONDAY_ENABLED = false;
+
 export async function POST(request: Request) {
+  if (!MONDAY_ENABLED) {
+    return NextResponse.json(
+      { error: "monday.com integration is not yet available" },
+      { status: 404 },
+    );
+  }
   try {
     const raw: MondayTriggerPayload = await request.json();
 
