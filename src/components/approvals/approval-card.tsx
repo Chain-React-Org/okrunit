@@ -28,6 +28,7 @@ import { Clock, CheckCircle, XCircle, User2, MoreVertical, Eye, Archive, Archive
 import { cn } from "@/lib/utils";
 import { SourceAvatar, getSourceDisplay } from "@/components/approvals/source-icons";
 import { canDecideOnApproval } from "@/lib/approvals/responsible";
+import { canArchiveApproval } from "@/lib/approvals/archive";
 import type { ApprovalRequest } from "@/lib/types/database";
 
 interface ApprovalCardProps {
@@ -39,6 +40,9 @@ interface ApprovalCardProps {
   canApprove?: boolean;
   /** Controls whether the inline "Configure Flow" icon button renders. */
   canManageFlows?: boolean;
+  /** Current user's org role, used with canArchiveApproval to hide the
+   * Archive/Unarchive items for mere approvers. */
+  userRole?: string;
   currentUserId?: string;
   delegatorIds?: ReadonlySet<string>;
   isLoading?: boolean;
@@ -86,6 +90,7 @@ export const ApprovalCard = memo(function ApprovalCard({
   onClick,
   canApprove = true,
   canManageFlows = false,
+  userRole,
   currentUserId,
   delegatorIds,
   isLoading = false,
@@ -337,19 +342,21 @@ export const ApprovalCard = memo(function ApprovalCard({
                     Details
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  {approval.archived_at ? (
-                    onUnarchive && (
-                      <DropdownMenuItem onClick={() => onUnarchive(approval.id)}>
-                        <ArchiveRestore className="size-4" />
-                        Unarchive
-                      </DropdownMenuItem>
-                    )
-                  ) : (
-                    onArchive && (
-                      <DropdownMenuItem onClick={() => onArchive(approval.id)}>
-                        <Archive className="size-4" />
-                        Archive
-                      </DropdownMenuItem>
+                  {canArchiveApproval(approval, currentUserId, userRole) && (
+                    approval.archived_at ? (
+                      onUnarchive && (
+                        <DropdownMenuItem onClick={() => onUnarchive(approval.id)}>
+                          <ArchiveRestore className="size-4" />
+                          Unarchive
+                        </DropdownMenuItem>
+                      )
+                    ) : (
+                      onArchive && (
+                        <DropdownMenuItem onClick={() => onArchive(approval.id)}>
+                          <Archive className="size-4" />
+                          Archive
+                        </DropdownMenuItem>
+                      )
                     )
                   )}
                 </DropdownMenuContent>

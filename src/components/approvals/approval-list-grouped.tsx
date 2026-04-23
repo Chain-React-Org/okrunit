@@ -24,6 +24,7 @@ interface ApprovalListGroupedProps {
   onSelect: (approval: ApprovalRequest) => void;
   canApprove?: boolean;
   canManageFlows?: boolean;
+  userRole?: string;
   currentUserId?: string;
   delegatorIds?: ReadonlySet<string>;
   isLoading?: boolean;
@@ -56,6 +57,7 @@ function VirtualizedSection({
   onSelect,
   canApprove,
   canManageFlows,
+  userRole,
   currentUserId,
   delegatorIds,
   isLoading,
@@ -78,6 +80,7 @@ function VirtualizedSection({
   onSelect: (approval: ApprovalRequest) => void;
   canApprove: boolean;
   canManageFlows: boolean;
+  userRole?: string;
   currentUserId?: string;
   delegatorIds?: ReadonlySet<string>;
   isLoading: boolean;
@@ -143,6 +146,7 @@ function VirtualizedSection({
                   onClick={() => onSelect(approval)}
                   canApprove={canApprove}
                   canManageFlows={canManageFlows}
+                  userRole={userRole}
                   currentUserId={currentUserId}
                   delegatorIds={delegatorIds}
                   isLoading={isLoading}
@@ -174,6 +178,7 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
   onSelect,
   canApprove = true,
   canManageFlows = false,
+  userRole,
   currentUserId,
   delegatorIds,
   isLoading = false,
@@ -225,6 +230,7 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
     onSelect,
     canApprove,
     canManageFlows,
+    userRole,
     currentUserId,
     delegatorIds,
     isLoading,

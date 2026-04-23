@@ -895,6 +895,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
     onSelect: handleSelect,
     canApprove,
     canManageFlows,
+    userRole,
     currentUserId: userId,
     delegatorIds,
     isLoading,
