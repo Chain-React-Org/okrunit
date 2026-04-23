@@ -97,8 +97,17 @@ async function AuthorizeContent({ searchParams }: AuthorizePageProps) {
     );
   }
 
-  // Verify redirect_uri.
-  if (!client.redirect_uris.includes(params.redirect_uri)) {
+  // Verify redirect_uri. Supports exact matches and wildcard patterns
+  // (e.g. "https://zapier.com/dashboard/auth/oauth/return/App*CLIAPI/").
+  const redirectUri = params.redirect_uri;
+  const uriMatch = client.redirect_uris.some((pattern: string) => {
+    if (pattern.includes("*")) {
+      const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]+");
+      return new RegExp(`^${escaped}$`).test(redirectUri);
+    }
+    return pattern === redirectUri;
+  });
+  if (!uriMatch) {
     return (
       <ErrorDisplay
         error="invalid_redirect_uri"

@@ -67,6 +67,25 @@ function verifySlackSignature(
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Validate a Slack response_url before POST-ing to it.
+ *
+ * We only reach response_url handling after HMAC-verifying the signature, so
+ * a forged response_url can't get here unless the attacker also has Slack's
+ * signing secret. But CodeQL (and defense-in-depth) want an explicit host
+ * allowlist on any URL that came from a request body. Slack response_urls
+ * are always HTTPS against hooks.slack.com.
+ */
+function isSlackResponseUrl(url: string | null | undefined): url is string {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && parsed.hostname === "hooks.slack.com";
+  } catch {
+    return false;
+  }
+}
+
 function decisionDisplay(decision: string): string {
   const map: Record<string, string> = {
     approved: ":white_check_mark: Approved",
@@ -464,7 +483,7 @@ export async function POST(request: Request) {
           .single();
 
         if (fetchError || !approval || approval.status !== "pending") {
-          if (responseUrl) {
+          if (isSlackResponseUrl(responseUrl)) {
             // Stale-click cleanup: replace the clicked message with a
             // decision summary so the buttons go away and the outcome is
             // visible right where the user clicked.
@@ -552,7 +571,7 @@ export async function POST(request: Request) {
         }
 
         // Update the original message.
-        if (responseUrl) {
+        if (isSlackResponseUrl(responseUrl)) {
           await fetch(responseUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -624,7 +643,7 @@ export async function POST(request: Request) {
 
     // Update the original message via response_url if available.
     const responseUrl = originalResponseUrl ?? payload.response_url;
-    if (responseUrl) {
+    if (isSlackResponseUrl(responseUrl)) {
       const newStatus = result.newStatus as string;
       const approvalData = result.approval as Record<string, unknown>;
 
