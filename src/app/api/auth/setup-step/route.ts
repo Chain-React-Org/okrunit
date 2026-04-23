@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isSameOrigin } from "@/lib/api/origin";
 
 export async function POST(request: Request) {
+  if (!isSameOrigin(request)) {
+    return NextResponse.json({ error: "Cross-origin requests not allowed" }, { status: 403 });
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

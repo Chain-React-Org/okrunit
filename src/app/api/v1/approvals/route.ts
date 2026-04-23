@@ -1077,7 +1077,13 @@ export async function GET(request: Request) {
         .select("id")
         .eq("org_id", auth.orgId)
         .eq("source_id", excludeSourceId);
-      const excludeFlowIds = (flows ?? []).map((f: { id: string }) => f.id);
+      // IDs come from our own DB but we UUID-validate before
+      // interpolating into a PostgREST filter string as defense-in-
+      // depth (belt-and-suspenders against a future caller shape change).
+      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const excludeFlowIds = (flows ?? [])
+        .map((f: { id: string }) => f.id)
+        .filter((id: string) => uuidRe.test(id));
       if (excludeFlowIds.length > 0) {
         // Use an OR filter: include rows where flow_id is not in the exclude list
         // OR flow_id is null. Without this, SQL's NULL NOT IN (...) returns NULL
@@ -1145,7 +1151,10 @@ export async function GET(request: Request) {
         .select("id")
         .eq("org_id", auth.orgId)
         .eq("source_id", excludeSourceId);
-      const excludeCountFlowIds = (countFlows ?? []).map((f: { id: string }) => f.id);
+      const countUuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const excludeCountFlowIds = (countFlows ?? [])
+        .map((f: { id: string }) => f.id)
+        .filter((id: string) => countUuidRe.test(id));
       if (excludeCountFlowIds.length > 0) {
         countQuery = countQuery.or(`flow_id.not.in.(${excludeCountFlowIds.join(",")}),flow_id.is.null`);
       }
