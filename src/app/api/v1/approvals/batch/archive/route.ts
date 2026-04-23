@@ -48,15 +48,29 @@ export async function POST(request: Request) {
     const ipAddress = getIpAddress(request);
     const isArchiving = validated.action === "archive";
     const archivedAt = isArchiving ? new Date().toISOString() : null;
+    const userRole = auth.membership.role;
 
-    // 3. Fetch the candidate approvals with their created_by so we can
-    //    filter to the ones this user is actually allowed to archive.
-    //    Rule: admins/owners can archive anything; everyone else can
-    //    only archive requests they personally created (mere approvers
-    //    can't archive, even if they're on the chain).
+    // 3. Load the set of teams this user leads. Team leads can archive
+    //    requests assigned to their team.
+    const { data: leadRows } = await admin
+      .from("team_memberships")
+      .select("team_id, teams!inner(org_id)")
+      .eq("user_id", actorId)
+      .eq("is_lead", true)
+      .eq("teams.org_id", auth.orgId);
+    const leadTeamIds = new Set(
+      (leadRows ?? []).map((r: { team_id: string }) => r.team_id),
+    );
+
+    // 4. Fetch the candidate approvals with just enough to decide
+    //    permission (created_by + assigned_team_id), then silently drop
+    //    any the user isn't allowed to touch. Matches UI behavior — the
+    //    Archive button is already hidden for those requests, so the
+    //    only way to reach this path for a forbidden id is a direct
+    //    API call.
     const { data: candidates, error: fetchError } = await admin
       .from("approval_requests")
-      .select("id, created_by")
+      .select("id, created_by, assigned_team_id")
       .in("id", validated.ids)
       .eq("org_id", auth.orgId);
 
@@ -64,19 +78,18 @@ export async function POST(request: Request) {
       throw new ApiError(500, "Failed to fetch approvals", "FETCH_FAILED");
     }
 
-    const userRole = auth.membership.role;
     const allowedIds: string[] = [];
-    const forbiddenIds: string[] = [];
     for (const c of candidates ?? []) {
-      const approvalLike = { created_by: c.created_by as CreatedByInfo | null };
-      if (canArchiveApproval(approvalLike, actorId, userRole)) {
+      const approvalLike = {
+        created_by: c.created_by as CreatedByInfo | null,
+        assigned_team_id: c.assigned_team_id as string | null,
+      };
+      if (canArchiveApproval(approvalLike, actorId, userRole, leadTeamIds)) {
         allowedIds.push(c.id);
-      } else {
-        forbiddenIds.push(c.id);
       }
     }
 
-    // 4. Update only the allowed ones.
+    // 5. Update only the allowed ones.
     let updated: { id: string }[] = [];
     if (allowedIds.length > 0) {
       const { data, error: updateError } = await admin
@@ -92,15 +105,7 @@ export async function POST(request: Request) {
       updated = data ?? [];
     }
 
-    const processed = updated.length;
-    const errors = forbiddenIds.map((id) => ({
-      id,
-      error:
-        "You can't archive this request. Only the creator or an admin can archive.",
-      code: "FORBIDDEN",
-    }));
-
-    // 5. Audit log
+    // 6. Audit log
     for (const row of updated) {
       logAuditEvent({
         orgId: auth.orgId,
@@ -113,7 +118,7 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ processed, errors });
+    return NextResponse.json({ processed: updated.length, errors: [] });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -27,6 +27,9 @@ interface ApprovalListGroupedProps {
   userRole?: string;
   currentUserId?: string;
   delegatorIds?: ReadonlySet<string>;
+  /** Teams the current user leads — used to show archive on requests
+   * assigned to a team they run. */
+  leadTeamIds?: ReadonlySet<string>;
   isLoading?: boolean;
   skipConfirmation?: boolean;
   onInlineAction?: (approvalId: string, decision: "approved" | "rejected", comment?: string) => void;
@@ -60,6 +63,7 @@ function VirtualizedSection({
   userRole,
   currentUserId,
   delegatorIds,
+  leadTeamIds,
   isLoading,
   skipConfirmation,
   onInlineAction,
@@ -81,6 +85,7 @@ function VirtualizedSection({
   canApprove: boolean;
   canManageFlows: boolean;
   userRole?: string;
+  leadTeamIds?: ReadonlySet<string>;
   currentUserId?: string;
   delegatorIds?: ReadonlySet<string>;
   isLoading: boolean;
@@ -149,6 +154,7 @@ function VirtualizedSection({
                   userRole={userRole}
                   currentUserId={currentUserId}
                   delegatorIds={delegatorIds}
+                  leadTeamIds={leadTeamIds}
                   isLoading={isLoading}
                   skipConfirmation={skipConfirmation}
                   onInlineAction={onInlineAction}
@@ -181,6 +187,7 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
   userRole,
   currentUserId,
   delegatorIds,
+  leadTeamIds,
   isLoading = false,
   skipConfirmation = false,
   onInlineAction,
@@ -233,6 +240,7 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
     userRole,
     currentUserId,
     delegatorIds,
+    leadTeamIds,
     isLoading,
     skipConfirmation,
     onInlineAction,
