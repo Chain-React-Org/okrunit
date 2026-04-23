@@ -746,6 +746,12 @@ export async function POST(request: Request) {
         actionType: effectiveActionType ?? undefined,
         assignedApprovers: assignedApprovers ?? undefined,
         assignedTeamId: assignedTeamId ?? undefined,
+        isSequential: effectiveIsSequential,
+        // On create, no one has voted yet, so the current turn is slot 0.
+        currentTurnUserId:
+          effectiveIsSequential && assignedApprovers && assignedApprovers.length > 0
+            ? assignedApprovers[0]
+            : undefined,
       });
 
       // In-app notifications

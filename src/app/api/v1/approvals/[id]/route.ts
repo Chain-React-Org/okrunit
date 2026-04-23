@@ -912,6 +912,9 @@ export async function PATCH(
               requestPriority: updated.priority,
               connectionId: approval.connection_id ?? undefined,
               targetUserIds: [nextApprover],
+              assignedApprovers: assignedApprovers ?? undefined,
+              isSequential: true,
+              currentTurnUserId: nextApprover,
             });
 
             await createInAppNotification({

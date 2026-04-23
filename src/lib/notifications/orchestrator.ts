@@ -749,6 +749,28 @@ function dispatchTelegram(
     metadata: { connectionId: conn.id, connectionName: conn.channel_name },
   };
 
+  // Only render Approve/Reject buttons when the DM installer is actually
+  // the person we need a decision from right now. For group chats (no
+  // installed_by) keep the buttons — server-side permission checks reject
+  // ineligible clickers with a clear ephemeral error. For DMs where the
+  // installer is NOT the current turn approver, drop the buttons so the
+  // message reads as an FYI.
+  let showActionButtons = true;
+  if (conn.installed_by && isCreateEvent) {
+    const assigned = event.assignedApprovers ?? [];
+    if (assigned.length > 0) {
+      if (event.isSequential) {
+        // event.currentTurnUserId is pre-computed by the caller; fall back
+        // to assigned[0] for create events since no one has voted yet.
+        const nextUp = event.currentTurnUserId ?? assigned[0];
+        showActionButtons = nextUp === conn.installed_by;
+      } else {
+        showActionButtons = assigned.includes(conn.installed_by);
+      }
+    }
+    // No assigned approvers on event = any-approver mode; keep buttons.
+  }
+
   if (isCreateEvent) {
     return sendTelegramNotification({
       chatId,
@@ -758,6 +780,7 @@ function dispatchTelegram(
       description: event.requestDescription,
       priority: event.requestPriority,
       connectionName: event.connectionName,
+      showActionButtons,
     })
       .then(() => {
         logNotificationDelivery({ ...logBase, status: "sent" });

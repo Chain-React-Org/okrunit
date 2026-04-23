@@ -56,6 +56,12 @@ export interface NotificationEvent {
   assignedApprovers?: string[];
   /** Assigned team ID, used for DM-level filtering. */
   assignedTeamId?: string;
+  /** Whether the flow is sequential. When true, only currentTurnUserId can
+   * decide right now; other assigned approvers should see an FYI without
+   * action buttons. */
+  isSequential?: boolean;
+  /** For sequential flows, the user whose turn it currently is. */
+  currentTurnUserId?: string;
   /** Current escalation level (1, 2, 3...) for escalated events. */
   escalationLevel?: number;
 }
