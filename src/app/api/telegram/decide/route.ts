@@ -18,6 +18,10 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
+import {
+  canUserDecideServerSide,
+  resolveMessagingUser,
+} from "@/lib/approvals/can-decide-server";
 
 // ---------------------------------------------------------------------------
 // Telegram initData validation
@@ -216,25 +220,49 @@ export async function POST(request: Request) {
     }
   }
 
+  // Permission enforcement: resolve the Telegram user to an OKrunit user,
+  // then run the same permission pipeline as the web app.
+  const resolved = await resolveMessagingUser(admin, {
+    orgId: approval.org_id,
+    platform: "telegram",
+    externalUserId: String(user.id),
+  });
+  if (!resolved) {
+    return NextResponse.json(
+      {
+        error:
+          "Your Telegram account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
+      },
+      { status: 403 },
+    );
+  }
+
+  const eligibility = await canUserDecideServerSide(admin, {
+    approval,
+    actorUserId: resolved.userId,
+    membershipRole: resolved.role,
+  });
+  if (!eligibility.ok) {
+    return NextResponse.json(
+      { error: eligibility.reason, code: eligibility.code },
+      { status: 403 },
+    );
+  }
+
   const newStatus = action === "approve" ? "approved" : "rejected";
   const decidedAt = new Date().toISOString();
   const displayName = telegramDisplayName(user);
-
-  const { data: orgMember } = await admin
-    .from("org_memberships")
-    .select("user_id")
-    .eq("org_id", approval.org_id)
-    .limit(1)
-    .maybeSingle();
-
-  const decidedBy = orgMember?.user_id ?? null;
+  const decidedByUserId = resolved.userId;
 
   const updatePayload: Record<string, unknown> = {
     status: newStatus,
-    decided_by: decidedBy,
+    decided_by: decidedByUserId,
     decided_at: decidedAt,
     decision_source: "telegram",
   };
+  if (eligibility.ok && eligibility.delegatedFrom) {
+    updatePayload.delegated_from = eligibility.delegatedFrom;
+  }
   if (comment?.trim()) updatePayload.decision_comment = comment.trim();
 
   const { data: updated, error: updateError } = await admin
@@ -251,7 +279,7 @@ export async function POST(request: Request) {
   // Audit log
   logAuditEvent({
     orgId: approval.org_id,
-    userId: decidedBy ?? undefined,
+    userId: decidedByUserId,
     action: `approval.${newStatus}`,
     resourceType: "approval_request",
     resourceId: requestId,
@@ -261,6 +289,9 @@ export async function POST(request: Request) {
       decision_comment: comment ?? null,
       telegram_user_id: user.id,
       telegram_display_name: displayName,
+      ...(eligibility.ok && eligibility.delegatedFrom
+        ? { delegated_from: eligibility.delegatedFrom }
+        : {}),
     },
     ipAddress: getClientIp(request),
   });

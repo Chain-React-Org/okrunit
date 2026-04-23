@@ -23,6 +23,10 @@ import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
 import { logger } from "@/lib/monitoring/logger";
+import {
+  canUserDecideServerSide,
+  resolveMessagingUser,
+} from "@/lib/approvals/can-decide-server";
 
 // ---------------------------------------------------------------------------
 // Signature Verification
@@ -215,9 +219,7 @@ async function applyDecisionAndRespond(request: Request, params: {
   }
 
   if (approval.status !== "pending") {
-    return {
-      response_action: "clear",
-    };
+    return { response_action: "clear" };
   }
 
   if (approval.expires_at && new Date(approval.expires_at) < new Date()) {
@@ -226,22 +228,42 @@ async function applyDecisionAndRespond(request: Request, params: {
       .update({ status: "expired" })
       .eq("id", approval.id);
 
+    return { response_action: "clear" };
+  }
+
+  // Permission enforcement: resolve the Slack user to an OKrunit user, then
+  // run the same check the web app does. If the user isn't linked or isn't
+  // eligible (not assigned, not their turn, self-created, four-eyes), reply
+  // with an ephemeral "errors" response_action and write nothing.
+  const resolved = await resolveMessagingUser(admin, {
+    orgId: approval.org_id,
+    platform: "slack",
+    externalUserId: slackUserId,
+  });
+  if (!resolved) {
     return {
-      response_action: "clear",
-    };
+      response_action: "errors",
+      errors: {
+        reason: "Your Slack account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
+      },
+    } as { response_action: string };
+  }
+
+  const eligibility = await canUserDecideServerSide(admin, {
+    approval,
+    actorUserId: resolved.userId,
+    membershipRole: resolved.role,
+  });
+  if (!eligibility.ok) {
+    return {
+      response_action: "errors",
+      errors: { reason: eligibility.reason },
+    } as { response_action: string };
   }
 
   const newStatus = decision === "approve" ? "approved" : "rejected";
   const decidedAt = new Date().toISOString();
-
-  const { data: orgMember } = await admin
-    .from("org_memberships")
-    .select("user_id")
-    .eq("org_id", approval.org_id)
-    .limit(1)
-    .maybeSingle();
-
-  const decidedBy = orgMember?.user_id ?? null;
+  const decidedBy = resolved.userId;
 
   // Build attribution tag for audit trail
   const slackAttribution = `[Decided via Slack by @${slackUsername}]`;
