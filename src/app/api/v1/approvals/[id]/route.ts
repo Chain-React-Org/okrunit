@@ -836,6 +836,20 @@ export async function PATCH(
             decisionComment: validated.comment,
           });
 
+          // Edit the original Telegram / Discord messages in place so the
+          // buttons are replaced with the outcome. Slack/Teams webhooks
+          // can't be edited proactively; stale-click cleanup handles those.
+          const { editApprovalMessagesOnDecide } = await import(
+            "@/lib/notifications/approval-messages"
+          );
+          await editApprovalMessagesOnDecide({
+            approvalId: id,
+            title: updated.title,
+            decision: updated.status as "approved" | "rejected",
+            decidedByName: await getUserDisplayName(admin, actorId) ?? undefined,
+            comment: validated.comment,
+          });
+
           // In-app: notify watchers + assigned approvers about the decision
           const actorName = await getUserDisplayName(admin, actorId);
           const verb = updated.status === "approved" ? "approved" : "rejected";
@@ -1057,6 +1071,19 @@ export async function PATCH(
         connectionId: approval.connection_id,
         decidedBy: actorId,
         decisionComment: validated.comment,
+      });
+
+      // Edit the original Telegram / Discord messages in place.
+      const { editApprovalMessagesOnDecide } = await import(
+        "@/lib/notifications/approval-messages"
+      );
+      const decidedByNameForEdit = await getUserDisplayName(admin, actorId);
+      await editApprovalMessagesOnDecide({
+        approvalId: id,
+        title: updated.title,
+        decision: newStatus as "approved" | "rejected",
+        decidedByName: decidedByNameForEdit ?? undefined,
+        comment: validated.comment,
       });
 
       // In-app: notify all org members about the decision

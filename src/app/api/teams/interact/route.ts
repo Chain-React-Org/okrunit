@@ -611,14 +611,28 @@ async function handleActionSubmit(
     );
   }
 
-  // 6. Check that the request is still pending.
+  // 6. Check that the request is still pending. Stale-click cleanup: when
+  // someone clicks a button on a message for a now-decided request, we
+  // show who decided and when so the answer is clear inline.
   if (approval.status !== "pending") {
     const statusLabel =
       approval.status.charAt(0).toUpperCase() + approval.status.slice(1);
-
+    let decidedByName = "";
+    if (approval.decided_by) {
+      const { data: profile } = await admin
+        .from("user_profiles")
+        .select("full_name, email")
+        .eq("id", approval.decided_by)
+        .maybeSingle();
+      decidedByName = profile?.full_name || profile?.email || "";
+    }
+    const byLine = decidedByName ? ` by ${decidedByName}` : "";
+    const commentLine = approval.decision_comment
+      ? `\n\n_${approval.decision_comment}_`
+      : "";
     return NextResponse.json(
       buildErrorCard(
-        `This request has already been ${statusLabel.toLowerCase()}. No action taken.`,
+        `${statusLabel}${byLine}.${commentLine}`,
       ),
     );
   }

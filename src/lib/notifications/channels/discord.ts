@@ -127,7 +127,7 @@ function decisionColor(decision: string): number {
  */
 export async function sendDiscordNotification(
   params: DiscordNotificationParams,
-): Promise<void> {
+): Promise<{ messageId: string; channelId: string; webhookUrl: string | null } | null> {
   const dashboardUrl = `${APP_URL}/dashboard#request-${params.requestId}`;
 
   const fields: Array<{ name: string; value: string; inline?: boolean }> = [
@@ -193,18 +193,21 @@ export async function sendDiscordNotification(
 
   try {
     let url: string;
+    let usingWebhook = false;
     const headers: Record<string, string> = { "Content-Type": "application/json" };
 
     if (params.botToken && params.channelId) {
-      // Bot token approach - send via Discord API
       url = `https://discord.com/api/v10/channels/${params.channelId}/messages`;
       headers["Authorization"] = `Bot ${params.botToken}`;
     } else if (params.webhookUrl) {
-      // Webhook URL approach
-      url = params.webhookUrl;
+      // Append ?wait=true so the POST returns the created message (needed
+      // for message edits later).
+      usingWebhook = true;
+      const hasQuery = params.webhookUrl.includes("?");
+      url = `${params.webhookUrl}${hasQuery ? "&" : "?"}wait=true`;
     } else {
       logger.warn("[Discord] No webhook URL or bot token. Skipping.");
-      return;
+      return null;
     }
 
     const response = await fetch(url, {
@@ -219,14 +222,87 @@ export async function sendDiscordNotification(
         `[Discord] API returned ${response.status} for request ${params.requestId}:`,
         body,
       );
-      return;
+      return null;
     }
 
-    logger.info(
-      `[Discord] Notification sent for request ${params.requestId}`,
-    );
+    const created = (await response.json()) as {
+      id?: string;
+      channel_id?: string;
+    };
+    logger.info(`[Discord] Notification sent for request ${params.requestId}`);
+
+    if (created.id) {
+      return {
+        messageId: created.id,
+        channelId: created.channel_id ?? params.channelId ?? "",
+        webhookUrl: usingWebhook ? params.webhookUrl ?? null : null,
+      };
+    }
+    return null;
   } catch (err) {
     logger.error("[Discord] Failed to send notification:", err);
+    return null;
+  }
+}
+
+/**
+ * Edit a Discord message posted via webhook to replace the Approve/Reject
+ * buttons with a decision summary. Called after the approval is decided so
+ * the original message reflects the outcome instead of showing stale
+ * buttons. Works for webhook-posted messages only; bot-posted channel
+ * messages would use a different endpoint (not wired yet).
+ */
+export async function editDiscordWebhookMessage(params: {
+  webhookUrl: string;
+  messageId: string;
+  title: string;
+  decision: "approved" | "rejected" | "cancelled" | "expired";
+  decidedBy?: string;
+  comment?: string;
+}): Promise<void> {
+  try {
+    const normalizedWebhook = params.webhookUrl.replace(/\?.*$/, "");
+    const url = `${normalizedWebhook}/messages/${params.messageId}`;
+
+    const decisionLine =
+      params.decision === "approved"
+        ? "\u2705 Approved"
+        : params.decision === "rejected"
+          ? "\u274C Rejected"
+          : params.decision === "cancelled"
+            ? "\uD83D\uDEAB Cancelled"
+            : "\u231B Expired";
+
+    const embed: DiscordEmbed = {
+      title: `${decisionLine}: ${params.title}`,
+      description: params.comment ? `_${params.comment}_` : undefined,
+      color:
+        params.decision === "approved"
+          ? 0x57f287
+          : params.decision === "rejected"
+            ? 0xed4245
+            : 0x99aab5,
+      fields: params.decidedBy
+        ? [{ name: "Decided by", value: params.decidedBy, inline: true }]
+        : [],
+      footer: { text: "OKrunit" },
+      timestamp: new Date().toISOString(),
+    };
+
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embeds: [embed], components: [] }),
+    });
+
+    if (!response.ok) {
+      logger.error(
+        `[Discord] PATCH message returned ${response.status} for ${params.messageId}:`,
+        await response.text(),
+      );
+    }
+  } catch (err) {
+    logger.error("[Discord] Failed to edit message:", err);
   }
 }
 
