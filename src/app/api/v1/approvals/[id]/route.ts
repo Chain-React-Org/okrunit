@@ -474,12 +474,19 @@ export async function PATCH(
       );
     }
 
-    // 5b0. Always block self-approval: a requester cannot decide on a request
-    // they themselves created. This is enforced regardless of four-eyes config
-    // so API-bypass paths respect the same rule as the UI.
+    // 5b0. Block self-approval in the default "any approver" case — a
+    // creator can't trivially rubber-stamp their own request. But if they
+    // were explicitly added to this request's approver chain (e.g., via
+    // Configure Flow Rules), respect that intent: they're on the chain
+    // deliberately, and the audit log records exactly who approved.
+    // Mirrors the client-side gate in `canDecideOnApproval`.
     {
       const createdBy = approval.created_by as { user_id?: string } | null;
-      if (createdBy?.user_id && createdBy.user_id === actorId) {
+      const assignedApprovers: string[] | null = approval.assigned_approvers;
+      const isSelfCreated = !!createdBy?.user_id && createdBy.user_id === actorId;
+      const isExplicitlyInChain =
+        !!assignedApprovers?.length && assignedApprovers.includes(actorId);
+      if (isSelfCreated && !isExplicitlyInChain) {
         throw new ApiError(
           403,
           "You cannot decide on a request you created",
