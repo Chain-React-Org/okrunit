@@ -32,6 +32,7 @@ import {
   canUserDecideServerSide,
   resolveMessagingUser,
 } from "@/lib/approvals/can-decide-server";
+import { createLinkNonce } from "@/lib/messaging/link-nonces";
 
 // ---------------------------------------------------------------------------
 // Bot Framework Auth Constants
@@ -660,9 +661,15 @@ async function handleActionSubmit(
     externalUserId: teamsUserId,
   });
   if (!resolved) {
+    const { url } = await createLinkNonce({
+      orgId: approval.org_id,
+      platform: "teams",
+      externalUserId: teamsUserId,
+      externalUsername: teamsUserName,
+    });
     return NextResponse.json(
       buildErrorCard(
-        "Your Teams account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
+        `Your Teams account isn't linked yet. Connect it here: ${url} (expires in 10 minutes).`,
       ),
     );
   }

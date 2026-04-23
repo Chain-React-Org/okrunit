@@ -27,6 +27,7 @@ import {
   canUserDecideServerSide,
   resolveMessagingUser,
 } from "@/lib/approvals/can-decide-server";
+import { createLinkNonce } from "@/lib/messaging/link-nonces";
 
 // ---------------------------------------------------------------------------
 // Signature Verification
@@ -241,10 +242,18 @@ async function applyDecisionAndRespond(request: Request, params: {
     externalUserId: slackUserId,
   });
   if (!resolved) {
+    // Mint a one-time link nonce so the user can bind this Slack id to
+    // their OKrunit account with a single click.
+    const { url } = await createLinkNonce({
+      orgId: approval.org_id,
+      platform: "slack",
+      externalUserId: slackUserId,
+      externalUsername: slackUsername,
+    });
     return {
       response_action: "errors",
       errors: {
-        reason: "Your Slack account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
+        reason: `Your Slack account isn't linked yet. Connect it here: ${url} (expires in 10 minutes).`,
       },
     } as { response_action: string };
   }

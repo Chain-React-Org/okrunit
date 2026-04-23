@@ -26,6 +26,7 @@ import {
   canUserDecideServerSide,
   resolveMessagingUser,
 } from "@/lib/approvals/can-decide-server";
+import { createLinkNonce } from "@/lib/messaging/link-nonces";
 import {
   answerCallbackQuery,
   editMessage,
@@ -188,13 +189,19 @@ async function applyDecision(request: Request, params: {
     externalUserId: String(telegramUser.id),
   });
   if (!resolved) {
+    const { url } = await createLinkNonce({
+      orgId: approval.org_id,
+      platform: "telegram",
+      externalUserId: String(telegramUser.id),
+      externalUsername: telegramUser.username ?? null,
+    });
     if (chatId && messageId) {
+      // MarkdownV2 requires escaping; build a plain message with a tap-able
+      // link. Users in Telegram tap the URL to open the /link page.
       await editMessage(
         String(chatId),
         messageId,
-        escapeMarkdownV2(
-          "\u26A0\uFE0F Your Telegram account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
-        ),
+        `\u26A0\uFE0F Your Telegram account isn't linked yet\\. [Connect it here](${url.replace(/([()])/g, "\\$1")}) \\(expires in 10 minutes\\)\\.`,
       );
     }
     return;
