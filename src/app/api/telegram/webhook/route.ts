@@ -386,6 +386,24 @@ async function handleStartCommand(
     })
     .eq("id", link.id);
 
+  // Seed messaging_user_identities so this Telegram user can act on approvals
+  // via the Mini App without re-linking. The nonce was created by a
+  // logged-in OKrunit user, so the mapping is legitimate.
+  if (msg.from?.id) {
+    await admin
+      .from("messaging_user_identities")
+      .upsert(
+        {
+          org_id: link.org_id,
+          user_id: link.created_by,
+          platform: "telegram",
+          external_user_id: String(msg.from.id),
+          external_username: msg.from.username ?? null,
+        },
+        { onConflict: "org_id,platform,external_user_id" },
+      );
+  }
+
   // Audit log
   logAuditEvent({
     orgId: link.org_id,
