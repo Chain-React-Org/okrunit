@@ -18,8 +18,15 @@ jobs:
           fetch-depth: 0
 
       - name: Create or update PR
+        # Prefer a personal access token (PAT_TOKEN secret) so the squash
+        # merge this workflow initiates actually triggers downstream
+        # workflows like supabase-migrations.yml. GITHUB_TOKEN-initiated
+        # events don't fire workflows — that's a GitHub-side limitation,
+        # not a bug here. Falls back to GITHUB_TOKEN when PAT_TOKEN is
+        # absent; the auto-merge still works, migrations just have to be
+        # pushed manually via workflow_dispatch.
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           BRANCH="${GITHUB_REF_NAME}"
           COMMIT_MSG=$(git log -1 --pretty=%s)

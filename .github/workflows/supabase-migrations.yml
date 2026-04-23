@@ -1,8 +1,23 @@
 name: Supabase Migrations
 
+# ---------------------------------------------------------------------------
+# Known GitHub limitation: events initiated by the default GITHUB_TOKEN
+# (including squash-merges performed by `gh pr merge --auto` in
+# auto-pr.yml) do NOT trigger downstream workflows. That means the
+# standard `push: main` / `pull_request.closed` triggers below only
+# reliably fire when:
+#   - a developer pushes to main directly with their own token
+#   - a human merges the auto-PR in the UI
+#   - auto-pr.yml is upgraded to use a PAT with `repo` scope
+#
+# Until then, use the `workflow_dispatch` trigger (Actions tab → "Run
+# workflow") to push migrations to prod after any bot-driven merge.
+# See https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow
+# ---------------------------------------------------------------------------
+
 on:
   push:
-    branches: [dev]
+    branches: [dev, main]
     paths:
       - 'supabase/migrations/**'
   pull_request:
@@ -10,11 +25,25 @@ on:
     types: [closed]
     paths:
       - 'supabase/migrations/**'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Which database to push to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - dev
+          - production
+          - both
 
 jobs:
   push-to-dev:
     name: Push migrations to Dev
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/dev') ||
+      (github.event_name == 'workflow_dispatch' &&
+        (inputs.target == 'dev' || inputs.target == 'both'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +64,11 @@ jobs:
 
   push-to-production:
     name: Push migrations to Production
-    if: github.event.pull_request.merged == true
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event.pull_request.merged == true) ||
+      (github.event_name == 'workflow_dispatch' &&
+        (inputs.target == 'production' || inputs.target == 'both'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
