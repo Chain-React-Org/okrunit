@@ -371,8 +371,11 @@ export async function dispatchNotifications(
       }
 
       // ---- Filter 3: User-level DM filtering ----
-      // For personal/DM channels, only notify if the connection's installer
-      // is an assigned approver or team member.
+      // For personal/DM channels, only notify the people who can act right
+      // now. For sequential flows that's just the current-turn approver —
+      // everyone else in the chain gets pinged when it becomes their turn
+      // via the approval.next_approver event. For parallel flows it's any
+      // assigned approver. No assigned approvers falls through to broadcast.
       if (isDmChannel(conn) && conn.installed_by) {
         const hasAssignedApprovers =
           event.assignedApprovers && event.assignedApprovers.length > 0;
@@ -381,12 +384,16 @@ export async function dispatchNotifications(
         if (hasAssignedApprovers || hasAssignedTeam) {
           let userIsTarget = false;
 
-          // Check direct assignment
           if (hasAssignedApprovers) {
-            userIsTarget = event.assignedApprovers!.includes(conn.installed_by);
+            if (event.isSequential && event.currentTurnUserId) {
+              // Sequential: only the current-turn approver (or their
+              // active delegate) gets a DM ping at this moment.
+              userIsTarget = conn.installed_by === event.currentTurnUserId;
+            } else {
+              userIsTarget = event.assignedApprovers!.includes(conn.installed_by);
+            }
           }
 
-          // Check team membership (lazy-load once)
           if (!userIsTarget && hasAssignedTeam) {
             if (teamMemberIds === null) {
               teamMemberIds = await loadTeamMemberIds(event.assignedTeamId!);

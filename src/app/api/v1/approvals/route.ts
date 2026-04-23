@@ -817,8 +817,13 @@ export async function POST(request: Request) {
             });
           }
         } else if (targetUserIds && targetUserIds.length > 0) {
-          // Configured flow with assigned approvers:
-          // "Action needed" for current approvers
+          // Configured flow with assigned approvers: only notify the
+          // current-turn approvers (for sequential chains that's the first
+          // slot; for parallel flows it's everyone). Later-in-chain
+          // approvers on a sequential flow used to get a FYI notification
+          // here — that was noise, since they'll be pinged the moment it's
+          // actually their turn via approval.next_approver. Watchers who
+          // explicitly opt in still get everything.
           await createInAppNotificationBulk(targetUserIds, {
             orgId: auth.orgId,
             category: "approval_awaiting",
@@ -828,24 +833,6 @@ export async function POST(request: Request) {
             resourceType: "approval_request",
             resourceId: approval.id,
           });
-
-          // "FYI" for later-in-chain approvers (sequential only)
-          if (effectiveIsSequential && assignedApprovers && assignedApprovers.length > 1) {
-            const laterApprovers = assignedApprovers.slice(1).filter(
-              (id: string) => !targetUserIds!.includes(id)
-            );
-            if (laterApprovers.length > 0) {
-              await createInAppNotificationBulk(laterApprovers, {
-                orgId: auth.orgId,
-                category: "approval_created",
-                title: `New request: ${validated.title}`,
-                body: `${bodyText} · you'll be needed later in the approval chain`,
-                actorName: connectionName ?? undefined,
-                resourceType: "approval_request",
-                resourceId: approval.id,
-              });
-            }
-          }
         } else {
           // No assigned approvers (mode = "any" or "role_based"):
           // Notify all eligible org members
