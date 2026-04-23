@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { createClient } from "@/lib/supabase/server";
@@ -28,7 +28,24 @@ interface PageProps {
   params: Promise<{ platform: string; nonce: string }>;
 }
 
-export default async function LinkNoncePage({ params }: PageProps) {
+export default function LinkNoncePage({ params }: PageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[200px] items-center justify-center">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+        </div>
+      }
+    >
+      <LinkNonceContent params={params} />
+    </Suspense>
+  );
+}
+
+async function LinkNonceContent({ params }: PageProps) {
+  // Opt out of prerendering: this page reads cookies, auth session, and
+  // short-lived nonce state that all must run per-request.
+  await connection();
   const { platform, nonce } = await params;
 
   if (!(VALID_PLATFORMS as readonly string[]).includes(platform)) {
@@ -109,16 +126,14 @@ export default async function LinkNoncePage({ params }: PageProps) {
   }
 
   return (
-    <Suspense>
-      <LinkNonceConfirm
-        nonce={nonce}
-        platform={nonceRow.platform}
-        platformLabel={PLATFORM_LABELS[nonceRow.platform] ?? nonceRow.platform}
-        externalUsername={nonceRow.external_username}
-        okrunitEmail={profile?.email ?? user.email ?? ""}
-        okrunitName={profile?.full_name ?? null}
-      />
-    </Suspense>
+    <LinkNonceConfirm
+      nonce={nonce}
+      platform={nonceRow.platform}
+      platformLabel={PLATFORM_LABELS[nonceRow.platform] ?? nonceRow.platform}
+      externalUsername={nonceRow.external_username}
+      okrunitEmail={profile?.email ?? user.email ?? ""}
+      okrunitName={profile?.full_name ?? null}
+    />
   );
 }
 
@@ -228,5 +243,3 @@ function NotOrgMemberState({
     </div>
   );
 }
-
-export const dynamic = "force-dynamic";

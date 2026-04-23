@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
 // When a user completes sign-in / sign-up with `?next=/link/<platform>/__resume`,
@@ -13,7 +15,22 @@ interface PageProps {
   params: Promise<{ platform: string }>;
 }
 
-export default async function LinkNonceResumePage({ params }: PageProps) {
+export default function LinkNonceResumePage({ params }: PageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[200px] items-center justify-center">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+        </div>
+      }
+    >
+      <ResumeContent params={params} />
+    </Suspense>
+  );
+}
+
+async function ResumeContent({ params }: PageProps): Promise<never> {
+  await connection();
   const { platform } = await params;
   if (!(VALID_PLATFORMS as readonly string[]).includes(platform)) {
     redirect("/requests/messaging");
@@ -27,5 +44,3 @@ export default async function LinkNonceResumePage({ params }: PageProps) {
 
   redirect(`/link/${platform}/${nonce}`);
 }
-
-export const dynamic = "force-dynamic";
