@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { logger } from "@/lib/monitoring/logger";
+import { resolveAndCheckUrl } from "@/lib/api/ssrf";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -210,6 +211,15 @@ export async function sendDiscordNotification(
       return null;
     }
 
+    // Re-check the webhook URL at send time to catch DNS rebinding or
+    // a post-registration DB mutation. Bot API requests use a hardcoded
+    // discord.com host so they skip the check.
+    if (usingWebhook && (await resolveAndCheckUrl(url))) {
+      logger.error(
+        `[Discord] Refusing to send to disallowed webhook URL for request ${params.requestId}`,
+      );
+      return null;
+    }
     const response = await fetch(url, {
       method: "POST",
       headers,
@@ -263,6 +273,12 @@ export async function editDiscordWebhookMessage(params: {
   try {
     const normalizedWebhook = params.webhookUrl.replace(/\?.*$/, "");
     const url = `${normalizedWebhook}/messages/${params.messageId}`;
+
+    // SSRF guard: revalidate at send time.
+    if (await resolveAndCheckUrl(url)) {
+      logger.error("[Discord] Refusing to edit disallowed webhook URL");
+      return;
+    }
 
     const decisionLine =
       params.decision === "approved"
@@ -343,6 +359,7 @@ export async function sendDiscordDecisionNotification(
 
   try {
     let url: string;
+    let usingWebhook = false;
     const headers: Record<string, string> = { "Content-Type": "application/json" };
 
     if (params.botToken && params.channelId) {
@@ -350,11 +367,18 @@ export async function sendDiscordDecisionNotification(
       headers["Authorization"] = `Bot ${params.botToken}`;
     } else if (params.webhookUrl) {
       url = params.webhookUrl;
+      usingWebhook = true;
     } else {
       logger.warn("[Discord] No webhook URL or bot token. Skipping decision.");
       return;
     }
 
+    // SSRF guard on user-supplied webhook URLs. Bot API hits hardcoded
+    // discord.com so it skips the check.
+    if (usingWebhook && (await resolveAndCheckUrl(url))) {
+      logger.error("[Discord] Refusing to send decision to disallowed webhook URL");
+      return;
+    }
     const response = await fetch(url, {
       method: "POST",
       headers,

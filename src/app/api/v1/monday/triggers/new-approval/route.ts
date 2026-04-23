@@ -23,7 +23,20 @@ interface MondayTriggerPayload {
   challenge?: string;
 }
 
+// monday.com is marked "coming soon" — the existing handler scopes
+// to "any active connection" instead of the caller's subscription,
+// which cross-serves data between orgs. Flip this to true once the
+// subscription→org lookup is implemented and the endpoint is ready
+// to ship.
+const MONDAY_ENABLED = false;
+
 export async function POST(request: Request) {
+  if (!MONDAY_ENABLED) {
+    return NextResponse.json(
+      { error: "monday.com integration is not yet available" },
+      { status: 404 },
+    );
+  }
   try {
     const raw: MondayTriggerPayload = await request.json();
 

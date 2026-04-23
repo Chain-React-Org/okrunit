@@ -10,6 +10,7 @@
 
 import { generateActionTokens } from "@/lib/notifications/tokens";
 import { logger } from "@/lib/monitoring/logger";
+import { resolveAndCheckUrl } from "@/lib/api/ssrf";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -255,6 +256,14 @@ export async function sendTeamsNotification(
 
     const payload = buildApprovalCard(params, tokens.approveToken, tokens.rejectToken);
 
+    // DNS rebinding / post-validation row mutation guard: re-check the
+    // URL at send time rather than trusting the value stored at
+    // registration. `resolveAndCheckUrl` returns true when the URL
+    // resolves to a private IP.
+    if (await resolveAndCheckUrl(params.webhookUrl)) {
+      logger.error("[Teams] Refusing to send to disallowed webhook URL");
+      return;
+    }
     const response = await fetch(params.webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -321,6 +330,14 @@ export async function sendTeamsDecisionNotification(
   };
 
   try {
+    // DNS rebinding / post-validation row mutation guard: re-check the
+    // URL at send time rather than trusting the value stored at
+    // registration. `resolveAndCheckUrl` returns true when the URL
+    // resolves to a private IP.
+    if (await resolveAndCheckUrl(params.webhookUrl)) {
+      logger.error("[Teams] Refusing to send to disallowed webhook URL");
+      return;
+    }
     const response = await fetch(params.webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

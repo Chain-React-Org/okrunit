@@ -7,14 +7,34 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/monitoring/logger";
+import {
+  checkIpRateLimitAsync,
+  getClientIp,
+  rateLimitResponse,
+} from "@/lib/api/ip-rate-limiter";
 
 const MAX_BODY_SIZE = 50_000; // 50 KB
+
+// Public unauthenticated endpoint. Rate limited per IP + per token so a
+// leaked 48-char hex token can't be used to flood webhook_test_requests.
+const TEST_WEBHOOK_RATE_LIMIT = { limit: 120, windowSeconds: 60 };
 
 async function captureRequest(
   request: Request,
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
+
+  // Rate limit by (ip + token). Single IP can't burst a single token,
+  // and a single token can't get burned across many IPs.
+  const ip = getClientIp(request);
+  const rate = await checkIpRateLimitAsync(
+    `test-webhook:${token}:${ip}`,
+    TEST_WEBHOOK_RATE_LIMIT,
+  );
+  if (!rate.allowed) {
+    return rateLimitResponse(rate);
+  }
 
   try {
     const admin = createAdminClient();

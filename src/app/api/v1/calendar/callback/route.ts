@@ -149,9 +149,16 @@ export async function GET(request: NextRequest) {
     const decoded = Buffer.from(stateParam, "base64url").toString("utf-8");
     const envelope = JSON.parse(decoded);
 
-    // Verify HMAC signature to prevent state forgery
+    // Verify HMAC signature to prevent state forgery. Missing secret
+    // is a hard error (not a silent fallback) so stolen DB credentials
+    // can't double as state-signing keys.
     if (envelope.d && envelope.s) {
-      const hmacKey = process.env.CALLBACK_HMAC_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "calendar-state";
+      const hmacKey = process.env.CALLBACK_HMAC_SECRET;
+      if (!hmacKey) {
+        return NextResponse.redirect(
+          `${settingsUrl}?calendar_error=not_configured`,
+        );
+      }
       const expectedSig = createHmac("sha256", hmacKey).update(envelope.d).digest("hex").slice(0, 16);
       if (envelope.s !== expectedSig) {
         return NextResponse.redirect(

@@ -64,10 +64,19 @@ export async function POST(request: Request) {
     }
 
     // Verify redirect_uri is registered.
-    // Supports exact matches and wildcard patterns (e.g. "https://*.app.n8n.cloud/rest/oauth2-credential/callback")
+    // Supports exact matches and wildcard patterns (e.g.
+    // "https://*.app.n8n.cloud/rest/oauth2-credential/callback").
+    // Wildcards are constrained to match exactly one hostname label
+    // that does NOT contain a dot — that prevents a wildcard on a
+    // trusted apex like `*.app.n8n.cloud` from matching something like
+    // `attacker.com.app.n8n.cloud` or
+    // `sub.sub.app.n8n.cloud`. Only the single leftmost label is
+    // substituted.
     const uriMatch = client.redirect_uris.some((pattern: string) => {
       if (pattern.includes("*")) {
-        const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]+");
+        const escaped = pattern
+          .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+          .replace(/\*/g, "[^./]+");
         return new RegExp(`^${escaped}$`).test(body.redirect_uri);
       }
       return pattern === body.redirect_uri;

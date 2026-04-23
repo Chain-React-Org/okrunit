@@ -9,6 +9,7 @@ import { getAppAdminContext } from "@/lib/app-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/monitoring/logger";
 import { titleCaseName } from "@/lib/format-name";
+import { logAuditEvent } from "@/lib/api/audit";
 
 // ---- Schemas --------------------------------------------------------------
 
@@ -96,6 +97,29 @@ export async function POST(request: Request) {
         is_default: true,
       });
     }
+
+    // Admin-created users bypass normal email verification (email_confirm:
+    // true). Audit each creation with the acting admin's ID so a
+    // compromised admin account leaves a trail of "who created which
+    // phishable accounts."
+    const ipAddress =
+      request.headers.get("x-forwarded-for") ??
+      request.headers.get("x-real-ip") ??
+      "unknown";
+    await logAuditEvent({
+      orgId: validated.org_id ?? "app-admin",
+      userId: profile.id,
+      action: "admin.user_created",
+      resourceType: "user",
+      resourceId: userId,
+      details: {
+        email: validated.email,
+        role: validated.role ?? "member",
+        is_app_admin: validated.is_app_admin ?? false,
+        email_confirm_bypassed: true,
+      },
+      ipAddress,
+    });
 
     return NextResponse.json({
       id: userId,

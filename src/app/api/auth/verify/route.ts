@@ -13,6 +13,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWelcomeEmailHtml } from "@/lib/email/welcome";
 import { logger } from "@/lib/monitoring/logger";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
+import {
+  checkIpRateLimit,
+  getClientIp,
+  AUTH_RATE_LIMIT,
+} from "@/lib/api/ip-rate-limiter";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -20,6 +25,17 @@ const FROM_EMAIL =
   process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 
 export async function GET(request: NextRequest) {
+  // Rate limit by IP to slow down OTP token bruteforce. Supabase itself
+  // rate-limits verifyOtp, but layering our own check keeps the entire
+  // round-trip cheap and prevents wasting an outbound Supabase call per
+  // guess.
+  const rl = checkIpRateLimit(`otp-verify:${getClientIp(request)}`, AUTH_RATE_LIMIT);
+  if (!rl.allowed) {
+    return NextResponse.redirect(
+      new URL("/login?error=too_many_attempts", APP_URL),
+    );
+  }
+
   const { searchParams } = request.nextUrl;
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as "signup" | "email" | "magiclink" | "recovery" | "invite" | undefined;

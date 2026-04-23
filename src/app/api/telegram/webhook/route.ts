@@ -517,11 +517,17 @@ export async function POST(request: Request) {
 
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
   const secretHeader = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
-  // If a webhook secret is configured, always require it
-  if (webhookSecret) {
-    if (!secretHeader || !verifyTelegramSecret(webhookSecret, secretHeader)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  // Secret is mandatory. Without it, anyone who can reach the webhook
+  // URL can drive fake button-callback decisions by POSTing a
+  // synthesized Telegram Update payload. (`setWebhook` on the bot must
+  // be called with `secret_token=TELEGRAM_WEBHOOK_SECRET` so real
+  // updates carry the header.)
+  if (!webhookSecret) {
+    logger.error("[Telegram Webhook] TELEGRAM_WEBHOOK_SECRET is not set");
+    return NextResponse.json({ error: "Not configured" }, { status: 500 });
+  }
+  if (!secretHeader || !verifyTelegramSecret(webhookSecret, secretHeader)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   let update: TelegramUpdate;

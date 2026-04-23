@@ -34,12 +34,17 @@ export default async function DelegationSettingsPage() {
     { data: memberRows },
     { data: flowsRaw },
   ] = await Promise.all([
-    admin
-      .from("approval_delegations")
-      .select("*")
-      .eq("org_id", membership.org_id)
-      .or(`delegator_id.eq.${profile.id},delegate_id.eq.${profile.id}`)
-      .order("created_at", { ascending: false }),
+    // `profile.id` is a Supabase-authenticated UUID but we defense-in-
+    // depth validate before interpolating it into a PostgREST `.or()`
+    // filter. Any non-UUID causes an early empty-result.
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profile.id)
+      ? admin
+          .from("approval_delegations")
+          .select("*")
+          .eq("org_id", membership.org_id)
+          .or(`delegator_id.eq.${profile.id},delegate_id.eq.${profile.id}`)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] as never[] }),
     admin
       .from("org_memberships")
       .select("user_id, role, can_approve")

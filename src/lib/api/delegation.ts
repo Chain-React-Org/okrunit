@@ -10,6 +10,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ApprovalDelegation } from "@/lib/types/database";
 
+// Accept the standard RFC 4122 UUID shape. Used to gate values that
+// get interpolated into PostgREST `.or()` filter strings below.
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // ---- Public API -----------------------------------------------------------
 
 /**
@@ -189,6 +194,15 @@ export async function listDelegations(
   userId: string,
 ): Promise<ApprovalDelegation[]> {
   const admin = createAdminClient();
+
+  // Validate UUIDs before interpolating into a PostgREST filter string
+  // so a malformed caller can't inject additional clauses.
+  if (!UUID_REGEX.test(orgId) || !UUID_REGEX.test(userId)) {
+    throw new DelegationError(
+      "Invalid org or user id",
+      "INVALID_ID",
+    );
+  }
 
   const { data, error } = await admin
     .from("approval_delegations")
