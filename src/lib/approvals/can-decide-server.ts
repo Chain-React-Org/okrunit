@@ -11,7 +11,6 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkFourEyes } from "@/lib/api/four-eyes";
-import { findDelegationForDelegate } from "@/lib/api/delegation";
 import type { ApprovalRequest, Organization } from "@/lib/types/database";
 
 export type DecideEligibility =
@@ -114,23 +113,30 @@ export async function canUserDecideServerSide(
     }
   }
 
-  // 4. Assigned-approver check (with delegation fallback).
+  // 4. Assigned-approver check (with delegation fallback). The delegation
+  //    query runs against the same admin client the caller provided so this
+  //    helper stays easy to mock in tests.
   let delegatedFrom: string | null = null;
   if (hasAssigned) {
     if (!approval.assigned_approvers!.includes(actorUserId)) {
-      const deleg = await findDelegationForDelegate(
-        approval.org_id,
-        actorUserId,
-        approval.assigned_approvers!,
-      );
-      if (!deleg) {
+      const nowIso = new Date().toISOString();
+      const { data: deleg } = await admin
+        .from("approval_delegations")
+        .select("delegator_id")
+        .eq("org_id", approval.org_id)
+        .eq("delegate_id", actorUserId)
+        .eq("is_active", true)
+        .lte("starts_at", nowIso)
+        .gte("ends_at", nowIso)
+        .in("delegator_id", approval.assigned_approvers!);
+      if (!deleg || deleg.length === 0) {
         return {
           ok: false,
           code: "NOT_ASSIGNED_APPROVER",
           reason: "You are not an assigned approver for this request.",
         };
       }
-      delegatedFrom = deleg.delegatorId;
+      delegatedFrom = deleg[0].delegator_id;
     }
 
     // 5. Sequential turn check. Whoever the next-in-line is, must be the
