@@ -5,8 +5,11 @@
 // variables. Users do NOT need to enter any URL. They just click "Connect".
 // ---------------------------------------------------------------------------
 
+// Use apex domain (no www): the platform 308-redirects www -> apex, and
+// HTTP clients drop the Authorization header on cross-host redirects, which
+// breaks Bearer auth. Hitting the apex directly avoids the redirect.
 const OKRUNIT_URL =
-  process.env.OKRUNIT_URL || "https://www.okrunit.com";
+  process.env.OKRUNIT_URL || "https://okrunit.com";
 
 const authentication = {
   type: "oauth2",
