@@ -127,10 +127,14 @@ async function authenticateApiKey(token: string): Promise<AuthResult> {
     }
 
     // Fire-and-forget: update last_used_at so we don't block the request.
-    void admin
+    // The supabase-js builder is a lazy thenable — `void builder` does not
+    // execute the query. Calling `.then` triggers execution; the empty
+    // handlers swallow result and any error.
+    admin
       .from("connections")
       .update({ last_used_at: new Date().toISOString() })
-      .eq("id", connection.id);
+      .eq("id", connection.id)
+      .then(() => {}, () => {});
 
     return {
       type: "api_key",
@@ -152,11 +156,12 @@ async function authenticateApiKey(token: string): Promise<AuthResult> {
       throw new ApiError(403, "API key is inactive", "INACTIVE_API_KEY");
     }
 
-    // Fire-and-forget: update last_used_at.
-    void admin
+    // Fire-and-forget: update last_used_at. See note above on .then().
+    admin
       .from("connections")
       .update({ last_used_at: new Date().toISOString() })
-      .eq("id", rotatedConnection.id);
+      .eq("id", rotatedConnection.id)
+      .then(() => {}, () => {});
 
     // Mark the result so callers / middleware can add a deprecation header.
     const result: AuthResult = {
@@ -199,11 +204,13 @@ async function authenticateOAuthToken(token: string): Promise<AuthResult> {
     throw new ApiError(401, "Access token has expired", "TOKEN_EXPIRED");
   }
 
-  // Fire-and-forget: update last_used_at.
-  void admin
+  // Fire-and-forget: update last_used_at. See note in authenticateApiKey
+  // about why .then() is needed instead of `void`.
+  admin
     .from("oauth_access_tokens")
     .update({ last_used_at: new Date().toISOString() })
-    .eq("id", accessToken.id);
+    .eq("id", accessToken.id)
+    .then(() => {}, () => {});
 
   return {
     type: "oauth",
