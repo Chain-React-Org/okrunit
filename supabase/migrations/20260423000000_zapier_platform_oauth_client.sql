@@ -18,9 +18,9 @@ INSERT INTO oauth_clients (
 ) VALUES (
   'Zapier',
   NULL,
-  'ba776c2f-8539-482c-8f74-793fc310e794',
-  '180f655185a5d9b29b1a630bb70be43f806ec33636be03e96ed9cbb95a3a6852',
-  'b6c90a1e',
+  '6698a665-26d4-4805-9695-7cb2672ab13e',
+  '3b902be4721eeafc107f5c12763be9c030cddc2ca74206312daa7cf395e77cbf',
+  '74d4eff2',
   ARRAY[
     'https://zapier.com/dashboard/auth/oauth/return/App*CLIAPI/',
     'https://zapier.com/dashboard/auth/oauth/return/App*API/'
