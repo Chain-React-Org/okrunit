@@ -13,6 +13,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { logger } from "@/lib/monitoring/logger";
+import { redactForLogging } from "@/lib/monitoring/redact";
 
 const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID!;
 const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET!;
@@ -97,7 +98,13 @@ export async function GET(request: Request) {
 
     if (!tokenResponse.ok) {
       const body = await tokenResponse.text();
-      logger.error("[Slack Callback] Token exchange HTTP error:", body);
+      let redactedBody: unknown = body;
+      try {
+        redactedBody = redactForLogging(JSON.parse(body));
+      } catch {
+        redactedBody = body.slice(0, 500);
+      }
+      logger.error("[Slack Callback] Token exchange HTTP error:", redactedBody);
       return NextResponse.redirect(`${dest}?error=token_exchange_failed`);
     }
 

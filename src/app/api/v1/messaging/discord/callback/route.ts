@@ -13,6 +13,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { logger } from "@/lib/monitoring/logger";
+import { redactForLogging } from "@/lib/monitoring/redact";
 
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID!;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
@@ -92,7 +93,15 @@ export async function GET(request: Request) {
 
     if (!tokenResponse.ok) {
       const body = await tokenResponse.text();
-      logger.error("[Discord Callback] Token exchange failed:", body);
+      let redactedBody: unknown = body;
+      try {
+        redactedBody = redactForLogging(JSON.parse(body));
+      } catch {
+        // Not JSON — log the raw text but truncate to avoid stamping
+        // a stray token in an error_description field.
+        redactedBody = body.slice(0, 500);
+      }
+      logger.error("[Discord Callback] Token exchange failed:", redactedBody);
       return NextResponse.redirect(`${dest}?error=token_exchange_failed`);
     }
 
