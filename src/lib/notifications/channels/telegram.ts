@@ -21,6 +21,10 @@ export interface TelegramNotificationParams {
   description?: string;
   priority: string;
   connectionName?: string;
+  /** Whether to render Approve/Reject callback buttons. Set to false for
+   * viewers and later-in-chain approvers so they don't click through to a
+   * "not your turn" error. A View-in-Dashboard link is always rendered. */
+  showActionButtons?: boolean;
 }
 
 export interface TelegramDecisionParams {
@@ -117,21 +121,35 @@ export async function sendTelegramNotification(
     .filter((line) => line !== "")
     .join("\n");
 
-  const approveWebAppUrl = `${APP_URL}/telegram/decide?id=${params.requestId}&action=approve`;
-  const rejectWebAppUrl = `${APP_URL}/telegram/decide?id=${params.requestId}&action=reject`;
+  // Callback-based buttons so Telegram sends the click to our webhook. The
+  // webhook already handles the approve/reject callback and prompts for a
+  // reason via an edited message + pendingReasons state machine — no mini app
+  // needed. A third link button still jumps to the web dashboard for anyone
+  // who wants the full detail view.
+  const approveCallback = `okrunit:approve:${params.requestId}`;
+  const rejectCallback = `okrunit:reject:${params.requestId}`;
 
-  const inlineKeyboard = {
-    inline_keyboard: [
-      [
+  // Only render Approve/Reject to the current-turn approver (for sequential)
+  // or to an assigned approver (for parallel). Viewers and later-in-chain
+  // approvers see a static message with a "View in Dashboard" button only —
+  // the same info is present but the action buttons don't lead them to
+  // click through to an error.
+  const actionRow = params.showActionButtons
+    ? [
         {
           text: "\u2705 Approve",
-          web_app: { url: approveWebAppUrl },
+          callback_data: approveCallback,
         },
         {
           text: "\u274C Reject",
-          web_app: { url: rejectWebAppUrl },
+          callback_data: rejectCallback,
         },
-      ],
+      ]
+    : null;
+
+  const inlineKeyboard = {
+    inline_keyboard: [
+      ...(actionRow ? [actionRow] : []),
       [
         {
           text: "\uD83D\uDD0D View in Dashboard",
