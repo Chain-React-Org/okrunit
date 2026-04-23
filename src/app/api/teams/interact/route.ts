@@ -28,6 +28,10 @@ import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
 import { logger } from "@/lib/monitoring/logger";
+import {
+  canUserDecideServerSide,
+  resolveMessagingUser,
+} from "@/lib/approvals/can-decide-server";
 
 // ---------------------------------------------------------------------------
 // Bot Framework Auth Constants
@@ -633,6 +637,30 @@ async function handleActionSubmit(
     );
   }
 
+  // Permission enforcement: resolve the Teams user to an OKrunit user,
+  // then run the shared server-side permission pipeline (assigned approvers,
+  // sequential turn, self-approval block, four-eyes, delegation).
+  const resolved = await resolveMessagingUser(admin, {
+    orgId: approval.org_id,
+    platform: "teams",
+    externalUserId: teamsUserId,
+  });
+  if (!resolved) {
+    return NextResponse.json(
+      buildErrorCard(
+        "Your Teams account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
+      ),
+    );
+  }
+  const eligibility = await canUserDecideServerSide(admin, {
+    approval,
+    actorUserId: resolved.userId,
+    membershipRole: resolved.role,
+  });
+  if (!eligibility.ok) {
+    return NextResponse.json(buildErrorCard(eligibility.reason));
+  }
+
   // -------------------------------------------------------------------------
   // If this is the first submit (no hasComment flag), show the reason prompt
   // (unless the org has opted to skip it)
@@ -663,18 +691,28 @@ async function handleActionSubmit(
   const comment =
     actionData.skipReason ? undefined : actionData.comment?.trim() || undefined;
 
+  // Enforce rejection-reason-required on the second submit (for the case
+  // where the user checked "skip reason" but the org policy requires one).
+  if (decision === "reject") {
+    const { reasonRequired } = await getDecisionCommentPolicy(
+      approval.org_id,
+      "reject",
+      {
+        require_rejection_reason: approval.require_rejection_reason,
+        priority: approval.priority,
+      },
+    );
+    if (reasonRequired && !comment) {
+      return NextResponse.json(
+        buildErrorCard("A rejection reason is required for this request."),
+      );
+    }
+  }
+
   // 8. Apply the decision.
   const newStatus = decision === "approve" ? "approved" : "rejected";
   const decidedAt = new Date().toISOString();
-
-  const { data: orgMember } = await admin
-    .from("org_memberships")
-    .select("user_id")
-    .eq("org_id", approval.org_id)
-    .limit(1)
-    .maybeSingle();
-
-  const decidedBy = orgMember?.user_id ?? null;
+  const decidedBy = resolved.userId;
 
   const updatePayload: Record<string, unknown> = {
     status: newStatus,
@@ -682,6 +720,9 @@ async function handleActionSubmit(
     decided_at: decidedAt,
     decision_source: "teams",
   };
+  if (eligibility.ok && eligibility.delegatedFrom) {
+    updatePayload.delegated_from = eligibility.delegatedFrom;
+  }
 
   if (comment) {
     updatePayload.decision_comment = comment;

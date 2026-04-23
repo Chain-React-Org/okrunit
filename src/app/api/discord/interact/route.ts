@@ -24,6 +24,10 @@ import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
 import { logger } from "@/lib/monitoring/logger";
+import {
+  canUserDecideServerSide,
+  resolveMessagingUser,
+} from "@/lib/approvals/can-decide-server";
 
 // ---------------------------------------------------------------------------
 // Discord Interaction Types
@@ -293,17 +297,58 @@ async function applyDecision(request: Request, params: {
     };
   }
 
+  // Permission enforcement: resolve the Discord user to an OKrunit user,
+  // then run the shared permission pipeline (assigned approvers, sequential
+  // turn, self-approval block, four-eyes, delegation).
+  const resolved = await resolveMessagingUser(admin, {
+    orgId: approval.org_id,
+    platform: "discord",
+    externalUserId: discordUserId,
+  });
+  if (!resolved) {
+    return {
+      success: false,
+      response: buildInfoResponse(
+        "Your Discord account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
+      ),
+    };
+  }
+  const eligibility = await canUserDecideServerSide(admin, {
+    approval,
+    actorUserId: resolved.userId,
+    membershipRole: resolved.role,
+  });
+  if (!eligibility.ok) {
+    return {
+      success: false,
+      response: buildInfoResponse(eligibility.reason),
+    };
+  }
+
+  // Enforce rejection-reason-required when the user tried to reject
+  // without a comment and the org policy requires one.
+  if (decision === "reject") {
+    const { reasonRequired } = await getDecisionCommentPolicy(
+      approval.org_id,
+      "reject",
+      {
+        require_rejection_reason: approval.require_rejection_reason,
+        priority: approval.priority,
+      },
+    );
+    if (reasonRequired && !comment?.trim()) {
+      return {
+        success: false,
+        response: buildInfoResponse(
+          "A rejection reason is required for this request.",
+        ),
+      };
+    }
+  }
+
   const newStatus = decision === "approve" ? "approved" : "rejected";
   const decidedAt = new Date().toISOString();
-
-  const { data: orgMember } = await admin
-    .from("org_memberships")
-    .select("user_id")
-    .eq("org_id", approval.org_id)
-    .limit(1)
-    .maybeSingle();
-
-  const decidedBy = orgMember?.user_id ?? null;
+  const decidedBy = resolved.userId;
 
   // Build attribution tag for audit trail
   const discordAttribution = `[Decided via Discord by ${discordUsername}]`;
@@ -314,6 +359,9 @@ async function applyDecision(request: Request, params: {
     decided_at: decidedAt,
     decision_source: "discord",
   };
+  if (eligibility.ok && eligibility.delegatedFrom) {
+    updatePayload.delegated_from = eligibility.delegatedFrom;
+  }
 
   if (comment) {
     updatePayload.decision_comment = `${comment}\n\n${discordAttribution}`;

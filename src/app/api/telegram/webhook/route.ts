@@ -23,6 +23,10 @@ import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
 import {
+  canUserDecideServerSide,
+  resolveMessagingUser,
+} from "@/lib/approvals/can-decide-server";
+import {
   answerCallbackQuery,
   editMessage,
 } from "@/lib/notifications/channels/telegram";
@@ -175,17 +179,69 @@ async function applyDecision(request: Request, params: {
     return;
   }
 
+  // Permission enforcement: resolve the Telegram user to an OKrunit user,
+  // then run the shared permission pipeline. This is the inline bot flow
+  // (the /decide Mini App path runs the same check at its own entry point).
+  const resolved = await resolveMessagingUser(admin, {
+    orgId: approval.org_id,
+    platform: "telegram",
+    externalUserId: String(telegramUser.id),
+  });
+  if (!resolved) {
+    if (chatId && messageId) {
+      await editMessage(
+        String(chatId),
+        messageId,
+        escapeMarkdownV2(
+          "\u26A0\uFE0F Your Telegram account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
+        ),
+      );
+    }
+    return;
+  }
+  const eligibility = await canUserDecideServerSide(admin, {
+    approval,
+    actorUserId: resolved.userId,
+    membershipRole: resolved.role,
+  });
+  if (!eligibility.ok) {
+    if (chatId && messageId) {
+      await editMessage(
+        String(chatId),
+        messageId,
+        escapeMarkdownV2(`\u26A0\uFE0F ${eligibility.reason}`),
+      );
+    }
+    return;
+  }
+
+  // Rejection-reason-required guard when the user sent an empty comment.
+  if (decision === "reject") {
+    const { reasonRequired } = await getDecisionCommentPolicy(
+      approval.org_id,
+      "reject",
+      {
+        require_rejection_reason: approval.require_rejection_reason,
+        priority: approval.priority,
+      },
+    );
+    if (reasonRequired && !comment?.trim()) {
+      if (chatId && messageId) {
+        await editMessage(
+          String(chatId),
+          messageId,
+          escapeMarkdownV2(
+            "\u26A0\uFE0F A rejection reason is required for this request. Tap Reject again and type a reason.",
+          ),
+        );
+      }
+      return;
+    }
+  }
+
   const newStatus = decision === "approve" ? "approved" : "rejected";
   const decidedAt = new Date().toISOString();
-
-  const { data: orgMember } = await admin
-    .from("org_memberships")
-    .select("user_id")
-    .eq("org_id", approval.org_id)
-    .limit(1)
-    .maybeSingle();
-
-  const decidedBy = orgMember?.user_id ?? null;
+  const decidedBy = resolved.userId;
 
   // Build attribution tag for audit trail
   const telegramAttribution = `[Decided via Telegram by ${displayName}]`;
@@ -196,6 +252,9 @@ async function applyDecision(request: Request, params: {
     decided_at: decidedAt,
     decision_source: "telegram",
   };
+  if (eligibility.ok && eligibility.delegatedFrom) {
+    updatePayload.delegated_from = eligibility.delegatedFrom;
+  }
   if (comment) {
     updatePayload.decision_comment = `${comment}\n\n${telegramAttribution}`;
   } else {

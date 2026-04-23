@@ -145,7 +145,40 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${dest}?error=save_failed`);
     }
 
-    // 5. Audit log
+    // 5. Seed messaging_user_identities with the installer's Discord user id
+    // so button clicks from them resolve without a separate linking step.
+    // Best-effort: Discord returns it via GET /users/@me with the user token.
+    try {
+      const meResp = await fetch("https://discord.com/api/users/@me", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      if (meResp.ok) {
+        const me = (await meResp.json()) as { id?: string; username?: string };
+        if (me.id) {
+          const { error: identityError } = await admin
+            .from("messaging_user_identities")
+            .upsert(
+              {
+                org_id: state.orgId,
+                user_id: state.userId,
+                platform: "discord",
+                external_user_id: me.id,
+                external_username: me.username ?? null,
+              },
+              { onConflict: "org_id,platform,external_user_id" },
+            );
+          if (identityError) {
+            logger.warn(
+              `[Discord Callback] Failed to seed installer identity: ${identityError.message}`,
+            );
+          }
+        }
+      }
+    } catch (err) {
+      logger.warn("[Discord Callback] /users/@me lookup failed (non-fatal):", err);
+    }
+
+    // 6. Audit log
     logAuditEvent({
       orgId: state.orgId,
       userId: state.userId,
