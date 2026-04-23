@@ -87,7 +87,7 @@ function getBotToken(): string | null {
  */
 export async function sendTelegramNotification(
   params: TelegramNotificationParams,
-): Promise<void> {
+): Promise<{ chatId: string; messageId: number } | null> {
   const botToken = params.botToken ?? getBotToken();
 
   if (!botToken) {
@@ -95,7 +95,7 @@ export async function sendTelegramNotification(
       "[Telegram] No bot token available -- skipping notification for request",
       params.requestId,
     );
-    return;
+    return null;
   }
 
   const dashboardUrl = `${APP_URL}/dashboard#request-${params.requestId}`;
@@ -178,14 +178,24 @@ export async function sendTelegramNotification(
         `[Telegram] API returned ${response.status} for request ${params.requestId}:`,
         body,
       );
-      return;
+      return null;
     }
 
-    logger.info(
-      `[Telegram] Notification sent for request ${params.requestId}`,
-    );
+    const result = (await response.json()) as {
+      ok?: boolean;
+      result?: { message_id?: number; chat?: { id?: number | string } };
+    };
+    logger.info(`[Telegram] Notification sent for request ${params.requestId}`);
+    if (result.ok && result.result?.message_id) {
+      return {
+        chatId: String(result.result.chat?.id ?? params.chatId),
+        messageId: result.result.message_id,
+      };
+    }
+    return null;
   } catch (err) {
     logger.error("[Telegram] Failed to send notification:", err);
+    return null;
   }
 }
 

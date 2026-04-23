@@ -61,6 +61,9 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
   const [userProfiles, setUserProfiles] = useState<Map<string, UserProfile>>(new Map());
   const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
   const [delegatorIds, setDelegatorIds] = useState<Set<string>>(new Set());
+  // Teams this user is a lead of — used to decide if they can archive
+  // requests assigned to those teams.
+  const [leadTeamIds, setLeadTeamIds] = useState<Set<string>>(new Set());
   // Transient banner shown when the current user's delegation status changes
   // mid-session (granted, revoked, or nearing expiry).
   const [delegationAlert, setDelegationAlert] = useState<
@@ -142,6 +145,30 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
     setDelegatorIds(
       new Set((delegRows ?? []).map((d: { delegator_id: string }) => d.delegator_id)),
     );
+  }, [orgId, userId]);
+
+  // Load the set of teams this user is a lead of (scoped to this org).
+  // Used by the archive permission check so team leads can archive
+  // requests assigned to their team.
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("team_memberships")
+        .select("team_id, teams!inner(org_id)")
+        .eq("user_id", userId)
+        .eq("is_lead", true)
+        .eq("teams.org_id", orgId);
+      if (cancelled) return;
+      setLeadTeamIds(
+        new Set((data ?? []).map((r: { team_id: string }) => r.team_id)),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [orgId, userId]);
 
   // Realtime: when a delegation-related notification lands, refetch the
@@ -898,6 +925,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
     userRole,
     currentUserId: userId,
     delegatorIds,
+    leadTeamIds,
     isLoading,
     skipConfirmation,
     onInlineAction: handleInlineAction,

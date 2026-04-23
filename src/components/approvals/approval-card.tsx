@@ -43,6 +43,9 @@ interface ApprovalCardProps {
   /** Current user's org role, used with canArchiveApproval to hide the
    * Archive/Unarchive items for mere approvers. */
   userRole?: string;
+  /** Teams this user is a lead of — archive is visible on requests
+   * assigned to one of these teams. */
+  leadTeamIds?: ReadonlySet<string>;
   currentUserId?: string;
   delegatorIds?: ReadonlySet<string>;
   isLoading?: boolean;
@@ -91,6 +94,7 @@ export const ApprovalCard = memo(function ApprovalCard({
   canApprove = true,
   canManageFlows = false,
   userRole,
+  leadTeamIds,
   currentUserId,
   delegatorIds,
   isLoading = false,
@@ -342,7 +346,7 @@ export const ApprovalCard = memo(function ApprovalCard({
                     Details
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  {canArchiveApproval(approval, currentUserId, userRole) && (
+                  {canArchiveApproval(approval, currentUserId, userRole, leadTeamIds) && (
                     approval.archived_at ? (
                       onUnarchive && (
                         <DropdownMenuItem onClick={() => onUnarchive(approval.id)}>

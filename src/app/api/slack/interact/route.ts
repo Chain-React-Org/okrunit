@@ -27,6 +27,7 @@ import {
   canUserDecideServerSide,
   resolveMessagingUser,
 } from "@/lib/approvals/can-decide-server";
+import { createLinkNonce } from "@/lib/messaging/link-nonces";
 
 // ---------------------------------------------------------------------------
 // Signature Verification
@@ -241,10 +242,18 @@ async function applyDecisionAndRespond(request: Request, params: {
     externalUserId: slackUserId,
   });
   if (!resolved) {
+    // Mint a one-time link nonce so the user can bind this Slack id to
+    // their OKrunit account with a single click.
+    const { url } = await createLinkNonce({
+      orgId: approval.org_id,
+      platform: "slack",
+      externalUserId: slackUserId,
+      externalUsername: slackUsername,
+    });
     return {
       response_action: "errors",
       errors: {
-        reason: "Your Slack account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
+        reason: `Your Slack account isn't linked yet. Connect it here: ${url} (expires in 10 minutes).`,
       },
     } as { response_action: string };
   }
@@ -450,22 +459,62 @@ export async function POST(request: Request) {
         const admin = createAdminClient();
         const { data: approval, error: fetchError } = await admin
           .from("approval_requests")
-          .select("id, status, expires_at, org_id, require_rejection_reason, priority, title, callback_url, callback_headers, connection_id, metadata")
+          .select("id, status, expires_at, org_id, require_rejection_reason, priority, title, callback_url, callback_headers, connection_id, metadata, decided_by, decided_at, decision_comment")
           .eq("id", requestId)
           .single();
 
         if (fetchError || !approval || approval.status !== "pending") {
           if (responseUrl) {
+            // Stale-click cleanup: replace the clicked message with a
+            // decision summary so the buttons go away and the outcome is
+            // visible right where the user clicked.
+            let blocks: object[];
+            if (!approval) {
+              blocks = [
+                {
+                  type: "section",
+                  text: { type: "mrkdwn", text: ":warning: Request not found." },
+                },
+              ];
+            } else {
+              const emoji =
+                approval.status === "approved"
+                  ? ":white_check_mark:"
+                  : approval.status === "rejected"
+                    ? ":x:"
+                    : approval.status === "cancelled"
+                      ? ":no_entry_sign:"
+                      : ":hourglass:";
+              let decidedByName = "";
+              if (approval.decided_by) {
+                const { data: profile } = await admin
+                  .from("user_profiles")
+                  .select("full_name, email")
+                  .eq("id", approval.decided_by)
+                  .maybeSingle();
+                decidedByName = profile?.full_name
+                  ? ` by ${profile.full_name}`
+                  : profile?.email
+                    ? ` by ${profile.email}`
+                    : "";
+              }
+              const commentLine = approval.decision_comment
+                ? `\n> _${approval.decision_comment}_`
+                : "";
+              blocks = [
+                {
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: `${emoji} *${approval.title}* — ${approval.status}${decidedByName}${commentLine}`,
+                  },
+                },
+              ];
+            }
             await fetch(responseUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                replace_original: true,
-                blocks: [{
-                  type: "section",
-                  text: { type: "mrkdwn", text: !approval ? ":warning: Request not found." : `:information_source: Already ${approval.status}.` },
-                }],
-              }),
+              body: JSON.stringify({ replace_original: true, blocks }),
             });
           }
           return;

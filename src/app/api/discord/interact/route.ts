@@ -28,6 +28,7 @@ import {
   canUserDecideServerSide,
   resolveMessagingUser,
 } from "@/lib/approvals/can-decide-server";
+import { createLinkNonce } from "@/lib/messaging/link-nonces";
 
 // ---------------------------------------------------------------------------
 // Discord Interaction Types
@@ -306,10 +307,16 @@ async function applyDecision(request: Request, params: {
     externalUserId: discordUserId,
   });
   if (!resolved) {
+    const { url } = await createLinkNonce({
+      orgId: approval.org_id,
+      platform: "discord",
+      externalUserId: discordUserId,
+      externalUsername: discordUsername,
+    });
     return {
       success: false,
       response: buildInfoResponse(
-        "Your Discord account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
+        `Your Discord account isn't linked yet. [Connect it here](${url}) (expires in 10 minutes).`,
       ),
     };
   }

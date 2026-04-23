@@ -633,8 +633,26 @@ async function dispatchDiscord(
       priority: event.requestPriority,
       connectionName: event.connectionName,
     })
-      .then(() => {
+      .then(async (ref) => {
         logNotificationDelivery({ ...logBase, status: "sent" });
+        // Record the message ref so we can edit it in place when the
+        // approval is decided. Only webhook-posted messages are editable
+        // via PATCH; bot-posted messages could use a different endpoint
+        // that we haven't wired yet.
+        if (ref && ref.webhookUrl) {
+          const { recordApprovalMessage } = await import(
+            "@/lib/notifications/approval-messages"
+          );
+          await recordApprovalMessage({
+            approvalId: event.requestId,
+            orgId: event.orgId,
+            connectionId: conn.id,
+            platform: "discord",
+            channelId: ref.channelId,
+            messageId: ref.messageId,
+            webhookUrl: ref.webhookUrl,
+          });
+        }
       })
       .catch((err: unknown) => {
         logger.error(
@@ -789,8 +807,24 @@ function dispatchTelegram(
       connectionName: event.connectionName,
       showActionButtons,
     })
-      .then(() => {
+      .then(async (ref) => {
         logNotificationDelivery({ ...logBase, status: "sent" });
+        // Record the message ref so we can edit it in place when the
+        // approval is decided.
+        if (ref) {
+          const { recordApprovalMessage } = await import(
+            "@/lib/notifications/approval-messages"
+          );
+          await recordApprovalMessage({
+            approvalId: event.requestId,
+            orgId: event.orgId,
+            connectionId: conn.id,
+            platform: "telegram",
+            channelId: ref.chatId,
+            messageId: String(ref.messageId),
+            webhookUrl: null,
+          });
+        }
       })
       .catch((err: unknown) => {
         logger.error(

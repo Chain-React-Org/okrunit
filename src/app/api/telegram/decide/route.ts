@@ -22,6 +22,7 @@ import {
   canUserDecideServerSide,
   resolveMessagingUser,
 } from "@/lib/approvals/can-decide-server";
+import { createLinkNonce } from "@/lib/messaging/link-nonces";
 
 // ---------------------------------------------------------------------------
 // Telegram initData validation
@@ -228,10 +229,17 @@ export async function POST(request: Request) {
     externalUserId: String(user.id),
   });
   if (!resolved) {
+    const { url } = await createLinkNonce({
+      orgId: approval.org_id,
+      platform: "telegram",
+      externalUserId: String(user.id),
+      externalUsername: user.username ?? null,
+    });
     return NextResponse.json(
       {
         error:
-          "Your Telegram account isn't linked to an OKrunit user. Open this request in the OKrunit dashboard to approve.",
+          "Your Telegram account isn't linked yet. Tap the link to connect it (expires in 10 minutes).",
+        link_url: url,
       },
       { status: 403 },
     );

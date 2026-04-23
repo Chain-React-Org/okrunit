@@ -8,12 +8,17 @@ import type { ApprovalRequest, CreatedByInfo } from "@/lib/types/database";
 
 const CREATOR = "11111111-1111-1111-1111-111111111111";
 const SOMEONE_ELSE = "22222222-2222-2222-2222-222222222222";
+const TEAM_A = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+const TEAM_B = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
 
-function approval(userId: string | null = CREATOR): Pick<ApprovalRequest, "created_by"> {
+function approval(
+  userId: string | null = CREATOR,
+  assignedTeamId: string | null = null,
+): Pick<ApprovalRequest, "created_by" | "assigned_team_id"> {
   const createdBy: CreatedByInfo | null = userId
     ? { type: "oauth", user_id: userId }
     : null;
-  return { created_by: createdBy };
+  return { created_by: createdBy, assigned_team_id: assignedTeamId };
 }
 
 describe("canArchiveApproval", () => {
@@ -50,5 +55,38 @@ describe("canArchiveApproval", () => {
   it("still allows admins/owners on requests with no human creator", () => {
     expect(canArchiveApproval(approval(null), SOMEONE_ELSE, "admin")).toBe(true);
     expect(canArchiveApproval(approval(null), SOMEONE_ELSE, "owner")).toBe(true);
+  });
+
+  it("allows a team lead on requests assigned to their team", () => {
+    expect(
+      canArchiveApproval(
+        approval(CREATOR, TEAM_A),
+        SOMEONE_ELSE,
+        "member",
+        new Set([TEAM_A]),
+      ),
+    ).toBe(true);
+  });
+
+  it("blocks a team lead on requests assigned to a different team", () => {
+    expect(
+      canArchiveApproval(
+        approval(CREATOR, TEAM_B),
+        SOMEONE_ELSE,
+        "member",
+        new Set([TEAM_A]),
+      ),
+    ).toBe(false);
+  });
+
+  it("doesn't elevate a team lead on unassigned requests", () => {
+    expect(
+      canArchiveApproval(
+        approval(CREATOR, null),
+        SOMEONE_ELSE,
+        "member",
+        new Set([TEAM_A]),
+      ),
+    ).toBe(false);
   });
 });
