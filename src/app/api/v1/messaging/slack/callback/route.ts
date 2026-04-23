@@ -148,7 +148,31 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${dest}?error=save_failed`);
     }
 
-    // 4. Audit log
+    // 4. Seed messaging_user_identities for the installer so their clicks
+    // in Slack can immediately resolve to their OKrunit user id. Without
+    // this the permission helper rejects every click with "link your
+    // account". Other org members can be linked later via a dedicated UI.
+    if (tokenData.authed_user?.id) {
+      const { error: identityError } = await admin
+        .from("messaging_user_identities")
+        .upsert(
+          {
+            org_id: state.orgId,
+            user_id: state.userId,
+            platform: "slack",
+            external_user_id: tokenData.authed_user.id,
+            external_username: null,
+          },
+          { onConflict: "org_id,platform,external_user_id" },
+        );
+      if (identityError) {
+        logger.warn(
+          `[Slack Callback] Failed to seed installer identity: ${identityError.message}`,
+        );
+      }
+    }
+
+    // 5. Audit log
     logAuditEvent({
       orgId: state.orgId,
       userId: state.userId,

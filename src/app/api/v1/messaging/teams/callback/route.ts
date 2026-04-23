@@ -190,7 +190,44 @@ export async function GET(request: Request) {
       );
     }
 
-    // 6. Audit log
+    // 6. Seed messaging_user_identities with the installer's AAD object id
+    // so clicks in Teams can resolve to their OKrunit user without a
+    // separate linking step. Best-effort — if the Graph /me call fails we
+    // still proceed with the connection.
+    try {
+      const meResp = await fetch(`${GRAPH_API_BASE}/me`, {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      if (meResp.ok) {
+        const me = (await meResp.json()) as {
+          id?: string;
+          userPrincipalName?: string;
+        };
+        if (me.id) {
+          const { error: identityError } = await admin
+            .from("messaging_user_identities")
+            .upsert(
+              {
+                org_id: state.orgId,
+                user_id: state.userId,
+                platform: "teams",
+                external_user_id: me.id,
+                external_username: me.userPrincipalName ?? null,
+              },
+              { onConflict: "org_id,platform,external_user_id" },
+            );
+          if (identityError) {
+            logger.warn(
+              `[Teams Callback] Failed to seed installer identity: ${identityError.message}`,
+            );
+          }
+        }
+      }
+    } catch (err) {
+      logger.warn("[Teams Callback] /me lookup failed (non-fatal):", err);
+    }
+
+    // 7. Audit log
     logAuditEvent({
       orgId: state.orgId,
       userId: state.userId,
