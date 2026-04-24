@@ -23,6 +23,7 @@ import { checkReauthRequired } from "@/lib/api/session-security";
 import type { RejectionReasonPolicy } from "@/lib/types/database";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -46,7 +47,7 @@ async function getUserDisplayName(
     .eq("id", userId)
     .single();
   if (!data) return null;
-  return data.full_name || data.email || null;
+  return titleCaseName(data.full_name) || data.email || null;
 }
 
 /**

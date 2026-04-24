@@ -5,6 +5,7 @@ import { buildWeeklyDigestEmailHtml } from "@/lib/email/weekly-digest";
 import type { WeeklyDigestAnalytics } from "@/lib/email/weekly-digest";
 import { verifyCronAuth } from "@/lib/api/cron-auth";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "OKrunit <noreply@okrunit.com>";
 
@@ -171,7 +172,7 @@ async function computeOrgAnalytics(
         .eq("id", slowestUserId)
         .single();
 
-      topBottleneckName = profile?.full_name || profile?.email || "Unknown";
+      topBottleneckName = titleCaseName(profile?.full_name) || profile?.email || "Unknown";
     }
   }
 
@@ -352,7 +353,7 @@ async function handleDigest(req: NextRequest) {
 
       try {
         const html = buildWeeklyDigestEmailHtml({
-          fullName: profile.full_name || "there",
+          fullName: titleCaseName(profile.full_name) || "there",
           orgName: org.name,
           periodStart,
           periodEnd,

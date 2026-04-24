@@ -10,6 +10,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { cancelDelegation, DelegationError } from "@/lib/api/delegation";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---- DELETE /api/v1/delegations/[id] --------------------------------------
 
@@ -89,7 +90,7 @@ export async function DELETE(
             .eq("id", existing.delegator_id)
             .single();
           const delegatorName =
-            delegatorProfile?.full_name ||
+            titleCaseName(delegatorProfile?.full_name) ||
             delegatorProfile?.email ||
             "A teammate";
 
@@ -98,7 +99,7 @@ export async function DELETE(
             orgId: auth.orgId,
             category: "delegation_revoked",
             title: `${delegatorName} cancelled their delegation to you`,
-            body: `You no longer cover requests routed to ${delegatorProfile?.full_name || "them"}. Any open requests revert to the original approver.`,
+            body: `You no longer cover requests routed to ${titleCaseName(delegatorProfile?.full_name) || "them"}. Any open requests revert to the original approver.`,
             actorId: existing.delegator_id,
             actorName: delegatorName,
             resourceType: "approval_delegation",

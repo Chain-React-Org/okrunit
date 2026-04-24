@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { AuditLogTable } from "@/components/audit/audit-log-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AuditLogEntry } from "@/lib/types/database";
+import { titleCaseName } from "@/lib/format-name";
 
 const PAGE_SIZE = 50;
 
@@ -39,7 +40,7 @@ export function AuditLogClient({ orgId }: AuditLogClientProps) {
           .in("id", userIds);
         const map: Record<string, string> = {};
         for (const p of profiles ?? []) {
-          map[p.id] = p.full_name || p.email;
+          map[p.id] = titleCaseName(p.full_name) || p.email;
         }
         setUserNames(map);
       }

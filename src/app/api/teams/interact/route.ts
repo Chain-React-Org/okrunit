@@ -28,6 +28,7 @@ import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { getDecisionCommentPolicy } from "@/lib/api/rejection-reason";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 import {
   canUserDecideServerSide,
   resolveMessagingUser,
@@ -625,7 +626,7 @@ async function handleActionSubmit(
         .select("full_name, email")
         .eq("id", approval.decided_by)
         .maybeSingle();
-      decidedByName = profile?.full_name || profile?.email || "";
+      decidedByName = titleCaseName(profile?.full_name) || profile?.email || "";
     }
     const byLine = decidedByName ? ` by ${decidedByName}` : "";
     const commentLine = approval.decision_comment

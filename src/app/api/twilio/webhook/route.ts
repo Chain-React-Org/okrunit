@@ -28,6 +28,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---------------------------------------------------------------------------
 // Twilio Signature Validation
@@ -211,7 +212,7 @@ export async function POST(request: Request) {
   // Apply the decision
   const newStatus = decision === "approve" ? "approved" : "rejected";
   const decidedAt = new Date().toISOString();
-  const displayName = profile.full_name || profile.email || profile.id;
+  const displayName = titleCaseName(profile.full_name) || profile.email || profile.id;
 
   const updatePayload: Record<string, unknown> = {
     status: newStatus,

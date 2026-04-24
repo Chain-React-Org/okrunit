@@ -14,6 +14,7 @@ import { emailLayout, emailCard, emailButton, escapeHtml } from "@/lib/email/lay
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---- Validation -----------------------------------------------------------
 
@@ -275,7 +276,7 @@ export async function POST(
     }
 
     const ipAddress = getIpAddress(request);
-    const addedByName = auth.profile.full_name || auth.user.email;
+    const addedByName = titleCaseName(auth.profile.full_name) || auth.user.email;
 
     // Audit + send notifications for each added user
     const { data: addedProfiles } = await admin

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/popover";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { cn } from "@/lib/utils";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -113,7 +114,7 @@ export function MemberPicker({ selectedIds, onChange }: MemberPickerProps) {
                 variant="secondary"
                 className="gap-1 pr-1"
               >
-                {m ? (m.full_name ?? m.email) : id.slice(0, 8)}
+                {m ? (titleCaseName(m.full_name) ?? m.email) : id.slice(0, 8)}
                 <button
                   type="button"
                   className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
@@ -161,7 +162,7 @@ export function MemberPicker({ selectedIds, onChange }: MemberPickerProps) {
                 <CommandGroup>
                   {members.map((m) => {
                     const isSelected = selectedIds.includes(m.id);
-                    const label = m.full_name ?? m.email;
+                    const label = titleCaseName(m.full_name) ?? m.email;
                     // Keywords let cmdk match on role and email even though they aren't in the displayed text
                     const keywords = [m.email, m.role, roleLabel(m.role)];
                     if (m.full_name) keywords.push(m.full_name);

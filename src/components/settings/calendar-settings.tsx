@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { titleCaseName } from "@/lib/format-name";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -104,7 +105,7 @@ export function CalendarSettings({ orgId, userId }: CalendarSettingsProps) {
               const profile = profiles?.find((p) => p.id === m.user_id);
               return {
                 id: m.user_id,
-                name: profile?.full_name || profile?.email || m.user_id,
+                name: titleCaseName(profile?.full_name) || profile?.email || m.user_id,
                 email: profile?.email || "",
               };
             })

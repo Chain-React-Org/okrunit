@@ -9,6 +9,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { canUseFeature } from "@/lib/billing/enforce";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { titleCaseName } from "@/lib/format-name";
 // ---- Validation -----------------------------------------------------------
 
 const overviewQuerySchema = z.object({
@@ -239,7 +240,7 @@ async function computeBottlenecks(
 
   const nameMap = new Map<string, string>();
   for (const p of profiles ?? []) {
-    nameMap.set(p.id, p.full_name || p.email);
+    nameMap.set(p.id, titleCaseName(p.full_name) || p.email);
   }
 
   // Build and sort by avg decision time descending

@@ -10,6 +10,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { checkConditions } from "@/lib/api/conditions";
 import { deliverCallback } from "@/lib/api/callbacks";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---- POST /api/v1/approvals/[id]/conditions/check ------------------------
 
@@ -77,7 +78,7 @@ export async function POST(
             .select("full_name, email")
             .eq("id", approval.decided_by)
             .single();
-          decidedByName = profile?.full_name || profile?.email || null;
+          decidedByName = titleCaseName(profile?.full_name) || profile?.email || null;
         }
 
         after(

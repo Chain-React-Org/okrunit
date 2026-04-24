@@ -12,6 +12,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkFourEyes } from "@/lib/api/four-eyes";
 import type { ApprovalRequest, Organization } from "@/lib/types/database";
+import { titleCaseName } from "@/lib/format-name";
 
 export type DecideEligibility =
   | { ok: true; delegatedFrom: string | null }
@@ -175,7 +176,7 @@ export async function canUserDecideServerSide(
           .eq("id", nextApprover)
           .maybeSingle();
         const waitingOn =
-          nextProfile?.full_name ?? nextProfile?.email ?? "another approver";
+          titleCaseName(nextProfile?.full_name) ?? nextProfile?.email ?? "another approver";
         return {
           ok: false,
           code: "NOT_YOUR_TURN",

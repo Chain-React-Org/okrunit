@@ -15,6 +15,7 @@ import { sendErrorDiscordAlert } from "./discord-alerts";
 import { getBreadcrumbs } from "./breadcrumbs";
 import { logger, getCorrelationId } from "./logger";
 import type { CaptureErrorParams, ErrorSeverity } from "./types";
+import { titleCaseName } from "@/lib/format-name";
 
 /** Current release. Read once from env. */
 const RELEASE =
@@ -161,7 +162,7 @@ export async function captureError(params: CaptureErrorParams): Promise<void> {
               : Promise.resolve({ data: null }),
           ]);
           if (userResult.data) {
-            userName = userResult.data.full_name || userResult.data.email;
+            userName = titleCaseName(userResult.data.full_name) || userResult.data.email;
           }
           if (orgResult.data) {
             orgName = orgResult.data.name;

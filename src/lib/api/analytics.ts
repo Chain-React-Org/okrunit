@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---- Types ----------------------------------------------------------------
 
@@ -508,7 +509,7 @@ export async function getPerUserMetrics(
 
   const nameMap = new Map<string, string>();
   for (const p of profiles ?? []) {
-    nameMap.set(p.id, p.full_name || p.email);
+    nameMap.set(p.id, titleCaseName(p.full_name) || p.email);
   }
 
   return Array.from(userMap.entries())

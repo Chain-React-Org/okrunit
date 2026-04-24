@@ -5,6 +5,7 @@
 // ---------------------------------------------------------------------------
 
 import type { ApprovalRequest, UserProfile } from "@/lib/types/database";
+import { titleCaseName } from "@/lib/format-name";
 
 interface Team {
   id: string;
@@ -28,7 +29,7 @@ export function getCurrentlyResponsible(
     const nextUserId = approval.assigned_approvers[nextIdx];
     if (nextUserId) {
       const profile = userProfiles.get(nextUserId);
-      return profile?.full_name || profile?.email || "Next approver";
+      return titleCaseName(profile?.full_name) || profile?.email || "Next approver";
     }
   }
 
@@ -36,7 +37,7 @@ export function getCurrentlyResponsible(
   if (approval.assigned_approvers?.length) {
     if (approval.assigned_approvers.length === 1) {
       const profile = userProfiles.get(approval.assigned_approvers[0]);
-      return profile?.full_name || profile?.email || "Assigned approver";
+      return titleCaseName(profile?.full_name) || profile?.email || "Assigned approver";
     }
     return `${approval.assigned_approvers.length} approvers`;
   }

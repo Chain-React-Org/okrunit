@@ -17,6 +17,7 @@ import { logAuditEvent } from "@/lib/api/audit";
 import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { verifyMondayAuth } from "@/lib/api/monday-auth";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 
 
 interface MondayActionPayload {
@@ -120,7 +121,7 @@ export async function POST(request: Request) {
         source_url: inputFields.source_url || null,
         metadata,
         idempotency_key: idempotencyKey,
-        requested_by_name: inputFields.userName || null,
+        requested_by_name: titleCaseName(inputFields.userName) || null,
         created_by: {
           type: "integration",
           platform: "monday",

@@ -18,6 +18,7 @@ import {
   listDelegations,
   DelegationError,
 } from "@/lib/api/delegation";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---- GET /api/v1/delegations ----------------------------------------------
 
@@ -152,7 +153,7 @@ export async function POST(request: Request) {
           .eq("id", delegatorId)
           .single();
         const delegatorName =
-          delegatorProfile?.full_name ||
+          titleCaseName(delegatorProfile?.full_name) ||
           delegatorProfile?.email ||
           "A teammate";
 
@@ -170,7 +171,7 @@ export async function POST(request: Request) {
         });
 
         const bodyParts = [
-          `Active ${startLabel} → ${endLabel}. You can decide on any request routed to ${delegatorProfile?.full_name || "them"} during this window.`,
+          `Active ${startLabel} → ${endLabel}. You can decide on any request routed to ${titleCaseName(delegatorProfile?.full_name) || "them"} during this window.`,
         ];
         if (validated.reason) bodyParts.push(`Note: "${validated.reason}"`);
 

@@ -19,6 +19,7 @@ import { FlowConfigDialog } from "@/components/approvals/flow-config-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ApprovalRequest, ApprovalComment, Connection, UserProfile, InAppNotification } from "@/lib/types/database";
+import { titleCaseName } from "@/lib/format-name";
 import { useOnboardingTourStore } from "@/stores/onboarding-tour-store";
 
 interface ApprovalDashboardProps {
@@ -899,7 +900,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
       if (a.created_by?.user_id) {
         const profile = userProfiles.get(a.created_by.user_id);
         if (profile) {
-          merged[a.id] = profile.full_name || profile.email;
+          merged[a.id] = titleCaseName(profile.full_name) || profile.email;
           continue;
         }
       }
@@ -909,7 +910,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         if (conn?.created_by) {
           const profile = userProfiles.get(conn.created_by);
           if (profile) {
-            merged[a.id] = profile.full_name || profile.email;
+            merged[a.id] = titleCaseName(profile.full_name) || profile.email;
           }
         }
       }

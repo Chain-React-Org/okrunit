@@ -17,6 +17,7 @@
 // ---------------------------------------------------------------------------
 
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 import type { NotificationEvent, NotificationEventType } from "@/lib/notifications/types";
 import {
   shouldNotify,
@@ -1107,7 +1108,7 @@ async function resolveUserName(userId: string): Promise<string> {
       .single();
 
     if (profile) {
-      return profile.full_name || profile.email || userId;
+      return titleCaseName(profile.full_name) || profile.email || userId;
     }
   } catch (err) {
     logger.error("[Notifications] Failed to resolve user name:", err);

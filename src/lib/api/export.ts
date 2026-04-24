@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -159,7 +160,7 @@ export async function fetchExportData(
       (profiles ?? []).map(
         (p: { id: string; full_name: string | null; email: string }) => [
           p.id,
-          p.full_name || p.email,
+          titleCaseName(p.full_name) || p.email,
         ],
       ),
     );

@@ -23,6 +23,7 @@ import { resolveDelegates } from "@/lib/api/delegation";
 import { checkTrustThreshold } from "@/lib/api/trust-engine";
 import { dispatchNotifications } from "@/lib/notifications/orchestrator";
 import { createInAppNotification, createInAppNotificationBulk } from "@/lib/notifications/in-app";
+import { titleCaseName } from "@/lib/format-name";
 import { calculateSlaDeadline, checkSlaBreach, type SlaConfig } from "@/lib/api/sla";
 import { calculateNextEscalation } from "@/lib/api/escalation";
 import type { EscalationConfig } from "@/lib/types/database";
@@ -473,7 +474,13 @@ export async function POST(request: Request) {
     }
 
     // 12. Determine approvers: request/template values → flow defaults → rule routing
-    let assignedApprovers: string[] | null = validated.assigned_approvers ?? flowAssignedApprovers ?? null;
+    //     When the flow is in "any approver" mode, ignore any persisted
+    //     assigned_approvers list. Older records can still carry a stale
+    //     list from a previous "designated" save; honouring it here would
+    //     silently turn a broadcast flow back into a targeted one.
+    const flowDefaultApprovers =
+      flowApproverMode === "any" ? undefined : flowAssignedApprovers;
+    let assignedApprovers: string[] | null = validated.assigned_approvers ?? flowDefaultApprovers ?? null;
     let requiredApprovals = assignedApprovers
       ? assignedApprovers.length
       : (validated.required_approvals ?? flowRequiredApprovals ?? 1);
@@ -795,12 +802,14 @@ export async function POST(request: Request) {
             }
           }
 
-          // Also notify eligible approvers so the request isn't missed
+          // Also notify eligible approvers so the request isn't missed.
+          // Gate on can_approve so owners who intentionally revoke someone's
+          // approval permission don't get overridden by their role label.
           const { data: eligibleMembers } = await admin
             .from("org_memberships")
             .select("user_id")
             .eq("org_id", auth.orgId)
-            .in("role", ["approver", "admin", "owner"]);
+            .eq("can_approve", true);
           const eligibleIds = (eligibleMembers ?? [])
             .map((m: { user_id: string }) => m.user_id)
             .filter((id: string) => id !== ownerId);
@@ -834,13 +843,15 @@ export async function POST(request: Request) {
             resourceId: approval.id,
           });
         } else {
-          // No assigned approvers (mode = "any" or "role_based"):
-          // Notify all eligible org members
+          // No assigned approvers (mode = "any" or "role_based" with no
+          // resolved matches): notify every org member who can approve.
+          // can_approve is the authoritative gate here so org-level permission
+          // revocations are honoured even when the role label would qualify.
           const { data: eligibleMembers } = await admin
             .from("org_memberships")
             .select("user_id")
             .eq("org_id", auth.orgId)
-            .in("role", ["approver", "admin", "owner"]);
+            .eq("can_approve", true);
           const notifyUserIds = (eligibleMembers ?? []).map((m: { user_id: string }) => m.user_id);
 
           if (notifyUserIds.length > 0) {
@@ -1318,7 +1329,7 @@ export async function GET(request: Request) {
       nameMap = new Map(
         (profiles ?? []).map((p: { id: string; full_name: string | null; email: string }) => [
           p.id,
-          p.full_name || p.email,
+          titleCaseName(p.full_name) || p.email,
         ]),
       );
     }

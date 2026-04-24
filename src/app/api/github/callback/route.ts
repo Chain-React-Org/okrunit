@@ -11,6 +11,7 @@ import { createHmac } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createCheckRun } from "@/lib/api/github";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
         .single();
 
       if (profile) {
-        decidedByName = profile.full_name || profile.email;
+        decidedByName = titleCaseName(profile.full_name) || profile.email;
       }
     }
 

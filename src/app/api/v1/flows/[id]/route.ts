@@ -109,6 +109,16 @@ export async function PATCH(
       is_configured: true,
     };
 
+    // "Any approver" must never pin a specific approver list: stale selections
+    // from a prior "designated" save would otherwise get persisted and the
+    // approvals dispatch would treat it like a targeted assignment, skipping
+    // the org-wide broadcast branch.
+    if (validated.approver_mode === "any") {
+      updatePayload.assigned_approvers = null;
+      updatePayload.required_role = null;
+      updatePayload.assigned_position_id = null;
+    }
+
     const { data: updated, error } = await admin
       .from("approval_flows")
       .update(updatePayload)

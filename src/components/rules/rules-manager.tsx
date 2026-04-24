@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { ApprovalRule } from "@/lib/types/database";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -398,7 +399,7 @@ export function RulesManager({ initialRules, teams, connections, members, existi
       const names = (config.user_ids as string[])
         .map((id) => memberMap.get(id))
         .filter(Boolean)
-        .map((m) => m!.full_name || m!.email.split("@")[0])
+        .map((m) => titleCaseName(m!.full_name) || m!.email.split("@")[0])
         .slice(0, 2);
       const remaining = (config.user_ids as string[]).length - names.length;
       const label = names.join(", ") + (remaining > 0 ? ` +${remaining}` : "");
@@ -845,7 +846,7 @@ export function RulesManager({ initialRules, teams, connections, members, existi
                                   key={uid}
                                   className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
                                 >
-                                  {m ? (m.full_name || m.email.split("@")[0]) : uid.slice(0, 8)}
+                                  {m ? (titleCaseName(m.full_name) || m.email.split("@")[0]) : uid.slice(0, 8)}
                                   <button
                                     type="button"
                                     onClick={() => toggleUser(uid)}
@@ -895,7 +896,7 @@ export function RulesManager({ initialRules, teams, connections, members, existi
                                       {selected && <CheckCircle className="size-3" />}
                                     </div>
                                     <span className="truncate">
-                                      {m.full_name || m.email.split("@")[0]}
+                                      {titleCaseName(m.full_name) || m.email.split("@")[0]}
                                     </span>
                                     {m.full_name && (
                                       <span className="text-muted-foreground truncate ml-auto text-[10px]">

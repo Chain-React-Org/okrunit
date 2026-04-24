@@ -48,6 +48,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { UserWithMemberships, OrgWithCounts } from "@/lib/admin-types";
+import { titleCaseName } from "@/lib/format-name";
 
 interface UsersTabProps {
   users: UserWithMemberships[];
@@ -278,7 +279,7 @@ export const UsersTab = memo(function UsersTab({ users, organizations = [] }: Us
                       </Avatar>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">
-                          {user.full_name ?? user.email}
+                          {titleCaseName(user.full_name) ?? user.email}
                         </p>
                         {user.full_name && (
                           <p className="truncate text-xs text-muted-foreground">
