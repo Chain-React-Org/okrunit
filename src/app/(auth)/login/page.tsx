@@ -8,15 +8,20 @@ export const metadata = {
   description: "Sign in to your OKrunit account.",
 };
 
-export default async function LoginPage() {
-  // If the user is already signed in, don't show the login form — send
-  // them to the dashboard. Matches the mfa-verify / setup redirect pattern.
+// Auth check lives in its own async component so Next 16's cache-components
+// can stream the shell first and suspend only the auth lookup. Calling
+// getAuthUser() at the top of the page body (outside <Suspense>) trips the
+// "Uncached data was accessed outside of <Suspense>" prerender error.
+async function LoginGate() {
   const { user } = await getAuthUser();
   if (user) redirect("/org/overview");
+  return <LoginForm />;
+}
 
+export default function LoginPage() {
   return (
     <Suspense>
-      <LoginForm />
+      <LoginGate />
     </Suspense>
   );
 }
