@@ -63,6 +63,7 @@ function makeMockAdmin(config: {
   profile?: { full_name?: string | null; email?: string | null };
   membershipRole?: string;
   fourEyesConfig?: { enabled: boolean; action_types: string[]; min_priority: string | null };
+  allowSelfApproval?: boolean;
 }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const builder = (table: string): any => {
@@ -144,9 +145,17 @@ function makeMockAdmin(config: {
           eq: () => ({
             maybeSingle: () =>
               Promise.resolve({
-                data: config.fourEyesConfig
-                  ? { four_eyes_config: config.fourEyesConfig }
-                  : null,
+                data:
+                  config.fourEyesConfig || config.allowSelfApproval !== undefined
+                    ? {
+                        four_eyes_config: config.fourEyesConfig ?? {
+                          enabled: false,
+                          action_types: [],
+                          min_priority: null,
+                        },
+                        allow_self_approval: config.allowSelfApproval ?? false,
+                      }
+                    : null,
               }),
           }),
         }),
@@ -261,6 +270,29 @@ describe("canUserDecideServerSide", () => {
       actorUserId: USER_A,
     });
     expect(result.ok).toBe(true);
+  });
+
+  it("allows the creator when the org has allow_self_approval=true", async () => {
+    const admin = makeMockAdmin({ allowSelfApproval: true });
+    const result = await canUserDecideServerSide(admin, {
+      approval: makeApproval({
+        created_by: { type: "oauth", user_id: USER_A },
+      }),
+      actorUserId: USER_A,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("still blocks the creator when allow_self_approval is false (default)", async () => {
+    const admin = makeMockAdmin({ allowSelfApproval: false });
+    const result = await canUserDecideServerSide(admin, {
+      approval: makeApproval({
+        created_by: { type: "oauth", user_id: USER_A },
+      }),
+      actorUserId: USER_A,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe("SELF_APPROVAL_BLOCKED");
   });
 
   it("rejects users not in assigned_approvers and without a delegation", async () => {

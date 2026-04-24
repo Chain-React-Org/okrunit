@@ -66,6 +66,7 @@ const updateOrgSchema = z.object({
   require_reauth_for_critical: z.boolean().optional(),
   session_timeout_minutes: z.number().int().min(5).max(43200).optional(),
   four_eyes_config: fourEyesConfigSchema.optional(),
+  allow_self_approval: z.boolean().optional(),
   escalation_config: escalationConfigSchema.optional(),
   rejection_presets: z.array(z.string().max(200)).max(20).optional(),
 }).refine(
@@ -81,6 +82,7 @@ const updateOrgSchema = z.object({
     data.require_reauth_for_critical !== undefined ||
     data.session_timeout_minutes !== undefined ||
     data.four_eyes_config !== undefined ||
+    data.allow_self_approval !== undefined ||
     data.escalation_config !== undefined ||
     data.rejection_presets !== undefined,
   { message: "At least one field must be provided" },
@@ -127,6 +129,7 @@ export async function PATCH(request: Request) {
     if (body.require_reauth_for_critical !== undefined) updatePayload.require_reauth_for_critical = body.require_reauth_for_critical;
     if (body.session_timeout_minutes !== undefined) updatePayload.session_timeout_minutes = body.session_timeout_minutes;
     if (body.four_eyes_config !== undefined) updatePayload.four_eyes_config = body.four_eyes_config;
+    if (body.allow_self_approval !== undefined) updatePayload.allow_self_approval = body.allow_self_approval;
     if (body.escalation_config !== undefined) updatePayload.escalation_config = body.escalation_config;
     if (body.rejection_presets !== undefined) updatePayload.rejection_presets = body.rejection_presets;
 

@@ -38,6 +38,9 @@ interface ApprovalCardProps {
   currentlyResponsible?: string | null;
   onClick: () => void;
   canApprove?: boolean;
+  /** Org setting: when true, creators are allowed to decide on their own
+   * requests. Off by default (segregation of duties). */
+  allowSelfApproval?: boolean;
   /** Controls whether the inline "Configure Flow" icon button renders. */
   canManageFlows?: boolean;
   /** Current user's org role, used with canArchiveApproval to hide the
@@ -92,6 +95,7 @@ export const ApprovalCard = memo(function ApprovalCard({
   currentlyResponsible,
   onClick,
   canApprove = true,
+  allowSelfApproval = false,
   canManageFlows = false,
   userRole,
   leadTeamIds,
@@ -245,7 +249,7 @@ export const ApprovalCard = memo(function ApprovalCard({
             {/* Inline approve/reject - visible on hover (hidden for logs).
                 Gated to the user who is currently responsible: hides for
                 viewers, non-assigned approvers, and self-created requests. */}
-            {onInlineAction && canDecideOnApproval(approval, currentUserId, canApprove, delegatorIds) && (
+            {onInlineAction && canDecideOnApproval(approval, currentUserId, canApprove, delegatorIds, allowSelfApproval) && (
               <div className={cn(
                 "hidden items-center gap-1.5 sm:flex sm:transition-opacity",
                 tourShowApproveButtons ? "sm:opacity-100" : "sm:opacity-0 sm:group-hover/card:opacity-100",

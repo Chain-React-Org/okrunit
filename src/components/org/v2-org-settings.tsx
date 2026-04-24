@@ -435,6 +435,7 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
   );
   const [requireReauth, setRequireReauth] = useState(org.require_reauth_for_critical);
   const [fourEyes, setFourEyes] = useState<FourEyesConfig>(org.four_eyes_config);
+  const [allowSelfApproval, setAllowSelfApproval] = useState(org.allow_self_approval ?? false);
   const [sla, setSla] = useState<SlaConfig>(org.sla_config);
   const [sessionTimeout, setSessionTimeout] = useState(org.session_timeout_minutes);
   const [skipDecisionComment, setSkipDecisionComment] = useState(org.skip_decision_comment);
@@ -465,6 +466,7 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
     if (requireReauth !== org.require_reauth_for_critical) return true;
     if (fourEyes.enabled !== org.four_eyes_config.enabled) return true;
     if ((fourEyes.min_priority ?? null) !== (org.four_eyes_config.min_priority ?? null)) return true;
+    if (allowSelfApproval !== (org.allow_self_approval ?? false)) return true;
     if (sla.low !== org.sla_config.low) return true;
     if (sla.medium !== org.sla_config.medium) return true;
     if (sla.high !== org.sla_config.high) return true;
@@ -476,7 +478,7 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
     if (JSON.stringify(escalation) !== JSON.stringify(org.escalation_config ?? defaultEscalation)) return true;
     return false;
   }, [
-    rejectionPolicy, skipDecisionComment, requireReauth, fourEyes, sla, sessionTimeout,
+    rejectionPolicy, skipDecisionComment, requireReauth, fourEyes, allowSelfApproval, sla, sessionTimeout,
     parsedIps, geoRestrictions.enabled, parsedCountries, escalation, org,
   ]);
 
@@ -500,6 +502,9 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
         (fourEyes.min_priority ?? null) !== (org.four_eyes_config.min_priority ?? null)
       ) {
         payload.four_eyes_config = fourEyes;
+      }
+      if (allowSelfApproval !== (org.allow_self_approval ?? false)) {
+        payload.allow_self_approval = allowSelfApproval;
       }
       if (
         sla.low !== org.sla_config.low ||
@@ -673,6 +678,17 @@ export function V2OrgSettings({ org, role }: V2OrgSettingsProps) {
             </Select>
           </SettingsRow>
         )}
+
+        <SettingsRow
+          label="Allow self-approval"
+          description="Let users decide on requests they created themselves. Off by default for segregation of duties. Turn on for solo accounts, testing, or when you want the same person who files a request to approve it."
+        >
+          <Switch
+            checked={allowSelfApproval}
+            onCheckedChange={setAllowSelfApproval}
+            disabled={!canEdit}
+          />
+        </SettingsRow>
       </SettingsSection>
 
       {/* Response Time Targets */}

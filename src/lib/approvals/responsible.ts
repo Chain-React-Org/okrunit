@@ -84,6 +84,9 @@ export function canDecideOnApproval(
    * eligible if any of their delegators is in assigned_approvers (or is the
    * next-in-line for a sequential flow). */
   delegatorIds?: ReadonlySet<string>,
+  /** When true, the org allows creators to decide on their own requests.
+   * Defaults to false to preserve segregation-of-duties behavior. */
+  allowSelfApproval?: boolean,
 ): boolean {
   if (!currentUserId) return false;
   if (!canApprove) return false;
@@ -97,11 +100,12 @@ export function canDecideOnApproval(
     hasAssigned && approval.assigned_approvers!.includes(currentUserId);
 
   // Block self-approval in the default "any approver" case, where a
-  // creator acting as approver would be trivial self-approval. When a
-  // creator is explicitly listed on the chain (e.g., added themselves
-  // via Configure Flow Rules), respect that intent — the audit log still
-  // captures exactly who approved.
-  if (isSelfCreated && !isExplicitlyInChain) return false;
+  // creator acting as approver would be trivial self-approval. Two escapes:
+  //  - The creator is explicitly listed on this request's chain (via
+  //    Configure Flow Rules), in which case they were placed there
+  //    deliberately — audit log still captures who approved.
+  //  - The org turned on "Allow self-approval" in settings (off by default).
+  if (isSelfCreated && !isExplicitlyInChain && !allowSelfApproval) return false;
 
   if (!hasAssigned) return true;
 

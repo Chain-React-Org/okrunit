@@ -11,7 +11,7 @@ export const metadata = {
 export default async function RequestsPage() {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
-  const { membership } = ctx;
+  const { membership, org } = ctx;
 
   const { approvalCreators, teamsMap } =
     await getCachedRequestsData(membership.org_id);
@@ -21,6 +21,7 @@ export default async function RequestsPage() {
       approvalCreators={approvalCreators}
       teamsMap={teamsMap}
       canApprove={membership.can_approve ?? true}
+      allowSelfApproval={org.allow_self_approval ?? false}
       canManageFlows={membership.can_manage_flows ?? false}
       orgId={membership.org_id}
       userId={membership.user_id}

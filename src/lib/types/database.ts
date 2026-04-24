@@ -124,6 +124,7 @@ export interface Organization {
   require_reauth_for_critical: boolean;
   session_timeout_minutes: number;
   four_eyes_config: FourEyesConfig;
+  allow_self_approval: boolean;
   action_types: string[];
   auto_approvals_paused: boolean;
   sso_domain: string | null;
