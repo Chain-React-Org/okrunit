@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, useMemo, memo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ApprovalFilters } from "@/components/approvals/approval-filters";
 import { ApprovalListGrouped } from "@/components/approvals/approval-list-grouped";
 import { ApprovalDetail } from "@/components/approvals/approval-detail";
@@ -302,7 +302,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         .from("notification_settings")
         .select("skip_approval_confirmation")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (data?.skip_approval_confirmation) {
         setSkipConfirmation(true);
@@ -555,7 +555,6 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
 
   // Auto-open detail panel from ?open=<id> query param (e.g. from notification click)
   const searchParams = useSearchParams();
-  const router = useRouter();
   const openRequestId = searchParams.get("open");
   const handledOpenRef = useRef<string | null>(null);
   useEffect(() => {
@@ -565,10 +564,17 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
       handledOpenRef.current = openRequestId;
       setSelectedApproval(target);
       setDetailOpen(true);
-      // Clean up the URL without triggering a navigation
-      router.replace("/requests", { scroll: false });
+      // Strip ?open=<id> with the native history API rather than
+      // router.replace — router.replace re-runs server components and can
+      // race the Sheet mount, occasionally leaving the detail unopened
+      // when users arrive from a notification link.
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("open");
+        window.history.replaceState(window.history.state, "", url.toString());
+      }
     }
-  }, [openRequestId, approvals, router]);
+  }, [openRequestId, approvals]);
 
   const handleSelect = useCallback((approval: ApprovalRequest) => {
     setSelectedApproval(approval);

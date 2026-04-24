@@ -318,9 +318,21 @@ export function BillingDashboard({ plans, subscription, planOverride, usage, inv
   const limits = PLAN_LIMITS[currentPlan];
   const hasPaidSub = subscription?.stripe_subscription_id && (subscription.status === "active" || subscription.status === "trialing") && subscriptionPlan !== "free";
   const isTrialing = subscription?.status === "trialing";
-  const trialDaysLeft = isTrialing && subscription?.trial_end
-    ? Math.max(0, Math.ceil((new Date(subscription.trial_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : 0;
+  // Compute trial days left only after mount. Using Date.now() at render
+  // time during SSR runs at a different moment than the client's first
+  // render, and a day boundary between the two produces a React hydration
+  // error (#418). Initializing to 0 ensures SSR and client agree; the real
+  // value fills in on the next paint.
+  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
+  useEffect(() => {
+    if (isTrialing && subscription?.trial_end) {
+      setTrialDaysLeft(
+        Math.max(0, Math.ceil((new Date(subscription.trial_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      );
+    } else {
+      setTrialDaysLeft(0);
+    }
+  }, [isTrialing, subscription?.trial_end]);
 
   const handleCheckout = (planId: string) => {
     if (!isAdmin) { toast.error("Only admins can manage billing"); return; }

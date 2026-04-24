@@ -278,7 +278,7 @@ export async function GET(request: Request) {
 
     const featureCheck = await canUseFeature(orgId, "analytics");
     if (!featureCheck.allowed) {
-      throw new ApiError(403, featureCheck.reason ?? "Upgrade required for analytics");
+      throw new ApiError(403, featureCheck.reason ?? "Upgrade required for analytics", "PLAN_LIMIT_EXCEEDED");
     }
 
     // 2. Parse query params

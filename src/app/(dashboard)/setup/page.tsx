@@ -15,6 +15,11 @@ export default async function SetupPage() {
   if (!ctx) redirect("/login");
 
   const { org, profile } = ctx;
+
+  // Users who already finished setup shouldn't see the wizard again.
+  // Send them to the main dashboard instead.
+  if (profile.setup_completed_at) redirect("/org/overview");
+
   const admin = createAdminClient();
 
   // Fetch connected messaging platforms and invite count for this org
