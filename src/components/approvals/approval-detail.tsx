@@ -44,6 +44,9 @@ interface ApprovalDetailProps {
   ) => void;
   isLoading: boolean;
   canApprove?: boolean;
+  /** Org setting: creators may decide on their own requests when true.
+   * Off by default (segregation of duties). */
+  allowSelfApproval?: boolean;
   /** Whether the current user has the `can_manage_flows` permission in
    * this org. Controls whether the "Configure Flow Rules" button is
    * rendered. Server also enforces this on the flow PATCH and
@@ -117,6 +120,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
   onRespond,
   isLoading,
   canApprove = true,
+  allowSelfApproval = false,
   canManageFlows = false,
   userProfiles,
   creatorName,
@@ -188,7 +192,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
   // non-assigned viewer, not out-of-turn on a sequential chain).
   useEffect(() => {
     if (!open || !approval) return;
-    if (!canDecideOnApproval(approval, currentUserId, !!canApprove, delegatorIds)) return;
+    if (!canDecideOnApproval(approval, currentUserId, !!canApprove, delegatorIds, allowSelfApproval)) return;
 
     function handleKey(e: KeyboardEvent) {
       // Don't fire if user is typing in an input/textarea
@@ -206,7 +210,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
 
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [open, approval, canApprove, onRespond, currentUserId, delegatorIds]);
+  }, [open, approval, canApprove, allowSelfApproval, onRespond, currentUserId, delegatorIds]);
 
   // No local fetch needed. Comments are prefetched by the parent dashboard.
 
@@ -264,7 +268,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
   // buttons can never drift. Hides for self-created, non-assigned, and
   // non-next-in-line users. Delegates are treated as eligible on behalf of
   // their delegators.
-  const effectiveCanApprove = canDecideOnApproval(approval, currentUserId, !!canApprove, delegatorIds);
+  const effectiveCanApprove = canDecideOnApproval(approval, currentUserId, !!canApprove, delegatorIds, allowSelfApproval);
 
   // Names of approvers still pending a decision (parallel: everyone who hasn't
   // pushed current_approvals past their slot; sequential: the rest of the chain).
@@ -505,7 +509,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
           </div>}
 
           {/* You're up banner: user is the responsible approver */}
-          {approval.status === "pending" && hasAssignedApprovers && isResponsibleApprover && !isSelfCreated && canApprove && (
+          {approval.status === "pending" && hasAssignedApprovers && isResponsibleApprover && (!isSelfCreated || allowSelfApproval) && canApprove && (
             <div className="flex items-start gap-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20 px-4 py-3">
               <UserCheck className="size-4 shrink-0 text-emerald-500 mt-0.5" />
               <p className="text-xs text-emerald-700 dark:text-emerald-400">
@@ -620,7 +624,7 @@ export const ApprovalDetail = memo(function ApprovalDetail({
                       .
                     </>
                   )
-                ) : isSelfCreated ? (
+                ) : isSelfCreated && !allowSelfApproval ? (
                   "You created this request. Another approver must decide."
                 ) : (
                   "Only approvers assigned to this request can decide."

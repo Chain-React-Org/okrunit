@@ -12,6 +12,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkFourEyes } from "@/lib/api/four-eyes";
 import type { ApprovalRequest, Organization } from "@/lib/types/database";
+import { titleCaseName } from "@/lib/format-name";
 
 export type DecideEligibility =
   | { ok: true; delegatedFrom: string | null }
@@ -54,8 +55,9 @@ export async function canUserDecideServerSide(
       | "priority"
     >;
     actorUserId: string;
-    /** Pre-fetched org (for four-eyes config). Optional; fetched if omitted. */
-    org?: Pick<Organization, "four_eyes_config">;
+    /** Pre-fetched org (for four-eyes config and self-approval toggle).
+     * Optional; fetched if omitted. */
+    org?: Pick<Organization, "four_eyes_config" | "allow_self_approval">;
     /** Pre-fetched membership (for role checks). Optional; fetched if omitted. */
     membershipRole?: string;
   },
@@ -78,17 +80,30 @@ export async function canUserDecideServerSide(
     };
   }
 
+  // Pre-fetch the org once so self-approval + four-eyes share the lookup.
+  let orgForGates = params.org;
+  if (!orgForGates) {
+    const { data } = await admin
+      .from("organizations")
+      .select("four_eyes_config, allow_self_approval")
+      .eq("id", approval.org_id)
+      .maybeSingle();
+    orgForGates = data ?? undefined;
+  }
+
   // 2. Self-approval block (applies in the default "any approver" case; when
   //    the creator was explicitly added to a sequential chain, we respect the
-  //    explicit intent).
+  //    explicit intent; when the org toggled "Allow self-approval" on, we let
+  //    creators decide on their own requests).
   const createdBy = approval.created_by as { user_id?: string } | null;
   const isSelfCreated =
     !!createdBy?.user_id && createdBy.user_id === actorUserId;
   const hasAssigned = !!approval.assigned_approvers?.length;
   const isExplicitlyInChain =
     hasAssigned && approval.assigned_approvers!.includes(actorUserId);
+  const orgAllowsSelfApproval = orgForGates?.allow_self_approval === true;
 
-  if (isSelfCreated && !isExplicitlyInChain) {
+  if (isSelfCreated && !isExplicitlyInChain && !orgAllowsSelfApproval) {
     return {
       ok: false,
       code: "SELF_APPROVAL_BLOCKED",
@@ -161,7 +176,7 @@ export async function canUserDecideServerSide(
           .eq("id", nextApprover)
           .maybeSingle();
         const waitingOn =
-          nextProfile?.full_name ?? nextProfile?.email ?? "another approver";
+          titleCaseName(nextProfile?.full_name) ?? nextProfile?.email ?? "another approver";
         return {
           ok: false,
           code: "NOT_YOUR_TURN",
@@ -203,18 +218,10 @@ export async function canUserDecideServerSide(
   }
 
   // 7. Four-eyes check (same gate the web respond endpoint uses).
-  let orgForFourEyes = params.org;
-  if (!orgForFourEyes) {
-    const { data } = await admin
-      .from("organizations")
-      .select("four_eyes_config")
-      .eq("id", approval.org_id)
-      .maybeSingle();
-    orgForFourEyes = data ?? undefined;
-  }
-  if (orgForFourEyes) {
+  //    Reuses the org lookup we did up top for self-approval.
+  if (orgForGates) {
     const fourEyes = checkFourEyes(
-      orgForFourEyes,
+      orgForGates,
       approval,
       actorUserId,
     );

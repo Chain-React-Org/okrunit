@@ -23,6 +23,7 @@ import { checkReauthRequired } from "@/lib/api/session-security";
 import type { RejectionReasonPolicy } from "@/lib/types/database";
 import { CacheTags, revalidateTags } from "@/lib/cache/tags";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -46,7 +47,7 @@ async function getUserDisplayName(
     .eq("id", userId)
     .single();
   if (!data) return null;
-  return data.full_name || data.email || null;
+  return titleCaseName(data.full_name) || data.email || null;
 }
 
 /**
@@ -416,7 +417,7 @@ export async function PATCH(
     // 2b. Fetch org settings for security checks
     const { data: orgSettings } = await admin
       .from("organizations")
-      .select("ip_allowlist, geo_restrictions, four_eyes_config, require_reauth_for_critical, session_timeout_minutes")
+      .select("ip_allowlist, geo_restrictions, four_eyes_config, require_reauth_for_critical, session_timeout_minutes, allow_self_approval")
       .eq("id", auth.orgId)
       .single();
 
@@ -475,18 +476,21 @@ export async function PATCH(
     }
 
     // 5b0. Block self-approval in the default "any approver" case — a
-    // creator can't trivially rubber-stamp their own request. But if they
-    // were explicitly added to this request's approver chain (e.g., via
-    // Configure Flow Rules), respect that intent: they're on the chain
-    // deliberately, and the audit log records exactly who approved.
-    // Mirrors the client-side gate in `canDecideOnApproval`.
+    // creator can't trivially rubber-stamp their own request. Two escapes:
+    //  - They were explicitly added to this request's approver chain (via
+    //    Configure Flow Rules), in which case they're on the chain
+    //    deliberately and the audit log records who approved.
+    //  - The org turned on "Allow self-approval" in settings.
+    // Mirrors the client-side gate in `canDecideOnApproval` and the
+    // messaging-side gate in `canUserDecideServerSide`.
     {
       const createdBy = approval.created_by as { user_id?: string } | null;
       const assignedApprovers: string[] | null = approval.assigned_approvers;
       const isSelfCreated = !!createdBy?.user_id && createdBy.user_id === actorId;
       const isExplicitlyInChain =
         !!assignedApprovers?.length && assignedApprovers.includes(actorId);
-      if (isSelfCreated && !isExplicitlyInChain) {
+      const orgAllowsSelfApproval = orgSettings?.allow_self_approval === true;
+      if (isSelfCreated && !isExplicitlyInChain && !orgAllowsSelfApproval) {
         throw new ApiError(
           403,
           "You cannot decide on a request you created",

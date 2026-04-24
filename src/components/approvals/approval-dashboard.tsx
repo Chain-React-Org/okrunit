@@ -19,6 +19,7 @@ import { FlowConfigDialog } from "@/components/approvals/flow-config-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ApprovalRequest, ApprovalComment, Connection, UserProfile, InAppNotification } from "@/lib/types/database";
+import { titleCaseName } from "@/lib/format-name";
 import { useOnboardingTourStore } from "@/stores/onboarding-tour-store";
 
 interface ApprovalDashboardProps {
@@ -27,6 +28,9 @@ interface ApprovalDashboardProps {
   approvalCreators?: Record<string, string>;
   teamsMap?: Record<string, string>;
   canApprove?: boolean;
+  /** Org setting: when true, creators may decide on their own requests.
+   * Defaults to false (segregation of duties). */
+  allowSelfApproval?: boolean;
   /** Whether the current user is allowed to edit approval flows and
    * reassign approvers on pending requests. Gated by the
    * `org_memberships.can_manage_flows` permission. */
@@ -42,6 +46,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
   approvalCreators = {},
   teamsMap = {},
   canApprove = true,
+  allowSelfApproval = false,
   canManageFlows = false,
   orgId,
   userId,
@@ -895,7 +900,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
       if (a.created_by?.user_id) {
         const profile = userProfiles.get(a.created_by.user_id);
         if (profile) {
-          merged[a.id] = profile.full_name || profile.email;
+          merged[a.id] = titleCaseName(profile.full_name) || profile.email;
           continue;
         }
       }
@@ -905,7 +910,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         if (conn?.created_by) {
           const profile = userProfiles.get(conn.created_by);
           if (profile) {
-            merged[a.id] = profile.full_name || profile.email;
+            merged[a.id] = titleCaseName(profile.full_name) || profile.email;
           }
         }
       }
@@ -921,6 +926,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
     userProfiles,
     onSelect: handleSelect,
     canApprove,
+    allowSelfApproval,
     canManageFlows,
     userRole,
     currentUserId: userId,
@@ -1214,6 +1220,7 @@ export const ApprovalDashboard = memo(function ApprovalDashboard({
         onRespond={handleRespond}
         isLoading={isLoading}
         canApprove={canApprove}
+        allowSelfApproval={allowSelfApproval}
         canManageFlows={canManageFlows}
         userProfiles={userProfiles}
         creatorName={selectedApproval ? allCreatorNames[selectedApproval.id] : undefined}

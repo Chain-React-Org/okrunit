@@ -7,6 +7,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -147,7 +148,7 @@ export async function getApprovalLoadDistribution(
   const profileMap = new Map(
     (profiles ?? []).map((p: { id: string; full_name: string | null; email: string }) => [
       p.id,
-      { name: p.full_name, email: p.email },
+      { name: titleCaseName(p.full_name), email: p.email },
     ]),
   );
 

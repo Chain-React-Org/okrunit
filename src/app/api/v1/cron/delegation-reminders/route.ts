@@ -14,6 +14,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { captureError } from "@/lib/monitoring/capture";
 import { verifyCronAuth } from "@/lib/api/cron-auth";
+import { titleCaseName } from "@/lib/format-name";
 
 export async function GET(request: Request) {
   if (!verifyCronAuth(request)) {
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
     .select("id, full_name, email")
     .in("id", delegateIds);
   const nameById = new Map(
-    (profiles ?? []).map((p) => [p.id, p.full_name || p.email || "a teammate"]),
+    (profiles ?? []).map((p) => [p.id, titleCaseName(p.full_name) || p.email || "a teammate"]),
   );
 
   let reminded = 0;

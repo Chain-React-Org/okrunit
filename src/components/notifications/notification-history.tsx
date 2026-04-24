@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getNotificationHref } from "@/lib/notifications/href";
 import type { InAppNotification, NotificationCategory } from "@/lib/types/database";
 
 const CATEGORY_CONFIG: Record<
@@ -68,16 +69,6 @@ function timeAgo(dateStr: string): string {
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
   return new Date(dateStr).toLocaleDateString();
-}
-
-function getNotificationHref(n: InAppNotification): string {
-  if (n.resource_type === "approval_request" && n.resource_id) {
-    return `/requests?highlight=${n.resource_id}`;
-  }
-  if (n.resource_type === "team" && n.resource_id) {
-    return `/org/teams/${n.resource_id}`;
-  }
-  return "/requests";
 }
 
 export function NotificationHistory() {

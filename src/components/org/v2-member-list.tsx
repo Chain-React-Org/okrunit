@@ -307,7 +307,7 @@ export const V2MemberList = memo(function V2MemberList({
             <TransferOwnershipDialog
               members={members.map((m) => ({
                 id: m.id,
-                name: m.full_name ?? m.email.split("@")[0],
+                name: titleCaseName(m.full_name) ?? m.email.split("@")[0],
                 email: m.email,
               }))}
               currentUserId={currentUserId}

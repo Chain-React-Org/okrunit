@@ -12,6 +12,7 @@ import { authenticateRequest } from "@/lib/api/auth";
 import { ApiError, errorResponse } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 // ---- GET /api/v1/notifications/delivery-log -------------------------------
 
 export async function GET(request: Request) {
@@ -91,7 +92,7 @@ export async function GET(request: Request) {
             .in("id", userIds)
             .then(({ data }) => {
               const map: Record<string, string> = {};
-              for (const u of data ?? []) map[u.id] = u.full_name || u.email;
+              for (const u of data ?? []) map[u.id] = titleCaseName(u.full_name) || u.email;
               return map;
             })
         : Promise.resolve({} as Record<string, string>),

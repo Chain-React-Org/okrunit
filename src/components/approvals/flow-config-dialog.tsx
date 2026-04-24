@@ -321,7 +321,7 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
       payload.assigned_approvers = null;
       payload.required_role = null;
       payload.default_required_approvals = requiredApprovals || 1;
-    } else if (approverMode === "designated" || approverMode === "any") {
+    } else if (approverMode === "designated") {
       payload.assigned_approvers = selectedApprovers.length > 0 ? selectedApprovers : null;
       payload.assigned_team_id = selectedTeamId !== "none" ? selectedTeamId : null;
       payload.assigned_position_id = null;
@@ -333,6 +333,15 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
       } else {
         payload.default_required_approvals = requiredApprovals || 1;
       }
+    } else if (approverMode === "any") {
+      // "Any approver" is a broadcast: intentionally drop any approver list
+      // carried over from a previous "designated" save so the server doesn't
+      // silently narrow the request back to those specific people.
+      payload.assigned_approvers = null;
+      payload.assigned_team_id = selectedTeamId !== "none" ? selectedTeamId : null;
+      payload.assigned_position_id = null;
+      payload.required_role = null;
+      payload.default_required_approvals = requiredApprovals || 1;
     } else if (approverMode === "role_based") {
       payload.required_role = requiredRole !== "none" ? requiredRole : null;
       payload.assigned_approvers = null;
@@ -366,7 +375,7 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
           reassignPayload.assigned_approvers = null;
           reassignPayload.required_role = null;
           reassignPayload.required_approvals = requiredApprovals || 1;
-        } else if (approverMode === "designated" || approverMode === "any") {
+        } else if (approverMode === "designated") {
           reassignPayload.assigned_approvers = selectedApprovers.length > 0 ? selectedApprovers : null;
           reassignPayload.assigned_team_id = selectedTeamId !== "none" ? selectedTeamId : null;
           reassignPayload.required_role = null;
@@ -378,6 +387,12 @@ export const FlowConfigDialog = memo(function FlowConfigDialog({
           } else {
             reassignPayload.required_approvals = requiredApprovals || 1;
           }
+        } else if (approverMode === "any") {
+          reassignPayload.assigned_approvers = null;
+          reassignPayload.assigned_team_id = selectedTeamId !== "none" ? selectedTeamId : null;
+          reassignPayload.required_role = null;
+          reassignPayload.is_sequential = false;
+          reassignPayload.required_approvals = requiredApprovals || 1;
         } else if (approverMode === "role_based") {
           reassignPayload.required_role = requiredRole !== "none" ? requiredRole : null;
           reassignPayload.assigned_approvers = null;

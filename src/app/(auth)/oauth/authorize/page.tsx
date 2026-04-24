@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ConsentForm } from "./consent-form";
+import { titleCaseName } from "@/lib/format-name";
 
 interface AuthorizePageProps {
   searchParams: Promise<{
@@ -185,7 +186,7 @@ async function AuthorizeContent({ searchParams }: AuthorizePageProps) {
       userId={user.id}
       orgId={membership.org_id}
       userEmail={profile?.email || user.email || ""}
-      userFullName={profile?.full_name || null}
+      userFullName={titleCaseName(profile?.full_name) || null}
       userAvatarUrl={profile?.avatar_url || null}
       orgOptions={orgOptions.length > 1 ? orgOptions : undefined}
     />

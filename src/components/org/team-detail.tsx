@@ -26,6 +26,7 @@ import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { titleCaseName } from "@/lib/format-name";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -420,7 +421,7 @@ export function TeamDetail({
                 const m = availableMembers.find((am) => am.id === uid);
                 return (
                   <Badge key={uid} variant="secondary" className="gap-1 pr-1">
-                    {m?.full_name ?? m?.email.split("@")[0] ?? uid.slice(0, 8)}
+                    {titleCaseName(m?.full_name) ?? m?.email.split("@")[0] ?? uid.slice(0, 8)}
                     <button
                       type="button"
                       className="rounded-full p-0.5 hover:bg-muted-foreground/20 cursor-pointer"
@@ -448,7 +449,7 @@ export function TeamDetail({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium truncate">
-                    {m.full_name ?? m.email.split("@")[0]}
+                    {titleCaseName(m.full_name) ?? m.email.split("@")[0]}
                   </div>
                   <div className="text-xs text-muted-foreground truncate">{m.email}</div>
                 </div>
@@ -559,7 +560,7 @@ export function TeamDetail({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold truncate">
-                        {member.full_name ?? member.email.split("@")[0]}
+                        {titleCaseName(member.full_name) ?? member.email.split("@")[0]}
                       </p>
                       {member.id === currentUserId && (
                         <span className="text-[10px] text-muted-foreground">(you)</span>

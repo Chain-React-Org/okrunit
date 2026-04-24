@@ -62,6 +62,9 @@ integrations/n8n/dist
 
 # supabase local
 supabase/.temp
+# Nested supabase CLI caches (e.g. integrations/zapier runs the CLI from
+# its own cwd, creating its own .temp dir that shouldn't be tracked).
+**/supabase/.temp/
 **/__pycache__/
 integrations/*/dist/
 tools/scripts/deploy/screenshots/

@@ -23,6 +23,8 @@ interface ApprovalListGroupedProps {
   userProfiles?: Map<string, UserProfile>;
   onSelect: (approval: ApprovalRequest) => void;
   canApprove?: boolean;
+  /** Org setting: allow creators to decide on their own requests. */
+  allowSelfApproval?: boolean;
   canManageFlows?: boolean;
   userRole?: string;
   currentUserId?: string;
@@ -59,6 +61,7 @@ function VirtualizedSection({
   teamsLookup,
   onSelect,
   canApprove,
+  allowSelfApproval,
   canManageFlows,
   userRole,
   currentUserId,
@@ -83,6 +86,7 @@ function VirtualizedSection({
   teamsLookup: Map<string, { id: string; name: string }>;
   onSelect: (approval: ApprovalRequest) => void;
   canApprove: boolean;
+  allowSelfApproval: boolean;
   canManageFlows: boolean;
   userRole?: string;
   leadTeamIds?: ReadonlySet<string>;
@@ -150,6 +154,7 @@ function VirtualizedSection({
                   currentlyResponsible={getCurrentlyResponsible(approval, userProfiles, teamsLookup)}
                   onClick={() => onSelect(approval)}
                   canApprove={canApprove}
+                  allowSelfApproval={allowSelfApproval}
                   canManageFlows={canManageFlows}
                   userRole={userRole}
                   currentUserId={currentUserId}
@@ -183,6 +188,7 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
   userProfiles = new Map(),
   onSelect,
   canApprove = true,
+  allowSelfApproval = false,
   canManageFlows = false,
   userRole,
   currentUserId,
@@ -222,10 +228,10 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
   // what the user can actually do.
   const pending = approvals.filter((a) => a.status === "pending");
   const needsAttention = pending.filter((a) =>
-    canDecideOnApproval(a, currentUserId, !!canApprove, delegatorIds),
+    canDecideOnApproval(a, currentUserId, !!canApprove, delegatorIds, allowSelfApproval),
   );
   const awaitingOthers = pending.filter(
-    (a) => !canDecideOnApproval(a, currentUserId, !!canApprove, delegatorIds),
+    (a) => !canDecideOnApproval(a, currentUserId, !!canApprove, delegatorIds, allowSelfApproval),
   );
   const resolved = approvals.filter((a) => a.status !== "pending");
 
@@ -236,6 +242,7 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
     teamsLookup,
     onSelect,
     canApprove,
+    allowSelfApproval,
     canManageFlows,
     userRole,
     currentUserId,
@@ -268,6 +275,7 @@ export const ApprovalListGrouped = memo(function ApprovalListGrouped({
             currentlyResponsible={getCurrentlyResponsible(approval, userProfiles, teamsLookup)}
             onClick={() => onSelect(approval)}
             canApprove={canApprove}
+            allowSelfApproval={allowSelfApproval}
             canManageFlows={canManageFlows}
             currentUserId={currentUserId}
             delegatorIds={delegatorIds}

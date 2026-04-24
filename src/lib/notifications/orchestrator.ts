@@ -17,6 +17,7 @@
 // ---------------------------------------------------------------------------
 
 import { logger } from "@/lib/monitoring/logger";
+import { titleCaseName } from "@/lib/format-name";
 import type { NotificationEvent, NotificationEventType } from "@/lib/notifications/types";
 import {
   shouldNotify,
@@ -538,8 +539,12 @@ function dispatchSlack(
   event: NotificationEvent,
   isCreateEvent: boolean,
 ): Promise<void> {
-  const webhookUrl = conn.webhook_url;
-  if (!webhookUrl) return Promise.resolve();
+  const webhookUrl = conn.webhook_url ?? undefined;
+  const botToken = conn.bot_token ?? undefined;
+  const channelId = conn.channel_id ?? undefined;
+
+  // Need at least one delivery method
+  if (!botToken && !webhookUrl) return Promise.resolve();
 
   const logBase = {
     orgId: event.orgId,
@@ -551,14 +556,30 @@ function dispatchSlack(
   if (isCreateEvent) {
     return sendSlackNotification({
       webhookUrl,
+      botToken,
+      channelId,
       requestId: event.requestId,
       title: event.requestTitle,
       description: event.requestDescription,
       priority: event.requestPriority,
       connectionName: event.connectionName,
     })
-      .then(() => {
+      .then(async (ref) => {
         logNotificationDelivery({ ...logBase, status: "sent" });
+        if (ref) {
+          const { recordApprovalMessage } = await import(
+            "@/lib/notifications/approval-messages"
+          );
+          await recordApprovalMessage({
+            approvalId: event.requestId,
+            orgId: event.orgId,
+            connectionId: conn.id,
+            platform: "slack",
+            channelId: ref.channelId,
+            messageId: ref.ts,
+            webhookUrl: null,
+          });
+        }
       })
       .catch((err: unknown) => {
         logger.error(
@@ -576,6 +597,8 @@ function dispatchSlack(
   const decision = extractDecision(event.type);
   return sendSlackDecisionNotification({
     webhookUrl,
+    botToken,
+    channelId,
     requestTitle: event.requestTitle,
     decision,
     decidedBy: event.decidedBy,
@@ -1085,7 +1108,7 @@ async function resolveUserName(userId: string): Promise<string> {
       .single();
 
     if (profile) {
-      return profile.full_name || profile.email || userId;
+      return titleCaseName(profile.full_name) || profile.email || userId;
     }
   } catch (err) {
     logger.error("[Notifications] Failed to resolve user name:", err);

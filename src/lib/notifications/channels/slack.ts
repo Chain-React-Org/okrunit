@@ -1,5 +1,12 @@
 // ---------------------------------------------------------------------------
-// OKrunit -- Slack Notification Channel (Block Kit via Incoming Webhooks)
+// OKrunit -- Slack Notification Channel
+// ---------------------------------------------------------------------------
+// Posts approval-request cards and decision notifications to Slack. When the
+// connection has a bot token (from the chat:write OAuth scope) we prefer
+// chat.postMessage so we can capture the message ts and later edit the card
+// in place via chat.update. Legacy installs that only have an
+// Incoming Webhook URL still work via the webhook POST fallback, but those
+// messages cannot be edited after a decision.
 // ---------------------------------------------------------------------------
 
 import { logger } from "@/lib/monitoring/logger";
@@ -7,12 +14,16 @@ import { logger } from "@/lib/monitoring/logger";
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+const SLACK_API_BASE = "https://slack.com/api";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface SlackNotificationParams {
-  webhookUrl: string;
+  webhookUrl?: string;
+  botToken?: string;
+  channelId?: string;
   requestId: string;
   title: string;
   description?: string;
@@ -20,13 +31,22 @@ export interface SlackNotificationParams {
   connectionName?: string;
 }
 
+export interface SlackMessageRef {
+  channelId: string;
+  ts: string;
+}
+
 export interface SlackDecisionParams {
-  webhookUrl: string;
+  webhookUrl?: string;
+  botToken?: string;
+  channelId?: string;
   requestTitle: string;
   decision: string;
   decidedBy?: string;
   comment?: string;
 }
+
+type SlackBlock = Record<string, unknown>;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -49,54 +69,32 @@ function decisionDisplay(decision: string): string {
     approved: ":white_check_mark: Approved",
     rejected: ":x: Rejected",
     cancelled: ":no_entry_sign: Cancelled",
+    expired: ":hourglass: Expired",
   };
   return map[decision] ?? decision;
 }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-/**
- * Send a Slack notification with Block Kit layout containing approve/reject
- * buttons.
- *
- * The buttons use Slack interactive messages, which require a separate
- * callback endpoint (`/api/slack/interact`) to receive the user's response.
- * The `action_id` encodes the request ID and action so the callback handler
- * knows what to do.
- *
- * Errors are caught and logged -- Slack notifications must never break the
- * main request flow.
- */
-export async function sendSlackNotification(
-  params: SlackNotificationParams,
-): Promise<void> {
+function buildRequestBlocks(params: {
+  requestId: string;
+  title: string;
+  description?: string;
+  priority: string;
+  connectionName?: string;
+}): SlackBlock[] {
   const dashboardUrl = `${APP_URL}/dashboard#request-${params.requestId}`;
-
-  const descriptionField = params.description
-    ? `\n>${params.description}`
-    : "";
-
+  const descriptionField = params.description ? `\n>${params.description}` : "";
   const connectionField = params.connectionName
     ? `\n*Connection:* ${params.connectionName}`
     : "";
 
-  const blocks = [
+  return [
     {
       type: "header",
-      text: {
-        type: "plain_text",
-        text: "New Approval Request",
-        emoji: true,
-      },
+      text: { type: "plain_text", text: "New Approval Request", emoji: true },
     },
     {
       type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `*${params.title}*${descriptionField}`,
-      },
+      text: { type: "mrkdwn", text: `*${params.title}*${descriptionField}` },
     },
     {
       type: "section",
@@ -124,33 +122,21 @@ export async function sendSlackNotification(
       elements: [
         {
           type: "button",
-          text: {
-            type: "plain_text",
-            text: "Approve",
-            emoji: true,
-          },
+          text: { type: "plain_text", text: "Approve", emoji: true },
           style: "primary",
-          action_id: `okrunit_approve`,
+          action_id: "okrunit_approve",
           value: params.requestId,
         },
         {
           type: "button",
-          text: {
-            type: "plain_text",
-            text: "Reject",
-            emoji: true,
-          },
+          text: { type: "plain_text", text: "Reject", emoji: true },
           style: "danger",
-          action_id: `okrunit_reject`,
+          action_id: "okrunit_reject",
           value: params.requestId,
         },
         {
           type: "button",
-          text: {
-            type: "plain_text",
-            text: "View in Dashboard",
-            emoji: true,
-          },
+          text: { type: "plain_text", text: "View in Dashboard", emoji: true },
           url: dashboardUrl,
           action_id: "okrunit_view",
         },
@@ -166,6 +152,140 @@ export async function sendSlackNotification(
       ],
     },
   ];
+}
+
+function buildDecisionBlocks(params: {
+  title: string;
+  decision: string;
+  decidedBy?: string;
+  comment?: string;
+}): SlackBlock[] {
+  const decidedByText = params.decidedBy ? ` by ${params.decidedBy}` : "";
+  const commentText = params.comment ? `\n>_${params.comment}_` : "";
+  return [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `${decisionDisplay(params.decision)} *${params.title}*${decidedByText}${commentText}`,
+      },
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Bot-token API calls (chat.postMessage / chat.update)
+// ---------------------------------------------------------------------------
+
+async function callSlackApi<T>(
+  method: string,
+  botToken: string,
+  body: Record<string, unknown>,
+): Promise<T | null> {
+  try {
+    const resp = await fetch(`${SLACK_API_BASE}/${method}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        Authorization: `Bearer ${botToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = (await resp.json()) as { ok: boolean; error?: string } & T;
+    if (!data.ok) {
+      logger.error(`[Slack] ${method} failed: ${data.error ?? "unknown"}`);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    logger.error(`[Slack] ${method} threw:`, err);
+    return null;
+  }
+}
+
+export async function postSlackBotMessage(params: {
+  botToken: string;
+  channelId: string;
+  blocks: SlackBlock[];
+  text: string;
+}): Promise<SlackMessageRef | null> {
+  const result = await callSlackApi<{ ts?: string; channel?: string }>(
+    "chat.postMessage",
+    params.botToken,
+    {
+      channel: params.channelId,
+      blocks: params.blocks,
+      text: params.text,
+    },
+  );
+  if (!result?.ts || !result.channel) return null;
+  return { channelId: result.channel, ts: result.ts };
+}
+
+export async function updateSlackBotMessage(params: {
+  botToken: string;
+  channelId: string;
+  ts: string;
+  title: string;
+  decision: "approved" | "rejected" | "cancelled" | "expired";
+  decidedBy?: string;
+  comment?: string;
+}): Promise<void> {
+  const blocks = buildDecisionBlocks({
+    title: params.title,
+    decision: params.decision,
+    decidedBy: params.decidedBy,
+    comment: params.comment,
+  });
+  await callSlackApi("chat.update", params.botToken, {
+    channel: params.channelId,
+    ts: params.ts,
+    blocks,
+    text: `${decisionDisplay(params.decision).replace(/^:[^:]+:\s*/, "")}: ${params.title}`,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
+ * Send an approval-request card to Slack. Prefers bot-token chat.postMessage
+ * (returns a message ref we can edit later); falls back to the Incoming
+ * Webhook URL for connections that don't have a bot token.
+ */
+export async function sendSlackNotification(
+  params: SlackNotificationParams,
+): Promise<SlackMessageRef | null> {
+  const blocks = buildRequestBlocks({
+    requestId: params.requestId,
+    title: params.title,
+    description: params.description,
+    priority: params.priority,
+    connectionName: params.connectionName,
+  });
+
+  if (params.botToken && params.channelId) {
+    const ref = await postSlackBotMessage({
+      botToken: params.botToken,
+      channelId: params.channelId,
+      blocks,
+      text: `New Approval Request: ${params.title}`,
+    });
+    if (ref) {
+      logger.info(
+        `[Slack] Notification sent via bot for request ${params.requestId}`,
+      );
+    }
+    return ref;
+  }
+
+  if (!params.webhookUrl) {
+    logger.error(
+      `[Slack] No delivery method (bot token or webhook) for request ${params.requestId}`,
+    );
+    return null;
+  }
 
   try {
     const response = await fetch(params.webhookUrl, {
@@ -180,44 +300,44 @@ export async function sendSlackNotification(
         `[Slack] Webhook returned ${response.status} for request ${params.requestId}:`,
         body,
       );
-      return;
+      return null;
     }
 
     logger.info(
-      `[Slack] Notification sent for request ${params.requestId}`,
+      `[Slack] Notification sent via webhook for request ${params.requestId}`,
     );
+    return null;
   } catch (err) {
     logger.error("[Slack] Failed to send notification:", err);
+    return null;
   }
 }
 
 /**
  * Send a decision notification to Slack (simple message, no interactive
- * buttons).
- *
- * Errors are caught and logged -- Slack notifications must never break the
- * main request flow.
+ * buttons). Used for the secondary "X decided Y" follow-up post that lands
+ * below the original card.
  */
 export async function sendSlackDecisionNotification(
   params: SlackDecisionParams,
 ): Promise<void> {
-  const decidedByText = params.decidedBy
-    ? ` by ${params.decidedBy}`
-    : "";
+  const blocks = buildDecisionBlocks({
+    title: params.requestTitle,
+    decision: params.decision,
+    decidedBy: params.decidedBy,
+    comment: params.comment,
+  });
 
-  const commentText = params.comment
-    ? `\n>_${params.comment}_`
-    : "";
+  if (params.botToken && params.channelId) {
+    await callSlackApi("chat.postMessage", params.botToken, {
+      channel: params.channelId,
+      blocks,
+      text: `${decisionDisplay(params.decision).replace(/^:[^:]+:\s*/, "")}: ${params.requestTitle}`,
+    });
+    return;
+  }
 
-  const blocks = [
-    {
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `${decisionDisplay(params.decision)} *${params.requestTitle}*${decidedByText}${commentText}`,
-      },
-    },
-  ];
+  if (!params.webhookUrl) return;
 
   try {
     const response = await fetch(params.webhookUrl, {

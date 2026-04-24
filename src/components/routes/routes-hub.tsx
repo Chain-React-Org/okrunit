@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { Route } from "lucide-react";
 import { toast } from "sonner";
 
@@ -55,6 +56,17 @@ export function RoutesHub({
   positionsMap,
 }: RoutesHubProps) {
   const [flows, setFlows] = useState(initialFlows);
+  const searchParams = useSearchParams();
+  const targetFlowId = searchParams.get("flow");
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  useEffect(() => {
+    if (!targetFlowId) return;
+    const el = cardRefs.current.get(targetFlowId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [targetFlowId]);
 
   useRealtime<ApprovalFlow>({
     table: "approval_flows",
@@ -114,7 +126,14 @@ export function RoutesHub({
 
         <div className="grid gap-3">
           {flows.map((flow, idx) => (
-            <div key={flow.id} data-tour={idx === 0 ? "flow-card" : undefined}>
+            <div
+              key={flow.id}
+              data-tour={idx === 0 ? "flow-card" : undefined}
+              ref={(el) => {
+                if (el) cardRefs.current.set(flow.id, el);
+                else cardRefs.current.delete(flow.id);
+              }}
+            >
               <FlowCard
                 flow={flow}
                 teams={teams}
@@ -122,6 +141,7 @@ export function RoutesHub({
                 orgId={orgId}
                 positionsMap={positionsMap}
                 onDelete={handleDelete}
+                initialExpanded={flow.id === targetFlowId}
               />
             </div>
           ))}

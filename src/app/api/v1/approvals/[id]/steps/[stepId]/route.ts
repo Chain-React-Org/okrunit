@@ -8,6 +8,7 @@ import { getClientIp } from "@/lib/api/ip-rate-limiter";
 import { createInAppNotificationBulk } from "@/lib/notifications/in-app";
 import { dispatchNotifications } from "@/lib/notifications/orchestrator";
 import { z } from "zod";
+import { titleCaseName } from "@/lib/format-name";
 
 const VoteSchema = z.object({
   decision: z.enum(["approve", "reject"]),
@@ -110,7 +111,7 @@ export async function PATCH(
             resourceType: "approval_request",
             resourceId: id,
             actorId: profile.id,
-            actorName: profile.full_name ?? profile.email,
+            actorName: titleCaseName(profile.full_name) ?? profile.email,
           });
         }
       });

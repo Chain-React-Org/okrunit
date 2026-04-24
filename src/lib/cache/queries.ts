@@ -228,7 +228,7 @@ export async function getCachedOverviewData(orgId: string) {
             Object.fromEntries(
               (data ?? []).map((p) => [
                 p.id,
-                p.full_name || p.email || p.id.slice(0, 8),
+                titleCaseName(p.full_name) || p.email || p.id.slice(0, 8),
               ])
             )
           )
@@ -634,7 +634,7 @@ export async function getCachedRequestsData(orgId: string) {
       const cb = a.created_by as Record<string, unknown> | null;
       if (cb?.user_id) {
         const p = profileMap.get(cb.user_id as string);
-        if (p) creators[a.id] = p.full_name || p.email;
+        if (p) creators[a.id] = titleCaseName(p.full_name) || p.email;
       }
     }
   }

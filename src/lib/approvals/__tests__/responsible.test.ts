@@ -192,3 +192,52 @@ describe("canDecideOnApproval — self-approval carveout", () => {
     expect(canDecideOnApproval(approval, USER_A, true)).toBe(true);
   });
 });
+
+describe("canDecideOnApproval — allowSelfApproval org flag", () => {
+  it("allows the creator to decide in any-approver mode when flag is true", () => {
+    const approval = makeApproval({
+      created_by: { user_id: USER_A } as unknown as ApprovalRequest["created_by"],
+    });
+    expect(canDecideOnApproval(approval, USER_A, true, undefined, true)).toBe(
+      true,
+    );
+  });
+
+  it("still blocks the creator when flag is false (default)", () => {
+    const approval = makeApproval({
+      created_by: { user_id: USER_A } as unknown as ApprovalRequest["created_by"],
+    });
+    expect(canDecideOnApproval(approval, USER_A, true, undefined, false)).toBe(
+      false,
+    );
+    // Default (undefined) should behave the same as false.
+    expect(canDecideOnApproval(approval, USER_A, true)).toBe(false);
+  });
+
+  it("allows the creator to decide when on the chain regardless of flag", () => {
+    const approval = makeApproval({
+      assigned_approvers: [USER_B, USER_A],
+      is_sequential: true,
+      current_approvals: 1,
+      created_by: { user_id: USER_A } as unknown as ApprovalRequest["created_by"],
+    });
+    expect(canDecideOnApproval(approval, USER_A, true, undefined, false)).toBe(
+      true,
+    );
+    expect(canDecideOnApproval(approval, USER_A, true, undefined, true)).toBe(
+      true,
+    );
+  });
+
+  it("allows creator with flag even when not assigned but others are", () => {
+    const approval = makeApproval({
+      assigned_approvers: [USER_B, USER_C],
+      created_by: { user_id: USER_A } as unknown as ApprovalRequest["created_by"],
+    });
+    // Creator isn't assigned — flag should NOT bypass the assignment rule
+    // (they'd still fail the hasAssigned check).
+    expect(canDecideOnApproval(approval, USER_A, true, undefined, true)).toBe(
+      false,
+    );
+  });
+});
