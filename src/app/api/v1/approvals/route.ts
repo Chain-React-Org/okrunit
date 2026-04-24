@@ -864,6 +864,10 @@ export async function POST(request: Request) {
               resourceType: "approval_request",
               resourceId: approval.id,
             });
+          } else {
+            logger.warn(
+              `[Approvals] Broadcast notification found 0 recipients (org=${auth.orgId}, request=${approval.id}, flowMode=${flowApproverMode ?? "none"}). Check that at least one member has can_approve=true.`,
+            );
           }
         }
       }
