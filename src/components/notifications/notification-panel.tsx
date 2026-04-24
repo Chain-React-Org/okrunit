@@ -30,6 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useRealtime } from "@/hooks/use-realtime";
 import { toast } from "sonner";
+import { getNotificationHref } from "@/lib/notifications/href";
 import type { InAppNotification, NotificationCategory } from "@/lib/types/database";
 
 interface NotificationPanelProps {
@@ -59,27 +60,6 @@ const CATEGORY_CONFIG: Record<
   delegation_revoked: { icon: UserPlus, color: "text-amber-500" },
   delegation_expiring: { icon: Clock, color: "text-amber-500" },
 };
-
-function getNotificationHref(n: InAppNotification): string {
-  if (n.resource_type === "approval_request" && n.resource_id) {
-    return `/requests?open=${n.resource_id}`;
-  }
-  if (n.resource_type === "team" && n.resource_id) {
-    return `/org/teams/${n.resource_id}`;
-  }
-  if (n.resource_type === "org_invite") {
-    return "/org/members";
-  }
-  if (
-    n.resource_type === "approval_delegation" ||
-    n.category === "delegation_received" ||
-    n.category === "delegation_revoked" ||
-    n.category === "delegation_expiring"
-  ) {
-    return "/settings/delegation";
-  }
-  return "/requests";
-}
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -111,10 +91,11 @@ export const NotificationPanel = memo(function NotificationPanel({ userId }: Not
     });
     if (!record.is_read) {
       setUnreadCount((prev) => prev + 1);
+      const href = getNotificationHref(record);
       toast(record.category === "approval_awaiting" ? "New request needs your approval" : record.title, {
         description: record.body || undefined,
-        action: record.resource_type === "approval_request" && record.resource_id
-          ? { label: "View", onClick: () => { window.location.href = `/requests?open=${record.resource_id}`; } }
+        action: href !== "/requests"
+          ? { label: "View", onClick: () => { window.location.href = href; } }
           : undefined,
       });
     }

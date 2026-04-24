@@ -771,15 +771,15 @@ export async function POST(request: Request) {
             : auth.type === "oauth" ? auth.userId : null;
 
           if (ownerId) {
-            if (flowIsNewlyCreated) {
+            if (flowIsNewlyCreated && flowId) {
               await createInAppNotification({
                 userId: ownerId,
                 orgId: auth.orgId,
                 category: "flow_assigned",
                 title: `New flow needs configuration`,
                 body: `"${validated.title}" arrived${sourceName ? ` from ${sourceName.charAt(0).toUpperCase() + sourceName.slice(1)}` : ""}. Configure routing to assign approvers.`,
-                resourceType: "approval_request",
-                resourceId: approval.id,
+                resourceType: "approval_flow",
+                resourceId: flowId,
               });
             } else {
               await createInAppNotification({

@@ -114,6 +114,7 @@ interface FlowCardProps {
   orgId: string;
   positionsMap?: Record<string, string>;
   onDelete?: (flowId: string) => void;
+  initialExpanded?: boolean;
 }
 
 // Draft state shape for sessionStorage persistence
@@ -160,9 +161,9 @@ function clearDraft(flowId: string) {
   }
 }
 
-export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, positionsMap, onDelete }: FlowCardProps) {
+export const FlowCard = memo(function FlowCard({ flow, teams, members, orgId, positionsMap, onDelete, initialExpanded = false }: FlowCardProps) {
   const router = useRouter();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(initialExpanded);
   const [saving, setSaving] = useState(false);
   const [restoredDraft, setRestoredDraft] = useState(false);
   const [deleting, setDeleting] = useState(false);
