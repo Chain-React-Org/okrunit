@@ -210,7 +210,7 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
                   />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuContent align="end" className="w-56">
                 <div className="flex flex-col gap-0.5 px-2 py-1.5">
                   {user.full_name ? (
                     <>
