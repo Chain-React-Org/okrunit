@@ -180,26 +180,24 @@ export async function DELETE(
       throw new ApiError(404, "Connection not found");
     }
 
-    // Hard-delete the connection row.
-    const { error: deleteError } = await admin
+    // Soft-delete (revoke) the connection. Hard delete would violate the
+    // audit_log.connection_id FK once the key has been used to create any
+    // approval. Auth already rejects requests against inactive connections.
+    const { error: revokeError } = await admin
       .from("connections")
-      .delete()
+      .update({ is_active: false })
       .eq("id", id)
       .eq("org_id", auth.orgId);
 
-    if (deleteError) {
-      logger.error(
-        "[Connections] Failed to delete connection:",
-        deleteError,
-      );
-      throw new ApiError(500, "Failed to delete connection");
+    if (revokeError) {
+      logger.error("[Connections] Failed to revoke connection:", revokeError);
+      throw new ApiError(500, "Failed to revoke connection");
     }
 
-    // Audit the deletion.
     await logAuditEvent({
       orgId: auth.orgId,
       userId: auth.user.id,
-      action: "connection.deleted",
+      action: "connection.revoked",
       resourceType: "connection",
       resourceId: id,
       ipAddress: getIpAddress(request),

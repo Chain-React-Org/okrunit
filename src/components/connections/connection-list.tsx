@@ -78,9 +78,9 @@ export function ConnectionList({ initialConnections }: ConnectionListProps) {
   }
 
   async function handleDelete(id: string) {
-    // Optimistic removal
-    const removed = connections.find((c) => c.id === id);
-    setConnections((prev) => prev.filter((c) => c.id !== id));
+    // Optimistic: mark inactive. Revoke is a soft-delete now, so the row
+    // stays visible for audit history.
+    setConnections((prev) => prev.map((c) => c.id === id ? { ...c, is_active: false } : c));
     try {
       const res = await fetch(`/api/v1/connections/${id}`, {
         method: "DELETE",
@@ -88,15 +88,14 @@ export function ConnectionList({ initialConnections }: ConnectionListProps) {
 
       if (!res.ok) {
         const body = await res.json();
-        throw new Error(body.error ?? "Failed to delete connection");
+        throw new Error(body.error ?? "Failed to revoke connection");
       }
 
-      toast.success("Connection deleted");
+      toast.success("Connection revoked");
     } catch (err) {
-      // Revert on failure
-      if (removed) setConnections((prev) => [...prev, removed]);
+      setConnections((prev) => prev.map((c) => c.id === id ? { ...c, is_active: true } : c));
       toast.error(
-        err instanceof Error ? err.message : "Failed to delete connection",
+        err instanceof Error ? err.message : "Failed to revoke connection",
       );
     }
   }

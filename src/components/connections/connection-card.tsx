@@ -206,7 +206,7 @@ export function ConnectionCard({
               onClick={() => setDeleteOpen(true)}
             >
               <Trash2 />
-              Delete
+              Revoke
             </Button>
           </div>
         </CardContent>
@@ -285,13 +285,12 @@ export function ConnectionCard({
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation dialog for delete */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Connection</DialogTitle>
+            <DialogTitle>Revoke Connection</DialogTitle>
             <DialogDescription>
-              Are you sure you want to permanently delete &ldquo;{connection.name}&rdquo;? This action cannot be undone. The API key will be invalidated immediately.
+              Are you sure you want to revoke &ldquo;{connection.name}&rdquo;? The API key will stop working immediately. The connection will remain visible for audit history.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -307,7 +306,7 @@ export function ConnectionCard({
               onClick={handleDelete}
               disabled={loading}
             >
-              {loading ? "Deleting..." : "Delete"}
+              {loading ? "Revoking..." : "Revoke"}
             </Button>
           </DialogFooter>
         </DialogContent>
