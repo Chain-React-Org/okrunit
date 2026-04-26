@@ -211,10 +211,21 @@ export function Header({ emergencyStopActive, user, orgName: serverOrgName, pend
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">
-                <div className="px-2 py-1.5">
-                  <p className="truncate text-sm font-medium leading-tight" title={user.email}>
-                    {user.email}
-                  </p>
+                <div className="flex flex-col gap-0.5 px-2 py-1.5">
+                  {user.full_name ? (
+                    <>
+                      <p className="truncate text-sm font-medium leading-tight" title={user.full_name}>
+                        {user.full_name}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground leading-tight" title={user.email}>
+                        {user.email}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="truncate text-sm font-medium leading-tight" title={user.email}>
+                      {user.email}
+                    </p>
+                  )}
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild className="cursor-pointer">
