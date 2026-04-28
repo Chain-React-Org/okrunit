@@ -55,22 +55,24 @@ test.describe('Docs pages', () => {
     const sidebar = page.locator('aside nav');
     await expect(sidebar).toBeVisible();
 
-    // Navigate to API Reference. Next.js Link triggers a client-side
-    // transition, so give the new route's content time to render before
-    // asserting the heading.
+    // Navigate to API Reference. Next.js client-side transitions stream
+    // the new RSC payload in before the old DOM is unmounted, so two h1s
+    // briefly coexist. Locate the new heading by accessible name so a
+    // generic `main h1` selector doesn't trip strict mode during the
+    // transition window.
     await sidebar.locator('a', { hasText: 'API Reference' }).click();
     await expect(page).toHaveURL(/\/docs\/api/);
-    await expect(page.locator('main h1')).toContainText('API Reference', { timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: 'API Reference', level: 1 })).toBeVisible({ timeout: 10_000 });
 
     // Navigate to Integrations
     await page.locator('aside nav').locator('a', { hasText: 'Integrations' }).click();
     await expect(page).toHaveURL(/\/docs\/integrations/);
-    await expect(page.locator('main h1')).toContainText('Integrations', { timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: 'Integrations', level: 1 })).toBeVisible({ timeout: 10_000 });
 
     // Navigate back to Overview (Getting Started)
     await page.locator('aside nav').locator('a', { hasText: 'Overview' }).click();
     await expect(page).toHaveURL(/\/docs$/);
-    await expect(page.locator('main h1')).toContainText('Getting Started', { timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: 'Getting Started', level: 1 })).toBeVisible({ timeout: 10_000 });
   });
 
   test('docs layout has proper sidebar navigation', async ({ page }) => {

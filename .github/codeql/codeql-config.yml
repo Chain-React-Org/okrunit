@@ -1,0 +1,7 @@
+name: "OKrunit CodeQL config"
+
+query-filters:
+  - exclude:
+      id: js/insufficient-password-hash
+      paths:
+        - "src/__tests__/**"
