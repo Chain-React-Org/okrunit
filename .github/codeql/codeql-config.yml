@@ -1,0 +1,12 @@
+name: "OKrunit CodeQL config"
+
+# CodeQL query-filters operate on query metadata only (id, tags, severity),
+# not on file paths. To silence false positives in test fixtures we have to
+# exclude those paths from analysis entirely via paths-ignore.
+#
+# Production code is unaffected: src/lib/api/auth.ts and the route handlers
+# under src/app/api/** are still scanned by every default query.
+paths-ignore:
+  - "src/__tests__/**"
+  - "e2e/**"
+  - "tools/**"
