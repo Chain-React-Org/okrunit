@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   Mail,
   FileText,
+  Twitter,
 } from "lucide-react";
 
 interface NavItem {
@@ -36,6 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "errors", label: "Error Monitor", href: "/admin/errors", icon: Bug },
   { id: "traffic", label: "Traffic", href: "/admin/traffic", icon: Globe },
   { id: "blog", label: "Blog", href: "/admin/blog", icon: FileText },
+  { id: "tweets", label: "Tweets", href: "/admin/tweets", icon: Twitter },
 ];
 
 interface AdminNavProps {

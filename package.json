@@ -21,6 +21,8 @@
     "cap:dev:android": "CAPACITOR_SERVER_URL=http://localhost:3000 npx cap run android --livereload --external"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.74",
+    "@ai-sdk/google": "^3.0.67",
     "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@capacitor/android": "^8.3.1",
     "@capacitor/app": "^8.1.0",
@@ -40,6 +42,7 @@
     "@supabase/supabase-js": "^2.104.1",
     "@tanstack/react-virtual": "^3.13.24",
     "@upstash/redis": "^1.37.0",
+    "ai": "^6.0.173",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -60,6 +63,7 @@
     "stripe": "^20.4.1",
     "svix": "^1.92.2",
     "tailwind-merge": "^3.5.0",
+    "twitter-api-v2": "^1.29.0",
     "web-push": "^3.6.7",
     "web-vitals": "^5.2.0",
     "zod": "^4.3.6",
