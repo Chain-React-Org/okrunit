@@ -32,15 +32,17 @@ function buildMessage(draft: TweetDraft): string {
     timeZoneName: "short",
   });
   const themeLabel = THEME_LABEL[draft.theme] ?? draft.theme;
-  return [
-    `Draft tweet ready for review (${themeLabel})`,
-    `Scheduled: ${scheduled}`,
-    "",
-    draft.content,
-    "",
-    `Review / edit / approve: ${editUrl}`,
-    `Characters: ${draft.content.length}/280`,
-  ].join("\n");
+  const autoApproved = draft.status === "approved";
+  const header = autoApproved
+    ? `Auto-posting at ${scheduled} (${themeLabel})`
+    : `Draft tweet ready for review (${themeLabel})`;
+  const actionLine = autoApproved
+    ? `Reject before that time if needed: ${editUrl}`
+    : `Review / edit / approve: ${editUrl}`;
+  const lines = [header];
+  if (!autoApproved) lines.push(`Scheduled: ${scheduled}`);
+  lines.push("", draft.content, "", actionLine, `Characters: ${draft.content.length}/280`);
+  return lines.join("\n");
 }
 
 async function sendSlackMessage(

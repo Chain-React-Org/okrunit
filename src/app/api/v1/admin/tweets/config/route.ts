@@ -43,6 +43,10 @@ const ALLOWED_FIELDS: Array<keyof TweetConfig> = [
   "theme_milestone_pct",
   "notify_connection_ids",
   "auto_regenerate_on_reject",
+  "auto_approve_feature",
+  "auto_approve_lesson",
+  "auto_approve_use_case",
+  "auto_approve_milestone",
 ];
 
 export async function PATCH(request: Request) {

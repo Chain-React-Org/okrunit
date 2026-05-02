@@ -106,6 +106,10 @@ export function TweetConfigForm() {
         theme_milestone_pct: config.theme_milestone_pct,
         notify_connection_ids: config.notify_connection_ids,
         auto_regenerate_on_reject: config.auto_regenerate_on_reject,
+        auto_approve_feature: config.auto_approve_feature,
+        auto_approve_lesson: config.auto_approve_lesson,
+        auto_approve_use_case: config.auto_approve_use_case,
+        auto_approve_milestone: config.auto_approve_milestone,
       };
       const resp = await fetch("/api/v1/admin/tweets/config", {
         method: "PATCH",
@@ -277,6 +281,32 @@ export function TweetConfigForm() {
         >
           Sum: {themeSum}% {themeSum !== 100 ? "(must be 100)" : ""}
         </p>
+      </Section>
+
+      <Section title="Auto-approve by theme">
+        <p className="text-xs text-muted-foreground mb-2">
+          When ON, drafts of that theme skip the approval queue and post
+          automatically at their scheduled time. You will still get a
+          messaging notification with a "reject before time X" link, so
+          you can intercept anything weird. Off = traditional review and
+          approve flow.
+        </p>
+        <div className="space-y-2">
+          {([
+            ["auto_approve_feature", "Feature drops"],
+            ["auto_approve_lesson", "Lessons / hot takes"],
+            ["auto_approve_use_case", "Use cases"],
+            ["auto_approve_milestone", "Milestones"],
+          ] as const).map(([key, label]) => (
+            <div key={key} className="flex items-center justify-between rounded-md p-2 hover:bg-muted/40">
+              <Label className="text-sm">{label}</Label>
+              <Switch
+                checked={config[key]}
+                onCheckedChange={(v) => update(key, v)}
+              />
+            </div>
+          ))}
+        </div>
       </Section>
 
       <Section title="Approval notifications">

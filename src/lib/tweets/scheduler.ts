@@ -11,6 +11,7 @@ import { captureError } from "@/lib/monitoring/capture";
 import { generateTweet } from "@/lib/tweets/generator";
 import { notifyDraftReady } from "@/lib/tweets/notify";
 import { postTweet, isTwitterConfigured } from "@/lib/tweets/twitter-client";
+import { isThemeAutoApproved } from "@/lib/tweets/types";
 import type { TweetBrief, TweetConfig, TweetDraft } from "@/lib/tweets/types";
 
 const SLOT_MATCH_WINDOW_MS = 60 * 1000;
@@ -120,6 +121,7 @@ async function generateAndStoreDraft(
 ): Promise<TweetDraft | null> {
   try {
     const result = await generateTweet(brief, config);
+    const autoApproved = isThemeAutoApproved(config, result.theme);
     const admin = createAdminClient();
     const { data, error } = await admin
       .from("tweet_drafts")
@@ -127,9 +129,10 @@ async function generateAndStoreDraft(
         content: result.content,
         original_content: result.content,
         theme: result.theme,
-        status: "pending_approval",
+        status: autoApproved ? "approved" : "pending_approval",
+        approved_at: autoApproved ? new Date().toISOString() : null,
         scheduled_for: scheduledFor.toISOString(),
-        generation_metadata: result.metadata,
+        generation_metadata: { ...result.metadata, auto_approved: autoApproved },
       })
       .select()
       .single<TweetDraft>();
