@@ -171,11 +171,14 @@ async function ensureUpcomingDrafts(
   return generated;
 }
 
-async function postApprovedDrafts(now: Date): Promise<{
+async function postApprovedDrafts(
+  now: Date,
+  config: TweetConfig,
+): Promise<{
   posted: number;
   errors: number;
 }> {
-  if (!isTwitterConfigured()) return { posted: 0, errors: 0 };
+  if (!isTwitterConfigured(config.post_webhook_url)) return { posted: 0, errors: 0 };
 
   const admin = createAdminClient();
   const { data: due, error } = await admin
@@ -196,7 +199,7 @@ async function postApprovedDrafts(now: Date): Promise<{
   let errors = 0;
   for (const draft of due ?? []) {
     try {
-      const result = await postTweet(draft.content);
+      const result = await postTweet(draft.content, config.post_webhook_url);
       await admin
         .from("tweet_drafts")
         .update({
@@ -245,6 +248,6 @@ export async function runScheduler(): Promise<SchedulerRunResult> {
   const now = new Date();
   await expireStaleDrafts(now);
   const generated = await ensureUpcomingDrafts(brief, config, now);
-  const { posted, errors } = await postApprovedDrafts(now);
+  const { posted, errors } = await postApprovedDrafts(now, config);
   return { generated, posted, errors };
 }

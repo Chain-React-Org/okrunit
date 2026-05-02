@@ -38,6 +38,7 @@ export interface TweetConfig {
   theme_milestone_pct: number;
   notify_connection_ids: string[];
   auto_regenerate_on_reject: boolean;
+  post_webhook_url: string | null;
   auto_approve_feature: boolean;
   auto_approve_lesson: boolean;
   auto_approve_use_case: boolean;

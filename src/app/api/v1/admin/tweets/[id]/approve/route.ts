@@ -58,14 +58,20 @@ export async function POST(request: Request, ctx: RouteCtx) {
     }
 
     if (body.post_now) {
-      if (!isTwitterConfigured()) {
+      const { data: config } = await admin
+        .from("tweet_config")
+        .select("post_webhook_url")
+        .eq("id", true)
+        .single<{ post_webhook_url: string | null }>();
+      const webhookUrl = config?.post_webhook_url ?? null;
+      if (!isTwitterConfigured(webhookUrl)) {
         return NextResponse.json(
-          { error: "Twitter API credentials not configured" },
+          { error: "Configure either X API credentials or a posting webhook URL in /admin/tweets/config" },
           { status: 400 },
         );
       }
       try {
-        const result = await postTweet(draft.content);
+        const result = await postTweet(draft.content, webhookUrl);
         const { data, error } = await admin
           .from("tweet_drafts")
           .update({

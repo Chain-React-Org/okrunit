@@ -82,7 +82,51 @@ function describeTwitterError(err: unknown): string {
   return parts.join(" ");
 }
 
-export async function postTweet(content: string): Promise<PostedTweet> {
+async function postViaWebhook(
+  content: string,
+  webhookUrl: string,
+): Promise<PostedTweet> {
+  logger.info(
+    `[Twitter] Posting via webhook (length=${content.length}, preview="${content.slice(0, 60)}...")`,
+  );
+  const resp = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: content }),
+  });
+  const responseText = await resp.text();
+  if (!resp.ok) {
+    logger.error(
+      `[Twitter] Webhook bridge failed: HTTP ${resp.status} body="${responseText.slice(0, 500)}"`,
+    );
+    throw new Error(`Webhook bridge HTTP ${resp.status}: ${responseText.slice(0, 200)}`);
+  }
+  // Try to parse a JSON response with id/url, but don't require it.
+  // Make.com / Zapier / IFTTT typically return a generic OK response without
+  // the actual tweet id, so we fall back to a synthetic placeholder.
+  let id = "";
+  let url = "";
+  try {
+    const parsed = JSON.parse(responseText) as { id?: string; url?: string; tweet_id?: string };
+    id = parsed.id ?? parsed.tweet_id ?? "";
+    url = parsed.url ?? (id ? `https://x.com/i/web/status/${id}` : "");
+  } catch {
+    // not JSON, fine
+  }
+  if (!id) {
+    id = `webhook:${Date.now()}`;
+  }
+  logger.info(`[Twitter] Webhook accepted (id=${id})`);
+  return { id, url };
+}
+
+export async function postTweet(
+  content: string,
+  webhookUrl?: string | null,
+): Promise<PostedTweet> {
+  if (webhookUrl) {
+    return postViaWebhook(content, webhookUrl);
+  }
   const client = getClient();
   logger.info(
     `[Twitter] Posting tweet (length=${content.length}, preview="${content.slice(0, 60)}...")`,
@@ -119,7 +163,8 @@ export async function postTweet(content: string): Promise<PostedTweet> {
   }
 }
 
-export function isTwitterConfigured(): boolean {
+export function isTwitterConfigured(webhookUrl?: string | null): boolean {
+  if (webhookUrl) return true;
   return Boolean(
     process.env.TWITTER_API_KEY &&
       process.env.TWITTER_API_SECRET &&

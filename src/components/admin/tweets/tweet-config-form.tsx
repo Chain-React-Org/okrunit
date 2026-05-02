@@ -106,6 +106,7 @@ export function TweetConfigForm() {
         theme_milestone_pct: config.theme_milestone_pct,
         notify_connection_ids: config.notify_connection_ids,
         auto_regenerate_on_reject: config.auto_regenerate_on_reject,
+        post_webhook_url: config.post_webhook_url,
         auto_approve_feature: config.auto_approve_feature,
         auto_approve_lesson: config.auto_approve_lesson,
         auto_approve_use_case: config.auto_approve_use_case,
@@ -251,6 +252,24 @@ export function TweetConfigForm() {
             </p>
           </div>
         </div>
+      </Section>
+
+      <Section title="Posting destination">
+        <p className="text-xs text-muted-foreground mb-2">
+          By default, OKrunit posts directly to X using your TWITTER_*
+          credentials. If you do not have an X API tier with credits, paste
+          a webhook URL here (Make.com, Zapier, IFTTT, n8n, etc.) and
+          OKrunit will POST the approved tweet to that URL as JSON
+          {"{ text: \"...\" }"} instead. The receiver is responsible for
+          posting to X. Leave blank to use the direct API path.
+        </p>
+        <Input
+          value={config.post_webhook_url ?? ""}
+          onChange={(e) =>
+            update("post_webhook_url", e.target.value.trim() || null)
+          }
+          placeholder="https://hook.eu2.make.com/..."
+        />
       </Section>
 
       <Section title="Theme mix (must sum to 100%)">
