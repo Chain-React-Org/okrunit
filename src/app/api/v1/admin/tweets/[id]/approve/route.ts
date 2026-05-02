@@ -17,6 +17,27 @@ interface RouteCtx {
   params: Promise<{ id: string }>;
 }
 
+function formatTwitterFailure(err: unknown): string {
+  if (!err || typeof err !== "object") return String(err);
+  const e = err as {
+    code?: number;
+    data?: { detail?: string; title?: string };
+    errors?: Array<{ code?: number; message?: string }>;
+    message?: string;
+  };
+  const parts: string[] = [];
+  if (e.code !== undefined) parts.push(`HTTP ${e.code}`);
+  if (e.data?.title) parts.push(e.data.title);
+  if (e.data?.detail) parts.push(e.data.detail);
+  if (e.errors && Array.isArray(e.errors)) {
+    for (const sub of e.errors) {
+      parts.push(`(${sub.code}) ${sub.message}`);
+    }
+  }
+  if (parts.length === 0 && e.message) parts.push(e.message);
+  return parts.join(" - ") || "unknown Twitter error";
+}
+
 export async function POST(request: Request, ctx: RouteCtx) {
   try {
     const profile = await getAppAdminContext();
@@ -64,7 +85,7 @@ export async function POST(request: Request, ctx: RouteCtx) {
         return NextResponse.json({ draft: data });
       } catch (err) {
         captureError({ error: err, service: "TweetPoster" }).catch(() => {});
-        const failureReason = err instanceof Error ? err.message : String(err);
+        const failureReason = formatTwitterFailure(err);
         await admin
           .from("tweet_drafts")
           .update({ status: "failed", failure_reason: failureReason })
