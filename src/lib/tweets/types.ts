@@ -38,7 +38,27 @@ export interface TweetConfig {
   theme_milestone_pct: number;
   notify_connection_ids: string[];
   auto_regenerate_on_reject: boolean;
+  auto_approve_feature: boolean;
+  auto_approve_lesson: boolean;
+  auto_approve_use_case: boolean;
+  auto_approve_milestone: boolean;
   updated_at: string;
+}
+
+export function isThemeAutoApproved(
+  config: TweetConfig,
+  theme: TweetTheme,
+): boolean {
+  switch (theme) {
+    case "feature":
+      return config.auto_approve_feature;
+    case "lesson":
+      return config.auto_approve_lesson;
+    case "use_case":
+      return config.auto_approve_use_case;
+    case "milestone":
+      return config.auto_approve_milestone;
+  }
 }
 
 export interface TweetDraft {

@@ -12,6 +12,7 @@ import { logger } from "@/lib/monitoring/logger";
 import { captureError } from "@/lib/monitoring/capture";
 import { generateTweet } from "@/lib/tweets/generator";
 import { notifyDraftReady } from "@/lib/tweets/notify";
+import { isThemeAutoApproved } from "@/lib/tweets/types";
 import type { TweetBrief, TweetConfig, TweetDraft, TweetTheme } from "@/lib/tweets/types";
 
 export async function POST(request: Request) {
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
     }
 
     const result = await generateTweet(briefRes.data, configRes.data, body.theme);
+    const autoApproved = isThemeAutoApproved(configRes.data, result.theme);
     const scheduledFor = body.scheduled_for
       ? new Date(body.scheduled_for)
       : new Date(Date.now() + 15 * 60 * 1000);
@@ -47,9 +49,11 @@ export async function POST(request: Request) {
         content: result.content,
         original_content: result.content,
         theme: result.theme,
-        status: "pending_approval",
+        status: autoApproved ? "approved" : "pending_approval",
+        approved_at: autoApproved ? new Date().toISOString() : null,
+        approved_by: autoApproved ? profile.id : null,
         scheduled_for: scheduledFor.toISOString(),
-        generation_metadata: result.metadata,
+        generation_metadata: { ...result.metadata, auto_approved: autoApproved },
       })
       .select()
       .single<TweetDraft>();
