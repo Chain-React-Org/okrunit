@@ -287,9 +287,9 @@ export function TweetConfigForm() {
         <p className="text-xs text-muted-foreground mb-2">
           When ON, drafts of that theme skip the approval queue and post
           automatically at their scheduled time. You will still get a
-          messaging notification with a "reject before time X" link, so
-          you can intercept anything weird. Off = traditional review and
-          approve flow.
+          messaging notification with a reject-before-time link, so you
+          can still intercept anything weird. Off keeps the traditional
+          review-and-approve flow.
         </p>
         <div className="space-y-2">
           {([
