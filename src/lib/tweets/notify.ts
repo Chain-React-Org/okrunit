@@ -185,22 +185,20 @@ async function dispatchOne(
 
 /**
  * Resolve which messaging connections to ping for tweet approval.
- * If notifyConnectionIds is empty, returns all active connections.
+ * Empty notifyConnectionIds means no notifications. The founder must
+ * explicitly opt in by selecting channels in /admin/tweets/config.
  */
 async function resolveTargetConnections(
   notifyConnectionIds: string[],
 ): Promise<MessagingConnection[]> {
+  if (notifyConnectionIds.length === 0) return [];
   const admin = createAdminClient();
-  let query = admin
+  const { data, error } = await admin
     .from("messaging_connections")
     .select("*")
-    .eq("is_active", true);
-
-  if (notifyConnectionIds.length > 0) {
-    query = query.in("id", notifyConnectionIds);
-  }
-
-  const { data, error } = await query.returns<MessagingConnection[]>();
+    .eq("is_active", true)
+    .in("id", notifyConnectionIds)
+    .returns<MessagingConnection[]>();
   if (error) {
     logger.error("[Tweets] Failed to load messaging connections:", error);
     return [];
