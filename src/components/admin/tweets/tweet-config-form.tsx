@@ -289,7 +289,8 @@ export function TweetConfigForm() {
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
               Pick which messaging channels get pinged when a draft is ready.
-              If none selected, all active connections are used.
+              If none are selected, no approval notifications are sent. You
+              can still review drafts here on the queue page.
             </p>
             {connections.map((c) => (
               <label
