@@ -39,7 +39,7 @@
     "@stripe/react-stripe-js": "^6.2.0",
     "@stripe/stripe-js": "^9.3.1",
     "@supabase/ssr": "^0.10.2",
-    "@supabase/supabase-js": "^2.104.1",
+    "@supabase/supabase-js": "^2.105.4",
     "@tanstack/react-virtual": "^3.13.24",
     "@upstash/redis": "^1.37.0",
     "ai": "^6.0.173",
