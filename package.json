@@ -21,7 +21,7 @@
     "cap:dev:android": "CAPACITOR_SERVER_URL=http://localhost:3000 npx cap run android --livereload --external"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.74",
+    "@ai-sdk/anthropic": "^3.0.76",
     "@ai-sdk/google": "^3.0.67",
     "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@capacitor/android": "^8.3.1",
