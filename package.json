@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.74",
-    "@ai-sdk/google": "^3.0.67",
+    "@ai-sdk/google": "^3.0.71",
     "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@capacitor/android": "^8.3.1",
     "@capacitor/app": "^8.1.0",
